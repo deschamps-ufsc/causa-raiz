@@ -12275,3 +12275,49 @@ __filename: string
 [2026-05-05 16:55:11] [INFO] usina_solar --    Data dir: E:\Antigravity\Causa Raiz\backend\data
 [2026-05-05 16:55:11] [INFO] usina_solar --    Docs:     http://localhost:8000/docs
 [2026-05-05 16:55:11] [INFO] usina_solar -- ============================================================
+[2026-05-05 17:17:25] [INFO] usina_solar -- ============================================================
+[2026-05-05 17:17:25] [INFO] usina_solar -- [SOLAR] Usina Solar API iniciada
+[2026-05-05 17:17:25] [INFO] usina_solar --    Data dir: E:\Antigravity\Causa Raiz\backend\data
+[2026-05-05 17:17:25] [INFO] usina_solar --    Docs:     http://localhost:8000/docs
+[2026-05-05 17:17:25] [INFO] usina_solar -- ============================================================
+[2026-05-05 17:19:53] [INFO] usina_solar -- [USINAS] Listando 2 usinas.
+[2026-05-05 17:19:53] [INFO] usina_solar -- [USINAS] Listando 2 usinas.
+[2026-05-05 17:19:59] [INFO] usina_solar -- [PARQUET] Schema lido: 5255 séries para 2025-11-24
+[2026-05-05 17:20:23] [INFO] usina_solar -- [SETTINGS] 16 elementos salvos.
+[2026-05-05 17:20:26] [INFO] usina_solar -- [SETTINGS] 16 elementos salvos.
+[2026-05-05 17:20:33] [INFO] usina_solar -- [SETTINGS] 16 elementos salvos.
+[2026-05-05 17:20:37] [INFO] usina_solar -- [SETTINGS] 16 elementos salvos.
+[2026-05-05 17:21:21] [INFO] usina_solar -- [MAPPING] Salvo: 8323 entradas → E:\Antigravity\Causa Raiz\backend\data\Cortez - SPE São Claus 1\series_map.json
+[2026-05-05 17:21:21] [INFO] usina_solar -- [MAPPING] Importado: 8323 entradas, 0 linhas inválidas
+[2026-05-05 17:21:37] [INFO] usina_solar -- [SETTINGS] 17 elementos salvos.
+[2026-05-05 17:22:02] [INFO] usina_solar -- [MAPPING] Salvo: 8323 entradas → E:\Antigravity\Causa Raiz\backend\data\Cortez - SPE São Claus 1\series_map.json
+[2026-05-05 17:22:02] [INFO] usina_solar -- [MAPPING] Importado: 8323 entradas, 0 linhas inválidas
+[2026-05-05 17:24:10] [INFO] usina_solar -- [USINAS] Listando 2 usinas.
+[2026-05-05 17:24:10] [INFO] usina_solar -- [USINAS] Listando 2 usinas.
+[2026-05-05 17:24:36] [INFO] usina_solar -- [PARQUET] Schema lido: 5255 séries para 2025-11-24
+[2026-05-05 17:24:44] [INFO] usina_solar -- [USINAS] Listando 2 usinas.
+[2026-05-05 17:24:44] [INFO] usina_solar -- [USINAS] Listando 2 usinas.
+[2026-05-05 17:24:47] [INFO] usina_solar -- [PARQUET] Schema lido: 5255 séries para 2025-11-24
+[2026-05-05 17:25:57] [INFO] usina_solar -- [DATA] Consulta: usina=Cortez - SPE São Claus 1, date=2025-11-24, series=['CLS01.1-INV01.CorA', 'CLS01.1-INV01.CorB', 'CLS01.1-INV01.CorC', 'CLS01.1-INV02.CorA', 'CLS01.1-INV02.CorB', 'CLS01.1-INV02.CorC', 'CLS01.1-INV03.CorA', 'CLS01.1-INV03.CorB', 'CLS01.1-INV03.CorC', 'CLS01.1-INV04.CorA', 'CLS01.1-INV04.CorB', 'CLS01.1-INV04.CorC', 'CLS01.1-INV05.CorA', 'CLS01.1-INV05.CorB', 'CLS01.1-INV05.CorC', 'CLS01.1-INV06.CorA', 'CLS01.1-INV06.CorB', 'CLS01.1-INV06.CorC', 'CLS01.1-INV07.CorA', 'CLS01.1-INV07.CorB', 'Flag 5 minutos'], elemento=None, skid=None, [None → None]
+[2026-05-05 17:25:57] [INFO] usina_solar -- [QUERY] date=2025-11-24 | 21 séries (0 sintéticas) | start=None end=None
+[2026-05-05 17:26:41] [INFO] usina_solar -- [SETTINGS] 16 elementos salvos.
+[2026-05-05 17:26:45] [INFO] usina_solar -- [SETTINGS] 15 elementos salvos.
+[2026-05-05 17:26:51] [INFO] usina_solar -- [SETTINGS] 16 elementos salvos.
+[2026-05-05 17:27:01] [INFO] usina_solar -- [MAPPING] Salvo: 8323 entradas → E:\Antigravity\Causa Raiz\backend\data\Cortez - SPE São Claus 1\series_map.json
+[2026-05-05 17:27:01] [INFO] usina_solar -- [MAPPING] Importado: 8323 entradas, 0 linhas inválidas
+[2026-05-05 17:27:12] [INFO] usina_solar -- [SETTINGS] 15 elementos salvos.
+[2026-05-05 17:27:48] [INFO] usina_solar -- [SETTINGS] 16 elementos salvos.
+[2026-05-05 17:27:53] [INFO] usina_solar -- [PARQUET] Schema lido: 5255 séries para 2025-11-24
+[2026-05-05 17:28:01] [INFO] usina_solar -- [DATA] Consulta: usina=Cortez - SPE São Claus 1, date=2025-11-24, series=['CLS01.4-INV05-SB17-TR067.PosAngAlvo', 'Flag 5 minutos'], elemento=None, skid=None, [None → None]
+[2026-05-05 17:28:01] [INFO] usina_solar -- [QUERY] date=2025-11-24 | 2 séries (0 sintéticas) | start=None end=None
+[2026-05-05 17:28:08] [INFO] usina_solar -- [DATA] Consulta: usina=Cortez - SPE São Claus 1, date=2025-11-24, series=['CLS01.4-INV05-SB17-TR067.PosAngAlvo', 'CLS01.1-INV01-SB13-TR049.PosAngAlvo', 'CLS01.1-INV01-SB13-TR049.PosAngAtual', 'Flag 5 minutos'], elemento=None, skid=None, [None → None]
+[2026-05-05 17:28:08] [INFO] usina_solar -- [QUERY] date=2025-11-24 | 4 séries (0 sintéticas) | start=None end=None
+[2026-05-05 17:28:26] [INFO] usina_solar -- [SETTINGS] 15 elementos salvos.
+[2026-05-05 17:28:36] [INFO] usina_solar -- [MAPPING] Salvo: 8323 entradas → E:\Antigravity\Causa Raiz\backend\data\Cortez - SPE São Claus 1\series_map.json
+[2026-05-05 17:28:36] [INFO] usina_solar -- [MAPPING] Importado: 8323 entradas, 0 linhas inválidas
+[2026-05-05 17:29:45] [INFO] usina_solar -- [USINAS] Listando 2 usinas.
+[2026-05-05 17:29:45] [INFO] usina_solar -- [USINAS] Listando 2 usinas.
+[2026-05-05 17:33:22] [INFO] usina_solar -- [USINAS] Listando 2 usinas.
+[2026-05-05 17:33:22] [INFO] usina_solar -- [USINAS] Listando 2 usinas.
+[2026-05-05 17:38:44] [INFO] usina_solar -- [USINAS] Listando 2 usinas.
+[2026-05-05 17:38:44] [INFO] usina_solar -- [USINAS] Listando 2 usinas.
