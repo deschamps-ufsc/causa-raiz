@@ -1,0 +1,20 @@
+[
+  {
+    "email": "deschamps.ufsc@gmail.com",
+    "name": "Eduardo M. Deschamps",
+    "role": "admin",
+    "password_hash": "$2b$12$u/eRbtFPvyWlprXHSQ4Y5uaz8w2oJtL8../I0z12Lzyz6.1C36Tq."
+  },
+  {
+    "email": "dudumd@gmail.com",
+    "name": "Usuário Teste 01",
+    "role": "user",
+    "password_hash": "$2b$12$XSxmHyZlm1TWkU0UNChIqus/TFgvJuS87Z8y4pIkNPWGb1vroU2ue"
+  },
+  {
+    "email": "fabiofaria82@gmail.com",
+    "name": "Fabio Faria",
+    "role": "analyst",
+    "password_hash": "$2b$12$J4uynveJ8uQiot6A.ztBiujpocGdRKAczR/HMeY.vs15eSlHuc9pK"
+  }
+]
