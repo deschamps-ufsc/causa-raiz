@@ -224,12 +224,12 @@ export default function SeriesSelector({ series, selected, onChange, elementos }
                       {s.coluna}
                     </div>
                     {s.mapeada && (
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        {s.elemento && <span style={{ color: 'var(--amber)', fontSize: 10 }}>{s.elemento}</span>}
-                        {s.estacao && <span style={{ color: '#14b8a6', fontSize: 10 }}>📍 {s.estacao}</span>}
-                        {s.skid && <span>{s.skid}</span>}
-                        {s.inversor && <span>· {s.inversor}</span>}
-                        {s.stringbox && <span>· {s.stringbox}</span>}
+                      <div style={{ fontSize: 10, color: 'var(--text-muted)', display: 'flex', gap: 4, flexWrap: 'nowrap', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                        {s.elemento && <span style={{ color: 'var(--amber)', flexShrink: 0 }}>{s.elemento}</span>}
+                        {s.estacao && <span style={{ color: '#14b8a6', flexShrink: 0 }}>📍 {s.estacao}</span>}
+                        {s.skid && <span style={{ flexShrink: 0 }}>{s.skid}</span>}
+                        {s.inversor && <span style={{ flexShrink: 0 }}>· {s.inversor}</span>}
+                        {s.stringbox && <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>· {s.stringbox}</span>}
                       </div>
                     )}
                   </div>

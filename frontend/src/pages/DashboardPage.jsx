@@ -5,7 +5,6 @@ import { useSeriesData } from '../hooks/useSeriesData'
 import { fetchElementos } from '../services/api'
 import { useUsina } from '../hooks/UsinaContext'
 import SeriesSelector from '../components/SeriesSelector'
-import TimeRangeFilter from '../components/TimeRangeFilter'
 import TimeSeriesChart from '../components/TimeSeriesChart'
 import DataTable from '../components/DataTable'
 import Heatmap from '../components/Heatmap'
@@ -28,14 +27,13 @@ export default function DashboardPage() {
   const initialDate = location.state?.date || ''
   const { usinaAtual } = useUsina()
 
-  const [selectedDate, setSelectedDate] = useState(initialDate)
+  const [selectedDates, setSelectedDates] = useState(initialDate ? [initialDate] : [])
   const [selectedSeries, setSelectedSeries] = useState([])
   const [activeFilters, setActiveFilters] = useState([])
   const [visibleFilters, setVisibleFilters] = useState([])
   const [filterColors, setFilterColors] = useState({})
   const [colorPickerFilter, setColorPickerFilter] = useState(null)
   
-  const [timeRange, setTimeRange] = useState({ start: '00:00', end: '23:59' })
   const [activeTab, setActiveTab] = useState('chart')
   const [elementos, setElementos] = useState([])
   
@@ -44,7 +42,7 @@ export default function DashboardPage() {
   const [isFiltersOpen, setIsFiltersOpen] = useState(true)
   const [isSeriesOpen, setIsSeriesOpen] = useState(true)
 
-  const { series, dates, loading: seriesLoading } = useSeries(selectedDate, usinaAtual)
+  const { series, dates, loading: seriesLoading } = useSeries(selectedDates, usinaAtual)
   const { data, loading: dataLoading, error: dataError, query, clear } = useSeriesData()
 
   // Separa as séries normais dos filtros
@@ -62,7 +60,7 @@ export default function DashboardPage() {
     setActiveFilters([])
     setVisibleFilters([])
     clear()
-  }, [selectedDate, usinaAtual])
+  }, [selectedDates, usinaAtual])
 
   // Define cores iniciais sincronizadas para os filtros
   useEffect(() => {
@@ -86,13 +84,11 @@ export default function DashboardPage() {
     // Busca sempre todas as séries de filtro disponíveis junto com as normais selecionadas
     const availableFilters = filterSeries.map(s => s.coluna)
     const allQuerySeries = Array.from(new Set([...selectedSeries, ...availableFilters]))
-    if (!selectedDate || !allQuerySeries.length || !usinaAtual) return
+    if (!selectedDates.length || !allQuerySeries.length || !usinaAtual) return
     query({
       usina: usinaAtual,
-      date: selectedDate,
+      dates: selectedDates,
       series: allQuerySeries,
-      start: timeRange.start !== '00:00' ? timeRange.start : undefined,
-      end: timeRange.end !== '23:59' ? timeRange.end : undefined,
     })
   }
 
@@ -159,13 +155,6 @@ export default function DashboardPage() {
     }
   }, [data, activeFilters, visibleFilters, filterSeries])
 
-  const totalPoints = (() => {
-    if (!timeRange.start || !timeRange.end) return 1440
-    const [sh, sm] = timeRange.start.split(':').map(Number)
-    const [eh, em] = timeRange.end.split(':').map(Number)
-    return Math.max(0, (eh * 60 + em) - (sh * 60 + sm) + 1)
-  })()
-
   // Guard: usina não selecionada
   if (!usinaAtual) {
     return (
@@ -213,29 +202,33 @@ export default function DashboardPage() {
                 onClick={() => setIsDataOpen(!isDataOpen)}
                 title="Clique para expandir/recolher"
               >
-                <span>📅 Data</span>
+                <span>📅 Data {selectedDates.length > 0 && <span className="badge badge-amber" style={{marginLeft: 8}}>{selectedDates.length} selecionados</span>}</span>
                 <span style={{ fontSize: '10px' }}>{isDataOpen ? '▼' : '▶'}</span>
               </div>
               {isDataOpen && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <select className="input" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)}>
-                    <option value="">-- Selecione uma data --</option>
-                    {dates.map((d) => <option key={d} value={d}>{d}</option>)}
-                  </select>
-                  {selectedDate && (
-                    <TimeRangeFilter
-                      start={timeRange.start}
-                      end={timeRange.end}
-                      onChange={setTimeRange}
-                      totalPoints={totalPoints}
-                    />
-                  )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 200, overflowY: 'auto', padding: '0 4px' }}>
+                  {dates.length === 0 && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Nenhuma data</span>}
+                  {dates.map((d) => (
+                    <label key={d} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, background: 'var(--bg-card)', padding: '6px 10px', borderRadius: 6, border: '1px solid var(--border)' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={selectedDates.includes(d)} 
+                        onChange={(e) => {
+                          setSelectedDates(prev => {
+                            if (e.target.checked) return [...prev, d].sort((a,b) => a.localeCompare(b))
+                            return prev.filter(x => x !== d)
+                          })
+                        }}
+                      />
+                      <span>{d}</span>
+                    </label>
+                  ))}
                 </div>
               )}
             </div>
 
             {/* FILTROS DE QUALIDADE */}
-            {selectedDate && filterSeries.length > 0 && (
+            {selectedDates.length > 0 && filterSeries.length > 0 && (
               <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
                 <div 
                   className="card-title" 
@@ -244,7 +237,7 @@ export default function DashboardPage() {
                   title="Clique para expandir/recolher"
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span>🛡️ Filtros de Qualidade</span>
+                    <span>🛡️ Filtros</span>
                   </div>
                   <span style={{ fontSize: '10px' }}>{isFiltersOpen ? '▼' : '▶'}</span>
                 </div>
@@ -310,7 +303,7 @@ export default function DashboardPage() {
             )}
 
             {/* Seleção de Séries */}
-            {selectedDate && (
+            {selectedDates.length > 0 && (
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                 <div 
                   className="card-title" 
@@ -349,7 +342,7 @@ export default function DashboardPage() {
             <button
               className="btn btn-primary btn-full"
               onClick={handleVisualize}
-              disabled={!selectedDate || !selectedSeries.length || dataLoading}
+              disabled={selectedDates.length === 0 || !selectedSeries.length || dataLoading}
             >
               {dataLoading ? '⏳ Carregando...' : `📊 Visualizar (${selectedSeries.length} séries)`}
             </button>
@@ -377,7 +370,7 @@ export default function DashboardPage() {
 
           {filteredData && (
             <div style={{ display: 'flex', gap: 8, fontSize: 12, color: 'var(--text-secondary)', marginLeft: 'auto' }}>
-              <span className="badge badge-amber">{filteredData.date}</span>
+              <span className="badge badge-amber">{filteredData.dates}</span>
               <span className="badge badge-blue">{Object.keys(filteredData.series).length} séries</span>
               <span className="badge badge-gray">{filteredData.total_pontos.toLocaleString('pt-BR')} pts</span>
             </div>
@@ -388,12 +381,12 @@ export default function DashboardPage() {
         <div style={{ flex: 1, overflow: 'auto', padding: 20 }}>
           {/* Heatmap Yield — independente de séries selecionadas */}
           {activeTab === 'heatmap' && (
-            <HeatmapYield usina={usinaAtual} date={selectedDate || ''} activeFilters={activeFilters} />
+            <HeatmapYield usina={usinaAtual} dates={selectedDates.join(',')} activeFilters={activeFilters} />
           )}
 
           {/* Ranking — independente de séries selecionadas */}
           {activeTab === 'ranking' && (
-            <RankingTab usina={usinaAtual} date={selectedDate || ''} activeFilters={activeFilters} />
+            <RankingTab usina={usinaAtual} dates={selectedDates.join(',')} activeFilters={activeFilters} />
           )}
 
           {/* Diagrama da Usina — independente de data e séries */}

@@ -26,7 +26,7 @@ router = APIRouter(tags=["Heatmap"])
 @router.get("/heatmap/yield")
 def get_yield_heatmap(
     usina: str = Query(...),
-    date:  str = Query(...),
+    dates:  str = Query(...),
     elemento: Optional[str] = Query(None, description="Elemento que representa Potência CA Inv"),
     filters: Optional[str] = Query(None, description="String de filtros separados por vírgula para qualidade"),
     row_cat: str = Query("skid", description="Categoria para as linhas do heatmap"),
@@ -37,9 +37,9 @@ def get_yield_heatmap(
     Se categorias forem skid e inversor, calcula o Yield usando MWp da usina_info.
     Caso contrário, retorna apenas a soma integrada (Σ / 60000).
     """
-    path = _parquet_path(date, usina)
-    if not os.path.exists(path):
-        raise HTTPException(status_code=404, detail=f"Parquet não encontrado para {date}")
+    date_list = [d.strip() for d in dates.split(",") if d.strip()]
+    if not date_list:
+        raise HTTPException(status_code=400, detail="Nenhuma data informada.")
 
     mapping = load_mapping(usina)
 
@@ -86,13 +86,22 @@ def get_yield_heatmap(
     
     cols_to_read = list(cols_needed) + active_filters
 
-    schema = pq.read_schema(path)
-    parquet_cols = {f.name for f in schema}
-    valid_cols = [c for c in cols_to_read if c in parquet_cols]
-    if not valid_cols:
-        raise HTTPException(status_code=422, detail="Nenhuma coluna válida no Parquet para este filtro.")
-    
-    df = pd.read_parquet(path, columns=valid_cols)
+    dfs = []
+    for date in date_list:
+        path = _parquet_path(date, usina)
+        if not os.path.exists(path):
+            continue
+        schema = pq.read_schema(path)
+        parquet_cols = {f.name for f in schema}
+        valid_cols_day = [c for c in cols_to_read if c in parquet_cols]
+        if valid_cols_day:
+            df_day = pd.read_parquet(path, columns=valid_cols_day)
+            dfs.append(df_day)
+            
+    if not dfs:
+        raise HTTPException(status_code=422, detail="Nenhuma coluna válida no Parquet para as datas selecionadas.")
+        
+    df = pd.concat(dfs, ignore_index=True)
     
     # Aplica iterativamente cada filtro presente no dataframe
     for f_col in active_filters:
@@ -132,7 +141,7 @@ def get_yield_heatmap(
         matrix.setdefault(r_val, {})[c_val] = final_value
         
     return {
-        "date": date,
+        "dates": dates,
         "elemento": elemento,
         "rows": sorted(rows_set),
         "cols": sorted(cols_set),
@@ -146,7 +155,7 @@ def get_yield_heatmap(
 @router.get("/heatmap/pivot")
 def get_pivot_heatmap(
     usina: str = Query(...),
-    date:  str = Query(...),
+    dates:  str = Query(...),
     elemento: str = Query(..., description="Elemento para integralizar"),
     filters: Optional[str] = Query(None, description="String de filtros separados por vírgula para qualidade"),
 ):
@@ -155,9 +164,9 @@ def get_pivot_heatmap(
     e seus metadados (skid, inversor, stringbox, estacao, kwp).
     Ideal para montagem de Pivot Table multicamadas no frontend.
     """
-    path = _parquet_path(date, usina)
-    if not os.path.exists(path):
-        raise HTTPException(status_code=404, detail=f"Parquet não encontrado para {date}")
+    date_list = [d.strip() for d in dates.split(",") if d.strip()]
+    if not date_list:
+        raise HTTPException(status_code=400, detail="Nenhuma data informada.")
 
     mapping = load_mapping(usina)
     
@@ -194,14 +203,22 @@ def get_pivot_heatmap(
             if src not in cols_to_read:
                 cols_to_read.append(src)
 
-    schema = pq.read_schema(path)
-    parquet_cols = {f.name for f in schema}
-    valid_cols = [c for c in cols_to_read if c in parquet_cols]
-    
-    if not valid_cols:
+    dfs = []
+    for date in date_list:
+        path = _parquet_path(date, usina)
+        if not os.path.exists(path):
+            continue
+        schema = pq.read_schema(path)
+        parquet_cols = {f.name for f in schema}
+        valid_cols_day = [c for c in cols_to_read if c in parquet_cols]
+        if valid_cols_day:
+            df_day = pd.read_parquet(path, columns=valid_cols_day)
+            dfs.append(df_day)
+            
+    if not dfs:
         raise HTTPException(status_code=422, detail="Nenhuma coluna válida no Parquet.")
-    
-    df = pd.read_parquet(path, columns=valid_cols)
+        
+    df = pd.concat(dfs, ignore_index=True)
 
     # Injetar séries sintéticas calculadas no DataFrame
     for synth_name, synth_def in synth_in_target.items():
@@ -257,7 +274,7 @@ def get_pivot_heatmap(
         })
         
     return {
-        "date": date,
+        "dates": dates,
         "elemento": elemento,
         "records": records
     }

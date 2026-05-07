@@ -11,7 +11,7 @@ from models.schemas import (
     MappingImportResponse,
     MappingValidationResponse,
 )
-from services.parquet_service import list_available_dates, list_series_for_date
+from services.parquet_service import list_available_dates, list_series_for_dates
 from services.mapping_service import (
     load_mapping,
     save_mapping,
@@ -41,14 +41,14 @@ def get_available_dates(usina: str = Query(..., description="Nome da usina para 
 @router.get("/series", response_model=list[SeriesInfo])
 def get_series(
     usina: str = Query(..., description="Nome da usina"),
-    date: str = Query(..., description="Data no formato YYYY-MM-DD")
+    dates: str = Query(..., description="Datas no formato YYYY-MM-DD separadas por vírgula")
 ):
     """
-    Lista todas as séries disponíveis para uma data e usina,
+    Lista todas as séries disponíveis para as datas e usina,
     enriquecidas com os metadados do mapeamento DE-PARA.
     """
     try:
-        series = list_series_for_date(date, usina)
+        series = list_series_for_dates(dates, usina)
         return [SeriesInfo(**s) for s in series]
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))

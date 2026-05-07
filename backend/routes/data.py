@@ -15,7 +15,7 @@ router = APIRouter(tags=["Dados"])
 @router.get("/data", response_model=DataResponse)
 def get_data(
     usina: str = Query(..., description="Nome da usina para consulta"),
-    date: str = Query(..., description="Data no formato YYYY-MM-DD"),
+    dates: str = Query(..., description="Datas no formato YYYY-MM-DD separadas por vírgula"),
     series: Optional[str] = Query(None, description="Nomes das colunas separados por vírgula"),
     elemento: Optional[str] = Query(None, description="Filtrar por tipo de Elemento"),
     skid: Optional[str] = Query(None, description="Filtrar por SKID"),
@@ -46,13 +46,13 @@ def get_data(
         )
 
     logger.info(
-        f"[DATA] Consulta: usina={usina}, date={date}, series={series_list}, "
+        f"[DATA] Consulta: usina={usina}, dates={dates}, series={series_list}, "
         f"elemento={elemento}, skid={skid}, [{start} → {end}]"
     )
 
     try:
         result = query_data(
-            date=date,
+            dates_str=dates,
             usina=usina,
             series=series_list,
             elemento=elemento,
@@ -67,7 +67,7 @@ def get_data(
         raise HTTPException(status_code=500, detail=str(e))
 
     return DataResponse(
-        date=date,
+        dates=dates,
         timestamps=result["timestamps"],
         series=result["series"],
         total_pontos=result["total_pontos"],

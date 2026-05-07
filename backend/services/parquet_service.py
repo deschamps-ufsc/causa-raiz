@@ -28,38 +28,40 @@ def list_available_dates(usina: str) -> list[str]:
     for fname in os.listdir(usina_dir):
         if fname.endswith(".parquet"):
             dates.append(fname.replace(".parquet", ""))
-    return sorted(dates, reverse=True)
+    return sorted(dates)
 
 
 # ── Listar séries de uma data ─────────────────────────────────────────────────
 
-def list_series_for_date(date: str, usina: str) -> list[dict]:
+def list_series_for_dates(dates_str: str, usina: str) -> list[dict]:
     """
-    Lê apenas o schema do Parquet (sem carregar dados) e retorna
-    os metadados de cada série enriquecidos com o mapeamento DE-PARA.
+    Lê apenas o schema dos Parquets de múltiplas datas (sem carregar dados) e retorna
+    os metadados unidos de cada série enriquecidos com o mapeamento DE-PARA.
 
     Args:
-        date: "YYYY-MM-DD"
+        dates_str: "YYYY-MM-DD,YYYY-MM-DD"
         usina: Nome da usina
 
     Returns:
         Lista de dicts com keys: coluna, elemento, skid, inversor, stringbox, mapeada
     """
-    path = _parquet_path(date, usina)
-    if not os.path.exists(path):
-        raise FileNotFoundError(f"Parquet não encontrado para data {date}")
-
-    # Ler apenas schema — extremamente rápido (~0ms)
-    schema = pq.read_schema(path)
-    colunas = [f.name for f in schema if f.name != "timestamp"]
-
-    logger.info(f"[PARQUET] Schema lido: {len(colunas)} séries para {date}")
-
+    colunas_set = set()
+    dates = [d.strip() for d in dates_str.split(",") if d.strip()]
+    
+    for date in dates:
+        path = _parquet_path(date, usina)
+        if not os.path.exists(path):
+            continue
+        schema = pq.read_schema(path)
+        colunas_set.update(f.name for f in schema if f.name != "timestamp")
+    
+    if not colunas_set:
+        raise FileNotFoundError(f"Nenhum Parquet encontrado para as datas: {dates_str}")
     from services.mapping_service import load_mapping
     mapping = load_mapping(usina)
     
     result = []
-    for col in colunas:
+    for col in colunas_set:
         info = mapping.get(col, {})
         result.append({
             "coluna": col,
@@ -77,7 +79,7 @@ def list_series_for_date(date: str, usina: str) -> list[dict]:
 # ── Consultar dados ────────────────────────────────────────────────────────────
 
 def query_data(
-    date: str,
+    dates_str: str,
     usina: str,
     series: Optional[list[str]] = None,
     elemento: Optional[str] = None,
@@ -86,18 +88,23 @@ def query_data(
     end_time: Optional[str] = None,       # "HH:MM"
 ) -> dict:
     """
-    Lê dados do Parquet de forma colunar (só as colunas solicitadas).
+    Lê dados de múltiplos Parquets de forma colunar (só as colunas solicitadas).
 
     Returns:
         { "timestamps": [...], "series": { "col": [...] }, "total_pontos": N }
     """
-    path = _parquet_path(date, usina)
-    if not os.path.exists(path):
-        raise FileNotFoundError(f"Parquet não encontrado para data {date} (usina {usina})")
+    dates = [d.strip() for d in dates_str.split(",") if d.strip()]
+    if not dates:
+        raise ValueError("Nenhuma data informada.")
 
-    # ── Resolver quais colunas carregar ────────────────────────────────────────
-    cols_to_load = _resolve_columns(path, usina, series, elemento, skid)
-
+    # ── Resolver quais colunas carregar (baseado no primeiro dia disponível) ──
+    cols_to_load = []
+    for date in dates:
+        path = _parquet_path(date, usina)
+        if os.path.exists(path):
+            cols_to_load = _resolve_columns(path, usina, series, elemento, skid)
+            break
+    
     if not cols_to_load:
         return {"timestamps": [], "series": {}, "total_pontos": 0}
 
@@ -112,12 +119,34 @@ def query_data(
                 final_cols.append(src)
 
     logger.info(
-        f"[QUERY] date={date} | {len(cols_to_load)} séries ({len(synth_requested)} sintéticas) | "
+        f"[QUERY] dates={dates_str} | {len(cols_to_load)} séries ({len(synth_requested)} sintéticas) | "
         f"start={start_time} end={end_time}"
     )
 
-    # ── Leitura colunar — só carrega o necessário ─────────────────────────────
-    df = pd.read_parquet(path, columns=["timestamp"] + final_cols)
+    # ── Leitura colunar e reindexação por dia ─────────────────────────────────
+    dfs = []
+    for date in dates:
+        path = _parquet_path(date, usina)
+        if not os.path.exists(path):
+            logger.warning(f"Parquet ausente para data {date}")
+            continue
+
+        schema = pq.read_schema(path)
+        parquet_cols = [f.name for f in schema]
+        read_cols = [c for c in final_cols if c in parquet_cols]
+        
+        df_day = pd.read_parquet(path, columns=["timestamp"] + read_cols)
+        
+        if start_time or end_time:
+            df_day = _apply_time_filter(df_day, date, start_time, end_time)
+            
+        df_day = _reindex_to_full_period(df_day, date, start_time, end_time)
+        dfs.append(df_day)
+
+    if not dfs:
+        raise FileNotFoundError(f"Nenhum Parquet encontrado para usina {usina} nas datas {dates_str}")
+
+    df = pd.concat(dfs, ignore_index=True)
 
     # ── Calcular séries sintéticas ────────────────────────────────────────────
     for synth_name, synth_def in synth_requested.items():
@@ -126,13 +155,6 @@ def query_data(
         except Exception as e:
             logger.warning(f"[SYNTHETIC] Erro ao calcular '{synth_name}': {e}")
             df[synth_name] = None
-
-    # ── Filtro de tempo ───────────────────────────────────────────────────────
-    if start_time or end_time:
-        df = _apply_time_filter(df, date, start_time, end_time)
-
-    # ── Preencher lacunas: garante período completo mesmo que os dados sejam parciais ──
-    df = _reindex_to_full_period(df, date, start_time, end_time)
 
     # ── Montar resposta ───────────────────────────────────────────────────────
     timestamps = df["timestamp"].dt.strftime("%Y-%m-%dT%H:%M:%S").tolist()

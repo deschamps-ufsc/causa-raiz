@@ -51,7 +51,7 @@ export default function DataTable({ data, seriesDict = {} }) {
       accessorKey: '_ts',
       cell: ({ getValue }) => (
         <span style={{ fontSize: 12, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
-          {getValue()?.slice(11, 19)}
+          {getValue()?.slice(0, 19).replace('T', ' ')}
         </span>
       ),
       enableSorting: false,
@@ -103,7 +103,7 @@ export default function DataTable({ data, seriesDict = {} }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {/* Tabela */}
       <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: 'calc(100vh - 200px)', borderRadius: 10, border: '1px solid var(--border)' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+        <table style={{ width: 'max-content', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id} style={{ background: 'var(--bg-secondary)', position: 'sticky', top: 0 }}>
@@ -115,7 +115,7 @@ export default function DataTable({ data, seriesDict = {} }) {
                       padding: '8px 8px', textAlign: 'left', cursor: header.column.getCanSort() ? 'pointer' : 'default',
                       borderBottom: '1px solid var(--border)', whiteSpace: 'normal',
                       userSelect: 'none', color: 'var(--text-secondary)',
-                      minWidth: '90px', maxWidth: '140px'
+                      minWidth: header.id === '_ts' ? '160px' : '100px', maxWidth: header.id === '_ts' ? '180px' : '160px'
                     }}
                   >
                     {flexRender(header.column.columnDef.header, header.getContext())}
@@ -134,7 +134,7 @@ export default function DataTable({ data, seriesDict = {} }) {
                 {row.getVisibleCells().map((cell) => (
                   <td
                     key={cell.id}
-                    style={{ padding: '4px 8px', borderBottom: '1px solid rgba(31,41,55,0.6)', whiteSpace: 'nowrap', maxWidth: '140px', overflow: 'hidden' }}
+                    style={{ padding: '4px 8px', borderBottom: '1px solid rgba(31,41,55,0.6)', whiteSpace: 'nowrap', maxWidth: cell.column.id === '_ts' ? '180px' : '160px', overflow: 'hidden', textOverflow: 'ellipsis' }}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>

@@ -86,11 +86,11 @@ export const getUsinaInfoTemplateUrl = () => {
 }
 
 // ── Heatmap de Yield ────────────────────────────────────────────
-export const fetchPivotHeatmap = (usina, date, elemento, filters = []) =>
-  api.get('/heatmap/pivot', { params: { usina, date, elemento, filters: filters?.join(',') || undefined } }).then((r) => r.data)
+export const fetchPivotHeatmap = (usina, dates, elemento, filters = []) =>
+  api.get('/heatmap/pivot', { params: { usina, dates, elemento, filters: filters?.join(',') || undefined } }).then((r) => r.data)
 
-export const fetchYieldHeatmap = (usina, date, elemento, filters = [], rowCat = 'skid', colCat = 'inversor') =>
-  api.get('/heatmap/yield', { params: { usina, date, elemento: elemento || undefined, filters: filters?.join(',') || undefined, row_cat: rowCat, col_cat: colCat } }).then((r) => r.data)
+export const fetchYieldHeatmap = (usina, dates, elemento, filters = [], rowCat = 'skid', colCat = 'inversor') =>
+  api.get('/heatmap/yield', { params: { usina, dates, elemento: elemento || undefined, filters: filters?.join(',') || undefined, row_cat: rowCat, col_cat: colCat } }).then((r) => r.data)
 
 // ── Upload de Excel diário ────────────────────────────────────
 export const uploadExcel = (usina, file, onProgress) => {
@@ -112,19 +112,19 @@ export const fetchDates = (usina) =>
   api.get('/dates', { params: { usina } }).then((r) => r.data)
 
 // ── Listar séries de uma data ─────────────────────────────────
-export const fetchSeries = (usina, date) =>
-  api.get('/series', { params: { usina, date } }).then((r) => r.data)
+export const fetchSeries = (usina, dates) =>
+  api.get('/series', { params: { usina, dates } }).then((r) => r.data)
 
 // ── Elementos válidos ─────────────────────────────────────────
 export const fetchElementos = (usina) =>
   api.get('/elementos', { params: usina ? { usina } : {} }).then((r) => r.data)
 
 // ── Consultar dados ───────────────────────────────────────────
-export const fetchData = ({ usina, date, series, elemento, skid, start, end }) =>
+export const fetchData = ({ usina, dates, series, elemento, skid, start, end }) =>
   api.get('/data', {
     params: {
       usina,
-      date,
+      dates,
       series: series?.join(','),
       elemento: elemento || undefined,
       skid: skid || undefined,

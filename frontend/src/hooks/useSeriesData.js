@@ -11,15 +11,16 @@ export function useSeriesData() {
   const [error, setError] = useState(null)
   const [lastQuery, setLastQuery] = useState(null)
 
-  const query = useCallback(async ({ usina, date, series, elemento, skid, start, end }) => {
-    if (!date || (!series?.length && !elemento && !skid)) return
+  const query = useCallback(async ({ usina, dates, series, elemento, skid, start, end }) => {
+    if (!dates || dates.length === 0 || (!series?.length && !elemento && !skid)) return
 
     setLoading(true)
     setError(null)
-    setLastQuery({ usina, date, series, elemento, skid, start, end })
+    setLastQuery({ usina, dates, series, elemento, skid, start, end })
 
     try {
-      const result = await fetchData({ usina, date, series, elemento, skid, start, end })
+      const datesStr = Array.isArray(dates) ? dates.join(',') : dates;
+      const result = await fetchData({ usina, dates: datesStr, series, elemento, skid, start, end })
       setData(result)
     } catch (e) {
       setError(e.message)

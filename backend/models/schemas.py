@@ -83,7 +83,7 @@ class DataQueryParams(BaseModel):
 
 class DataResponse(BaseModel):
     """Resposta do endpoint GET /data."""
-    date: str
+    dates: str
     timestamps: list[str]
     series: dict[str, list]              # { "coluna": [v1, v2, ...] }
     total_pontos: int

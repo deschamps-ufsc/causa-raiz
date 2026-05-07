@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { fetchPivotHeatmap, fetchSeries, fetchMappingData } from '../services/api'
 
-export default function RankingTab({ usina, date, activeFilters = [] }) {
+export default function RankingTab({ usina, dates, activeFilters = [] }) {
   const [data, setData]           = useState(null)
   const [loading, setLoading]     = useState(false)
   const [error, setError]         = useState(null)
@@ -14,10 +14,10 @@ export default function RankingTab({ usina, date, activeFilters = [] }) {
   const toggleCol = (col) => setVisCols(prev => ({ ...prev, [col]: !prev[col] }))
 
   useEffect(() => {
-    if (!usina || !date) return
+    if (!usina || !dates) return
     // Busca séries do Parquet e complementa com o DE-PARA para incluir sintéticas
     Promise.all([
-      fetchSeries(usina, date).catch(() => []),
+      fetchSeries(usina, dates).catch(() => []),
       fetchMappingData(usina).catch(() => ({})),
     ]).then(([parquetSeries, mapping]) => {
       const parquetKeys = new Set(parquetSeries.map(s => s.coluna))
@@ -37,7 +37,7 @@ export default function RankingTab({ usina, date, activeFilters = [] }) {
       })
       setAllSeries([...parquetSeries, ...extras])
     })
-  }, [usina, date])
+  }, [usina, dates])
 
   const isValid = (val) => val != null && String(val).trim() !== '' && String(val).toLowerCase() !== 'nan'
 
@@ -62,11 +62,11 @@ export default function RankingTab({ usina, date, activeFilters = [] }) {
   }, [elementosOptions, elemento])
 
   const load = async (el) => {
-    if (!usina || !date) return
+    if (!usina || !dates) return
     setLoading(true)
     setError(null)
     try {
-      const res = await fetchPivotHeatmap(usina, date, el ?? elemento, activeFilters)
+      const res = await fetchPivotHeatmap(usina, dates, el ?? elemento, activeFilters)
       setData(res.records)
     } catch (e) {
       setError(e.message)
@@ -160,11 +160,11 @@ export default function RankingTab({ usina, date, activeFilters = [] }) {
     return `${sign}${p.toFixed(1)}%`
   }
 
-  if (!usina || !date) {
+  if (!usina || !dates) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '60px 20px', color: 'var(--text-muted)', textAlign: 'center' }}>
         <span style={{ fontSize: 48 }}>🏆</span>
-        <strong style={{ color: 'var(--text-secondary)', fontSize: 15 }}>Selecione uma data no painel esquerdo</strong>
+        <strong style={{ color: 'var(--text-secondary)', fontSize: 15 }}>Selecione uma ou mais datas no painel esquerdo</strong>
       </div>
     )
   }
@@ -285,7 +285,7 @@ export default function RankingTab({ usina, date, activeFilters = [] }) {
           <span style={{ fontSize: 48 }}>🏆</span>
           <strong style={{ color: 'var(--text-secondary)', fontSize: 16 }}>Ranking de Inversores</strong>
           <p style={{ fontSize: 13, maxWidth: 500 }}>
-            Inicie selecionando o elemento e o tipo de operação para que o sistema construa o ranking da usina neste dia.
+            Inicie selecionando o elemento e o tipo de operação para que o sistema construa o ranking da usina neste período.
           </p>
         </div>
       )}

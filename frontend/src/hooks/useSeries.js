@@ -5,7 +5,7 @@ import { fetchSeries, fetchDates, fetchMappingData } from '../services/api'
  * Hook para buscar e gerenciar a lista de séries disponíveis.
  * Inclui séries sintéticas do DE-PARA que não existem no Parquet.
  */
-export function useSeries(selectedDate, usina) {
+export function useSeries(selectedDates, usina) {
   const [series, setSeries] = useState([])      // Todas as séries do dia + sintéticas
   const [dates, setDates] = useState([])
   const [loading, setLoading] = useState(false)
@@ -21,11 +21,11 @@ export function useSeries(selectedDate, usina) {
 
   // Carregar séries quando a data ou usina muda
   useEffect(() => {
-    if (!selectedDate || !usina) return
+    if (!selectedDates || selectedDates.length === 0 || !usina) return
     setLoading(true)
     setError(null)
     Promise.all([
-      fetchSeries(usina, selectedDate),
+      fetchSeries(usina, Array.isArray(selectedDates) ? selectedDates.join(',') : selectedDates),
       fetchMappingData(usina).catch(() => ({})),
     ])
       .then(([parquetSeries, mapping]) => {
@@ -50,7 +50,7 @@ export function useSeries(selectedDate, usina) {
         setLoading(false)
       })
       .catch((e) => { setError(e.message); setLoading(false) })
-  }, [selectedDate, usina])
+  }, [selectedDates, usina])
 
   // Filtrar localmente (sem re-fetch)
   const filterSeries = ({ elemento, skid, inversor, search }) => {

@@ -28,10 +28,12 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
   const [seriesColors,    setSeriesColors]    = useState({})   // cor customizada por série
   const [seriesWidths,    setSeriesWidths]    = useState({})   // espessura da série
   const [seriesDashes,    setSeriesDashes]    = useState({})   // tipo de linha da série
+  const [seriesFills,     setSeriesFills]     = useState({})   // opacidade de preenchimento (0-100)
   const [colorPickerFor,  setColorPickerFor]  = useState(null) // nome da série com picker aberto
   const [axesOpen,        setAxesOpen]        = useState(false)
   const [dragOver,        setDragOver]        = useState(null)
   const [plotRevision,    setPlotRevision]    = useState(0)
+  const [plotMountKey,    setPlotMountKey]    = useState(0)
 
 
   const { elementSettings } = useChartSettings()
@@ -144,6 +146,14 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
     return def?.dash ?? 'solid'
   }
 
+  const hexToRgba = (hex, alpha) => {
+    if (!hex || !hex.startsWith('#')) return hex
+    const r = parseInt(hex.slice(1, 3), 16) || 0
+    const g = parseInt(hex.slice(3, 5), 16) || 0
+    const b = parseInt(hex.slice(5, 7), 16) || 0
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`
+  }
+
   // ── Drag and Drop ─────────────────────────────────────────────────
   const handleDrop = (targetAxis) => (e) => {
     e.preventDefault()
@@ -151,6 +161,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
     const name = e.dataTransfer.getData('text/plain')
     if (!name || !seriesNames.includes(name)) return
     setSeriesAxisMap(prev => ({ ...prev, [name]: targetAxis }))
+    setPlotMountKey(k => k + 1)
     bumpRevision()
   }
 
@@ -164,24 +175,66 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
       const cur = prev[name] || 'y1'
       return { ...prev, [name]: cur === 'hidden' ? 'y1' : 'hidden' }
     })
+    setPlotMountKey(k => k + 1)
     bumpRevision()
   }
 
   // ── Traces Principais ─────────────────────────────────────────────
   const traces = useMemo(() => {
-    const mainTraces = visibleNames.map(name => {
+    const mainTraces = visibleNames.flatMap(name => {
       const axis = seriesAxisMap[name] || 'y1'
-      return {
-        x: data.timestamps,
-        y: data.series[name],
+      const isFilled = seriesFills[name] !== undefined
+
+      const baseTrace = {
         type: 'scatter',
         mode: 'lines',
         name,
         yaxis: axis === 'y1' ? 'y' : axis,
         line: { color: getColor(name), width: getWidth(name), dash: getDash(name) },
-        hovertemplate: `<b>${name}</b><br>%{x}<br>Valor: %{y:.4g}<extra></extra>`,
+        fill: isFilled ? 'tozeroy' : 'none',
+        fillcolor: isFilled ? hexToRgba(getColor(name), seriesFills[name] / 100) : undefined,
+        hovertemplate: `&nbsp;&nbsp;<b>${name}</b><br>&nbsp;&nbsp;Valor: %{y:.4g}<extra></extra>`,
         connectgaps: false,
+        legendgroup: name,
+        showlegend: true
       }
+
+      if (!isFilled) {
+        return [{ ...baseTrace, x: data.timestamps, y: data.series[name] }]
+      }
+
+      // Plotly Bug: 'fill' bridges over nulls even when connectgaps is false.
+      // Solução: quebrar a série em vários pedaços (traces) onde houver dados contínuos.
+      const chunks = []
+      let currentX = []
+      let currentY = []
+      const values = data.series[name]
+      const times = data.timestamps
+      let chunkIndex = 0
+
+      for (let i = 0; i < values.length; i++) {
+        const val = values[i]
+        if (val === null || val === undefined || Number.isNaN(val)) {
+          if (currentX.length > 0) {
+            chunks.push({ ...baseTrace, x: currentX, y: currentY, showlegend: chunkIndex === 0 })
+            chunkIndex++
+            currentX = []
+            currentY = []
+          }
+        } else {
+          currentX.push(times[i])
+          currentY.push(val)
+        }
+      }
+
+      if (currentX.length > 0) {
+        chunks.push({ ...baseTrace, x: currentX, y: currentY, showlegend: chunkIndex === 0 })
+      } else if (chunkIndex === 0) {
+        // Se a série inteira for nula, garantimos que ela apareça na legenda
+        chunks.push({ ...baseTrace, x: [], y: [] })
+      }
+
+      return chunks
     })
 
     // ── Faixas de Filtro (Topo) ───────────────────────────────────────
@@ -202,21 +255,38 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
         name: `Filtro: ${name}`,
         yaxis: yAxisRef,
         line: { color: getColor(name), width: 0, shape: 'hv' },
-        hovertemplate: `<b>${name}</b><br>%{x}<extra></extra>`,
+        hovertemplate: `<b>${name}</b><extra></extra>`,
         connectgaps: false,
-        hoverinfo: 'name+x'
+        hoverinfo: 'name'
       }
     })
 
-    return [...mainTraces, ...filterTraces]
+    // Bug do Plotly: se o eixo Y primário ('y') estiver totalmente vazio, 
+    // os eixos sobrepostos (y2, y3) podem falhar na renderização de suas linhas.
+    // Injetamos um traço invisível no Y1 para forçar a criação correta do canvas base.
+    let dummyY1 = []
+    if (y1Names.length === 0 && data.timestamps.length > 0) {
+      dummyY1 = [{
+        x: [data.timestamps[0], data.timestamps[data.timestamps.length - 1]],
+        y: [0, 0],
+        yaxis: 'y',
+        type: 'scatter',
+        mode: 'lines',
+        line: { color: 'transparent', width: 0 },
+        showlegend: false,
+        hoverinfo: 'none'
+      }]
+    }
+
+    return [...mainTraces, ...filterTraces, ...dummyY1]
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, seriesAxisMap, seriesColors, seriesWidths, seriesDashes, filterColors])
+  }, [data, seriesAxisMap, seriesColors, seriesWidths, seriesDashes, seriesFills, filterColors])
 
   // ── Layout ────────────────────────────────────────────────────────
   const layout = useMemo(() => {
     const visibleFilters = data?.visibleFilters || []
-    const xDomain    = hasY3 ? [0, 0.95] : [0, 1]
-    const rightMargin = 60
+    const xDomain    = hasY3 ? [0, 0.97] : (y2Names.length > 0 ? [0, 0.985] : [0, 1])
+    const rightMargin = hasY3 ? 60 : (y2Names.length > 0 ? 40 : 20)
 
     // Calcula altura das faixas de filtro para esmagar os eixos Y normais (REDUZIDO PELA METADE)
     const filterHeight = Math.max(0.02, Math.min(0.04, 0.15 / (visibleFilters.length || 1)))
@@ -224,25 +294,55 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
     const mainYTop = visibleFilters.length > 0 ? (1 - totalFiltersHeight - 0.02) : 1
     const yDomain = [0, mainYTop]
 
+    // Bypass Plotly's internal dtick generator to prevent freezes
+    const generateXTicks = () => {
+      if (!xGridSpacing || !data?.timestamps?.length) return undefined;
+      const intervalMs = parseInt(xGridSpacing) * 3600000;
+      const ticks = [];
+      const startStr = data.timestamps[0];
+      const endStr = data.timestamps[data.timestamps.length - 1];
+      
+      const dayStart = new Date(startStr.substring(0, 10) + 'T00:00:00');
+      const endObj = new Date(endStr);
+      
+      let current = dayStart.getTime();
+      const endMs = endObj.getTime();
+      
+      while (current <= endMs) {
+        ticks.push(current);
+        current += intervalMs;
+      }
+      return ticks;
+    }
+
     const baseLayout = {
       paper_bgcolor: '#f8fafc',
       plot_bgcolor:  '#ffffff',
       font:   { family: 'Inter, sans-serif', color: '#475569', size: 12 },
       margin: { t: visibleFilters.length > 0 ? 25 : 45, r: rightMargin, b: 60, l: 60 },
-      hovermode: 'x unified',
-      uirevision: baseDate,
-      xaxis: {
-        type:       'date',
-        domain:     xDomain,
-        gridcolor:  gridX ? '#e2e8f0' : 'transparent',
-        linecolor:  '#cbd5e1',
-        tickfont:   { size: 11 },
-        tickangle:  -30,
-        tickformat: '%H:%M',
-        title:      { text: 'Horário', standoff: 10 },
-        dtick:      xGridSpacing ? parseInt(xGridSpacing) * 3600000 : undefined,
-        range:      appliedRanges.x,
+      hovermode: 'x',
+      hoverlabel: {
+        font: { size: 11, family: 'Inter, sans-serif' }
       },
+      uirevision: baseDate,
+    xaxis: {
+      type:       'date',
+      domain:     xDomain,
+      gridcolor:  gridX ? '#e2e8f0' : 'transparent',
+      linecolor:  '#cbd5e1',
+      tickfont:   { size: 11 },
+      tickangle:  -30,
+      tickformat: '%H:%M',
+      title:      { text: 'Horário', standoff: 10 },
+      showspikes: true,
+      spikemode: 'across+marker',
+      spikedash: 'dot',
+      spikecolor: '#94a3b8',
+      spikethickness: 1,
+      tickmode:   xGridSpacing ? 'array' : 'auto',
+      tickvals:   xGridSpacing ? generateXTicks() : undefined,
+      range:      appliedRanges.x,
+    },
       yaxis: {
         domain:        yDomain,
         gridcolor:     gridY1 ? '#e2e8f0' : 'transparent',
@@ -255,6 +355,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
         title:         { text: 'Eixo Y1', font: { size: 11 } },
       },
       yaxis2: {
+        visible:    y2Names.length > 0 || gridY2,
         gridcolor:  gridY2 ? '#e2e8f0' : 'transparent',
         linecolor:  '#cbd5e1',
         tickfont:   { size: 11 },
@@ -262,11 +363,14 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
         zerolinecolor: '#cbd5e1',
         overlaying: 'y',
         side:       'right',
+        anchor:     'free',
+        position:   hasY3 ? 0.97 : 0.985,
         range:      appliedRanges.y2,
         rangemode:  'tozero',
         title:      { text: 'Eixo Y2', font: { size: 11 } },
       },
       yaxis3: {
+        visible:    hasY3 || gridY3,
         gridcolor:  gridY3 ? '#e2e8f0' : 'transparent',
         linecolor:  '#cbd5e1',
         tickfont:   { size: 11 },
@@ -275,7 +379,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
         overlaying: 'y',
         side:       'right',
         anchor:     'free',
-        position:   hasY3 ? 0.98 : 1,
+        position:   1,
         range:      appliedRanges.y3,
         rangemode:  'tozero',
         title:      { text: 'Eixo Y3', font: { size: 11 } },
@@ -308,7 +412,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
     })
 
     return baseLayout
-  }, [gridX, gridY1, gridY2, gridY3, xGridSpacing, appliedRanges, visibleNames.length, baseDate, hasY3, data, filterColors])
+  }, [gridX, gridY1, gridY2, gridY3, xGridSpacing, appliedRanges, visibleNames.length, baseDate, hasY3, data, filterColors, y2Names.length, y3Names.length])
 
   // ── onRelayout ────────────────────────────────────────────────────
   const handleRelayout = (e) => {
@@ -363,6 +467,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
     const currentColor = getColor(name)
     const currentWidth = getWidth(name)
     const currentDash  = getDash(name)
+    const currentFill  = seriesFills[name]
 
     const applyColor = (color) => {
       setSeriesColors(prev => ({ ...prev, [name]: color }))
@@ -377,6 +482,34 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
     const applyDash = (d) => {
       setSeriesDashes(prev => ({ ...prev, [name]: d }))
       bumpRevision()
+    }
+
+    // Local state to keep slider perfectly smooth
+    const [localFill, setLocalFill] = useState(currentFill !== undefined ? currentFill : 20)
+
+    useEffect(() => {
+      if (currentFill !== undefined) setLocalFill(currentFill)
+    }, [currentFill])
+
+    const toggleFill = () => {
+      setSeriesFills(prev => {
+        const next = { ...prev }
+        if (next[name] !== undefined) delete next[name]
+        else next[name] = localFill
+        return next
+      })
+      bumpRevision()
+    }
+
+    const handleSliderChange = (e) => {
+      setLocalFill(parseInt(e.target.value))
+    }
+
+    const applyFillToChart = () => {
+      if (currentFill !== undefined && localFill !== currentFill) {
+        setSeriesFills(prev => ({ ...prev, [name]: localFill }))
+        bumpRevision()
+      }
     }
 
     return (
@@ -439,6 +572,25 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
                 ))}
               </div>
             </div>
+          </div>
+
+          {/* PREENCHIMENTO */}
+          <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f8fafc', padding: '6px 8px', borderRadius: 4, border: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <input type="checkbox" id={`fill-${name}`} checked={currentFill !== undefined} onChange={toggleFill} style={{ cursor: 'pointer' }} />
+              <label htmlFor={`fill-${name}`} style={{ fontSize: 10, fontWeight: 600, color: '#64748b', cursor: 'pointer', margin: 0 }}>
+                Preencher área
+              </label>
+            </div>
+            {currentFill !== undefined && (
+              <div 
+                style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                onPointerDown={e => e.stopPropagation()}
+              >
+                <input type="range" min="0" max="100" value={localFill} onChange={handleSliderChange} onPointerUp={applyFillToChart} style={{ width: 60, height: 4 }} />
+                <span style={{ fontSize: 10, color: '#64748b', width: 24, textAlign: 'right', fontWeight: 600 }}>{localFill}%</span>
+              </div>
+            )}
           </div>
         </SharedColorPicker>
       </>
@@ -760,6 +912,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
       {/* ── Gráfico ──────────────────────────────────────────── */}
       <div style={{ flex: 1, minHeight: 380 }}>
         <Plot
+          key={plotMountKey}
           data={traces}
           layout={layout}
           revision={plotRevision}
