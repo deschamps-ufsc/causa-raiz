@@ -87,3 +87,23 @@ class DataResponse(BaseModel):
     timestamps: list[str]
     series: dict[str, list]              # { "coluna": [v1, v2, ...] }
     total_pontos: int
+
+
+# ── Visualizações ─────────────────────────────────────────────────────────────
+
+class VisualizationPayload(BaseModel):
+    """Payload para salvar uma visualização de dashboard."""
+    name: str
+    user: str = "Desconhecido"
+    selectedDates: list[str] = Field(default_factory=list)
+    selectedSeries: list[str] = Field(default_factory=list)
+    activeFilters: list[str] = Field(default_factory=list)
+    visibleFilters: list[str] = Field(default_factory=list)
+    filterColors: dict = Field(default_factory=dict)
+    chartConfig: dict = Field(default_factory=dict)
+
+
+class VisualizationResponse(VisualizationPayload):
+    """Resposta com a visualização completa, incluindo ID e Timestamp."""
+    id: str
+    created_at: str

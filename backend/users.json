@@ -16,5 +16,11 @@
     "name": "Fabio Faria",
     "role": "analyst",
     "password_hash": "$2b$12$J4uynveJ8uQiot6A.ztBiujpocGdRKAczR/HMeY.vs15eSlHuc9pK"
+  },
+  {
+    "email": "projetos@solarbase.app.br",
+    "name": "Usuário Teste 02",
+    "role": "analyst",
+    "password_hash": "$2b$12$Ge8WNjUFvSUbJ9XJLL2vs.ZdllnJfCxigbLd5Ky3rDMufZhwJwHl6"
   }
 ]

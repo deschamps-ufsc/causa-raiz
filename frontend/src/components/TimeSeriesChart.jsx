@@ -12,23 +12,43 @@ const CHIP_HIDDEN = {
   textDecoration: 'line-through', opacity: 0.7,
 }
 
-export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterColors = {} }) {
-  const [gridX,        setGridX]        = useState(true)
-  const [gridY1,       setGridY1]       = useState(true)
-  const [gridY2,       setGridY2]       = useState(false)
-  const [gridY3,       setGridY3]       = useState(false)
-  const [xGridSpacing, setXGridSpacing] = useState('')
-  const [xLimits,      setXLimits]      = useState({ min: '', max: '' })
-  const [y1Limits,     setY1Limits]     = useState({ min: '', max: '' })
-  const [y2Limits,     setY2Limits]     = useState({ min: '', max: '' })
-  const [y3Limits,     setY3Limits]     = useState({ min: '', max: '' })
-  const [appliedRanges, setAppliedRanges] = useState({ x: undefined, y1: undefined, y2: undefined, y3: undefined })
+export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterColors = {}, chartConfig, setChartConfig }) {
+  const {
+    gridX, gridY1, gridY2, gridY3,
+    xGridSpacing, xLimits, y1Limits, y2Limits, y3Limits, appliedRanges,
+    seriesAxisMap, seriesColors, seriesWidths, seriesDashes, seriesFills
+  } = chartConfig || {
+    gridX: true, gridY1: true, gridY2: false, gridY3: false,
+    xGridSpacing: '',
+    xLimits: { min: '', max: '' }, y1Limits: { min: '', max: '' }, y2Limits: { min: '', max: '' }, y3Limits: { min: '', max: '' },
+    appliedRanges: { x: undefined, y1: undefined, y2: undefined, y3: undefined },
+    seriesAxisMap: {}, seriesColors: {}, seriesWidths: {}, seriesDashes: {}, seriesFills: {}
+  }
 
-  const [seriesAxisMap,   setSeriesAxisMap]   = useState({})
-  const [seriesColors,    setSeriesColors]    = useState({})   // cor customizada por série
-  const [seriesWidths,    setSeriesWidths]    = useState({})   // espessura da série
-  const [seriesDashes,    setSeriesDashes]    = useState({})   // tipo de linha da série
-  const [seriesFills,     setSeriesFills]     = useState({})   // opacidade de preenchimento (0-100)
+  const setConfigVal = (key, valueOrFn) => {
+    if (setChartConfig) {
+      setChartConfig(prev => ({
+        ...prev,
+        [key]: typeof valueOrFn === 'function' ? valueOrFn(prev[key] || (Array.isArray(prev[key]) ? [] : {})) : valueOrFn
+      }))
+    }
+  }
+
+  const setGridX = val => setConfigVal('gridX', val)
+  const setGridY1 = val => setConfigVal('gridY1', val)
+  const setGridY2 = val => setConfigVal('gridY2', val)
+  const setGridY3 = val => setConfigVal('gridY3', val)
+  const setXGridSpacing = val => setConfigVal('xGridSpacing', val)
+  const setXLimits = val => setConfigVal('xLimits', val)
+  const setY1Limits = val => setConfigVal('y1Limits', val)
+  const setY2Limits = val => setConfigVal('y2Limits', val)
+  const setY3Limits = val => setConfigVal('y3Limits', val)
+  const setAppliedRanges = val => setConfigVal('appliedRanges', val)
+  const setSeriesAxisMap = val => setConfigVal('seriesAxisMap', val)
+  const setSeriesColors = val => setConfigVal('seriesColors', val)
+  const setSeriesWidths = val => setConfigVal('seriesWidths', val)
+  const setSeriesDashes = val => setConfigVal('seriesDashes', val)
+  const setSeriesFills = val => setConfigVal('seriesFills', val)
   const [colorPickerFor,  setColorPickerFor]  = useState(null) // nome da série com picker aberto
   const [axesOpen,        setAxesOpen]        = useState(false)
   const [dragOver,        setDragOver]        = useState(null)

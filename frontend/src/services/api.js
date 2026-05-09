@@ -187,4 +187,17 @@ export const deleteBatch = (usina, batchId) =>
     params: { usina },
   }).then((r) => r.data)
 
+// ── Visualizações (Save/Load) ─────────────────────────────────
+export const fetchVisualizations = (usina) =>
+  api.get(`/visualizacoes/${encodeURIComponent(usina)}`).then((r) => r.data)
+
+export const createVisualization = (usina, data) =>
+  api.post(`/visualizacoes/${encodeURIComponent(usina)}`, data).then((r) => r.data)
+
+export const updateVisualization = (usina, visId, data) =>
+  api.put(`/visualizacoes/${encodeURIComponent(usina)}/${encodeURIComponent(visId)}`, data).then((r) => r.data)
+
+export const deleteVisualization = (usina, visId) =>
+  api.delete(`/visualizacoes/${encodeURIComponent(usina)}/${encodeURIComponent(visId)}`).then((r) => r.data)
+
 export default api

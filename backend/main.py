@@ -14,6 +14,7 @@ from routes.heatmap import router as heatmap_router
 from routes.synthetic import router as synthetic_router
 from routes.auth import router as auth_router
 from routes.settings import router as settings_router
+from routes.visualizacoes import router as visualizacoes_router
 from services.auth_service import seed_default_admin
 from utils.logger import logger
 from utils.config import DATA_DIR
@@ -59,6 +60,7 @@ app.include_router(usina_info_router)
 app.include_router(heatmap_router)
 app.include_router(synthetic_router)
 app.include_router(settings_router)
+app.include_router(visualizacoes_router, prefix="/visualizacoes", tags=["Visualizações"])
 
 # ── Criar pastas necessárias na inicialização ─────────────────────────────────
 

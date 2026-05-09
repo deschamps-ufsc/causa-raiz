@@ -41,7 +41,7 @@ export function ErrorState({ message, onRetry }) {
 }
 
 /** Estado vazio */
-export function EmptyState({ icon = '📊', title, subtitle }) {
+export function EmptyState({ icon = '📊', title, subtitle, action }) {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -51,6 +51,7 @@ export function EmptyState({ icon = '📊', title, subtitle }) {
       <span style={{ fontSize: 48 }}>{icon}</span>
       <strong style={{ color: 'var(--text-secondary)', fontSize: 15 }}>{title}</strong>
       {subtitle && <span style={{ fontSize: 13 }}>{subtitle}</span>}
+      {action && <div style={{ marginTop: 8 }}>{action}</div>}
     </div>
   )
 }

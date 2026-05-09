@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useSeries } from '../hooks/useSeries'
 import { useSeriesData } from '../hooks/useSeriesData'
@@ -13,6 +13,9 @@ import RankingTab from '../components/RankingTab'
 import DiagramTab from '../pages/DiagramPage'
 import { SkeletonChart, SkeletonList, ErrorState, EmptyState } from '../components/StateComponents'
 import SharedColorPicker from '../components/SharedColorPicker'
+import { useAuth } from '../hooks/AuthContext'
+import { fetchVisualizations, createVisualization, updateVisualization, deleteVisualization } from '../services/api'
+import { SaveVisualizationModal, LoadVisualizationModal } from '../components/VisualizationModals'
 
 const TABS = [
   { id: 'chart',   label: '📈 Gráfico' },
@@ -41,6 +44,87 @@ export default function DashboardPage() {
   const [isDataOpen, setIsDataOpen] = useState(true)
   const [isFiltersOpen, setIsFiltersOpen] = useState(true)
   const [isSeriesOpen, setIsSeriesOpen] = useState(true)
+  
+  const { user } = useAuth()
+  
+  // ── ESTADO DAS VISUALIZAÇÕES ──────────────────────────
+  const [chartConfig, setChartConfig] = useState({
+    gridX: true, gridY1: true, gridY2: false, gridY3: false,
+    xGridSpacing: '',
+    xLimits: { min: '', max: '' },
+    y1Limits: { min: '', max: '' },
+    y2Limits: { min: '', max: '' },
+    y3Limits: { min: '', max: '' },
+    appliedRanges: { x: undefined, y1: undefined, y2: undefined, y3: undefined },
+    seriesAxisMap: {},
+    seriesColors: {},
+    seriesWidths: {},
+    seriesDashes: {},
+    seriesFills: {},
+  })
+
+  const [loadedVisualization, setLoadedVisualization] = useState(null)
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false)
+  const [isLoadModalOpen, setIsLoadModalOpen] = useState(false)
+  const [savedVisualizations, setSavedVisualizations] = useState([])
+  const [pendingLoadVis, setPendingLoadVis] = useState(null)
+  const skipCleanup = useRef(false)
+
+  // ── VISUALIZAÇÕES LOGIC ──────────────────────────────────────────
+  useEffect(() => {
+    if (usinaAtual) {
+      fetchVisualizations(usinaAtual).then(setSavedVisualizations).catch(() => {})
+      setLoadedVisualization(null)
+    }
+  }, [usinaAtual])
+
+  const handleSaveVisualization = async ({ name, saveAsNew }) => {
+    try {
+      const payload = {
+        name,
+        user: user?.email || "Desconhecido",
+        selectedDates,
+        selectedSeries,
+        activeFilters,
+        visibleFilters,
+        filterColors,
+        chartConfig
+      }
+      
+      let saved;
+      if (loadedVisualization && !saveAsNew) {
+        saved = await updateVisualization(usinaAtual, loadedVisualization.id, payload)
+      } else {
+        saved = await createVisualization(usinaAtual, payload)
+      }
+      
+      setLoadedVisualization(saved)
+      fetchVisualizations(usinaAtual).then(setSavedVisualizations).catch(() => {})
+    } catch (err) {
+      console.error("Erro ao salvar visualização:", err)
+      alert("Erro ao salvar visualização.")
+    }
+  }
+
+  const handleLoadVisualization = (vis) => {
+    skipCleanup.current = true
+    setLoadedVisualization(vis)
+    setSelectedDates(vis.selectedDates || [])
+    setPendingLoadVis(vis)
+    // A query será disparada pelo useEffect quando filterSeries estiver pronto
+  }
+
+  const handleDeleteVisualization = async (visId) => {
+    try {
+      await deleteVisualization(usinaAtual, visId)
+      fetchVisualizations(usinaAtual).then(setSavedVisualizations).catch(() => {})
+      if (loadedVisualization?.id === visId) setLoadedVisualization(null)
+    } catch (err) {
+      console.error("Erro ao excluir visualização:", err)
+      alert("Erro ao excluir visualização.")
+    }
+  }
+
 
   const { series, dates, loading: seriesLoading } = useSeries(selectedDates, usinaAtual)
   const { data, loading: dataLoading, error: dataError, query, clear } = useSeriesData()
@@ -50,12 +134,40 @@ export default function DashboardPage() {
   const filterSeries = useMemo(() => series?.filter(s => s.elemento?.toLowerCase() === 'filtro') || [], [series])
 
   useEffect(() => {
+    if (pendingLoadVis && filterSeries.length > 0) {
+      const vis = pendingLoadVis
+      setPendingLoadVis(null)
+
+      setSelectedSeries(vis.selectedSeries || [])
+      setActiveFilters(vis.activeFilters || [])
+      setVisibleFilters(vis.visibleFilters || [])
+      setFilterColors(vis.filterColors || {})
+      if (vis.chartConfig) setChartConfig(vis.chartConfig)
+
+      const availableFilters = filterSeries.map(s => s.coluna)
+      const allQuerySeries = Array.from(new Set([...(vis.selectedSeries || []), ...availableFilters]))
+      
+      if (vis.selectedDates?.length && allQuerySeries.length && usinaAtual) {
+        query({
+          usina: usinaAtual,
+          dates: vis.selectedDates,
+          series: allQuerySeries,
+        })
+      }
+    }
+  }, [pendingLoadVis, filterSeries, usinaAtual, query])
+
+  useEffect(() => {
     fetchElementos(usinaAtual)
       .then(els => setElementos(els.filter(e => e.toLowerCase() !== 'filtro')))
       .catch(() => {})
   }, [usinaAtual])
 
   useEffect(() => {
+    if (skipCleanup.current) {
+      skipCleanup.current = false
+      return
+    }
     setSelectedSeries([])
     setActiveFilters([])
     setVisibleFilters([])
@@ -194,7 +306,7 @@ export default function DashboardPage() {
         </div>
 
         {!sidebarCollapsed && (
-          <div style={{ overflow: 'hidden', flex: 1, padding: '16px 14px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ overflowY: 'auto', flex: 1, padding: '16px 14px', display: 'flex', flexDirection: 'column', gap: 20 }}>
             <div style={{ flexShrink: 0 }}>
               <div 
                 className="card-title"
@@ -336,13 +448,22 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Botão Visualizar */}
+        {/* Botões de Ação */}
         {!sidebarCollapsed && (
-          <div style={{ padding: 14, borderTop: '1px solid var(--border)' }}>
+          <div style={{ padding: 14, borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <button 
+              className="btn btn-ghost btn-full" 
+              onClick={() => setIsLoadModalOpen(true)}
+              style={{ justifyContent: 'center', gap: 8 }}
+            >
+              📂 Carregar Visualização
+            </button>
+            
             <button
               className="btn btn-primary btn-full"
               onClick={handleVisualize}
               disabled={selectedDates.length === 0 || !selectedSeries.length || dataLoading}
+              style={{ justifyContent: 'center', gap: 8 }}
             >
               {dataLoading ? '⏳ Carregando...' : `📊 Visualizar (${selectedSeries.length} séries)`}
             </button>
@@ -366,7 +487,30 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          {/* O Toggle de Flag global foi removido a pedido. Substituido pelo painel Filtros de Qualidade local */}
+          {/* Botões de Visualização */}
+          <div style={{ display: 'flex', gap: 8, marginLeft: 20 }}>
+            <button 
+              className="btn btn-sm btn-ghost" 
+              onClick={() => setIsLoadModalOpen(true)}
+              title="Carregar Visualização"
+              style={{ padding: '4px 8px', fontSize: 13 }}
+            >
+              📂 Carregar
+            </button>
+            <button 
+              className="btn btn-sm btn-primary" 
+              onClick={() => setIsSaveModalOpen(true)}
+              title="Salvar Visualização"
+              style={{ padding: '4px 8px', fontSize: 13 }}
+            >
+              💾 Salvar
+            </button>
+            {loadedVisualization && (
+              <div style={{ display: 'flex', alignItems: 'center', marginLeft: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
+                <span>Visualização: <strong>{loadedVisualization.name}</strong></span>
+              </div>
+            )}
+          </div>
 
           {filteredData && (
             <div style={{ display: 'flex', gap: 8, fontSize: 12, color: 'var(--text-secondary)', marginLeft: 'auto' }}>
@@ -405,12 +549,21 @@ export default function DashboardPage() {
                   icon="☀️"
                   title="Selecione séries e clique em Visualizar"
                   subtitle="Escolha uma data, selecione as séries no painel esquerdo e clique no botão"
+                  action={
+                    <button 
+                      className="btn btn-secondary" 
+                      onClick={() => setIsLoadModalOpen(true)}
+                      style={{ gap: 8 }}
+                    >
+                      📂 Carregar Visualização Salva
+                    </button>
+                  }
                 />
               )}
 
               {!dataLoading && !dataError && filteredData && (
                 <div className="fade-in" style={{ height: '100%' }}>
-                  {activeTab === 'chart' && <TimeSeriesChart data={filteredData} usina={usinaAtual} seriesDict={seriesDict} filterColors={filterColors} />}
+                  {activeTab === 'chart' && <TimeSeriesChart data={filteredData} usina={usinaAtual} seriesDict={seriesDict} filterColors={filterColors} chartConfig={chartConfig} setChartConfig={setChartConfig} />}
                   {activeTab === 'table' && <DataTable data={filteredData} seriesDict={seriesDict} />}
                 </div>
               )}
@@ -434,6 +587,22 @@ export default function DashboardPage() {
           />
         </div>
       )}
+
+      <SaveVisualizationModal
+        isOpen={isSaveModalOpen}
+        onClose={() => setIsSaveModalOpen(false)}
+        onSave={handleSaveVisualization}
+        hasLoadedVis={!!loadedVisualization}
+        currentName={loadedVisualization?.name}
+      />
+      
+      <LoadVisualizationModal
+        isOpen={isLoadModalOpen}
+        onClose={() => setIsLoadModalOpen(false)}
+        onLoad={handleLoadVisualization}
+        onDelete={handleDeleteVisualization}
+        visualizations={savedVisualizations}
+      />
     </div>
   )
 }

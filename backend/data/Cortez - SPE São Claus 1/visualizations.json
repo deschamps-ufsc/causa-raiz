@@ -1,0 +1,307 @@
+[
+  {
+    "id": "eaebd484-e3f2-4a5f-92f2-2f812578e291",
+    "created_at": "2026-05-09T00:38:19.211571",
+    "name": "Teste 1",
+    "user": "deschamps.ufsc@gmail.com",
+    "selectedDates": [
+      "2025-11-24",
+      "2025-11-25"
+    ],
+    "selectedSeries": [
+      "CLS01.6-INV06-SB27.CorrenteCC_09",
+      "CLS01.6-INV08-SB23.CorrenteCC_08",
+      "CLS01.5-INV06.TenBC",
+      "CLS01.4-INV04-SB11.CorrenteCC_05",
+      "CLS01.6-INV01-SB15-TR057.PosAngAlvo"
+    ],
+    "activeFilters": [],
+    "visibleFilters": [],
+    "filterColors": {
+      "Flag 5 minutos": "#ef4444"
+    },
+    "chartConfig": {
+      "gridX": true,
+      "gridY1": true,
+      "gridY2": false,
+      "gridY3": false,
+      "xGridSpacing": "1",
+      "xLimits": {
+        "min": "05:39",
+        "max": "16:49"
+      },
+      "y1Limits": {
+        "min": 394,
+        "max": 667
+      },
+      "y2Limits": {
+        "min": 615,
+        "max": 695
+      },
+      "y3Limits": {
+        "min": 12,
+        "max": 21
+      },
+      "appliedRanges": {
+        "y1": [
+          500,
+          null
+        ],
+        "y2": [
+          615.1098156182213,
+          694.9362798264642
+        ]
+      },
+      "seriesAxisMap": {
+        "CLS01.6-INV06-SB27.CorrenteCC_09": "y3",
+        "CLS01.6-INV08-SB23.CorrenteCC_08": "y3",
+        "CLS01.5-INV06.TenBC": "y1",
+        "CLS01.4-INV04-SB11.CorrenteCC_05": "y3",
+        "CLS01.6-INV01-SB15-TR057.PosAngAlvo": "y2"
+      },
+      "seriesColors": {
+        "CLS01.6-INV06-SB27.CorrenteCC_09": "#D81B60",
+        "CLS01.6-INV08-SB23.CorrenteCC_08": "#D81B60",
+        "CLS01.5-INV06.TenBC": "#000000",
+        "CLS01.4-INV04-SB11.CorrenteCC_05": "#D81B60",
+        "CLS01.6-INV01-SB15-TR057.PosAngAlvo": "#6A1B9A"
+      },
+      "seriesWidths": {
+        "CLS01.6-INV06-SB27.CorrenteCC_09": 1.5,
+        "CLS01.6-INV08-SB23.CorrenteCC_08": 1.5,
+        "CLS01.5-INV06.TenBC": 1.5,
+        "CLS01.4-INV04-SB11.CorrenteCC_05": 1.5,
+        "CLS01.6-INV01-SB15-TR057.PosAngAlvo": 1.5
+      },
+      "seriesDashes": {
+        "CLS01.6-INV06-SB27.CorrenteCC_09": "solid",
+        "CLS01.6-INV08-SB23.CorrenteCC_08": "solid",
+        "CLS01.5-INV06.TenBC": "solid",
+        "CLS01.4-INV04-SB11.CorrenteCC_05": "solid",
+        "CLS01.6-INV01-SB15-TR057.PosAngAlvo": "solid"
+      },
+      "seriesFills": {
+        "CLS01.5-INV06.TenBC": 15
+      }
+    }
+  },
+  {
+    "id": "eabddbfb-6674-41d0-8458-ab0ffbe7a05d",
+    "created_at": "2026-05-09T00:09:11.944283",
+    "name": "Teste 2",
+    "user": "deschamps.ufsc@gmail.com",
+    "selectedDates": [
+      "2025-11-24",
+      "2025-11-25"
+    ],
+    "selectedSeries": [
+      "CLS01.6-INV06-SB27.CorrenteCC_09",
+      "CLS01.6-INV08-SB23.CorrenteCC_08",
+      "CLS01.5-INV06.TenBC",
+      "CLS01.4-INV04-SB11.CorrenteCC_05"
+    ],
+    "activeFilters": [],
+    "visibleFilters": [],
+    "filterColors": {
+      "Flag 5 minutos": "#ef4444"
+    },
+    "chartConfig": {
+      "gridX": true,
+      "gridY1": true,
+      "gridY2": false,
+      "gridY3": false,
+      "xGridSpacing": "1",
+      "xLimits": {
+        "min": "11:09",
+        "max": "20:59"
+      },
+      "y1Limits": {
+        "min": 1,
+        "max": 1
+      },
+      "y2Limits": {
+        "min": 343,
+        "max": 657
+      },
+      "y3Limits": {
+        "min": 10,
+        "max": 20
+      },
+      "appliedRanges": {},
+      "seriesAxisMap": {
+        "CLS01.6-INV06-SB27.CorrenteCC_09": "y3",
+        "CLS01.6-INV08-SB23.CorrenteCC_08": "hidden",
+        "CLS01.5-INV06.TenBC": "y2",
+        "CLS01.4-INV04-SB11.CorrenteCC_05": "hidden"
+      },
+      "seriesColors": {
+        "CLS01.6-INV06-SB27.CorrenteCC_09": "#D81B60",
+        "CLS01.6-INV08-SB23.CorrenteCC_08": "#D81B60",
+        "CLS01.5-INV06.TenBC": "#000000",
+        "CLS01.4-INV04-SB11.CorrenteCC_05": "#D81B60"
+      },
+      "seriesWidths": {
+        "CLS01.6-INV06-SB27.CorrenteCC_09": 1.5,
+        "CLS01.6-INV08-SB23.CorrenteCC_08": 1.5,
+        "CLS01.5-INV06.TenBC": 1.5,
+        "CLS01.4-INV04-SB11.CorrenteCC_05": 1.5
+      },
+      "seriesDashes": {
+        "CLS01.6-INV06-SB27.CorrenteCC_09": "solid",
+        "CLS01.6-INV08-SB23.CorrenteCC_08": "solid",
+        "CLS01.5-INV06.TenBC": "solid",
+        "CLS01.4-INV04-SB11.CorrenteCC_05": "solid"
+      },
+      "seriesFills": {
+        "CLS01.5-INV06.TenBC": 15,
+        "CLS01.6-INV06-SB27.CorrenteCC_09": 20
+      }
+    }
+  },
+  {
+    "id": "6b1d8ad9-d315-4e67-a3be-535ce4973b32",
+    "created_at": "2026-05-09T00:12:15.059104",
+    "name": "Teste 3",
+    "user": "deschamps.ufsc@gmail.com",
+    "selectedDates": [
+      "2025-11-24",
+      "2025-11-25"
+    ],
+    "selectedSeries": [
+      "CLS01.6-INV06-SB27.CorrenteCC_09",
+      "CLS01.6-INV08-SB23.CorrenteCC_08",
+      "CLS01.6-INV01-SB15-TR057.PosAngAlvo"
+    ],
+    "activeFilters": [],
+    "visibleFilters": [],
+    "filterColors": {
+      "Flag 5 minutos": "#ef4444"
+    },
+    "chartConfig": {
+      "gridX": true,
+      "gridY1": true,
+      "gridY2": false,
+      "gridY3": false,
+      "xGridSpacing": "",
+      "xLimits": {
+        "min": "",
+        "max": ""
+      },
+      "y1Limits": {
+        "min": "",
+        "max": ""
+      },
+      "y2Limits": {
+        "min": "",
+        "max": ""
+      },
+      "y3Limits": {
+        "min": "",
+        "max": ""
+      },
+      "appliedRanges": {},
+      "seriesAxisMap": {
+        "CLS01.6-INV06-SB27.CorrenteCC_09": "y3",
+        "CLS01.6-INV08-SB23.CorrenteCC_08": "y3",
+        "CLS01.6-INV01-SB15-TR057.PosAngAlvo": "y2"
+      },
+      "seriesColors": {
+        "CLS01.6-INV06-SB27.CorrenteCC_09": "#D81B60",
+        "CLS01.6-INV08-SB23.CorrenteCC_08": "#D81B60",
+        "CLS01.6-INV01-SB15-TR057.PosAngAlvo": "#6A1B9A"
+      },
+      "seriesWidths": {
+        "CLS01.6-INV06-SB27.CorrenteCC_09": 1.5,
+        "CLS01.6-INV08-SB23.CorrenteCC_08": 1.5,
+        "CLS01.6-INV01-SB15-TR057.PosAngAlvo": 1.5
+      },
+      "seriesDashes": {
+        "CLS01.6-INV06-SB27.CorrenteCC_09": "solid",
+        "CLS01.6-INV08-SB23.CorrenteCC_08": "solid",
+        "CLS01.6-INV01-SB15-TR057.PosAngAlvo": "solid"
+      },
+      "seriesFills": {
+        "CLS01.6-INV06-SB27.CorrenteCC_09": 20
+      }
+    }
+  },
+  {
+    "id": "03e8fccd-1d3f-48f7-9a71-1ee110e8983b",
+    "created_at": "2026-05-09T00:28:18.643135",
+    "name": "Teste 4",
+    "user": "deschamps.ufsc@gmail.com",
+    "selectedDates": [
+      "2025-11-24",
+      "2025-11-25"
+    ],
+    "selectedSeries": [
+      "CLS01.6-INV06-SB27.CorrenteCC_09",
+      "CLS01.6-INV08-SB23.CorrenteCC_08",
+      "CLS01.6-INV01-SB15-TR057.PosAngAlvo",
+      "CLS01.5-INV06.TenBC",
+      "CLS01.1-INV01-SB13.CorrenteCC_11"
+    ],
+    "activeFilters": [],
+    "visibleFilters": [
+      "Flag 5 minutos"
+    ],
+    "filterColors": {
+      "Flag 5 minutos": "#ef4444"
+    },
+    "chartConfig": {
+      "gridX": true,
+      "gridY1": true,
+      "gridY2": false,
+      "gridY3": false,
+      "xGridSpacing": "",
+      "xLimits": {
+        "min": "",
+        "max": ""
+      },
+      "y1Limits": {
+        "min": "",
+        "max": ""
+      },
+      "y2Limits": {
+        "min": "",
+        "max": ""
+      },
+      "y3Limits": {
+        "min": "",
+        "max": ""
+      },
+      "appliedRanges": {},
+      "seriesAxisMap": {
+        "CLS01.6-INV06-SB27.CorrenteCC_09": "y3",
+        "CLS01.6-INV08-SB23.CorrenteCC_08": "y3",
+        "CLS01.6-INV01-SB15-TR057.PosAngAlvo": "y2",
+        "CLS01.5-INV06.TenBC": "y1",
+        "CLS01.1-INV01-SB13.CorrenteCC_11": "y3"
+      },
+      "seriesColors": {
+        "CLS01.6-INV06-SB27.CorrenteCC_09": "#D81B60",
+        "CLS01.6-INV08-SB23.CorrenteCC_08": "#D81B60",
+        "CLS01.6-INV01-SB15-TR057.PosAngAlvo": "#6A1B9A",
+        "CLS01.5-INV06.TenBC": "#000000",
+        "CLS01.1-INV01-SB13.CorrenteCC_11": "#D81B60"
+      },
+      "seriesWidths": {
+        "CLS01.6-INV06-SB27.CorrenteCC_09": 1.5,
+        "CLS01.6-INV08-SB23.CorrenteCC_08": 1.5,
+        "CLS01.6-INV01-SB15-TR057.PosAngAlvo": 1.5,
+        "CLS01.5-INV06.TenBC": 1.5,
+        "CLS01.1-INV01-SB13.CorrenteCC_11": 1.5
+      },
+      "seriesDashes": {
+        "CLS01.6-INV06-SB27.CorrenteCC_09": "solid",
+        "CLS01.6-INV08-SB23.CorrenteCC_08": "solid",
+        "CLS01.6-INV01-SB15-TR057.PosAngAlvo": "solid",
+        "CLS01.5-INV06.TenBC": "solid",
+        "CLS01.1-INV01-SB13.CorrenteCC_11": "solid"
+      },
+      "seriesFills": {
+        "CLS01.6-INV06-SB27.CorrenteCC_09": 20
+      }
+    }
+  }
+]
