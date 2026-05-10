@@ -86,7 +86,7 @@ export default function App() {
               to="/settings"
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
             >
-              ⚙️ Configurações
+              📋 Cadastro
             </NavLink>
           )}
 

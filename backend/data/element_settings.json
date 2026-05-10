@@ -3,54 +3,61 @@
     "element": "Tracker",
     "axis": "y3",
     "colors": [
-      "#6A1B9A"
+      "#6A1B9A",
+      "#A576C3"
     ],
-    "width": 1.5,
+    "width": 1,
     "dash": "solid"
   },
   {
     "element": "Corrente CA",
-    "axis": "y3",
+    "axis": "y2",
     "colors": [
-      "#D81B60"
+      "#1565C0",
+      "#4383CC",
+      "#71A2D9"
     ],
-    "width": 1.5,
+    "width": 1,
     "dash": "solid"
   },
   {
     "element": "Corrente CC Total",
-    "axis": "y3",
+    "axis": "y2",
     "colors": [
       "#D81B60"
     ],
-    "width": 1.5,
+    "width": 1,
     "dash": "solid"
   },
   {
     "element": "Corrente CC String",
-    "axis": "y3",
+    "axis": "y2",
     "colors": [
-      "#D81B60"
+      "#E8769F",
+      "#F7D1DE"
     ],
-    "width": 1.5,
+    "width": 1,
     "dash": "solid"
   },
   {
     "element": "Irradiação",
     "axis": "y1",
     "colors": [
-      "#F9CC00"
+      "#F9CC00",
+      "#F9A825"
     ],
-    "width": 1.5,
+    "width": 1,
     "dash": "solid"
   },
   {
     "element": "Potência CA Inv",
     "axis": "y2",
     "colors": [
-      "#2E7D32"
+      "#2E7D32",
+      "#7CB342",
+      "#B1D18D"
     ],
-    "width": 1.5,
+    "width": 1,
     "dash": "solid"
   },
   {
@@ -59,7 +66,7 @@
     "colors": [
       "#6D4C41"
     ],
-    "width": 1.5,
+    "width": 1,
     "dash": "solid"
   },
   {
@@ -68,34 +75,34 @@
     "colors": [
       "#EF6C00"
     ],
-    "width": 1.5,
+    "width": 1,
     "dash": "solid"
   },
   {
     "element": "Tensão CA Inv",
-    "axis": "y3",
+    "axis": "y2",
     "colors": [
       "#000000"
     ],
-    "width": 1.5,
+    "width": 1,
     "dash": "solid"
   },
   {
     "element": "Tensão CC Inv",
-    "axis": "y3",
+    "axis": "y2",
     "colors": [
-      "#000000"
+      "#666666"
     ],
-    "width": 1.5,
+    "width": 1,
     "dash": "solid"
   },
   {
     "element": "Tensão CC Stringbox",
-    "axis": "y3",
+    "axis": "y2",
     "colors": [
-      "#000000"
+      "#999999"
     ],
-    "width": 1.5,
+    "width": 1,
     "dash": "solid"
   },
   {
@@ -104,16 +111,16 @@
     "colors": [
       "#0277BD"
     ],
-    "width": 1.5,
+    "width": 1,
     "dash": "solid"
   },
   {
     "element": "Potência CC String",
     "axis": "y3",
     "colors": [
-      "#999999"
+      "#C62828"
     ],
-    "width": 1.5,
+    "width": 1,
     "dash": "solid"
   },
   {
@@ -122,16 +129,16 @@
     "colors": [
       "#00838F"
     ],
-    "width": 1.5,
+    "width": 1,
     "dash": "solid"
   },
   {
     "element": "Filtro",
     "axis": "y3",
     "colors": [
-      "#C62828"
+      "#7BFF19"
     ],
     "width": 1.5,
-    "dash": "dash"
+    "dash": "solid"
   }
 ]

@@ -631,14 +631,14 @@ function UsuariosTab({ readOnly = false }) {
 
 // ── Página de Configurações ───────────────────────────────────────────────────
 const TABS = [
-  { id: 'elementos', icon: '📊', label: 'Elementos' },
   { id: 'usinas',    icon: '🏭', label: 'Usinas' },
+  { id: 'elementos', icon: '📊', label: 'Elementos' },
   { id: 'usuarios',  icon: '👥', label: 'Usuários' },
 ]
 
 export default function SettingsPage() {
   const { isAdmin } = useAuth()
-  const [activeTab, setActiveTab] = useState('elementos')
+  const [activeTab, setActiveTab] = useState('usinas')
   const readOnly = !isAdmin
 
   return (
@@ -651,18 +651,17 @@ export default function SettingsPage() {
           <div style={{
             width: 40, height: 40, borderRadius: 10,
             background: 'linear-gradient(135deg, #0f172a, #334155)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 4px 12px rgba(15,23,42,0.25)',
           }}>
-            ⚙️
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </div>
           <div>
             <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#0f172a', letterSpacing: -0.3 }}>
-              Configurações
+              Cadastro
             </h1>
-            <p style={{ margin: '3px 0 0', fontSize: 12, color: '#64748b' }}>
-              Personalize o comportamento das ferramentas de análise.
-            </p>
           </div>
         </div>
 

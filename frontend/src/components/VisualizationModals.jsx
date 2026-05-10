@@ -1,21 +1,33 @@
 import React, { useState, useEffect } from 'react'
 
-export function SaveVisualizationModal({ isOpen, onClose, onSave, hasLoadedVis, currentName }) {
+export function SaveVisualizationModal({ isOpen, onClose, onSave, hasLoadedVis, currentName, existingNames = [] }) {
   const [name, setName] = useState('')
   const [saveAsNew, setSaveAsNew] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     if (isOpen) {
-      setName(saveAsNew ? '' : (currentName || ''))
-      setSaveAsNew(false)
+      setName(currentName || '')
+      setSaveAsNew(!hasLoadedVis) // Se não tem carregada, força 'novo'
+      setError('')
     }
-  }, [isOpen, currentName])
+  }, [isOpen, currentName, hasLoadedVis])
 
   if (!isOpen) return null
 
   const handleSave = () => {
-    const finalName = saveAsNew ? name : (currentName || name)
-    if (!finalName.trim()) return
+    const finalName = name.trim()
+    if (!finalName) {
+      setError('O nome não pode estar vazio.')
+      return
+    }
+
+    // Se for salvar como novo, não permite nome duplicado
+    if (saveAsNew && existingNames.includes(finalName)) {
+      setError('Já existe uma visualização com este nome.')
+      return
+    }
+
     onSave({ name: finalName, saveAsNew })
     onClose()
   }
@@ -28,52 +40,74 @@ export function SaveVisualizationModal({ isOpen, onClose, onSave, hasLoadedVis, 
     }}>
       <div style={{
         background: 'var(--bg-card)', padding: '24px', borderRadius: '12px',
-        width: '400px', maxWidth: '90%', boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
+        width: '400px', maxWidth: '90%', boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+        animation: 'fadeIn 0.2s ease'
       }}>
-        <h3 style={{ margin: '0 0 16px 0' }}>Salvar Visualização</h3>
+        <h3 style={{ margin: '0 0 20px 0', fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>Salvar Configurações</h3>
         
+        {/* Toggle para escolha de modo */}
         {hasLoadedVis && (
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-              <input 
-                type="checkbox" 
-                checked={saveAsNew} 
-                onChange={(e) => setSaveAsNew(e.target.checked)} 
-              />
-              <span style={{ fontSize: 14 }}>Salvar como nova visualização</span>
-            </label>
-            {!saveAsNew && (
-              <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4, marginLeft: 22 }}>
-                Isso sobrescreverá a visualização atual.
-              </p>
-            )}
-          </div>
-        )}
-
-        {(!hasLoadedVis || saveAsNew) && (
           <div style={{ marginBottom: 20 }}>
-            <label style={{ display: 'block', fontSize: 13, marginBottom: 6, fontWeight: 600 }}>
-              Nome da Visualização
-            </label>
-            <input 
-              className="input" 
-              style={{ width: '100%' }}
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="Ex: Análise Inversor 3..."
-              autoFocus
-            />
+            <div style={{ 
+              display: 'flex', background: 'var(--bg-secondary)', borderRadius: 10, padding: 4, 
+              position: 'relative', height: 40, border: '1px solid var(--border)'
+            }}>
+              <div style={{
+                position: 'absolute', top: 4, bottom: 4, left: saveAsNew ? 'calc(50% + 2px)' : 4,
+                width: 'calc(50% - 6px)', background: 'var(--bg-card)', borderRadius: 6,
+                boxShadow: '0 2px 6px rgba(0,0,0,0.1)', transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
+              }} />
+              <button 
+                onClick={() => setSaveAsNew(false)}
+                style={{ 
+                  flex: 1, zIndex: 1, background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: 12, fontWeight: !saveAsNew ? 700 : 500, color: !saveAsNew ? 'var(--text-primary)' : 'var(--text-muted)',
+                  transition: 'color 0.2s'
+                }}
+              >
+                Sobrescrever
+              </button>
+              <button 
+                onClick={() => setSaveAsNew(true)}
+                style={{ 
+                  flex: 1, zIndex: 1, background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: 12, fontWeight: saveAsNew ? 700 : 500, color: saveAsNew ? 'var(--text-primary)' : 'var(--text-muted)',
+                  transition: 'color 0.2s'
+                }}
+              >
+                Salvar como Novo
+              </button>
+            </div>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8, textAlign: 'center' }}>
+              {saveAsNew ? 'Cria um novo registro na lista.' : 'Atualiza as configurações da visualização atual.'}
+            </p>
           </div>
         )}
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24 }}>
+        <div style={{ marginBottom: 8 }}>
+          <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            Nome da Visualização
+          </label>
+          <input 
+            className="input" 
+            style={{ width: '100%', borderColor: error ? 'var(--red)' : 'var(--border)' }}
+            value={name}
+            onChange={e => { setName(e.target.value); setError('') }}
+            placeholder="Ex: Análise de Causa Raiz - Skid 1..."
+            autoFocus
+          />
+          {error && <p style={{ color: 'var(--red)', fontSize: 11, marginTop: 6, fontWeight: 500 }}>⚠️ {error}</p>}
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 24 }}>
           <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
           <button 
             className="btn btn-primary" 
+            style={{ minWidth: 100 }}
             onClick={handleSave}
-            disabled={(!hasLoadedVis || saveAsNew) && !name.trim()}
+            disabled={!name.trim()}
           >
-            Salvar
+            Confirmar
           </button>
         </div>
       </div>

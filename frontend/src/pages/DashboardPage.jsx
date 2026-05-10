@@ -588,6 +588,7 @@ export default function DashboardPage() {
         onSave={handleSaveVisualization}
         hasLoadedVis={!!loadedVisualization}
         currentName={loadedVisualization?.name}
+        existingNames={savedVisualizations.map(v => v.name)}
       />
       
       <LoadVisualizationModal

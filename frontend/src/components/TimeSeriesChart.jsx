@@ -334,7 +334,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
     const legendX = (hasY3 ? y3Pos : y2Pos) + 0.05 // Aumentado de 0.02 para 0.05 para afastar da legenda
     
     // Margem direita suficiente para os eixos extras e a legenda
-    const rightMargin = hasY3 ? 150 : (y2Names.length > 0 ? 100 : 20)
+    const rightMargin = hasY3 ? 200 : (y2Names.length > 0 ? 150 : 20)
 
     // Calcula altura das faixas de filtro para esmagar os eixos Y normais (REDUZIDO PELA METADE)
     const filterHeight = Math.max(0.02, Math.min(0.04, 0.15 / (visibleFilters.length || 1)))
@@ -430,24 +430,24 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
       },
       uirevision: baseDate,
       annotations,
-    xaxis: {
-      type:       'date',
-      domain:     xDomain,
-      gridcolor:  gridX ? '#e2e8f0' : 'transparent',
-      linecolor:  '#cbd5e1',
-      tickfont:   { size: 11 },
-      tickangle:  0, // Removido inclinação para ficar mais limpo com as datas abaixo
-      tickformat: '%H:%M',
-      title: { text: '', standoff: 10 }, // Removido 'Horário'
-      showspikes: true,
-      spikemode: 'across+marker',
-      spikedash: 'dot',
-      spikecolor: '#94a3b8',
-      spikethickness: 1,
-      tickmode:   xGridSpacing ? 'array' : 'auto',
-      tickvals:   xGridSpacing ? generateXTicks() : undefined,
-      range:      appliedRanges.x,
-    },
+      xaxis: {
+        type:       'date',
+        domain:     xDomain,
+        gridcolor:  gridX ? '#e2e8f0' : 'transparent',
+        linecolor:  '#cbd5e1',
+        tickfont:   { size: 11 },
+        tickangle:  0, // Removido inclinação para ficar mais limpo com as datas abaixo
+        tickformat: '%H:%M',
+        title: { text: '', standoff: 10 }, // Removido 'Horário'
+        showspikes: true,
+        spikemode: 'across+marker',
+        spikedash: 'dot',
+        spikecolor: '#94a3b8',
+        spikethickness: 1,
+        tickmode:   xGridSpacing ? 'array' : 'auto',
+        tickvals:   xGridSpacing ? generateXTicks() : undefined,
+        range:      appliedRanges.x,
+      },
       yaxis: {
         domain:        yDomain,
         gridcolor:     gridY1 ? '#e2e8f0' : 'transparent',
@@ -493,11 +493,12 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
         bgcolor:     'rgba(255,255,255,0.9)',
         bordercolor: '#cbd5e1',
         borderwidth: 1,
-        font:        { size: 11 },
-        orientation: visibleNames.length > 8 ? 'h'   : 'v',
-        x:           visibleNames.length > 8 ?  0    : legendX,
-        y:           visibleNames.length > 8 ? -0.28 : 1, // Movido mais para baixo (-0.28) para não bater nas datas
-        yanchor:     visibleNames.length > 8 ? 'top' : 'auto',
+        font:        { size: 8.5 },
+        orientation: visibleNames.length > 20 ? 'h'   : 'v',
+        x:           visibleNames.length > 20 ?  0    : legendX,
+        y:           visibleNames.length > 20 ? -0.28 : 1,
+        yanchor:     visibleNames.length > 20 ? 'top' : 'top',
+        traceorder:  'normal',
       },
       modebar: { bgcolor: 'transparent', color: '#94a3b8', activecolor: '#f59e0b' },
     }
