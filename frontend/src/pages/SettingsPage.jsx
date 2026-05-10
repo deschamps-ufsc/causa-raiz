@@ -4,6 +4,7 @@ import { LINE_WIDTHS, LINE_DASHES, DEFAULT_LINE_WIDTH, DEFAULT_LINE_DASH } from 
 import SharedColorPicker from '../components/SharedColorPicker'
 import { fetchAuthUsers, createAuthUser, updateAuthUser, deleteAuthUser } from '../services/api'
 import { useAuth } from '../hooks/AuthContext'
+import UsinasTab from '../components/Settings/UsinasTab'
 
 // ── Linha de elemento ─────────────────────────────────────────────────────────
 const MAX_COLORS = 5
@@ -60,32 +61,41 @@ function ElementRow({ setting, index, updateElementSetting, removeCustomElement,
     >
       {/* Elemento */}
       <td style={{ padding: '10px 16px', color: '#1e293b', fontWeight: 500, fontSize: 13, whiteSpace: 'nowrap' }}>
-        {isConfirmingDelete ? (
-           <div style={{ display: 'flex', alignItems: 'center', gap: 8, animation: 'fadeIn 0.2s' }}>
-             <span style={{ fontSize: 12, color: '#dc2626', fontWeight: 600 }}>Excluir elemento?</span>
-             <button onClick={() => removeCustomElement(setting.element)} style={{ padding: '3px 10px', borderRadius: 5, border: 'none', background: '#dc2626', color: '#fff', cursor: 'pointer', fontSize: 11, fontWeight: 700 }}>Sim</button>
-             <button onClick={() => setIsConfirmingDelete(false)} style={{ padding: '3px 10px', borderRadius: 5, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>Não</button>
-           </div>
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 9, height: 9, borderRadius: '50%', background: firstColor, flexShrink: 0, boxShadow: `0 0 0 2px ${firstColor}33` }} />
-            {setting.element}
-            {isHovered && !readOnly && (
-               <button
-                 onClick={() => setIsConfirmingDelete(true)}
-                 title="Excluir elemento"
-                 style={{
-                   marginLeft: 8, background: 'none', border: 'none', cursor: 'pointer',
-                   color: '#ef4444', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                   padding: '2px', opacity: 0.7, transition: 'opacity 0.15s, transform 0.15s, background 0.15s',
-                   borderRadius: 4
-                 }}
-                 onMouseEnter={e => { e.currentTarget.style.opacity = 1; e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.background = '#fee2e2' }}
-                 onMouseLeave={e => { e.currentTarget.style.opacity = 0.7; e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.background = 'none' }}
-               >
-                 🗑️
-               </button>
-            )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 9, height: 9, borderRadius: '50%', background: firstColor, flexShrink: 0, boxShadow: `0 0 0 2px ${firstColor}33` }} />
+          {setting.element}
+          {isHovered && !readOnly && (
+            <button
+              onClick={() => setIsConfirmingDelete(true)}
+              title="Excluir elemento"
+              style={{
+                marginLeft: 8, background: 'none', border: 'none', cursor: 'pointer',
+                color: '#dc2626', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: '4px', opacity: 0.7, transition: 'all 0.15s',
+                borderRadius: 4
+              }}
+              onMouseEnter={e => { e.currentTarget.style.opacity = 1; e.currentTarget.style.background = '#fee2e2' }}
+              onMouseLeave={e => { e.currentTarget.style.opacity = 0.7; e.currentTarget.style.background = 'none' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          )}
+        </div>
+        
+        {isConfirmingDelete && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+            <div style={{ background: '#fff', borderRadius: 16, padding: '24px 28px', width: '100%', maxWidth: 360, boxShadow: '0 24px 64px rgba(0,0,0,0.2)', border: '1px solid #e2e8f0', animation: 'fadeIn 0.2s ease' }}>
+              <h3 style={{ margin: '0 0 12px 0', fontSize: 16, fontWeight: 800, color: '#0f172a' }}>Confirmar Exclusão</h3>
+              <p style={{ margin: '0 0 24px 0', fontSize: 14, color: '#64748b', lineHeight: 1.5, whiteSpace: 'normal' }}>
+                Tem certeza que deseja excluir o elemento <strong>{setting.element}</strong>? Esta ação não pode ser desfeita.
+              </p>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <button onClick={() => setIsConfirmingDelete(false)} style={{ padding: '9px 18px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>Cancelar</button>
+                <button onClick={() => removeCustomElement(setting.element)} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#dc2626', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>Excluir</button>
+              </div>
+            </div>
           </div>
         )}
       </td>
@@ -573,28 +583,21 @@ function UsuariosTab({ readOnly = false }) {
                     <td style={{ padding: '12px 16px', textAlign: 'center' }}><UserBadge role={u.role} /></td>
                     <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                       {!isSelf && !readOnly && (
-                        deleteConfirm === u.email ? (
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                            <span style={{ fontSize: 12, color: '#64748b' }}>Confirmar?</span>
-                            <button onClick={() => handleDelete(u.email)} style={{ padding: '3px 10px', borderRadius: 5, border: 'none', background: '#dc2626', color: '#fff', cursor: 'pointer', fontSize: 11, fontWeight: 700 }}>Sim</button>
-                            <button onClick={() => setDeleteConfirm(null)} style={{ padding: '3px 10px', borderRadius: 5, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>Não</button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => setDeleteConfirm(u.email)}
-                            title="Remover usuário"
-                            style={{
-                              padding: '4px 12px', borderRadius: 6, border: '1px solid #fecaca',
-                              background: '#fef2f2', color: '#dc2626', cursor: 'pointer',
-                              fontSize: 11, fontWeight: 600, fontFamily: 'inherit',
-                              transition: 'background 0.15s',
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.background = '#fee2e2'}
-                            onMouseLeave={e => e.currentTarget.style.background = '#fef2f2'}
-                          >
-                            Remover
-                          </button>
-                        )
+                        <button
+                          onClick={() => setDeleteConfirm(u.email)}
+                          title="Remover usuário"
+                          style={{
+                            margin: '0 auto', background: 'none', border: '1px solid #fee2e2', cursor: 'pointer',
+                            color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            padding: '6px', transition: 'all 0.15s', borderRadius: 6
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.background = '#fef2f2'; e.currentTarget.style.borderColor = '#fecaca' }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.borderColor = '#fee2e2' }}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
                       )}
                     </td>
                   </tr>
@@ -606,6 +609,22 @@ function UsuariosTab({ readOnly = false }) {
       </div>
 
       {showModal && <NewUserModal onClose={() => setShowModal(false)} onCreated={u => setUsers(prev => [...prev, u])} />}
+
+      {/* Modal Confirmação Exclusão Usuário */}
+      {deleteConfirm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+            <div style={{ background: '#fff', borderRadius: 16, padding: '24px 28px', width: '100%', maxWidth: 360, boxShadow: '0 24px 64px rgba(0,0,0,0.2)', border: '1px solid #e2e8f0', animation: 'fadeIn 0.2s ease' }}>
+                <h3 style={{ margin: '0 0 12px 0', fontSize: 16, fontWeight: 800, color: '#0f172a' }}>Confirmar Exclusão</h3>
+                <p style={{ margin: '0 0 24px 0', fontSize: 14, color: '#64748b', lineHeight: 1.5 }}>
+                    Tem certeza que deseja remover o usuário <strong>{deleteConfirm}</strong>? O acesso dele será revogado imediatamente.
+                </p>
+                <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                    <button onClick={() => setDeleteConfirm(null)} style={{ padding: '9px 18px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>Cancelar</button>
+                    <button onClick={() => handleDelete(deleteConfirm)} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#dc2626', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>Remover Usuário</button>
+                </div>
+            </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -613,6 +632,7 @@ function UsuariosTab({ readOnly = false }) {
 // ── Página de Configurações ───────────────────────────────────────────────────
 const TABS = [
   { id: 'elementos', icon: '📊', label: 'Elementos' },
+  { id: 'usinas',    icon: '🏭', label: 'Usinas' },
   { id: 'usuarios',  icon: '👥', label: 'Usuários' },
 ]
 
@@ -624,7 +644,7 @@ export default function SettingsPage() {
   return (
     <div style={{ flex: 1, background: '#f1f5f9', minHeight: '100%', padding: '32px 20px', boxSizing: 'border-box' }}>
       {/* Centered container */}
-      <div style={{ maxWidth: 820, margin: '0 auto' }}>
+      <div style={{ maxWidth: 1000, margin: '0 auto' }}>
 
         {/* Header */}
         <div style={{ marginBottom: 26, display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -669,6 +689,7 @@ export default function SettingsPage() {
 
         {/* Content */}
         {activeTab === 'elementos' && <ElementosTab readOnly={readOnly} />}
+        {activeTab === 'usinas'    && <UsinasTab readOnly={readOnly} />}
         {activeTab === 'usuarios'  && <UsuariosTab readOnly={readOnly} />}
       </div>
     </div>

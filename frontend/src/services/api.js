@@ -64,8 +64,17 @@ export const saveElementSettings = (settings) =>
 export const fetchUsinas = () =>
   api.get('/usinas').then((r) => r.data)
 
+export const fetchDetailedUsinas = () =>
+  api.get('/usinas/detailed').then((r) => r.data)
+
 export const createUsina = (nome) =>
   api.post('/usinas', { nome }).then((r) => r.data)
+
+export const renameUsina = (nome, novoNome) =>
+  api.patch(`/usinas/${encodeURIComponent(nome)}`, { novo_nome: novoNome }).then(r => r.data)
+
+export const deleteUsina = (nome) =>
+  api.delete(`/usinas/${encodeURIComponent(nome)}`).then(r => r.data)
 
 // ── Infos Usina (SKID/INV/MWp) ────────────────────────────────────────
 export const fetchUsinaInfo = (usina) =>

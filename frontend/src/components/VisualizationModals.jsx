@@ -82,6 +82,8 @@ export function SaveVisualizationModal({ isOpen, onClose, onSave, hasLoadedVis, 
 }
 
 export function LoadVisualizationModal({ isOpen, onClose, onLoad, onDelete, visualizations }) {
+  const [deleteRequest, setDeleteRequest] = useState(null)
+
   if (!isOpen) return null
 
   return (
@@ -92,7 +94,7 @@ export function LoadVisualizationModal({ isOpen, onClose, onLoad, onDelete, visu
     }}>
       <div style={{
         background: 'var(--bg-card)', padding: '24px', borderRadius: '12px',
-        width: '800px', maxWidth: '95%', maxHeight: '85vh',
+        width: '1000px', maxWidth: '95%', maxHeight: '85vh',
         boxShadow: '0 10px 25px rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column'
       }}>
         <h3 style={{ margin: '0 0 16px 0' }}>Carregar Visualização</h3>
@@ -106,10 +108,10 @@ export function LoadVisualizationModal({ isOpen, onClose, onLoad, onDelete, visu
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, tableLayout: 'fixed' }}>
               <thead>
                 <tr style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', textAlign: 'left' }}>
-                  <th style={{ padding: '8px 12px', width: '35%' }}>Nome</th>
-                  <th style={{ padding: '8px 12px', width: '30%' }}>Usuário</th>
-                  <th style={{ padding: '8px 12px', width: '15%' }}>Data</th>
-                  <th style={{ padding: '8px 12px', width: '20%' }}>Ações</th>
+                  <th style={{ padding: '8px 12px', width: '45%' }}>Nome</th>
+                  <th style={{ padding: '8px 12px', width: '25%' }}>Usuário</th>
+                  <th style={{ padding: '8px 12px', width: '12%' }}>Data</th>
+                  <th style={{ padding: '8px 12px', width: '18%' }}>Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -132,7 +134,7 @@ export function LoadVisualizationModal({ isOpen, onClose, onLoad, onDelete, visu
                         <button 
                           className="btn btn-sm btn-ghost" 
                           style={{ padding: '4px 6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                          onClick={() => { if(window.confirm(`Excluir a visualização "${v.name}"?`)) onDelete(v.id) }}
+                          onClick={() => setDeleteRequest({ id: v.id, name: v.name })}
                           title="Excluir"
                         >
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -152,6 +154,22 @@ export function LoadVisualizationModal({ isOpen, onClose, onLoad, onDelete, visu
           <button className="btn btn-ghost" onClick={onClose}>Fechar</button>
         </div>
       </div>
+
+      {/* Modal Confirmação Exclusão */}
+      {deleteRequest && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000 }}>
+            <div style={{ background: '#fff', borderRadius: 16, padding: '24px 28px', width: '100%', maxWidth: 360, boxShadow: '0 24px 64px rgba(0,0,0,0.2)', border: '1px solid #e2e8f0', animation: 'fadeIn 0.2s ease' }}>
+                <h3 style={{ margin: '0 0 12px 0', fontSize: 16, fontWeight: 800, color: '#0f172a' }}>Confirmar Exclusão</h3>
+                <p style={{ margin: '0 0 24px 0', fontSize: 14, color: '#64748b', lineHeight: 1.5 }}>
+                    Tem certeza que deseja excluir a visualização <strong>{deleteRequest.name}</strong>? Esta ação não pode ser desfeita.
+                </p>
+                <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                    <button onClick={() => setDeleteRequest(null)} style={{ padding: '9px 18px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>Cancelar</button>
+                    <button onClick={() => { onDelete(deleteRequest.id); setDeleteRequest(null) }} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#dc2626', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>Excluir</button>
+                </div>
+            </div>
+        </div>
+      )}
     </div>
   )
 }

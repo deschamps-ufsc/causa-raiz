@@ -305,7 +305,7 @@ export default function DiagramTab() {
         
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Orientação:</span>
-          <select className="input" value={direction} onChange={e => setDirection(e.target.value)} style={{ padding: '4px 8px', borderRadius: 4, width: 140 }}>
+          <select className="input" value={direction} onChange={e => setDirection(e.target.value)} style={{ padding: '4px 8px', borderRadius: 4, width: 160 }}>
             <option value="TB">Hierarquia Vertical</option>
             <option value="LR">Fluxo Horizontal</option>
           </select>

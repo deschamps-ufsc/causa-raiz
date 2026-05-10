@@ -54,6 +54,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
   const [dragOver,        setDragOver]        = useState(null)
   const [plotRevision,    setPlotRevision]    = useState(0)
   const [plotMountKey,    setPlotMountKey]    = useState(0)
+  const containerRef = useRef(null)
 
 
   const { elementSettings } = useChartSettings()
@@ -66,6 +67,19 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
 
   const bumpRevision = () => setPlotRevision(r => r + 1)
 
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const observer = new ResizeObserver(() => {
+      // Disparamos um evento global de resize para forçar o Plotly a recalcular.
+      // Isso é mais confiável que apenas o 'revision' quando há ticks manuais.
+      window.dispatchEvent(new Event('resize'))
+      bumpRevision()
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [containerRef.current, xGridSpacing]) // Re-vincula se a grade mudar para garantir estado fresco
+
   // Lookup helper: returns the ChartSettings entry for a series by its element
   const getElementDefault = (seriesName) => {
     const elem = seriesDictRef.current[seriesName]?.elemento
@@ -77,6 +91,10 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
     () => (data?.series ? Object.keys(data.series) : []),
     [data]
   )
+
+  useEffect(() => {
+    bumpRevision()
+  }, [xGridSpacing])
 
   useEffect(() => {
     bumpRevision()
@@ -305,14 +323,80 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
   // ── Layout ────────────────────────────────────────────────────────
   const layout = useMemo(() => {
     const visibleFilters = data?.visibleFilters || []
-    const xDomain    = hasY3 ? [0, 0.97] : (y2Names.length > 0 ? [0, 0.985] : [0, 1])
-    const rightMargin = hasY3 ? 60 : (y2Names.length > 0 ? 40 : 20)
+    
+    // Margens e Domínios otimizados
+    // Aumentamos o xDomainEnd para ganhar mais espaço de gráfico
+    const xDomainEnd = hasY3 ? 0.90 : (y2Names.length > 0 ? 0.95 : 1.0)
+    const xDomain = [0, xDomainEnd]
+    
+    const y2Pos = xDomainEnd
+    const y3Pos = xDomainEnd + 0.035 // Reduzido de 0.05 para aproximar de Y2
+    const legendX = (hasY3 ? y3Pos : y2Pos) + 0.05 // Aumentado de 0.02 para 0.05 para afastar da legenda
+    
+    // Margem direita suficiente para os eixos extras e a legenda
+    const rightMargin = hasY3 ? 150 : (y2Names.length > 0 ? 100 : 20)
 
     // Calcula altura das faixas de filtro para esmagar os eixos Y normais (REDUZIDO PELA METADE)
     const filterHeight = Math.max(0.02, Math.min(0.04, 0.15 / (visibleFilters.length || 1)))
     const totalFiltersHeight = visibleFilters.length * filterHeight
     const mainYTop = visibleFilters.length > 0 ? (1 - totalFiltersHeight - 0.02) : 1
     const yDomain = [0, mainYTop]
+
+    // Anotações para os títulos dos eixos no topo e DATAS no eixo X
+    const dateAnnotations = []
+    if (data?.timestamps?.length) {
+      const uniqueDays = []
+      data.timestamps.forEach(ts => {
+        const d = ts.substring(0, 10)
+        if (!uniqueDays.includes(d)) uniqueDays.push(d)
+      })
+      uniqueDays.forEach(d => {
+        dateAnnotations.push({
+          xref: 'x', yref: 'paper',
+          x: `${d} 12:00:00`,
+          y: -0.12, // Logo abaixo dos ticks de hora
+          text: `<b>${d.split('-').reverse().join('/')}</b>`,
+          showarrow: false,
+          font: { size: 12, color: '#334155' },
+          xanchor: 'center',
+          yanchor: 'top'
+        })
+      })
+    }
+
+    const annotations = [
+      ...dateAnnotations,
+      {
+        text: '<b>Y1</b>',
+        xref: 'paper', yref: 'paper',
+        x: 0, xanchor: 'center',
+        y: 1.01, yanchor: 'bottom',
+        showarrow: false,
+        font: { size: 11, color: '#475569' }
+      }
+    ]
+
+    if (y2Names.length > 0 || gridY2) {
+      annotations.push({
+        text: '<b>Y2</b>',
+        xref: 'paper', yref: 'paper',
+        x: y2Pos, xanchor: 'center',
+        y: 1.01, yanchor: 'bottom',
+        showarrow: false,
+        font: { size: 11, color: '#475569' }
+      })
+    }
+
+    if (hasY3 || gridY3) {
+      annotations.push({
+        text: '<b>Y3</b>',
+        xref: 'paper', yref: 'paper',
+        x: y3Pos, xanchor: 'center',
+        y: 1.01, yanchor: 'bottom',
+        showarrow: false,
+        font: { size: 11, color: '#475569' }
+      })
+    }
 
     // Bypass Plotly's internal dtick generator to prevent freezes
     const generateXTicks = () => {
@@ -339,21 +423,22 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
       paper_bgcolor: '#f8fafc',
       plot_bgcolor:  '#ffffff',
       font:   { family: 'Inter, sans-serif', color: '#475569', size: 12 },
-      margin: { t: visibleFilters.length > 0 ? 25 : 45, r: rightMargin, b: 60, l: 60 },
+      margin: { t: 55, r: rightMargin, b: 80, l: 50 }, // Aumentado b para 80 para caber as datas
       hovermode: 'x',
       hoverlabel: {
         font: { size: 11, family: 'Inter, sans-serif' }
       },
       uirevision: baseDate,
+      annotations,
     xaxis: {
       type:       'date',
       domain:     xDomain,
       gridcolor:  gridX ? '#e2e8f0' : 'transparent',
       linecolor:  '#cbd5e1',
       tickfont:   { size: 11 },
-      tickangle:  -30,
+      tickangle:  0, // Removido inclinação para ficar mais limpo com as datas abaixo
       tickformat: '%H:%M',
-      title:      { text: 'Horário', standoff: 10 },
+      title: { text: '', standoff: 10 }, // Removido 'Horário'
       showspikes: true,
       spikemode: 'across+marker',
       spikedash: 'dot',
@@ -372,7 +457,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
         zerolinecolor: '#cbd5e1',
         range:         appliedRanges.y1,
         rangemode:     'tozero',
-        title:         { text: 'Eixo Y1', font: { size: 11 } },
+        title:         { text: '', font: { size: 11 } },
       },
       yaxis2: {
         visible:    y2Names.length > 0 || gridY2,
@@ -384,10 +469,10 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
         overlaying: 'y',
         side:       'right',
         anchor:     'free',
-        position:   hasY3 ? 0.97 : 0.985,
+        position:   y2Pos,
         range:      appliedRanges.y2,
         rangemode:  'tozero',
-        title:      { text: 'Eixo Y2', font: { size: 11 } },
+        title:      { text: '', font: { size: 11 } },
       },
       yaxis3: {
         visible:    hasY3 || gridY3,
@@ -399,10 +484,10 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
         overlaying: 'y',
         side:       'right',
         anchor:     'free',
-        position:   1,
+        position:   y3Pos,
         range:      appliedRanges.y3,
         rangemode:  'tozero',
-        title:      { text: 'Eixo Y3', font: { size: 11 } },
+        title:      { text: '', font: { size: 11 } },
       },
       legend: {
         bgcolor:     'rgba(255,255,255,0.9)',
@@ -410,8 +495,8 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
         borderwidth: 1,
         font:        { size: 11 },
         orientation: visibleNames.length > 8 ? 'h'   : 'v',
-        x:           visibleNames.length > 8 ?  0    : 1.01,
-        y:           visibleNames.length > 8 ? -0.18 : 1,
+        x:           visibleNames.length > 8 ?  0    : legendX,
+        y:           visibleNames.length > 8 ? -0.28 : 1, // Movido mais para baixo (-0.28) para não bater nas datas
         yanchor:     visibleNames.length > 8 ? 'top' : 'auto',
       },
       modebar: { bgcolor: 'transparent', color: '#94a3b8', activecolor: '#f59e0b' },
@@ -665,7 +750,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
             onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
           />
 
-          <span style={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span style={{ maxWidth: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {name}
           </span>
 
@@ -730,12 +815,11 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
   }
 
   const YLimitsControl = ({ limits, setLimits, applyFn }) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <input type="number" placeholder="Min" className="input" style={{ width: 62, padding: '4px 8px' }}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+      <input type="number" placeholder="Min" className="input" style={{ width: 60, height: 28, padding: '4px 6px' }}
         value={limits.min} onChange={e => setLimits(p => ({...p, min: e.target.value}))}
         onBlur={applyFn} onKeyDown={e => e.key === 'Enter' && e.target.blur()} />
-      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>até</span>
-      <input type="number" placeholder="Max" className="input" style={{ width: 62, padding: '4px 8px' }}
+      <input type="number" placeholder="Max" className="input" style={{ width: 60, height: 28, padding: '4px 6px' }}
         value={limits.max} onChange={e => setLimits(p => ({...p, max: e.target.value}))}
         onBlur={applyFn} onKeyDown={e => e.key === 'Enter' && e.target.blur()} />
     </div>
@@ -743,42 +827,39 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
 
   const AxisGroup = ({ title, children }) => (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 10, padding: '6px 12px',
+      display: 'flex', alignItems: 'center', gap: 4, padding: '4px 6px',
       background: 'rgba(241,245,249,0.4)', border: '1px solid var(--border)', borderRadius: 8,
     }}>
       <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>{title}</span>
-      <div style={{ width: 1, height: 16, backgroundColor: '#cbd5e1' }} />
       {children}
     </div>
   )
 
-  const VerticalSubDivider = () => <div style={{ width: 1, height: 16, backgroundColor: '#e2e8f0' }} />
+  const VerticalSubDivider = () => null
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '12px' }}>
 
       {/* ── Controles ─────────────────────────────────────────── */}
       <div style={{
-        display: 'flex', flexWrap: 'wrap', gap: '12px', padding: '12px',
         backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)',
-        borderRadius: '8px', alignItems: 'center',
+        borderRadius: '8px', padding: '6px 8px',
+        display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center'
       }}>
-
-        <AxisGroup title="Eixo X">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <input type="time" className="input" style={{ width: 85, padding: '4px 8px' }}
+        <span style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginRight: 2 }}>Eixos</span>
+          <AxisGroup title="X">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <input type="time" className="input" style={{ width: 80, height: 28, padding: '4px 6px' }}
               value={xLimits.min} onChange={e => setXLimits(p => ({...p, min: e.target.value}))}
               onBlur={applyXLimits} onKeyDown={e => e.key === 'Enter' && e.target.blur()} />
-            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>até</span>
-            <input type="time" className="input" style={{ width: 85, padding: '4px 8px' }}
+            <input type="time" className="input" style={{ width: 80, height: 28, padding: '4px 6px' }}
               value={xLimits.max} onChange={e => setXLimits(p => ({...p, max: e.target.value}))}
               onBlur={applyXLimits} onKeyDown={e => e.key === 'Enter' && e.target.blur()} />
           </div>
 
-          <VerticalSubDivider />
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)' }}>Grade:</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)' }}>Intervalo:</span>
             <select className="input" style={{ padding: '2px 24px 2px 6px', minWidth: 60, fontSize: 12 }}
               value={xGridSpacing}
               onChange={e => { setXGridSpacing(e.target.value); bumpRevision() }}>
@@ -791,7 +872,6 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
             </select>
           </div>
 
-          <VerticalSubDivider />
 
           <label className="checkbox-row" style={{ padding: 0 }}>
             <input type="checkbox" checked={gridX} onChange={e => { setGridX(e.target.checked); bumpRevision() }} />
@@ -799,27 +879,24 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
           </label>
         </AxisGroup>
 
-        <AxisGroup title="Eixo Y1">
+        <AxisGroup title="Y1">
           <YLimitsControl limits={y1Limits} setLimits={setY1Limits} applyFn={makeApplyY('y1', y1Limits)} />
-          <VerticalSubDivider />
           <label className="checkbox-row" style={{ padding: 0 }}>
             <input type="checkbox" checked={gridY1} onChange={e => { setGridY1(e.target.checked); bumpRevision() }} />
             <span style={{ fontSize: '11px', fontWeight: 600 }}>Grade</span>
           </label>
         </AxisGroup>
 
-        <AxisGroup title="Eixo Y2">
+        <AxisGroup title="Y2">
           <YLimitsControl limits={y2Limits} setLimits={setY2Limits} applyFn={makeApplyY('y2', y2Limits)} />
-          <VerticalSubDivider />
           <label className="checkbox-row" style={{ padding: 0 }}>
             <input type="checkbox" checked={gridY2} onChange={e => { setGridY2(e.target.checked); bumpRevision() }} />
             <span style={{ fontSize: '11px', fontWeight: 600 }}>Grade</span>
           </label>
         </AxisGroup>
 
-        <AxisGroup title="Eixo Y3">
+        <AxisGroup title="Y3">
           <YLimitsControl limits={y3Limits} setLimits={setY3Limits} applyFn={makeApplyY('y3', y3Limits)} />
-          <VerticalSubDivider />
           <label className="checkbox-row" style={{ padding: 0 }}>
             <input type="checkbox" checked={gridY3} onChange={e => { setGridY3(e.target.checked); bumpRevision() }} />
             <span style={{ fontSize: '11px', fontWeight: 600 }}>Grade</span>
@@ -848,7 +925,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
           }}>▶</span>
 
           <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', flexShrink: 0 }}>
-            Eixos
+            Séries
           </span>
 
           {/* Preview compacto quando fechado — usando cor da série */}
@@ -930,7 +1007,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
       </div>
 
       {/* ── Gráfico ──────────────────────────────────────────── */}
-      <div style={{ flex: 1, minHeight: 380 }}>
+      <div ref={containerRef} style={{ flex: 1, minHeight: 380 }}>
         <Plot
           key={plotMountKey}
           data={traces}

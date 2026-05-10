@@ -451,14 +451,6 @@ export default function DashboardPage() {
         {/* Botões de Ação */}
         {!sidebarCollapsed && (
           <div style={{ padding: 14, borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <button 
-              className="btn btn-ghost btn-full" 
-              onClick={() => setIsLoadModalOpen(true)}
-              style={{ justifyContent: 'center', gap: 8 }}
-            >
-              📂 Carregar Visualização
-            </button>
-            
             <button
               className="btn btn-primary btn-full"
               onClick={handleVisualize}
@@ -514,7 +506,9 @@ export default function DashboardPage() {
 
           {filteredData && (
             <div style={{ display: 'flex', gap: 8, fontSize: 12, color: 'var(--text-secondary)', marginLeft: 'auto' }}>
-              <span className="badge badge-amber">{filteredData.dates}</span>
+              <span className="badge badge-amber">
+                {filteredData.dates?.split(',').length} {filteredData.dates?.split(',').length === 1 ? 'dia' : 'dias'}
+              </span>
               <span className="badge badge-blue">{Object.keys(filteredData.series).length} séries</span>
               <span className="badge badge-gray">{filteredData.total_pontos.toLocaleString('pt-BR')} pts</span>
             </div>

@@ -1,0 +1,257 @@
+import { useState, useEffect } from 'react'
+import { fetchDetailedUsinas, createUsina, renameUsina, deleteUsina } from '../../services/api'
+import { useAuth } from '../../hooks/AuthContext'
+
+export default function UsinasTab({ readOnly = false }) {
+  const { user: currentUser } = useAuth()
+  const [usinas, setUsinas] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [feedback, setFeedback] = useState(null)
+  const [showModal, setShowModal] = useState(false)
+  const [editingUsina, setEditingUsina] = useState(null)
+  const [newName, setNewName] = useState('')
+  const [deleteConfirm, setDeleteConfirm] = useState(null)
+
+  const loadUsinas = async () => {
+    try {
+      setLoading(true)
+      const data = await fetchDetailedUsinas()
+      setUsinas(data)
+    } catch (err) {
+      setFeedback({ type: 'error', msg: err.message })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { loadUsinas() }, [])
+
+  const showFeedback = (type, msg) => {
+    setFeedback({ type, msg })
+    setTimeout(() => setFeedback(null), 4000)
+  }
+
+  const handleCreateOrRename = async (e) => {
+    e.preventDefault()
+    if (!newName.trim()) return
+    try {
+      if (editingUsina) {
+        await renameUsina(editingUsina.nome, newName.trim())
+        showFeedback('success', 'Usina renomeada com sucesso.')
+      } else {
+        await createUsina(newName.trim())
+        showFeedback('success', 'Nova usina criada com sucesso.')
+      }
+      setShowModal(false)
+      setNewName('')
+      setEditingUsina(null)
+      loadUsinas()
+    } catch (err) {
+      showFeedback('error', err.message)
+    }
+  }
+
+  const handleDelete = async (nome) => {
+    try {
+      await deleteUsina(nome)
+      setDeleteConfirm(null)
+      showFeedback('success', `Usina ${nome} removida.`)
+      loadUsinas()
+    } catch (err) {
+      showFeedback('error', err.message)
+    }
+  }
+
+  if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>Carregando usinas...</div>
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <div>
+          <p style={{ margin: 0, fontSize: 12, color: '#94a3b8' }}>Gerencie as usinas solares cadastradas e suas estatísticas agregadas.</p>
+        </div>
+        {!readOnly && (
+          <button 
+            onClick={() => { setEditingUsina(null); setNewName(''); setShowModal(true) }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '8px 16px', borderRadius: 8, border: 'none',
+              background: 'linear-gradient(135deg,#f59e0b,#f97316)',
+              color: '#fff', fontFamily: 'inherit', fontSize: 13, fontWeight: 700,
+              cursor: 'pointer', boxShadow: '0 2px 8px rgba(245,158,11,0.3)',
+              transition: 'transform 0.15s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            + Nova Usina
+          </button>
+        )}
+      </div>
+
+      {feedback && (
+        <div style={{
+          marginBottom: 14, padding: '10px 14px', borderRadius: 8, fontSize: 13,
+          background: feedback.type === 'success' ? '#f0fdf4' : '#fef2f2',
+          border: `1px solid ${feedback.type === 'success' ? '#86efac' : '#fecaca'}`,
+          color: feedback.type === 'success' ? '#065f46' : '#991b1b',
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          {feedback.type === 'success' ? '✅' : '⚠️'} {feedback.msg}
+        </div>
+      )}
+
+      <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0', boxShadow: '0 2px 10px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+        <div style={{ padding: '14px 18px', borderBottom: '1px solid #f1f5f9', background: 'linear-gradient(to right,#f8fafc,#fff)' }}>
+          <h2 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Usinas Cadastradas</h2>
+        </div>
+
+        {usinas.length === 0 ? (
+          <div style={{ padding: 32, textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>Nenhuma usina encontrada.</div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+              <thead>
+                <tr style={{ background: '#f8fafc' }}>
+                  {['Usina', 'Criação', 'Potência', 'Strings', 'Módulos', 'Elementos', 'Séries', 'Sintéticas', 'Ações'].map((l, i) => (
+                    <th key={l} style={{ 
+                      padding: '10px 12px', textAlign: i === 0 ? 'left' : 'center', 
+                      fontWeight: 700, color: '#94a3b8', fontSize: 10, 
+                      letterSpacing: 0.5, textTransform: 'uppercase', 
+                      borderBottom: '1px solid #f1f5f9', whiteSpace: 'nowrap'
+                    }}>{l}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {usinas.map(u => (
+                  <tr key={u.nome}
+                    style={{ borderTop: '1px solid #f1f5f9', transition: 'background 0.12s' }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <td style={{ padding: '12px', fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap' }}>{u.nome}</td>
+                    <td style={{ padding: '12px', textAlign: 'center', color: '#64748b', fontSize: 11, minWidth: 100 }}>
+                      <div style={{ fontWeight: 500 }}>{new Date(u.criado_em).toLocaleDateString()}</div>
+                      <div style={{ fontSize: 9, opacity: 0.8 }}>por {u.criado_por}</div>
+                    </td>
+                    <td style={{ padding: '12px', textAlign: 'center', fontWeight: 700, color: '#15803d' }}>
+                      {u.total_mwp.toFixed(2)} <span style={{ fontSize: 9, fontWeight: 400 }}>MWp</span>
+                    </td>
+                    <td style={{ padding: '12px', textAlign: 'center' }}>{u.total_strings}</td>
+                    <td style={{ padding: '12px', textAlign: 'center' }}>{u.total_modulos}</td>
+                    <td style={{ padding: '12px', textAlign: 'center' }}>{u.count_elementos}</td>
+                    <td style={{ padding: '12px', textAlign: 'center' }}>{u.count_series}</td>
+                    <td style={{ padding: '12px', textAlign: 'center' }}>{u.total_sinteticas}</td>
+                    <td style={{ padding: '12px', textAlign: 'center', minWidth: 100 }}>
+                      {!readOnly && (
+                        <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+                          <button 
+                            onClick={() => { setEditingUsina(u); setNewName(u.nome); setShowModal(true) }}
+                            style={{ 
+                              padding: '5px 8px', borderRadius: 6, border: '1px solid #e2e8f0', 
+                              background: '#fff', cursor: 'pointer', transition: 'all 0.15s' 
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.borderColor = '#94a3b8'; e.currentTarget.style.background = '#f8fafc' }}
+                            onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#fff' }}
+                            title="Editar nome"
+                          >✏️</button>
+                          
+                          <button 
+                            onClick={() => setDeleteConfirm(u.nome)} 
+                            style={{ 
+                              padding: '5px 8px', borderRadius: 6, border: '1px solid #fee2e2', 
+                              background: '#fff', color: '#dc2626', cursor: 'pointer', transition: 'all 0.15s',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.background = '#fef2f2'; e.currentTarget.style.borderColor = '#fecaca' }}
+                            onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#fee2e2' }}
+                            title="Excluir usina"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Modal Criar/Editar */}
+      {showModal && (
+        <div style={{ 
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', 
+          backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', 
+          justifyContent: 'center', zIndex: 9999 
+        }} onClick={e => { if (e.target === e.currentTarget) setShowModal(false) }}>
+          <div style={{ 
+            background: '#fff', borderRadius: 16, padding: '28px 28px 24px', 
+            width: '100%', maxWidth: 400, boxShadow: '0 24px 64px rgba(0,0,0,0.2)',
+            border: '1px solid #e2e8f0', animation: 'fadeIn 0.2s ease'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#0f172a' }}>
+                {editingUsina ? 'Renomear Usina' : 'Nova Usina'}
+              </h2>
+              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#94a3b8', lineHeight: 1 }}>×</button>
+            </div>
+            
+            <form onSubmit={handleCreateOrRename}>
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', marginBottom: 5, textTransform: 'uppercase', letterSpacing: 0.5 }}>Nome da Usina</label>
+                <input 
+                  autoFocus
+                  style={{ 
+                    width: '100%', boxSizing: 'border-box', background: '#f8fafc', 
+                    border: '1.5px solid #e2e8f0', borderRadius: 8, color: '#0f172a', 
+                    padding: '10px 12px', fontSize: 13, fontFamily: 'inherit', 
+                    outline: 'none', transition: 'border-color 0.2s' 
+                  }}
+                  placeholder="Ex: Usina Solar Central"
+                  value={newName}
+                  onChange={e => setNewName(e.target.value)}
+                  onFocus={e => e.target.style.borderColor = '#f59e0b'}
+                  onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                />
+              </div>
+              
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <button type="button" onClick={() => setShowModal(false)} style={{ padding: '9px 18px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>Cancelar</button>
+                <button type="submit" disabled={!newName.trim()} style={{ 
+                  padding: '9px 18px', borderRadius: 8, border: 'none', 
+                  background: 'linear-gradient(135deg,#f59e0b,#f97316)', color: '#fff', 
+                  cursor: !newName.trim() ? 'not-allowed' : 'pointer', fontSize: 13, 
+                  fontWeight: 700, opacity: !newName.trim() ? 0.7 : 1 
+                }}>
+                  {editingUsina ? 'Renomear' : 'Criar Usina'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Confirmação Exclusão */}
+      {deleteConfirm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+            <div style={{ background: '#fff', borderRadius: 16, padding: '24px 28px', width: '100%', maxWidth: 360, boxShadow: '0 24px 64px rgba(0,0,0,0.2)', border: '1px solid #e2e8f0' }}>
+                <h3 style={{ margin: '0 0 12px 0', fontSize: 16, fontWeight: 800, color: '#0f172a' }}>Confirmar Exclusão</h3>
+                <p style={{ margin: '0 0 24px 0', fontSize: 14, color: '#64748b', lineHeight: 1.5 }}>
+                    Tem certeza que deseja excluir a usina <strong>{deleteConfirm}</strong>? Esta ação não pode ser desfeita e todos os dados serão perdidos.
+                </p>
+                <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                    <button onClick={() => setDeleteConfirm(null)} style={{ padding: '9px 18px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>Cancelar</button>
+                    <button onClick={() => handleDelete(deleteConfirm)} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#dc2626', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>Excluir Usina</button>
+                </div>
+            </div>
+        </div>
+      )}
+    </div>
+  )
+}

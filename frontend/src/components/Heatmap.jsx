@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react'
 import Plot from 'react-plotly.js'
 
 /**
@@ -5,6 +6,18 @@ import Plot from 'react-plotly.js'
  * Colorscale YlOrRd: verde=baixo, amarelo=médio, vermelho=alto.
  */
 export default function Heatmap({ data }) {
+  const [revision, setRevision] = useState(0)
+  const containerRef = useRef(null)
+
+  useEffect(() => {
+    if (!containerRef.current) return
+    const observer = new ResizeObserver(() => {
+      setRevision(r => r + 1)
+    })
+    observer.observe(containerRef.current)
+    return () => observer.disconnect()
+  }, [])
+
   if (!data || !data.timestamps?.length) return null
 
   const seriesNames = Object.keys(data.series)
@@ -53,16 +66,19 @@ export default function Heatmap({ data }) {
   }
 
   return (
-    <Plot
-      data={[trace]}
-      layout={layout}
-      config={{
-        responsive: true,
-        displaylogo: false,
-        toImageButtonOptions: { format: 'png', filename: 'usina_solar_heatmap', scale: 2 },
-      }}
-      style={{ width: '100%', minHeight: Math.max(300, seriesNames.length * 22 + 100) }}
-      useResizeHandler
-    />
+    <div ref={containerRef} style={{ width: '100%', minHeight: Math.max(300, seriesNames.length * 22 + 100) }}>
+      <Plot
+        data={[trace]}
+        layout={layout}
+        revision={revision}
+        config={{
+          responsive: true,
+          displaylogo: false,
+          toImageButtonOptions: { format: 'png', filename: 'usina_solar_heatmap', scale: 2 },
+        }}
+        style={{ width: '100%', height: '100%' }}
+        useResizeHandler
+      />
+    </div>
   )
 }

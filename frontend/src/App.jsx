@@ -2,17 +2,13 @@ import { useEffect, useState, useRef } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useUsina } from './hooks/UsinaContext'
 import { useAuth } from './hooks/AuthContext'
-import { fetchUsinas, createUsina } from './services/api'
+import { fetchUsinas } from './services/api'
 
 export default function App() {
   const { usinaAtual, setUsinaAtual } = useUsina()
   const { user, isAdmin, isAnalystOrAdmin, logout } = useAuth()
   const navigate = useNavigate()
   const [usinas, setUsinas] = useState([])
-  const [showNewUsina, setShowNewUsina] = useState(false)
-  const [nomeUsina, setNomeUsina]       = useState('')
-  const [usinaError, setUsinaError]     = useState('')
-  const inputRef = useRef(null)
 
   const loadUsinas = async () => {
     try {
@@ -25,26 +21,6 @@ export default function App() {
 
   useEffect(() => { loadUsinas() }, [])
 
-  // Foca o input quando o popover abre
-  useEffect(() => {
-    if (showNewUsina) setTimeout(() => inputRef.current?.focus(), 50)
-  }, [showNewUsina])
-
-  const handleCreateUsina = async (e) => {
-    e.preventDefault()
-    const nome = nomeUsina.trim()
-    if (!nome) { setUsinaError('Informe um nome.'); return }
-    try {
-      await createUsina(nome)
-      await loadUsinas()
-      setUsinaAtual(nome)
-      setShowNewUsina(false)
-      setNomeUsina('')
-      setUsinaError('')
-    } catch (err) {
-      setUsinaError(err.message || 'Erro ao criar usina.')
-    }
-  }
 
   const handleLogout = () => {
     logout()
@@ -87,82 +63,6 @@ export default function App() {
                 <option key={u} value={u} style={{ color: 'black' }}>{u}</option>
               ))}
             </select>
-
-            {isAnalystOrAdmin && (
-              <div style={{ position: 'relative' }}>
-                <button
-                  onClick={() => { setShowNewUsina(v => !v); setUsinaError(''); setNomeUsina('') }}
-                  style={{
-                    background: '#4CAF50', color: 'white', border: 'none',
-                    borderRadius: '4px', padding: '3px 8px', cursor: 'pointer',
-                    fontSize: '14px', fontWeight: 'bold', lineHeight: 1,
-                  }}
-                  title="Nova Usina"
-                >
-                  +
-                </button>
-
-                {/* Popover de nova usina */}
-                {showNewUsina && (
-                  <>
-                    {/* Overlay para fechar ao clicar fora */}
-                    <div
-                      style={{ position: 'fixed', inset: 0, zIndex: 998 }}
-                      onClick={() => { setShowNewUsina(false); setNomeUsina(''); setUsinaError('') }}
-                    />
-                    <form
-                      onSubmit={handleCreateUsina}
-                      style={{
-                        position: 'absolute', top: 'calc(100% + 8px)', left: '50%',
-                        transform: 'translateX(-50%)',
-                        background: '#1c2333', border: '1px solid #30363d',
-                        borderRadius: 10, padding: '14px 16px', zIndex: 999,
-                        boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-                        display: 'flex', flexDirection: 'column', gap: 10,
-                        minWidth: 240,
-                        animation: 'fadeIn 0.15s ease',
-                      }}
-                      onClick={e => e.stopPropagation()}
-                    >
-                      <label style={{ fontSize: 11, fontWeight: 700, color: '#8b949e', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                        Nome da Usina
-                      </label>
-                      <input
-                        ref={inputRef}
-                        value={nomeUsina}
-                        onChange={e => { setNomeUsina(e.target.value); setUsinaError('') }}
-                        placeholder="Ex: Cortez - SPE São Claus 3"
-                        style={{
-                          background: 'rgba(255,255,255,0.07)', border: `1.5px solid ${usinaError ? 'rgba(220,38,38,0.6)' : 'rgba(255,255,255,0.15)'}`,
-                          borderRadius: 7, color: '#e6edf3', padding: '8px 10px',
-                          fontSize: 13, fontFamily: 'inherit', outline: 'none', width: '100%', boxSizing: 'border-box',
-                        }}
-                        onFocus={e => e.target.style.borderColor = 'rgba(245,158,11,0.6)'}
-                        onBlur={e => e.target.style.borderColor = usinaError ? 'rgba(220,38,38,0.6)' : 'rgba(255,255,255,0.15)'}
-                      />
-                      {usinaError && (
-                        <span style={{ fontSize: 11, color: '#fca5a5' }}>⚠️ {usinaError}</span>
-                      )}
-                      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                        <button
-                          type="button"
-                          onClick={() => { setShowNewUsina(false); setNomeUsina(''); setUsinaError('') }}
-                          style={{ padding: '6px 14px', borderRadius: 6, border: '1px solid #30363d', background: 'transparent', color: '#8b949e', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
-                        >
-                          Cancelar
-                        </button>
-                        <button
-                          type="submit"
-                          style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: 'linear-gradient(135deg,#f59e0b,#f97316)', color: '#0d1117', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}
-                        >
-                          Criar
-                        </button>
-                      </div>
-                    </form>
-                  </>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Links de navegação — Upload e Settings: Analista e Admin */}

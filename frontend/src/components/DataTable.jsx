@@ -61,12 +61,19 @@ export default function DataTable({ data, seriesDict = {} }) {
       return {
         id: name,
         header: () => (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 3, verticalAlign: 'bottom' }}>
-            {sinfo.elemento && <span style={{ fontSize: 10, color: 'var(--amber)', textTransform: 'uppercase', lineHeight: 1 }}>{sinfo.elemento}</span>}
-            {sinfo.skid && <span style={{ fontSize: 10, color: 'var(--text-secondary)', lineHeight: 1 }}>{sinfo.skid}</span>}
-            {sinfo.inversor && <span style={{ fontSize: 10, color: 'var(--text-secondary)', lineHeight: 1 }}>{sinfo.inversor}</span>}
-            {sinfo.stringbox && <span style={{ fontSize: 10, color: 'var(--text-secondary)', lineHeight: 1 }}>{sinfo.stringbox}</span>}
-            {Object.keys(sinfo).length > 2 && <div style={{ height: 1, background: 'var(--border)', margin: '2px 0 4px 0' }} />}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, verticalAlign: 'top' }}>
+            {sinfo.elemento && (
+              <span style={{ fontSize: 10, color: 'var(--amber)', textTransform: 'uppercase', lineHeight: 1.1, fontWeight: 700 }}>
+                {sinfo.elemento}
+              </span>
+            )}
+            <div style={{ 
+              fontSize: 10, color: 'var(--text-secondary)', lineHeight: 1.3, 
+              whiteSpace: 'normal', wordBreak: 'keep-all', display: 'block' 
+            }}>
+              {[sinfo.skid, sinfo.inversor, sinfo.estacao, sinfo.stringbox].filter(Boolean).join(' · ')}
+            </div>
+            {Object.keys(sinfo).length > 2 && <div style={{ height: 1, background: 'var(--border)', margin: '1px 0 3px 0' }} />}
             <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--amber)', display: 'block', wordBreak: 'break-word', whiteSpace: 'normal', lineHeight: '1.2' }} title={name}>
               {name}
             </span>
@@ -115,7 +122,8 @@ export default function DataTable({ data, seriesDict = {} }) {
                       padding: '8px 8px', textAlign: 'left', cursor: header.column.getCanSort() ? 'pointer' : 'default',
                       borderBottom: '1px solid var(--border)', whiteSpace: 'normal',
                       userSelect: 'none', color: 'var(--text-secondary)',
-                      minWidth: header.id === '_ts' ? '160px' : '100px', maxWidth: header.id === '_ts' ? '180px' : '160px'
+                      minWidth: header.id === '_ts' ? '160px' : '100px', maxWidth: header.id === '_ts' ? '180px' : '160px',
+                      verticalAlign: 'top'
                     }}
                   >
                     {flexRender(header.column.columnDef.header, header.getContext())}
