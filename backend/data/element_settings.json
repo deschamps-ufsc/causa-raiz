@@ -1,7 +1,7 @@
 [
   {
     "element": "Tracker",
-    "axis": "y3",
+    "axis": "y4",
     "colors": [
       "#6A1B9A",
       "#A576C3"
@@ -73,7 +73,8 @@
     "element": "Temperatura Módulo",
     "axis": "y3",
     "colors": [
-      "#EF6C00"
+      "#EF6C00",
+      "#F6A866"
     ],
     "width": 1,
     "dash": "solid"
@@ -118,7 +119,8 @@
     "element": "Potência CC String",
     "axis": "y3",
     "colors": [
-      "#C62828"
+      "#C62828",
+      "#DD7E7E"
     ],
     "width": 1,
     "dash": "solid"

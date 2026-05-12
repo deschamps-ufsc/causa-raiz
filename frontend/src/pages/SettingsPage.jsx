@@ -19,7 +19,7 @@ function ElementRow({ setting, index, updateElementSetting, removeCustomElement,
   const colors  = setting.colors ?? (setting.color ? [setting.color] : ['#000000'])
   const firstColor = colors[0] || '#000000'
 
-  const AXES = ['y1', 'y2', 'y3']
+  const AXES = ['y1', 'y2', 'y3', 'y4']
   const cycleAxis = () => {
     const next = AXES[(AXES.indexOf(setting.axis) + 1) % AXES.length]
     updateElementSetting(index, 'axis', next)

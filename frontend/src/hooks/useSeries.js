@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { fetchSeries, fetchDates, fetchMappingData } from '../services/api'
 
 /**
  * Hook para buscar e gerenciar a lista de séries disponíveis.
- * Inclui séries sintéticas do DE-PARA que não existem no Parquet.
+ * Inclui séries sintéticas do Mapeamento de Séries que não existem no Parquet.
  */
 export function useSeries(selectedDates, usina) {
   const [series, setSeries] = useState([])      // Todas as séries do dia + sintéticas

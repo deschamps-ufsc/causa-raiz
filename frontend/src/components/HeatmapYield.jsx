@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+﻿import React, { useState, useEffect, useMemo } from 'react'
 import { fetchPivotHeatmap, fetchSeries, fetchMappingData } from '../services/api'
 
 export default function HeatmapYield({ usina, dates, activeFilters = [] }) {
@@ -29,7 +29,7 @@ export default function HeatmapYield({ usina, dates, activeFilters = [] }) {
 
   useEffect(() => {
     if (!usina || !dates) return
-    // Busca séries do Parquet e complementa com o DE-PARA para incluir sintéticas
+    // Busca séries do Parquet e complementa com o Mapeamento de Séries para incluir sintéticas
     Promise.all([
       fetchSeries(usina, dates).catch(() => []),
       fetchMappingData(usina).catch(() => ({})),

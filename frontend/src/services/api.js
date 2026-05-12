@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Camada de comunicação com o backend FastAPI.
  * Todas as chamadas à API passam por aqui.
  */
@@ -142,7 +142,7 @@ export const fetchData = ({ usina, dates, series, elemento, skid, start, end }) 
     },
   }).then((r) => r.data)
 
-// ── Importar Excel DE-PARA ────────────────────────────────────
+// ── Importar Excel Mapeamento de Séries ────────────────────────────────────
 export const importMappingExcel = (usina, file) => {
   const form = new FormData()
   form.append('usina', usina)
@@ -163,7 +163,7 @@ export const fetchMappingData = (usina) =>
 export const validateMapping = (usina, date) =>
   api.get('/map-series/validate', { params: { usina, date } }).then((r) => r.data)
 
-// ── URL do template DE-PARA ───────────────────────────────────
+// ── URL do template Mapeamento de Séries ───────────────────────────────────
 export const getMappingTemplateUrl = (usina, date) => {
   const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
   const params = new URLSearchParams()

@@ -34,7 +34,7 @@ export default function MappingPage() {
           }}>🗂️</div>
           <div>
             <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.3 }}>
-              Mapeamento DE-PARA
+              Mapeamento de Séries
             </h1>
             <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
               Usina: <strong style={{ color: 'var(--amber)' }}>{usinaAtual}</strong> · Importe o Excel que vincula cada série temporal ao seu Elemento e hierarquia da usina.
@@ -49,7 +49,7 @@ export default function MappingPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
           {[
             { n: '1', icon: '📥', title: 'Baixe o template', desc: 'Template vazio sugerindo o formato das colunas' },
-            { n: '2', icon: '✏️', title: 'Preencha o DE-PARA', desc: 'Vincule cada coluna ao Elemento, SKID, Inversor e Stringbox' },
+            { n: '2', icon: '✏️', title: 'Preencha o Mapeamento', desc: 'Vincule cada coluna ao Elemento, SKID, Inversor e Stringbox' },
             { n: '3', icon: '🚀', title: 'Importe de volta', desc: 'As séries ficam classificadas e filtráveis no dashboard' },
           ].map((step) => (
             <div key={step.n} style={{
@@ -73,7 +73,7 @@ export default function MappingPage() {
 
       {/* Importador */}
       <div className="card">
-        <div className="card-title">📥 Importar DE-PARA</div>
+        <div className="card-title">📥 Importar Mapeamento de Séries</div>
         <SeriesMapImport usina={usinaAtual} />
       </div>
     </div>

@@ -1,4 +1,4 @@
-"""
+﻿"""
 Serviço de acesso aos arquivos Parquet.
 Responsável por:
   - Listar datas disponíveis
@@ -36,7 +36,7 @@ def list_available_dates(usina: str) -> list[str]:
 def list_series_for_dates(dates_str: str, usina: str) -> list[dict]:
     """
     Lê apenas o schema dos Parquets de múltiplas datas (sem carregar dados) e retorna
-    os metadados unidos de cada série enriquecidos com o mapeamento DE-PARA.
+    os metadados unidos de cada série enriquecidos com o mapeamento Mapeamento de Séries.
 
     Args:
         dates_str: "YYYY-MM-DD,YYYY-MM-DD"

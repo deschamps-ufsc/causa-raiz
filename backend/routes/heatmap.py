@@ -1,8 +1,8 @@
-"""
+﻿"""
 Rota de Heatmap de Yield (Energia CA / MWp instalado).
 
 Yield por par (SKID, Inversor):
-  1. Identifica séries no DE-PARA com skid=S, inversor=I, elemento=E
+  1. Identifica séries no Mapeamento de Séries com skid=S, inversor=I, elemento=E
   2. Lê essas colunas do Parquet
   3. Integra potência (kW, 1 min) → energia MWh:  Σ(kW) / 60000
   4. Divide MWh / MWp (da usina_info) → Yield

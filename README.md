@@ -1,4 +1,4 @@
-# ☀️ Usina Solar — Plataforma de Análise de Dados
+﻿# ☀️ Usina Solar — Plataforma de Análise de Dados
 
 Aplicação full-stack para análise operacional de usinas solares fotovoltaicas.
 
@@ -18,7 +18,7 @@ Causa Raiz/
 │   ├── services/
 │   │   ├── excel_service.py    ← Leitura Excel → Parquet
 │   │   ├── parquet_service.py  ← Consultas eficientes
-│   │   └── mapping_service.py  ← Sistema DE-PARA ⭐
+│   │   └── mapping_service.py  ← Sistema Mapeamento de Séries ⭐
 │   ├── models/
 │   │   └── schemas.py
 │   ├── utils/
@@ -30,7 +30,7 @@ Causa Raiz/
 │   └── src/
 │       ├── pages/
 │       │   ├── UploadPage.jsx
-│       │   ├── MappingPage.jsx   ← Sistema DE-PARA ⭐
+│       │   ├── MappingPage.jsx   ← Sistema Mapeamento de Séries ⭐
 │       │   └── DashboardPage.jsx
 │       ├── components/
 │       │   ├── SeriesSelector.jsx
@@ -106,7 +106,7 @@ npm run dev
 
 ```
 1. Upload        →  Envie o Excel diário da usina
-2. DE-PARA       →  Baixe o template, preencha e importe
+2. Mapeamento de Séries  →  Baixe o template, preencha e importe
 3. Dashboard     →  Selecione séries e visualize
 ```
 
@@ -116,8 +116,8 @@ npm run dev
 - O sistema converte para Parquet e detecta data automaticamente
 - Arquivos idênticos são cacheados por MD5 (não são reprocessados)
 
-### 2. Mapeamento DE-PARA ⭐
-- Acesse **DE-PARA** na navbar
+### 2. Mapeamento de Séries ⭐
+- Acesse **Mapeamento de Séries** na navbar
 - Selecione a data de referência
 - Clique **Template** para baixar o Excel pré-preenchido com as colunas
 - Preencha: `coluna_excel | elemento | skid | inversor | stringbox`
@@ -144,10 +144,10 @@ Tracker, Corrente CA, Corrente CC Total, Corrente CC String, Potência CC String
 |---|---|---|
 | `POST` | `/upload` | Upload de Excel → converte para Parquet |
 | `GET` | `/dates` | Lista datas com dados disponíveis |
-| `GET` | `/series?date=YYYY-MM-DD` | Lista séries da data com metadados DE-PARA |
+| `GET` | `/series?date=YYYY-MM-DD` | Lista séries da data com metadados de Mapeamento de Séries |
 | `GET` | `/elementos` | Lista tipos de Elemento |
 | `GET` | `/data` | Retorna dados filtrados (colunar) |
-| `POST` | `/map-series/import` | Importa Excel DE-PARA |
+| `POST` | `/map-series/import` | Importa Excel de Mapeamento de Séries |
 | `GET` | `/map-series/validate?date=` | Valida mapeamento contra Parquet |
 | `GET` | `/map-series/template?date=` | Baixa template Excel |
 

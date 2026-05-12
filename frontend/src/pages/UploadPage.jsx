@@ -12,7 +12,7 @@ import SeriesMapImport from '../components/SeriesMapImport'
 
 const TABS = [
   { id: 'dados',     label: '📤 Dados Diários' },
-  { id: 'depara',   label: '🗂️ DE-PARA' },
+  { id: 'depara',   label: '🗂️ Mapeamento de Séries' },
   { id: 'infos',    label: '⚡ Infos Usina' },
   { id: 'sintetica', label: '🧪 Séries Sintéticas' },
 ]
@@ -238,11 +238,11 @@ export default function UploadPage() {
           </div>
         )}
 
-        {/* ── TAB 2: DE-PARA ─────────────────────────────────────────────────── */}
+        {/* ── TAB 2: Mapeamento de Séries ──────────────────────────────────────── */}
         {activeTab === 'depara' && (
           <div>
             <div className="card">
-              <div className="card-title">📥 Importar DE-PARA</div>
+              <div className="card-title">📥 Importar Mapeamento de Séries</div>
               <SeriesMapImport usina={usinaAtual} />
             </div>
           </div>
@@ -382,7 +382,7 @@ export default function UploadPage() {
               <div className="card-title">🧪 Novo Grupo de Séries Sintéticas</div>
               <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 14 }}>
                 Cada upload cria um <strong>grupo</strong> compartilhando uma única fórmula (ex: <code>S1 * S2</code>).<br />
-                Vários grupos podem coexistir com fórmulas distintas. Adicione as séries ao DE-PARA para usá-las no dashboard.
+                Vários grupos podem coexistir com fórmulas distintas. Adicione as séries ao Mapeamento de Séries para usá-las no dashboard.
               </p>
 
               <input

@@ -1,5 +1,5 @@
-"""
-Rotas de séries e mapeamento DE-PARA.
+﻿"""
+Rotas de séries e Mapeamento de Séries.
 """
 from fastapi import APIRouter, HTTPException, UploadFile, File, Query, Form
 from fastapi.responses import StreamingResponse
@@ -45,7 +45,7 @@ def get_series(
 ):
     """
     Lista todas as séries disponíveis para as datas e usina,
-    enriquecidas com os metadados do mapeamento DE-PARA.
+    enriquecidas com os metadados do Mapeamento de Séries.
     """
     try:
         series = list_series_for_dates(dates, usina)
@@ -62,7 +62,7 @@ def get_series(
 @router.get("/elementos", response_model=list[str])
 def get_elementos(usina: str = Query(None, description="Usina para derivar os elementos do mapeamento")):
     """
-    Lista os tipos de Elemento presentes no mapeamento DE-PARA da usina.
+    Lista os tipos de Elemento presentes no Mapeamento de Séries da usina.
     Se a usina não for informada ou não tiver mapeamento, retorna a lista padrão.
     """
     if usina:
@@ -78,7 +78,7 @@ def get_elementos(usina: str = Query(None, description="Usina para derivar os el
     return ELEMENTOS_VALIDOS
 
 
-# ── Mapeamento DE-PARA: Importar Excel ────────────────────────────────────────
+# ── Mapeamento Mapeamento de Séries: Importar Excel ────────────────────────────────────────
 
 @router.post("/map-series/import", response_model=MappingImportResponse)
 async def import_mapping_excel(
@@ -86,7 +86,7 @@ async def import_mapping_excel(
     file: UploadFile = File(...)
 ):
     """
-    Importa um Excel DE-PARA para mapear colunas a Elemento e hierarquia.
+    Importa um Excel de Mapeamento de Séries para mapear colunas a Elemento e hierarquia.
     O Excel deve ter colunas: coluna_excel | elemento | skid | inversor | stringbox
     """
     if not usina:
@@ -126,7 +126,7 @@ def get_mapping_data_endpoint(usina: str = Query(...)):
     return load_mapping(usina)
 
 
-# ── Mapeamento DE-PARA: Salvar via JSON ───────────────────────────────────────
+# ── Mapeamento Mapeamento de Séries: Salvar via JSON ───────────────────────────────────────
 
 @router.post("/map-series")
 def save_series_map(body: SeriesMapRequest, usina: str = Query(...)):
@@ -145,7 +145,7 @@ def save_series_map(body: SeriesMapRequest, usina: str = Query(...)):
     return {"saved": len(body.mapeamentos), "total": len(mapping)}
 
 
-# ── Mapeamento DE-PARA: Validar contra Parquet ────────────────────────────────
+# ── Mapeamento Mapeamento de Séries: Validar contra Parquet ────────────────────────────────
 
 @router.get("/map-series/validate", response_model=MappingValidationResponse)
 def validate_mapping(
@@ -166,7 +166,7 @@ def validate_mapping(
     return MappingValidationResponse(**result)
 
 
-# ── Mapeamento DE-PARA: Download de Template ──────────────────────────────────
+# ── Mapeamento Mapeamento de Séries: Download de Template ──────────────────────────────────
 
 @router.get("/map-series/template")
 def download_template(
@@ -174,7 +174,7 @@ def download_template(
     date: Optional[str] = Query(None, description="Se informado, pré-preenche com colunas do Parquet")
 ):
     """
-    Baixa um Excel template para o usuário preencher o DE-PARA.
+    Baixa um Excel template para o usuário preencher o Mapeamento de Séries.
     Se 'date' for informado, pré-preenche com as colunas já existentes.
     """
     import io

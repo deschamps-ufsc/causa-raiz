@@ -14,14 +14,14 @@ const CHIP_HIDDEN = {
 
 export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterColors = {}, chartConfig, setChartConfig }) {
   const {
-    gridX, gridY1, gridY2, gridY3,
-    xGridSpacing, xLimits, y1Limits, y2Limits, y3Limits, appliedRanges,
+    gridX, gridY1, gridY2, gridY3, gridY4,
+    xGridSpacing, xLimits, y1Limits, y2Limits, y3Limits, y4Limits, appliedRanges,
     seriesAxisMap, seriesColors, seriesWidths, seriesDashes, seriesFills
   } = chartConfig || {
-    gridX: true, gridY1: true, gridY2: false, gridY3: false,
+    gridX: true, gridY1: true, gridY2: false, gridY3: false, gridY4: false,
     xGridSpacing: '',
-    xLimits: { min: '', max: '' }, y1Limits: { min: '', max: '' }, y2Limits: { min: '', max: '' }, y3Limits: { min: '', max: '' },
-    appliedRanges: { x: undefined, y1: undefined, y2: undefined, y3: undefined },
+    xLimits: { min: '', max: '' }, y1Limits: { min: '', max: '' }, y2Limits: { min: '', max: '' }, y3Limits: { min: '', max: '' }, y4Limits: { min: '', max: '' },
+    appliedRanges: { x: undefined, y1: undefined, y2: undefined, y3: undefined, y4: undefined },
     seriesAxisMap: {}, seriesColors: {}, seriesWidths: {}, seriesDashes: {}, seriesFills: {}
   }
 
@@ -38,11 +38,13 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
   const setGridY1 = val => setConfigVal('gridY1', val)
   const setGridY2 = val => setConfigVal('gridY2', val)
   const setGridY3 = val => setConfigVal('gridY3', val)
+  const setGridY4 = val => setConfigVal('gridY4', val)
   const setXGridSpacing = val => setConfigVal('xGridSpacing', val)
   const setXLimits = val => setConfigVal('xLimits', val)
   const setY1Limits = val => setConfigVal('y1Limits', val)
   const setY2Limits = val => setConfigVal('y2Limits', val)
   const setY3Limits = val => setConfigVal('y3Limits', val)
+  const setY4Limits = val => setConfigVal('y4Limits', val)
   const setAppliedRanges = val => setConfigVal('appliedRanges', val)
   const setSeriesAxisMap = val => setConfigVal('seriesAxisMap', val)
   const setSeriesColors = val => setConfigVal('seriesColors', val)
@@ -98,11 +100,12 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
 
   useEffect(() => {
     bumpRevision()
-    setAppliedRanges({ x: undefined, y1: undefined, y2: undefined, y3: undefined })
+    setAppliedRanges({ x: undefined, y1: undefined, y2: undefined, y3: undefined, y4: undefined })
     setXLimits({ min: '', max: '' })
     setY1Limits({ min: '', max: '' })
     setY2Limits({ min: '', max: '' })
     setY3Limits({ min: '', max: '' })
+    setY4Limits({ min: '', max: '' })
   }, [data])
   // When new series appear, apply defaults from ChartSettingsContext (element config)
   // Colors are assigned sequentially per element (1st series → colors[0], 2nd → colors[1], ...)
@@ -164,7 +167,9 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
   const y1Names      = seriesNames.filter(n => (seriesAxisMap[n] || 'y1') === 'y1')
   const y2Names      = seriesNames.filter(n => seriesAxisMap[n] === 'y2')
   const y3Names      = seriesNames.filter(n => seriesAxisMap[n] === 'y3')
+  const y4Names      = seriesNames.filter(n => seriesAxisMap[n] === 'y4')
   const hasY3        = y3Names.length > 0
+  const hasY4        = y4Names.length > 0
 
   // Returns the current color for a series: user override → resolved at init → auto-cycle palette
   const getColor = (name) => {
@@ -278,7 +283,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
     // ── Faixas de Filtro (Topo) ───────────────────────────────────────
     const visibleFilters = data?.visibleFilters || []
     const filterTraces = visibleFilters.map((name, i) => {
-      const yAxisRef = `y${i + 4}`
+      const yAxisRef = `y${i + 5}`
       
       // Mapeia onde o filtro é 1, e caso contrário 0 (cria uma onda quadrada com shape 'hv')
       const rawVals = data?.filterData?.[name] || data?.series?.[name] || []
@@ -325,16 +330,17 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
     const visibleFilters = data?.visibleFilters || []
     
     // Margens e Domínios otimizados
-    // Aumentamos o xDomainEnd para ganhar mais espaço de gráfico
-    const xDomainEnd = hasY3 ? 0.90 : (y2Names.length > 0 ? 0.95 : 1.0)
+    const xDomainEnd = hasY4 ? 0.82 : (hasY3 ? 0.88 : (y2Names.length > 0 ? 0.94 : 1.0))
     const xDomain = [0, xDomainEnd]
-    
+
     const y2Pos = xDomainEnd
-    const y3Pos = xDomainEnd + 0.035 // Reduzido de 0.05 para aproximar de Y2
-    const legendX = (hasY3 ? y3Pos : y2Pos) + 0.05 // Aumentado de 0.02 para 0.05 para afastar da legenda
-    
+    const y3Pos = xDomainEnd + 0.035
+    const y4Pos = xDomainEnd + 0.07
+    const lastAxisPos = hasY4 ? y4Pos : (hasY3 ? y3Pos : y2Pos)
+    const legendX = (y2Names.length > 0 || hasY3 || hasY4) ? lastAxisPos + 0.05 : 0
+
     // Margem direita suficiente para os eixos extras e a legenda
-    const rightMargin = hasY3 ? 200 : (y2Names.length > 0 ? 150 : 20)
+    const rightMargin = hasY4 ? 260 : (hasY3 ? 210 : (y2Names.length > 0 ? 160 : 20))
 
     // Calcula altura das faixas de filtro para esmagar os eixos Y normais (REDUZIDO PELA METADE)
     const filterHeight = Math.max(0.02, Math.min(0.04, 0.15 / (visibleFilters.length || 1)))
@@ -392,6 +398,17 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
         text: '<b>Y3</b>',
         xref: 'paper', yref: 'paper',
         x: y3Pos, xanchor: 'center',
+        y: 1.01, yanchor: 'bottom',
+        showarrow: false,
+        font: { size: 11, color: '#475569' }
+      })
+    }
+
+    if (hasY4 || gridY4) {
+      annotations.push({
+        text: '<b>Y4</b>',
+        xref: 'paper', yref: 'paper',
+        x: y4Pos, xanchor: 'center',
         y: 1.01, yanchor: 'bottom',
         showarrow: false,
         font: { size: 11, color: '#475569' }
@@ -489,6 +506,21 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
         rangemode:  'tozero',
         title:      { text: '', font: { size: 11 } },
       },
+      yaxis4: {
+        visible:    hasY4 || gridY4,
+        gridcolor:  gridY4 ? '#e2e8f0' : 'transparent',
+        linecolor:  '#cbd5e1',
+        tickfont:   { size: 11 },
+        zeroline:   gridY4,
+        zerolinecolor: '#cbd5e1',
+        overlaying: 'y',
+        side:       'right',
+        anchor:     'free',
+        position:   y4Pos,
+        range:      appliedRanges.y4,
+        rangemode:  'tozero',
+        title:      { text: '', font: { size: 11 } },
+      },
       legend: {
         bgcolor:     'rgba(255,255,255,0.9)',
         bordercolor: '#cbd5e1',
@@ -507,7 +539,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
     visibleFilters.forEach((name, i) => {
       const bottom = mainYTop + (i * filterHeight)
       const top = bottom + filterHeight * 0.85 // gap entre faixas
-      baseLayout[`yaxis${i + 4}`] = {
+      baseLayout[`yaxis${i + 5}`] = {
         domain: [bottom, top],
         showgrid: false,
         zeroline: false,
@@ -518,7 +550,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
     })
 
     return baseLayout
-  }, [gridX, gridY1, gridY2, gridY3, xGridSpacing, appliedRanges, visibleNames.length, baseDate, hasY3, data, filterColors, y2Names.length, y3Names.length])
+  }, [gridX, gridY1, gridY2, gridY3, gridY4, xGridSpacing, appliedRanges, visibleNames.length, baseDate, hasY3, hasY4, data, filterColors, y2Names.length, y3Names.length, y4Names.length])
 
   // ── onRelayout ────────────────────────────────────────────────────
   const handleRelayout = (e) => {
@@ -545,6 +577,9 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
     const y3Range = getRange('yaxis3')
     if (y3Range === 'auto') setY3Limits({ min: '', max: '' })
     else if (y3Range) setY3Limits({ min: Math.round(+y3Range[0]), max: Math.round(+y3Range[1]) })
+    const y4Range = getRange('yaxis4')
+    if (y4Range === 'auto') setY4Limits({ min: '', max: '' })
+    else if (y4Range) setY4Limits({ min: Math.round(+y4Range[0]), max: Math.round(+y4Range[1]) })
   }
 
   const makeApplyY = (key, limits) => () => {
@@ -797,11 +832,6 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
           color: 'var(--text-secondary)', marginBottom: 6,
         }}>
           {label}
-          {names.length > 0 && (
-            <span style={{ fontWeight: 400, marginLeft: 6, color: 'var(--text-muted)', textTransform: 'none', letterSpacing: 0 }}>
-              ({names.length})
-            </span>
-          )}
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
           {names.map(n => <SeriesChip key={n} name={n} />)}
@@ -904,6 +934,14 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
           </label>
         </AxisGroup>
 
+        <AxisGroup title="Y4">
+          <YLimitsControl limits={y4Limits ?? { min: '', max: '' }} setLimits={setY4Limits} applyFn={makeApplyY('y4', y4Limits ?? { min: '', max: '' })} />
+          <label className="checkbox-row" style={{ padding: 0 }}>
+            <input type="checkbox" checked={gridY4 ?? false} onChange={e => { setGridY4(e.target.checked); bumpRevision() }} />
+            <span style={{ fontSize: '11px', fontWeight: 600 }}>Grade</span>
+          </label>
+        </AxisGroup>
+
       </div>
 
       {/* ── Eixos (drag & drop) ──────────────────────────────── */}
@@ -978,6 +1016,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
               <DropZone axis="y1" label="Eixo Y1" names={y1Names} />
               <DropZone axis="y2" label="Eixo Y2" names={y2Names} />
               <DropZone axis="y3" label="Eixo Y3" names={y3Names} />
+              <DropZone axis="y4" label="Eixo Y4" names={y4Names} />
             </div>
 
             {hiddenNames.length > 0 && (

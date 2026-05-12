@@ -49,13 +49,14 @@ export default function DashboardPage() {
   
   // ── ESTADO DAS VISUALIZAÇÕES ──────────────────────────
   const [chartConfig, setChartConfig] = useState({
-    gridX: true, gridY1: true, gridY2: false, gridY3: false,
+    gridX: true, gridY1: true, gridY2: false, gridY3: false, gridY4: false,
     xGridSpacing: '',
     xLimits: { min: '', max: '' },
     y1Limits: { min: '', max: '' },
     y2Limits: { min: '', max: '' },
     y3Limits: { min: '', max: '' },
-    appliedRanges: { x: undefined, y1: undefined, y2: undefined, y3: undefined },
+    y4Limits: { min: '', max: '' },
+    appliedRanges: { x: undefined, y1: undefined, y2: undefined, y3: undefined, y4: undefined },
     seriesAxisMap: {},
     seriesColors: {},
     seriesWidths: {},
@@ -465,52 +466,59 @@ export default function DashboardPage() {
 
       {/* ── ÁREA PRINCIPAL ──────────────────────────────────────── */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg-primary)' }}>
-        {/* Barra superior: Abas + info */}
+        {/* Barra superior: Abas + info + sub-barra de visualizações */}
         <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '12px 20px', borderBottom: '1px solid var(--border)',
+          borderBottom: '1px solid var(--border)',
           background: 'var(--bg-card)', flexShrink: 0,
         }}>
-          <div className="tabs" style={{ flex: '0 0 auto' }}>
-            {TABS.map((tab) => (
-              <button key={tab.id} className={`tab ${activeTab === tab.id ? 'active' : ''}`} onClick={() => setActiveTab(tab.id)}>
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          {/* Linha 1: abas + badges */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px' }}>
+            <div className="tabs" style={{ flex: '0 0 auto' }}>
+              {TABS.map((tab) => (
+                <button key={tab.id} className={`tab ${activeTab === tab.id ? 'active' : ''}`} onClick={() => setActiveTab(tab.id)}>
+                  {tab.label}
+                </button>
+              ))}
+            </div>
 
-          {/* Botões de Visualização */}
-          <div style={{ display: 'flex', gap: 8, marginLeft: 20 }}>
-            <button 
-              className="btn btn-sm btn-ghost" 
-              onClick={() => setIsLoadModalOpen(true)}
-              title="Carregar Visualização"
-              style={{ padding: '4px 8px', fontSize: 13 }}
-            >
-              📂 Carregar
-            </button>
-            <button 
-              className="btn btn-sm btn-primary" 
-              onClick={() => setIsSaveModalOpen(true)}
-              title="Salvar Visualização"
-              style={{ padding: '4px 8px', fontSize: 13 }}
-            >
-              💾 Salvar
-            </button>
-            {loadedVisualization && (
-              <div style={{ display: 'flex', alignItems: 'center', marginLeft: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
-                <span>Visualização: <strong>{loadedVisualization.name}</strong></span>
+            {filteredData && (
+              <div style={{ display: 'flex', gap: 8, fontSize: 12, color: 'var(--text-secondary)', marginLeft: 'auto' }}>
+                <span className="badge badge-amber">
+                  {filteredData.dates?.split(',').length} {filteredData.dates?.split(',').length === 1 ? 'dia' : 'dias'}
+                </span>
+                <span className="badge badge-blue">{Object.keys(filteredData.series).length} séries</span>
+                <span className="badge badge-gray">{filteredData.total_pontos.toLocaleString('pt-BR')} pts</span>
               </div>
             )}
           </div>
 
-          {filteredData && (
-            <div style={{ display: 'flex', gap: 8, fontSize: 12, color: 'var(--text-secondary)', marginLeft: 'auto' }}>
-              <span className="badge badge-amber">
-                {filteredData.dates?.split(',').length} {filteredData.dates?.split(',').length === 1 ? 'dia' : 'dias'}
-              </span>
-              <span className="badge badge-blue">{Object.keys(filteredData.series).length} séries</span>
-              <span className="badge badge-gray">{filteredData.total_pontos.toLocaleString('pt-BR')} pts</span>
+          {/* Linha 2: botões de Carregar/Salvar — só nas abas Gráfico e Tabela */}
+          {(activeTab === 'chart' || activeTab === 'table') && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '0 20px 12px', flexWrap: 'wrap',
+            }}>
+              <button
+                className="btn btn-sm btn-ghost"
+                onClick={() => setIsLoadModalOpen(true)}
+                title="Carregar Visualização"
+                style={{ padding: '4px 10px', fontSize: 13 }}
+              >
+                📂 Carregar
+              </button>
+              <button
+                className="btn btn-sm btn-primary"
+                onClick={() => setIsSaveModalOpen(true)}
+                title="Salvar Visualização"
+                style={{ padding: '4px 10px', fontSize: 13 }}
+              >
+                💾 Salvar
+              </button>
+              {loadedVisualization && (
+                <span style={{ fontSize: 12, color: 'var(--text-secondary)', marginLeft: 4 }}>
+                  Visualização: <strong>{loadedVisualization.name}</strong>
+                </span>
+              )}
             </div>
           )}
         </div>

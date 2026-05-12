@@ -1,7 +1,7 @@
 [
   {
     "id": "a5da185f-942b-4c31-83a7-4ae3b8bfc618",
-    "created_at": "2026-05-10T14:17:26.147759",
+    "created_at": "2026-05-12T13:48:42.714639",
     "name": "Skid 1.1 - INV 01 - Irrad, Temp. Mód e Tracker",
     "user": "deschamps.ufsc@gmail.com",
     "selectedDates": [
@@ -40,8 +40,8 @@
         "max": ""
       },
       "y3Limits": {
-        "min": "",
-        "max": ""
+        "min": 0,
+        "max": 116
       },
       "appliedRanges": {},
       "seriesAxisMap": {
@@ -56,8 +56,8 @@
         "CLS01.1-INV03.PotAt": "y2",
         "CLS01.1-INV04.PotAt": "y2",
         "CLS01.1.MET-B.T_MOD": "y3",
-        "CLS01.1-INV01-SB13-TR051.PosAngAtual": "y3",
-        "CLS01.1-INV01-SB13-TR051.PosAngAlvo": "y3"
+        "CLS01.1-INV01-SB13-TR051.PosAngAtual": "y4",
+        "CLS01.1-INV01-SB13-TR051.PosAngAlvo": "y4"
       },
       "seriesColors": {
         "CLS01.1.MET-B.POA-Irrd": "#F9CC00",
@@ -103,6 +103,249 @@
         "CLS01.1.MET-B.T_MOD": "solid",
         "CLS01.1-INV01-SB13-TR051.PosAngAtual": "solid",
         "CLS01.1-INV01-SB13-TR051.PosAngAlvo": "solid"
+      },
+      "seriesFills": {
+        "CLS01.1.MET-B.POA-Irrd": 15,
+        "CLS01.1.MET-B.POA-Irrd_REAR": 20
+      },
+      "y4Limits": {
+        "min": -114,
+        "max": 102
+      }
+    }
+  },
+  {
+    "id": "cc8de7b2-d604-4be2-be20-a3cbade33aab",
+    "created_at": "2026-05-12T13:03:07.502645",
+    "name": "Grafico do Dé S2",
+    "user": "deschamps.ufsc@gmail.com",
+    "selectedDates": [
+      "2025-11-24",
+      "2025-11-25"
+    ],
+    "selectedSeries": [
+      "CLS01.1-INV01.PotAt",
+      "CLS01.1.MET-B.POA-Irrd",
+      "CLS01.1.MET-B.POA-Irrd_REAR",
+      "CLS01.1.MET-B.T_MOD",
+      "CLS01.1-INV01-SB13-TR051.PosAngAlvo",
+      "CLS01.1-INV01-SB13-TR051.PosAngAtual"
+    ],
+    "activeFilters": [],
+    "visibleFilters": [],
+    "filterColors": {
+      "Flag 5 minutos": "#ef4444"
+    },
+    "chartConfig": {
+      "gridX": true,
+      "gridY1": true,
+      "gridY2": false,
+      "gridY3": false,
+      "xGridSpacing": "2",
+      "xLimits": {
+        "min": "",
+        "max": ""
+      },
+      "y1Limits": {
+        "min": "",
+        "max": ""
+      },
+      "y2Limits": {
+        "min": -69,
+        "max": 1502
+      },
+      "y3Limits": {
+        "min": "",
+        "max": ""
+      },
+      "appliedRanges": {},
+      "seriesAxisMap": {
+        "CLS01.3-INV06-SB26.CorrenteCC_14": "y2",
+        "CLS01.4-INV02-SB06-TR024.PosAngAlvo": "y3",
+        "CLS01.1-INV05-SB20.CorrenteCC_01": "y2",
+        "CLS01.2-INV06-SB28-TR111.PosAngAlvo": "y3",
+        "CLS01.3-INV02-SB05.CorrenteCC_16": "y2",
+        "CLS01.1-INV01.PotAt": "y2",
+        "CLS01.1.MET-B.POA-Irrd": "y1",
+        "CLS01.1.MET-B.POA-Irrd_REAR": "y1",
+        "CLS01.1.MET-B.T_MOD": "y3",
+        "CLS01.1-INV01-SB13-TR051.PosAngAlvo": "y3",
+        "CLS01.1-INV01-SB13-TR051.PosAngAtual": "y3"
+      },
+      "seriesColors": {
+        "CLS01.3-INV06-SB26.CorrenteCC_14": "#E8769F",
+        "CLS01.4-INV02-SB06-TR024.PosAngAlvo": "#6A1B9A",
+        "CLS01.1-INV05-SB20.CorrenteCC_01": "#F7D1DE",
+        "CLS01.2-INV06-SB28-TR111.PosAngAlvo": "#A576C3",
+        "CLS01.3-INV02-SB05.CorrenteCC_16": "#E8769F",
+        "CLS01.1-INV01.PotAt": "#2E7D32",
+        "CLS01.1.MET-B.POA-Irrd": "#F9CC00",
+        "CLS01.1.MET-B.POA-Irrd_REAR": "#EB87FF",
+        "CLS01.1.MET-B.T_MOD": "#EF6C00",
+        "CLS01.1-INV01-SB13-TR051.PosAngAlvo": "#6A1B9A",
+        "CLS01.1-INV01-SB13-TR051.PosAngAtual": "#A576C3"
+      },
+      "seriesWidths": {
+        "CLS01.3-INV06-SB26.CorrenteCC_14": 1,
+        "CLS01.4-INV02-SB06-TR024.PosAngAlvo": 1,
+        "CLS01.1-INV05-SB20.CorrenteCC_01": 1,
+        "CLS01.2-INV06-SB28-TR111.PosAngAlvo": 1,
+        "CLS01.3-INV02-SB05.CorrenteCC_16": 1,
+        "CLS01.1-INV01.PotAt": 1,
+        "CLS01.1.MET-B.POA-Irrd": 1,
+        "CLS01.1.MET-B.POA-Irrd_REAR": 1,
+        "CLS01.1.MET-B.T_MOD": 1,
+        "CLS01.1-INV01-SB13-TR051.PosAngAlvo": 1,
+        "CLS01.1-INV01-SB13-TR051.PosAngAtual": 1
+      },
+      "seriesDashes": {
+        "CLS01.3-INV06-SB26.CorrenteCC_14": "solid",
+        "CLS01.4-INV02-SB06-TR024.PosAngAlvo": "solid",
+        "CLS01.1-INV05-SB20.CorrenteCC_01": "solid",
+        "CLS01.2-INV06-SB28-TR111.PosAngAlvo": "solid",
+        "CLS01.3-INV02-SB05.CorrenteCC_16": "solid",
+        "CLS01.1-INV01.PotAt": "solid",
+        "CLS01.1.MET-B.POA-Irrd": "solid",
+        "CLS01.1.MET-B.POA-Irrd_REAR": "solid",
+        "CLS01.1.MET-B.T_MOD": "solid",
+        "CLS01.1-INV01-SB13-TR051.PosAngAlvo": "solid",
+        "CLS01.1-INV01-SB13-TR051.PosAngAtual": "solid"
+      },
+      "seriesFills": {
+        "CLS01.1.MET-B.POA-Irrd": 11,
+        "CLS01.1.MET-B.POA-Irrd_REAR": 20
+      }
+    }
+  },
+  {
+    "id": "5c103c76-7a99-4e38-b501-4d7728aadd60",
+    "created_at": "2026-05-12T13:05:24.295483",
+    "name": "Skid 1.1 - INV 01 - Irrad, Temp. Mód e Tracker - Dé S2",
+    "user": "deschamps.ufsc@gmail.com",
+    "selectedDates": [
+      "2025-11-24",
+      "2025-11-25"
+    ],
+    "selectedSeries": [
+      "CLS01.1-INV01.PotAt",
+      "CLS01.1.MET-B.POA-Irrd_REAR",
+      "CLS01.1.MET-B.POA-Irrd",
+      "CLS01.1.MET-B.T_MOD",
+      "CLS01.1-INV01-SB13-TR051.PosAngAtual",
+      "CLS01.1-INV01-SB13-TR051.PosAngAlvo",
+      "CLS01.3-INV06-SB26.CorrenteCC_14",
+      "CLS01.4-INV02-SB06-TR024.PosAngAlvo",
+      "CLS01.1-INV05-SB20.CorrenteCC_01",
+      "CLS01.2-INV06-SB28-TR111.PosAngAlvo",
+      "CLS01.3-INV02-SB05.CorrenteCC_16"
+    ],
+    "activeFilters": [],
+    "visibleFilters": [],
+    "filterColors": {
+      "Flag 5 minutos": "#ef4444"
+    },
+    "chartConfig": {
+      "gridX": true,
+      "gridY1": true,
+      "gridY2": false,
+      "gridY3": false,
+      "xGridSpacing": "",
+      "xLimits": {
+        "min": "",
+        "max": ""
+      },
+      "y1Limits": {
+        "min": "",
+        "max": ""
+      },
+      "y2Limits": {
+        "min": "",
+        "max": ""
+      },
+      "y3Limits": {
+        "min": "",
+        "max": ""
+      },
+      "appliedRanges": {},
+      "seriesAxisMap": {
+        "CLS01.1.MET-B.POA-Irrd": "y1",
+        "CLS01.1.MET-B.POA-Irrd_REAR": "y1",
+        "CLS01.1-INV01.PotAt": "y2",
+        "CLS01.1-INV05.PotAt": "y2",
+        "CLS01.1-INV08.PotAt": "y2",
+        "CLS01.1-INV07.PotAt": "y2",
+        "CLS01.1-INV06.PotAt": "y2",
+        "CLS01.1-INV02.PotAt": "y2",
+        "CLS01.1-INV03.PotAt": "y2",
+        "CLS01.1-INV04.PotAt": "y2",
+        "CLS01.1.MET-B.T_MOD": "y3",
+        "CLS01.1-INV01-SB13-TR051.PosAngAtual": "y2",
+        "CLS01.1-INV01-SB13-TR051.PosAngAlvo": "y2",
+        "CLS01.3-INV06-SB26.CorrenteCC_14": "y3",
+        "CLS01.4-INV02-SB06-TR024.PosAngAlvo": "y2",
+        "CLS01.1-INV05-SB20.CorrenteCC_01": "y3",
+        "CLS01.2-INV06-SB28-TR111.PosAngAlvo": "y2",
+        "CLS01.3-INV02-SB05.CorrenteCC_16": "y3"
+      },
+      "seriesColors": {
+        "CLS01.1.MET-B.POA-Irrd": "#F9CC00",
+        "CLS01.1.MET-B.POA-Irrd_REAR": "#F9A825",
+        "CLS01.1-INV01.PotAt": "#2E7D32",
+        "CLS01.1-INV05.PotAt": "#2E7D32",
+        "CLS01.1-INV08.PotAt": "#2E7D32",
+        "CLS01.1-INV07.PotAt": "#2E7D32",
+        "CLS01.1-INV06.PotAt": "#2E7D32",
+        "CLS01.1-INV02.PotAt": "#2E7D32",
+        "CLS01.1-INV03.PotAt": "#2E7D32",
+        "CLS01.1-INV04.PotAt": "#2E7D32",
+        "CLS01.1.MET-B.T_MOD": "#EF6C00",
+        "CLS01.1-INV01-SB13-TR051.PosAngAtual": "#6A1B9A",
+        "CLS01.1-INV01-SB13-TR051.PosAngAlvo": "#6A1B9A",
+        "CLS01.3-INV06-SB26.CorrenteCC_14": "#E8769F",
+        "CLS01.4-INV02-SB06-TR024.PosAngAlvo": "#6A1B9A",
+        "CLS01.1-INV05-SB20.CorrenteCC_01": "#F7D1DE",
+        "CLS01.2-INV06-SB28-TR111.PosAngAlvo": "#A576C3",
+        "CLS01.3-INV02-SB05.CorrenteCC_16": "#E8769F"
+      },
+      "seriesWidths": {
+        "CLS01.1.MET-B.POA-Irrd": 1,
+        "CLS01.1.MET-B.POA-Irrd_REAR": 1,
+        "CLS01.1-INV01.PotAt": 1,
+        "CLS01.1-INV05.PotAt": 1.5,
+        "CLS01.1-INV08.PotAt": 1.5,
+        "CLS01.1-INV07.PotAt": 1.5,
+        "CLS01.1-INV06.PotAt": 1.5,
+        "CLS01.1-INV02.PotAt": 1.5,
+        "CLS01.1-INV03.PotAt": 1.5,
+        "CLS01.1-INV04.PotAt": 1.5,
+        "CLS01.1.MET-B.T_MOD": 1,
+        "CLS01.1-INV01-SB13-TR051.PosAngAtual": 1,
+        "CLS01.1-INV01-SB13-TR051.PosAngAlvo": 1,
+        "CLS01.3-INV06-SB26.CorrenteCC_14": 1,
+        "CLS01.4-INV02-SB06-TR024.PosAngAlvo": 1,
+        "CLS01.1-INV05-SB20.CorrenteCC_01": 1,
+        "CLS01.2-INV06-SB28-TR111.PosAngAlvo": 1,
+        "CLS01.3-INV02-SB05.CorrenteCC_16": 1
+      },
+      "seriesDashes": {
+        "CLS01.1.MET-B.POA-Irrd": "solid",
+        "CLS01.1.MET-B.POA-Irrd_REAR": "solid",
+        "CLS01.1-INV01.PotAt": "solid",
+        "CLS01.1-INV05.PotAt": "solid",
+        "CLS01.1-INV08.PotAt": "solid",
+        "CLS01.1-INV07.PotAt": "solid",
+        "CLS01.1-INV06.PotAt": "solid",
+        "CLS01.1-INV02.PotAt": "solid",
+        "CLS01.1-INV03.PotAt": "solid",
+        "CLS01.1-INV04.PotAt": "solid",
+        "CLS01.1.MET-B.T_MOD": "solid",
+        "CLS01.1-INV01-SB13-TR051.PosAngAtual": "solid",
+        "CLS01.1-INV01-SB13-TR051.PosAngAlvo": "solid",
+        "CLS01.3-INV06-SB26.CorrenteCC_14": "solid",
+        "CLS01.4-INV02-SB06-TR024.PosAngAlvo": "solid",
+        "CLS01.1-INV05-SB20.CorrenteCC_01": "solid",
+        "CLS01.2-INV06-SB28-TR111.PosAngAlvo": "solid",
+        "CLS01.3-INV02-SB05.CorrenteCC_16": "solid"
       },
       "seriesFills": {
         "CLS01.1.MET-B.POA-Irrd": 15,

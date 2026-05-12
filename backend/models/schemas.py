@@ -1,4 +1,4 @@
-"""
+﻿"""
 Schemas Pydantic — contratos de entrada e saída da API.
 """
 from pydantic import BaseModel, Field
@@ -17,7 +17,7 @@ class SeriesInfo(BaseModel):
     stringbox: Optional[str] = None
     estacao: Optional[str] = None         # Estação de monitoramento
     string: Optional[str] = None          # String Identifier
-    mapeada: bool = False                 # True se encontrada no DE-PARA
+    mapeada: bool = False                 # True se encontrada no Mapeamento de Séries
 
 
 # ── Upload ────────────────────────────────────────────────────────────────────
@@ -30,10 +30,10 @@ class UploadResponse(BaseModel):
     cached: bool = False
 
 
-# ── Mapeamento DE-PARA ────────────────────────────────────────────────────────
+# ── Mapeamento Mapeamento de Séries ────────────────────────────────────────────────────────
 
 class SeriesMapEntry(BaseModel):
-    """Um registro do DE-PARA."""
+    """Um registro do Mapeamento de Séries."""
     coluna_excel: str
     elemento: str
     skid: Optional[str] = None
@@ -49,7 +49,7 @@ class SeriesMapRequest(BaseModel):
 
 
 class MappingImportResponse(BaseModel):
-    """Resposta da importação do Excel DE-PARA."""
+    """Resposta da importação do Excel de Mapeamento de Séries."""
     total_mapeamentos: int
     linhas_invalidas: int
     elementos_encontrados: list[str]

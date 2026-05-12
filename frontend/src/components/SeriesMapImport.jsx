@@ -3,7 +3,7 @@ import { importMappingExcel, getMappingTemplateUrl, fetchMappingSummary } from '
 import { ErrorState } from './StateComponents'
 
 /**
- * Componente completo de importação do Excel DE-PARA.
+ * Componente completo de importação do Excel de Mapeamento de Séries.
  * Inclui: drag-drop, preview de estatísticas, download de template.
  */
 export default function SeriesMapImport({ onImported, usina }) {
@@ -75,7 +75,7 @@ export default function SeriesMapImport({ onImported, usina }) {
         <input ref={inputRef} type="file" accept=".xlsx,.xls" style={{ display: 'none' }} onChange={(e) => handleFile(e.target.files[0])} />
         <div style={{ fontSize: 32, marginBottom: 8 }}>📋</div>
         <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
-          {file ? file.name : 'Arraste o Excel DE-PARA aqui'}
+          {file ? file.name : 'Arraste o Excel de Mapeamento de Séries aqui'}
         </div>
         <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
           Colunas: coluna_excel | elemento | skid | estacao | inversor | stringbox
@@ -85,7 +85,7 @@ export default function SeriesMapImport({ onImported, usina }) {
       {/* Ações */}
       <div style={{ display: 'flex', gap: 10 }}>
         <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleImport} disabled={!file || loading}>
-          {loading ? '⏳ Importando...' : '📥 Importar DE-PARA'}
+          {loading ? '⏳ Importando...' : '📥 Importar Mapeamento'}
         </button>
         <a className="btn btn-secondary" href={templateUrl} download>
           📄 Template

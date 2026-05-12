@@ -1,8 +1,8 @@
-"""
-Serviço do sistema DE-PARA (mapeamento de séries).
+﻿"""
+Serviço do sistema de mapeamento de séries (Mapeamento de Séries).
 Responsável por:
   - Carregar / salvar series_map.json
-  - Importar Excel DE-PARA enviado pelo usuário
+  - Importar Excel de Mapeamento de Séries enviado pelo usuário
   - Validar o mapeamento contra colunas de um Parquet
   - Gerar template Excel para preenchimento
 """
@@ -56,11 +56,11 @@ def get_series_info(col_name: str, usina: str) -> dict:
     return {"mapeada": False}
 
 
-# ── Importar Excel DE-PARA ────────────────────────────────────────────────────
+# ── Importar Excel Mapeamento de Séries ────────────────────────────────────────────────────
 
 def import_from_excel(content: bytes, usina: str) -> dict:
     """
-    Lê o Excel DE-PARA enviado pelo usuário.
+    Lê o Excel de Mapeamento de Séries enviado pelo usuário.
 
     Colunas esperadas (case-insensitive):
         coluna_excel | elemento | skid | inversor | stringbox
@@ -76,7 +76,7 @@ def import_from_excel(content: bytes, usina: str) -> dict:
     # Verificar coluna obrigatória
     if "coluna_excel" not in df.columns or "elemento" not in df.columns:
         raise ValueError(
-            "O Excel DE-PARA precisa ter pelo menos as colunas 'coluna_excel' e 'elemento'."
+            "O Excel de Mapeamento de Séries precisa ter pelo menos as colunas 'coluna_excel' e 'elemento'."
         )
 
     mapping = {}
@@ -196,7 +196,7 @@ def validate_mapping_against_parquet(parquet_columns: list[str], usina: str) -> 
 
 def generate_template_excel(colunas_parquet: Optional[list[str]] = None) -> bytes:
     """
-    Gera um Excel template para o usuário preencher o DE-PARA.
+    Gera um Excel template para o usuário preencher o Mapeamento de Séries.
     Se colunas_parquet for fornecido, pré-preenche a coluna 'coluna_excel'.
     """
     if colunas_parquet:
