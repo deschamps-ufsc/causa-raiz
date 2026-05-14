@@ -1,0 +1,214 @@
+import React, { useState, useMemo, useRef, useEffect } from 'react'
+
+export default function SingleSeriesDropdown({ value, onChange, series = [], elementos = [] }) {
+  const [isOpen, setIsOpen] = useState(false)
+  
+  // Filtros
+  const [search, setSearch] = useState('')
+  const [filterEl, setFilterEl] = useState('')
+  const [filterEstacao, setFilterEstacao] = useState('')
+  const [filterSkid, setFilterSkid] = useState('')
+  const [filterInv, setFilterInv] = useState('')
+  const [filterSb, setFilterSb] = useState('')
+
+  const containerRef = useRef(null)
+
+  // Fecha o dropdown ao clicar fora
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsOpen(false)
+      }
+    }
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isOpen])
+
+  const hasActiveFilters = filterEl || filterEstacao || filterSkid || filterInv || filterSb
+
+  const filteredSeries = useMemo(() => {
+    return series.filter((s) => {
+      if (filterEl && s.elemento !== filterEl) return false
+      if (filterEstacao && s.estacao !== filterEstacao) return false
+      if (filterSkid && s.skid !== filterSkid) return false
+      if (filterInv && s.inversor !== filterInv) return false
+      if (filterSb && s.stringbox !== filterSb) return false
+      if (search && !s.coluna.toLowerCase().includes(search.toLowerCase())) return false
+      return true
+    })
+  }, [series, filterEl, filterEstacao, filterSkid, filterInv, filterSb, search])
+
+  const uniqueEstacoes = useMemo(() => [...new Set(series.filter(s => !filterEl || s.elemento === filterEl).map(s => s.estacao).filter(Boolean))].sort(), [series, filterEl])
+  const uniqueSkids = useMemo(() => [...new Set(series.filter(s => (!filterEl || s.elemento === filterEl) && (!filterEstacao || s.estacao === filterEstacao)).map(s => s.skid).filter(Boolean))].sort(), [series, filterEl, filterEstacao])
+  const uniqueInvs = useMemo(() => [...new Set(series.filter(s => !filterSkid || s.skid === filterSkid).map(s => s.inversor).filter(Boolean))].sort(), [series, filterSkid])
+  const uniqueSbs = useMemo(() => [...new Set(series.filter(s => !filterInv || s.inversor === filterInv).map(s => s.stringbox).filter(Boolean))].sort(), [series, filterInv])
+
+  const handleSelect = (coluna) => {
+    onChange(coluna)
+    setIsOpen(false)
+  }
+
+  const clearFilters = () => {
+    setFilterEl('')
+    setFilterEstacao('')
+    setFilterSkid('')
+    setFilterInv('')
+    setFilterSb('')
+  }
+
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+
+  return (
+    <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
+      {/* Botão que simula o Select */}
+      <div 
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          border: '1px solid var(--border)', background: 'var(--bg-input)', padding: '8px 12px',
+          borderRadius: '6px', fontSize: '13px', color: value ? 'var(--text-primary)' : 'var(--text-muted)',
+          cursor: 'pointer', userSelect: 'none'
+        }}
+      >
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {value || 'Selecionar série...'}
+        </span>
+        <span style={{ fontSize: '10px' }}>▼</span>
+      </div>
+
+      {/* Popover */}
+      {isOpen && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
+          background: 'var(--bg-card)', border: '1px solid var(--border)',
+          borderRadius: '8px', zIndex: 1050, boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+          display: 'flex', flexDirection: 'column', maxHeight: '350px'
+        }}>
+          
+          <div style={{ padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px', borderBottom: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', gap: '6px', position: 'relative' }}>
+              <div style={{ position: 'relative', flex: 1 }}>
+                <input
+                  className="input"
+                  style={{ width: '100%', fontSize: '13px', paddingRight: '24px' }}
+                  placeholder="🔍 Buscar série..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  autoFocus
+                />
+                {search && (
+                  <button 
+                    onClick={() => setSearch('')}
+                    style={{ position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '14px' }}
+                  >×</button>
+                )}
+              </div>
+
+              <button 
+                className={`btn ${hasActiveFilters ? 'btn-primary' : 'btn-ghost'}`} 
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                title="Filtros avançados (Elementos, Estações, etc)"
+                style={{ 
+                  padding: '0 8px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: isFilterOpen ? 'var(--amber)' : (hasActiveFilters ? 'rgba(245,158,11,0.2)' : 'none'),
+                  borderColor: hasActiveFilters ? 'var(--amber)' : 'var(--border)',
+                  color: isFilterOpen ? '#000' : (hasActiveFilters ? 'var(--amber)' : 'var(--text-secondary)'),
+                  height: '32px'
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                {hasActiveFilters && !isFilterOpen && (
+                  <div style={{ position: 'absolute', top: -4, right: -4, width: 8, height: 8, borderRadius: '50%', background: '#ef4444', border: '1.5px solid var(--bg-sidebar)' }} />
+                )}
+              </button>
+
+              {/* Filtros Hierárquicos Popover */}
+              {isFilterOpen && (
+                <>
+                  <div style={{ position: 'fixed', inset: 0, zIndex: 100 }} onClick={() => setIsFilterOpen(false)} />
+                  <div style={{
+                    position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: 260, zIndex: 101,
+                    background: 'var(--bg-card)', border: '1px solid var(--border)',
+                    borderRadius: 12, padding: 14, boxShadow: '0 12px 40px rgba(0,0,0,0.4)',
+                    display: 'flex', flexDirection: 'column', gap: 10
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Filtros Hierárquicos</span>
+                      {hasActiveFilters && (
+                        <button onClick={clearFilters} style={{ background: 'none', border: 'none', color: 'var(--red)', fontSize: 10, fontWeight: 700, cursor: 'pointer', padding: 0 }}>LIMPAR</button>
+                      )}
+                    </div>
+
+                    <select className="input" style={{ fontSize: 12 }} value={filterEl} onChange={e => { setFilterEl(e.target.value); setFilterEstacao(''); setFilterSkid(''); setFilterInv(''); setFilterSb(''); }}>
+                      <option value="">Todos os Elementos</option>
+                      {elementos.map(el => <option key={el} value={el}>{el}</option>)}
+                    </select>
+
+                    <select className="input" style={{ fontSize: 12 }} value={filterEstacao} onChange={e => { setFilterEstacao(e.target.value); setFilterSkid(''); setFilterInv(''); setFilterSb(''); }}>
+                      <option value="">Todas as Estações</option>
+                      {uniqueEstacoes.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+
+                    <select className="input" style={{ fontSize: 12 }} value={filterSkid} onChange={e => { setFilterSkid(e.target.value); setFilterInv(''); setFilterSb(''); }}>
+                      <option value="">Todos os SKIDs</option>
+                      {uniqueSkids.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+
+                    <select className="input" style={{ fontSize: 12 }} value={filterInv} onChange={e => { setFilterInv(e.target.value); setFilterSb(''); }}>
+                      <option value="">Todos os Inversores</option>
+                      {uniqueInvs.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+
+                    <button 
+                      className="btn btn-primary btn-sm" 
+                      style={{ marginTop: 6, background: 'var(--amber)', color: '#000' }}
+                      onClick={() => setIsFilterOpen(false)}
+                    >
+                      Aplicar Filtros
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div style={{ flex: 1, overflowY: 'auto', padding: '4px', display: 'flex', flexDirection: 'column' }}>
+            {filteredSeries.length === 0 ? (
+              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>
+                Nenhuma série encontrada. (Filtros: {hasActiveFilters ? 'Sim' : 'Não'}, Total séries: {series.length})
+              </div>
+            ) : (
+              filteredSeries.slice(0, 100).map((s) => (
+                <div
+                  key={s.coluna}
+                  onClick={() => handleSelect(s.coluna)}
+                  style={{
+                    padding: '8px 10px', fontSize: '12px', color: 'var(--text-primary)',
+                    cursor: 'pointer', borderRadius: '4px', flexShrink: 0,
+                    background: value === s.coluna ? 'rgba(245,158,11,0.1)' : 'transparent',
+                    border: value === s.coluna ? '1px solid var(--amber)' : '1px solid transparent',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                  }}
+                  onMouseEnter={e => { if (value !== s.coluna) e.currentTarget.style.background = 'var(--bg-hover)' }}
+                  onMouseLeave={e => { if (value !== s.coluna) e.currentTarget.style.background = 'transparent' }}
+                >
+                  {s.coluna}
+                </div>
+              ))
+            )}
+            {filteredSeries.length > 100 && (
+              <div style={{ padding: '8px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '11px' }}>
+                Mostrando 100 de {filteredSeries.length} séries. Refine a busca.
+              </div>
+            )}
+          </div>
+
+        </div>
+      )}
+    </div>
+  )
+}

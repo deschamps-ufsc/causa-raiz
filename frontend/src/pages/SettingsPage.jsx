@@ -5,6 +5,7 @@ import SharedColorPicker from '../components/SharedColorPicker'
 import { fetchAuthUsers, createAuthUser, updateAuthUser, deleteAuthUser } from '../services/api'
 import { useAuth } from '../hooks/AuthContext'
 import UsinasTab from '../components/Settings/UsinasTab'
+import FiltrosTab from '../components/Settings/FiltrosTab'
 
 // ── Linha de elemento ─────────────────────────────────────────────────────────
 const MAX_COLORS = 5
@@ -633,6 +634,7 @@ function UsuariosTab({ readOnly = false }) {
 const TABS = [
   { id: 'usinas',    icon: '🏭', label: 'Usinas' },
   { id: 'elementos', icon: '📊', label: 'Elementos' },
+  { id: 'filtros',   icon: '🎛️', label: 'Filtros' },
   { id: 'usuarios',  icon: '👥', label: 'Usuários' },
 ]
 
@@ -689,6 +691,7 @@ export default function SettingsPage() {
         {/* Content */}
         {activeTab === 'elementos' && <ElementosTab readOnly={readOnly} />}
         {activeTab === 'usinas'    && <UsinasTab readOnly={readOnly} />}
+        {activeTab === 'filtros'   && <FiltrosTab readOnly={readOnly} />}
         {activeTab === 'usuarios'  && <UsuariosTab readOnly={readOnly} />}
       </div>
     </div>

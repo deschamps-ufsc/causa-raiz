@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Camada de comunicação com o backend FastAPI.
  * Todas as chamadas à API passam por aqui.
  */
@@ -59,6 +59,12 @@ export const fetchElementSettings = () =>
 
 export const saveElementSettings = (settings) =>
   api.put('/settings/elements', settings).then(r => r.data)
+
+export const fetchFilterSettings = () =>
+  api.get('/settings/filters').then(r => r.data)
+
+export const saveFilterSettings = (settings) =>
+  api.put('/settings/filters', settings).then(r => r.data)
 
 // ── Usinas ────────────────────────────────────────────────────
 export const fetchUsinas = () =>

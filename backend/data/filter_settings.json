@@ -1,0 +1,8 @@
+[
+  {
+    "element": "Irradiação",
+    "min_value": 50,
+    "max_value": 1800,
+    "max_variation": 1200
+  }
+]

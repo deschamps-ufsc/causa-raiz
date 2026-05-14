@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react'
-import { fetchElementSettings, saveElementSettings } from '../services/api'
+import { fetchElementSettings, saveElementSettings, fetchFilterSettings, saveFilterSettings } from '../services/api'
 import { useAuth } from './AuthContext'
 
 const ChartSettingsContext = createContext(null)
@@ -7,33 +7,39 @@ const ChartSettingsContext = createContext(null)
 export function ChartSettingsProvider({ children }) {
   const { user } = useAuth()
   const [elementSettings, setElementSettings] = useState([])
+  const [filterSettings, setFilterSettings] = useState([])
   const [loading, setLoading] = useState(true)
 
   // Use ref to avoid saving on the very first mount fetch
-  const isFirstLoad = useRef(true)
+  const isFirstLoadElements = useRef(true)
+  const isFirstLoadFilters = useRef(true)
 
   useEffect(() => {
     let isMounted = true
-    fetchElementSettings()
-      .then((data) => {
+    Promise.all([
+      fetchElementSettings(),
+      fetchFilterSettings()
+    ])
+      .then(([elementsData, filtersData]) => {
         if (isMounted) {
-          setElementSettings(data)
+          setElementSettings(elementsData)
+          setFilterSettings(filtersData)
           setLoading(false)
         }
       })
       .catch((e) => {
-        console.error("Erro ao carregar configurações de elementos", e)
+        console.error("Erro ao carregar configurações (elementos/filtros)", e)
         if (isMounted) setLoading(false)
       })
     return () => { isMounted = false }
   }, [user])
 
+  // Auto-save elements
   useEffect(() => {
-    if (isFirstLoad.current) {
-      if (!loading) isFirstLoad.current = false
+    if (isFirstLoadElements.current) {
+      if (!loading) isFirstLoadElements.current = false
       return
     }
-    // Auto-save changes to the backend (only for admin, backend also restricts this)
     if (user?.role === 'admin') {
       const timeout = setTimeout(() => {
         saveElementSettings(elementSettings).catch(console.error)
@@ -41,6 +47,20 @@ export function ChartSettingsProvider({ children }) {
       return () => clearTimeout(timeout)
     }
   }, [elementSettings, user, loading])
+
+  // Auto-save filters
+  useEffect(() => {
+    if (isFirstLoadFilters.current) {
+      if (!loading) isFirstLoadFilters.current = false
+      return
+    }
+    if (user?.role === 'admin') {
+      const timeout = setTimeout(() => {
+        saveFilterSettings(filterSettings).catch(console.error)
+      }, 500)
+      return () => clearTimeout(timeout)
+    }
+  }, [filterSettings, user, loading])
 
   const updateElementSetting = (index, field, value) => {
     setElementSettings(prev => prev.map((s, i) => i === index ? { ...s, [field]: value } : s))
@@ -55,23 +75,45 @@ export function ChartSettingsProvider({ children }) {
 
   const removeCustomElement = (elementName) => {
     setElementSettings(prev => prev.filter(s => s.element !== elementName))
+    setFilterSettings(prev => prev.filter(s => s.element !== elementName)) // Remove filtro também
   }
 
-  // Dado um nome de elemento, retorna a configuração completa
   const getSettingForElement = (elementName) => {
     return elementSettings.find(s =>
       elementName && s.element.toLowerCase() === elementName.toLowerCase()
     ) || null
   }
 
+  // Métodos para filtros
+  const addFilterElement = (elementName) => {
+    setFilterSettings(prev => {
+      if (prev.some(s => s.element === elementName)) return prev
+      return [...prev, { element: elementName, min_value: null, max_value: null, max_variation: null }]
+    })
+  }
+
+  const updateFilterSetting = (elementName, field, value) => {
+    setFilterSettings(prev => prev.map(s => 
+      s.element === elementName ? { ...s, [field]: value } : s
+    ))
+  }
+
+  const removeFilterElement = (elementName) => {
+    setFilterSettings(prev => prev.filter(s => s.element !== elementName))
+  }
+
   return (
     <ChartSettingsContext.Provider value={{
       elementSettings,
+      filterSettings,
       loading,
       updateElementSetting,
       getSettingForElement,
       addCustomElement,
       removeCustomElement,
+      addFilterElement,
+      updateFilterSetting,
+      removeFilterElement,
     }}>
       {children}
     </ChartSettingsContext.Provider>

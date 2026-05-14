@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import PlotWrapper from 'react-plotly.js'
 const Plot = PlotWrapper.default || PlotWrapper
+import Plotly from 'plotly.js/dist/plotly'
 
 import { EXCEL_THEME, COLORS } from '../constants/palette'
 import SharedColorPicker from './SharedColorPicker'
@@ -16,13 +17,13 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
   const {
     gridX, gridY1, gridY2, gridY3, gridY4,
     xGridSpacing, xLimits, y1Limits, y2Limits, y3Limits, y4Limits, appliedRanges,
-    seriesAxisMap, seriesColors, seriesWidths, seriesDashes, seriesFills
+    seriesAxisMap, seriesColors, seriesWidths, seriesDashes, seriesFills, legendPosition = 'right'
   } = chartConfig || {
     gridX: true, gridY1: true, gridY2: false, gridY3: false, gridY4: false,
     xGridSpacing: '',
     xLimits: { min: '', max: '' }, y1Limits: { min: '', max: '' }, y2Limits: { min: '', max: '' }, y3Limits: { min: '', max: '' }, y4Limits: { min: '', max: '' },
     appliedRanges: { x: undefined, y1: undefined, y2: undefined, y3: undefined, y4: undefined },
-    seriesAxisMap: {}, seriesColors: {}, seriesWidths: {}, seriesDashes: {}, seriesFills: {}
+    seriesAxisMap: {}, seriesColors: {}, seriesWidths: {}, seriesDashes: {}, seriesFills: {}, legendPosition: 'right'
   }
 
   const setConfigVal = (key, valueOrFn) => {
@@ -51,12 +52,30 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
   const setSeriesWidths = val => setConfigVal('seriesWidths', val)
   const setSeriesDashes = val => setConfigVal('seriesDashes', val)
   const setSeriesFills = val => setConfigVal('seriesFills', val)
+  const setLegendPosition = val => setConfigVal('legendPosition', val)
   const [colorPickerFor,  setColorPickerFor]  = useState(null) // nome da série com picker aberto
   const [axesOpen,        setAxesOpen]        = useState(false)
   const [dragOver,        setDragOver]        = useState(null)
   const [plotRevision,    setPlotRevision]    = useState(0)
   const [plotMountKey,    setPlotMountKey]    = useState(0)
-  const containerRef = useRef(null)
+  const containerRef    = useRef(null)
+  const plotDivRef      = useRef(null)
+  const plotWrapperRef  = useRef(null)
+  const xDomainEndRef   = useRef(1.0)
+  
+  const [plotSize, setPlotSize] = useState({ width: 800, height: 400 })
+
+  useEffect(() => {
+    if (!plotWrapperRef.current) return
+    const ro = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        setPlotSize({ width: entry.contentRect.width, height: entry.contentRect.height })
+        setPlotRevision(r => r + 1)
+      }
+    })
+    ro.observe(plotWrapperRef.current)
+    return () => ro.disconnect()
+  }, [])
 
 
   const { elementSettings } = useChartSettings()
@@ -162,8 +181,12 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
   if (!data?.timestamps?.length) return null
 
   const baseDate     = data.date || ''
-  const visibleNames = seriesNames.filter(n => (seriesAxisMap[n] || 'y1') !== 'hidden')
-  const hiddenNames  = seriesNames.filter(n => seriesAxisMap[n] === 'hidden')
+  // Helpers para o formato 'hidden:y2' que preserva o eixo anterior ao ocultar
+  const isHiddenSeries = (axisVal) => axisVal != null && String(axisVal).startsWith('hidden')
+  const prevAxisOf     = (axisVal) => String(axisVal).split(':')[1] || 'y1'
+
+  const visibleNames = seriesNames.filter(n => !isHiddenSeries(seriesAxisMap[n] || 'y1'))
+  const hiddenNames  = seriesNames.filter(n => isHiddenSeries(seriesAxisMap[n]))
   const y1Names      = seriesNames.filter(n => (seriesAxisMap[n] || 'y1') === 'y1')
   const y2Names      = seriesNames.filter(n => seriesAxisMap[n] === 'y2')
   const y3Names      = seriesNames.filter(n => seriesAxisMap[n] === 'y3')
@@ -216,7 +239,13 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
   const hideShow = (name) => {
     setSeriesAxisMap(prev => {
       const cur = prev[name] || 'y1'
-      return { ...prev, [name]: cur === 'hidden' ? 'y1' : 'hidden' }
+      if (isHiddenSeries(cur)) {
+        // Desoculta: retorna ao eixo que estava antes de ocultar
+        return { ...prev, [name]: prevAxisOf(cur) }
+      } else {
+        // Oculta: codifica o eixo atual no valor para poder restaurar depois
+        return { ...prev, [name]: `hidden:${cur}` }
+      }
     })
     setPlotMountKey(k => k + 1)
     bumpRevision()
@@ -329,18 +358,28 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
   const layout = useMemo(() => {
     const visibleFilters = data?.visibleFilters || []
     
-    // Margens e Domínios otimizados
-    const xDomainEnd = hasY4 ? 0.82 : (hasY3 ? 0.88 : (y2Names.length > 0 ? 0.94 : 1.0))
+    // Margens e Domínios otimizados com base em pixels fixos
+    const AXIS_SPACE_PX = 35 // Espaço fixo em pixels para cada eixo Y extra
+    
+    let extraAxesCount = 0
+    if (hasY4) extraAxesCount = 3
+    else if (hasY3) extraAxesCount = 2
+    else if (y2Names.length > 0) extraAxesCount = 1
+
+    const innerWidth = Math.max(100, plotSize.width - 45 - 15) // plotWidth - leftMargin - rightMargin
+    const axisFraction = (extraAxesCount * AXIS_SPACE_PX) / innerWidth
+    const xDomainEnd = Math.max(0.5, 1.0 - axisFraction)
+    
+    xDomainEndRef.current = xDomainEnd
     const xDomain = [0, xDomainEnd]
 
+    const axisStep = AXIS_SPACE_PX / innerWidth
     const y2Pos = xDomainEnd
-    const y3Pos = xDomainEnd + 0.035
-    const y4Pos = xDomainEnd + 0.07
-    const lastAxisPos = hasY4 ? y4Pos : (hasY3 ? y3Pos : y2Pos)
-    const legendX = (y2Names.length > 0 || hasY3 || hasY4) ? lastAxisPos + 0.05 : 0
-
-    // Margem direita suficiente para os eixos extras e a legenda
-    const rightMargin = hasY4 ? 260 : (hasY3 ? 210 : (y2Names.length > 0 ? 160 : 20))
+    const y3Pos = xDomainEnd + axisStep
+    const y4Pos = xDomainEnd + axisStep * 2
+    
+    // Margem direita mínima — legenda é painel HTML externo ao canvas do Plotly
+    const rightMargin = 15
 
     // Calcula altura das faixas de filtro para esmagar os eixos Y normais (REDUZIDO PELA METADE)
     const filterHeight = Math.max(0.02, Math.min(0.04, 0.15 / (visibleFilters.length || 1)))
@@ -360,7 +399,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
         dateAnnotations.push({
           xref: 'x', yref: 'paper',
           x: `${d} 12:00:00`,
-          y: -0.12, // Logo abaixo dos ticks de hora
+          y: -0.05, // Logo abaixo dos ticks de hora
           text: `<b>${d.split('-').reverse().join('/')}</b>`,
           showarrow: false,
           font: { size: 12, color: '#334155' },
@@ -437,10 +476,12 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
     }
 
     const baseLayout = {
+      width: plotSize.width,
+      height: plotSize.height,
       paper_bgcolor: '#f8fafc',
       plot_bgcolor:  '#ffffff',
       font:   { family: 'Inter, sans-serif', color: '#475569', size: 12 },
-      margin: { t: 55, r: rightMargin, b: 80, l: 50 }, // Aumentado b para 80 para caber as datas
+      margin: { t: 45, r: rightMargin, b: 50, l: 45 },
       hovermode: 'x',
       hoverlabel: {
         font: { size: 11, family: 'Inter, sans-serif' }
@@ -521,17 +562,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
         rangemode:  'tozero',
         title:      { text: '', font: { size: 11 } },
       },
-      legend: {
-        bgcolor:     'rgba(255,255,255,0.9)',
-        bordercolor: '#cbd5e1',
-        borderwidth: 1,
-        font:        { size: 8.5 },
-        orientation: visibleNames.length > 20 ? 'h'   : 'v',
-        x:           visibleNames.length > 20 ?  0    : legendX,
-        y:           visibleNames.length > 20 ? -0.28 : 1,
-        yanchor:     visibleNames.length > 20 ? 'top' : 'top',
-        traceorder:  'normal',
-      },
+      showlegend: false,
       modebar: { bgcolor: 'transparent', color: '#94a3b8', activecolor: '#f59e0b' },
     }
 
@@ -550,7 +581,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
     })
 
     return baseLayout
-  }, [gridX, gridY1, gridY2, gridY3, gridY4, xGridSpacing, appliedRanges, visibleNames.length, baseDate, hasY3, hasY4, data, filterColors, y2Names.length, y3Names.length, y4Names.length])
+  }, [plotSize, gridX, gridY1, gridY2, gridY3, gridY4, xGridSpacing, appliedRanges, visibleNames.length, baseDate, hasY3, hasY4, data, filterColors, y2Names.length, y3Names.length, y4Names.length])
 
   // ── onRelayout ────────────────────────────────────────────────────
   const handleRelayout = (e) => {
@@ -740,7 +771,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
 
   // ── Series Chip ───────────────────────────────────────────────────
   const SeriesChip = ({ name }) => {
-    const isHidden     = seriesAxisMap[name] === 'hidden'
+    const isHidden     = isHiddenSeries(seriesAxisMap[name])
     const color        = getColor(name)
     const isPickerOpen = colorPickerFor === name
 
@@ -868,15 +899,194 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
 
   const VerticalSubDivider = () => null
 
+  // ── Exportar PNG com legenda (composição Canvas) ──────────────────
+  const handleExportWithLegend = async () => {
+    const gd = plotDivRef.current
+      || containerRef.current?.querySelector('.js-plotly-plot')
+    if (!gd) { alert('Gráfico ainda não inicializado. Aguarde e tente novamente.'); return }
+    try {
+      const scale = 2
+
+      // 1. Captura o gráfico com a largura total do container (chart + painel legenda HTML).
+      //    Sem isso, o toImage usa a largura comprimida do chart div, espremendo os eixos Y.
+      const exportW = containerRef.current?.offsetWidth || gd.offsetWidth
+      const exportH = gd.offsetHeight
+      const chartDataUrl = await Plotly.toImage(gd, { format: 'png', scale, width: exportW, height: exportH })
+
+
+      // 2. Carrega a imagem do gráfico num HTMLImageElement
+      const chartImg = await new Promise((res, rej) => {
+        const img = new Image()
+        img.onload = () => res(img)
+        img.onerror = rej
+        img.src = chartDataUrl
+      })
+
+      // 3. Dimensões do painel de legenda (em pixels físicos = lógicos × scale)
+      const PAD        = 14 * scale
+      const ROW_H      = 20 * scale
+      const LINE_W     = 22 * scale
+      const FONT_SIZE  = 11 * scale
+      const HEADER_H   = 28 * scale
+      const MAX_TEXT_W = 220 * scale
+
+      // Mede o nome mais largo para ajustar a largura do painel
+      const tmpCanvas = document.createElement('canvas')
+      const tmpCtx = tmpCanvas.getContext('2d')
+      tmpCtx.font = `${FONT_SIZE}px Inter, sans-serif`
+      let maxTextWidth = 0
+      seriesNames.forEach(n => {
+        const w = tmpCtx.measureText(n).width
+        if (w > maxTextWidth) maxTextWidth = w
+      })
+      const textAreaW = Math.min(maxTextWidth, MAX_TEXT_W)
+
+      const isHorizontal = legendPosition === 'bottom' || legendPosition === 'top'
+
+      let canvasW, canvasH, itemW, cols, rows
+      let legendW = 0, legendH = 0
+      
+      if (isHorizontal) {
+        itemW = PAD + LINE_W + PAD + textAreaW + PAD
+        cols = Math.max(1, Math.floor((chartImg.width - PAD * 2) / itemW))
+        rows = Math.ceil(seriesNames.length / cols)
+        
+        legendH = PAD + rows * ROW_H + PAD
+        canvasW = chartImg.width
+        canvasH = chartImg.height + legendH
+      } else {
+        legendW = PAD + LINE_W + PAD + textAreaW + PAD
+        legendH = Math.max(chartImg.height, HEADER_H + seriesNames.length * ROW_H + PAD)
+        canvasW = chartImg.width + legendW
+        canvasH = Math.max(chartImg.height, legendH)
+      }
+
+      // 4. Canvas final: gráfico + legenda
+      const canvas = document.createElement('canvas')
+      canvas.width  = canvasW
+      canvas.height = canvasH
+      const ctx = canvas.getContext('2d')
+
+      // Fundo branco
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+      // Calcula posições de desenho
+      let chartX = 0, chartY = 0
+      let legendX = 0, legendY = 0
+
+      if (legendPosition === 'right') {
+         legendX = chartImg.width
+      } else if (legendPosition === 'left') {
+         chartX = legendW
+      } else if (legendPosition === 'bottom') {
+         legendY = chartImg.height
+      } else if (legendPosition === 'top') {
+         chartY = legendH
+      }
+
+      // Gráfico
+      ctx.drawImage(chartImg, chartX, chartY)
+
+      // Desenha fundo da legenda
+      ctx.fillStyle = '#ffffff'
+      if (isHorizontal) {
+        ctx.fillRect(0, legendY, canvas.width, legendH)
+        ctx.strokeStyle = '#e2e8f0'
+        ctx.lineWidth = 1 * scale
+        ctx.beginPath()
+        if (legendPosition === 'bottom') {
+          ctx.moveTo(0, legendY); ctx.lineTo(canvas.width, legendY)
+        } else {
+          ctx.moveTo(0, legendH); ctx.lineTo(canvas.width, legendH)
+        }
+        ctx.stroke()
+      } else {
+        ctx.fillRect(legendX, 0, legendW, canvas.height)
+        ctx.strokeStyle = '#e2e8f0'
+        ctx.lineWidth = 1 * scale
+        ctx.beginPath()
+        if (legendPosition === 'right') {
+           ctx.moveTo(legendX, 0); ctx.lineTo(legendX, canvas.height)
+        } else {
+           ctx.moveTo(legendW, 0); ctx.lineTo(legendW, canvas.height)
+        }
+        ctx.stroke()
+
+        // Cabeçalho "LEGENDA"
+        ctx.fillStyle = '#94a3b8'
+        ctx.font = `700 ${9 * scale}px Inter, sans-serif`
+        ctx.fillText('LEGENDA', legendX + PAD, HEADER_H * 0.65)
+        ctx.strokeStyle = '#f1f5f9'
+        ctx.beginPath(); ctx.moveTo(legendX, HEADER_H); ctx.lineTo(legendX + legendW, HEADER_H); ctx.stroke()
+      }
+
+      // Itens da legenda
+      seriesNames.forEach((name, i) => {
+        const isHidden = isHiddenSeries(seriesAxisMap[name])
+        const color    = isHidden ? '#94a3b8' : getColor(name)
+        const dash     = getDash(name)
+        const lw       = Math.min(getWidth(name), 2.5) * scale
+        
+        let x, y
+        if (isHorizontal) {
+          const col = i % cols
+          const row = Math.floor(i / cols)
+          x = PAD + col * itemW
+          y = legendY + PAD + row * ROW_H + ROW_H / 2
+        } else {
+          x = legendX + PAD
+          y = legendY + HEADER_H + i * ROW_H + ROW_H / 2
+        }
+
+        // Linha
+        ctx.strokeStyle = color
+        ctx.lineWidth   = lw
+        ctx.setLineDash(dash === 'dash' ? [4 * scale, 3 * scale] : dash === 'dot' ? [2 * scale, 2 * scale] : [])
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + LINE_W, y); ctx.stroke()
+        ctx.setLineDash([])
+
+        // Texto
+        ctx.fillStyle = isHidden ? '#94a3b8' : '#334155'
+        ctx.font = `${FONT_SIZE}px Inter, sans-serif`
+        ctx.textAlign = 'left'
+        ctx.textBaseline = 'middle'
+        
+        let label = name
+        while (label.length > 3 && ctx.measureText(label).width > MAX_TEXT_W) {
+          label = label.slice(0, -1)
+        }
+        if (label !== name) label += '…'
+        ctx.fillText(label, x + LINE_W + PAD, y)
+      })
+
+      // 5. Download
+      const filename = ['causa-raiz', usina || 'usina', data?.date || 'data', `${visibleNames.length}series`].join('_') + '.png'
+      const a = document.createElement('a')
+      a.href = canvas.toDataURL('image/png')
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+    } catch (err) {
+      console.error('Export with legend failed:', err)
+      alert('Falha ao exportar: ' + err.message)
+    }
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '12px' }}>
 
       {/* ── Controles ─────────────────────────────────────────── */}
-      <div style={{
-        backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)',
-        borderRadius: '8px', padding: '6px 8px',
-        display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center'
-      }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+        
+        {/* Bloco Eixos */}
+        <div style={{
+          flex: 1,
+          backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)',
+          borderRadius: '8px', padding: '6px 8px',
+          display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center'
+        }}>
         <span style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginRight: 2 }}>Eixos</span>
           <AxisGroup title="X">
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -904,7 +1114,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
           </div>
 
 
-          <label className="checkbox-row" style={{ padding: 0 }}>
+          <label className="checkbox-row" style={{ padding: 0, gap: 4 }}>
             <input type="checkbox" checked={gridX} onChange={e => { setGridX(e.target.checked); bumpRevision() }} />
             <span style={{ fontSize: '11px', fontWeight: 600 }}>Grade</span>
           </label>
@@ -912,7 +1122,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
 
         <AxisGroup title="Y1">
           <YLimitsControl limits={y1Limits} setLimits={setY1Limits} applyFn={makeApplyY('y1', y1Limits)} />
-          <label className="checkbox-row" style={{ padding: 0 }}>
+          <label className="checkbox-row" style={{ padding: 0, gap: 4 }}>
             <input type="checkbox" checked={gridY1} onChange={e => { setGridY1(e.target.checked); bumpRevision() }} />
             <span style={{ fontSize: '11px', fontWeight: 600 }}>Grade</span>
           </label>
@@ -920,7 +1130,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
 
         <AxisGroup title="Y2">
           <YLimitsControl limits={y2Limits} setLimits={setY2Limits} applyFn={makeApplyY('y2', y2Limits)} />
-          <label className="checkbox-row" style={{ padding: 0 }}>
+          <label className="checkbox-row" style={{ padding: 0, gap: 4 }}>
             <input type="checkbox" checked={gridY2} onChange={e => { setGridY2(e.target.checked); bumpRevision() }} />
             <span style={{ fontSize: '11px', fontWeight: 600 }}>Grade</span>
           </label>
@@ -928,7 +1138,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
 
         <AxisGroup title="Y3">
           <YLimitsControl limits={y3Limits} setLimits={setY3Limits} applyFn={makeApplyY('y3', y3Limits)} />
-          <label className="checkbox-row" style={{ padding: 0 }}>
+          <label className="checkbox-row" style={{ padding: 0, gap: 4 }}>
             <input type="checkbox" checked={gridY3} onChange={e => { setGridY3(e.target.checked); bumpRevision() }} />
             <span style={{ fontSize: '11px', fontWeight: 600 }}>Grade</span>
           </label>
@@ -936,11 +1146,66 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
 
         <AxisGroup title="Y4">
           <YLimitsControl limits={y4Limits ?? { min: '', max: '' }} setLimits={setY4Limits} applyFn={makeApplyY('y4', y4Limits ?? { min: '', max: '' })} />
-          <label className="checkbox-row" style={{ padding: 0 }}>
+          <label className="checkbox-row" style={{ padding: 0, gap: 4 }}>
             <input type="checkbox" checked={gridY4 ?? false} onChange={e => { setGridY4(e.target.checked); bumpRevision() }} />
             <span style={{ fontSize: '11px', fontWeight: 600 }}>Grade</span>
           </label>
         </AxisGroup>
+
+        </div>
+
+        {/* Bloco Legenda */}
+        <div style={{
+          backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)',
+          borderRadius: '8px', padding: '6px 8px',
+          display: 'flex', alignItems: 'center', gap: 6
+        }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', paddingLeft: 4 }}>Legenda</span>
+          <div style={{ 
+            width: 32, height: 32, 
+            border: '1.5px solid #475569', borderRadius: 8, 
+            overflow: 'hidden', background: '#ffffff',
+            display: 'flex', flexDirection: 'column',
+            flexShrink: 0
+          }}>
+            <div 
+              onClick={() => { setLegendPosition(legendPosition === 'top' ? 'none' : 'top'); bumpRevision() }}
+              title="Horizontal Acima"
+              style={{ 
+                height: '28%', background: legendPosition === 'top' ? '#3b82f6' : '#e2e8f0', 
+                cursor: 'pointer', transition: 'background 0.2s'
+              }} 
+            />
+            
+            <div style={{ display: 'flex', flex: 1, borderTop: '1.5px solid #475569', borderBottom: '1.5px solid #475569' }}>
+              <div 
+                onClick={() => { setLegendPosition(legendPosition === 'left' ? 'none' : 'left'); bumpRevision() }}
+                title="Vertical Esquerda"
+                style={{ 
+                  flex: 1, background: legendPosition === 'left' ? '#3b82f6' : '#e2e8f0', 
+                  cursor: 'pointer', borderRight: '1.5px solid #475569', transition: 'background 0.2s'
+                }} 
+              />
+              <div 
+                onClick={() => { setLegendPosition(legendPosition === 'right' ? 'none' : 'right'); bumpRevision() }}
+                title="Vertical Direita"
+                style={{ 
+                  flex: 1, background: legendPosition === 'right' ? '#3b82f6' : '#e2e8f0', 
+                  cursor: 'pointer', transition: 'background 0.2s'
+                }} 
+              />
+            </div>
+
+            <div 
+              onClick={() => { setLegendPosition(legendPosition === 'bottom' ? 'none' : 'bottom'); bumpRevision() }}
+              title="Horizontal Abaixo"
+              style={{ 
+                height: '28%', background: legendPosition === 'bottom' ? '#3b82f6' : '#e2e8f0', 
+                cursor: 'pointer', transition: 'background 0.2s'
+              }} 
+            />
+          </div>
+        </div>
 
       </div>
 
@@ -975,7 +1240,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
               WebkitMaskImage: 'linear-gradient(to right, black 80%, transparent)',
             }}>
               {seriesNames.map(name => {
-                const isHidden = seriesAxisMap[name] === 'hidden'
+                const isHidden = isHiddenSeries(seriesAxisMap[name])
                 const color = getColor(name)
                 return (
                   <span key={name} style={{
@@ -1046,37 +1311,142 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
         )}
       </div>
 
-      {/* ── Gráfico ──────────────────────────────────────────── */}
-      <div ref={containerRef} style={{ flex: 1, minHeight: 380 }}>
-        <Plot
-          key={plotMountKey}
-          data={traces}
-          layout={layout}
-          revision={plotRevision}
-          onRelayout={handleRelayout}
-          config={{
-            responsive: true,
-            displaylogo: false,
-            displayModeBar: true,
-            modeBarButtonsToRemove: [
-              'lasso2d', 'select2d',
-              'zoomIn2d', 'zoomOut2d',
-              'autoScale2d', 'hoverClosestCartesian', 'hoverCompareCartesian', 'toggleSpikelines',
-            ],
-            toImageButtonOptions: {
-              format: 'png',
-              filename: [
-                'causa-raiz',
-                usina  || 'usina',
-                data?.date || 'data',
-                `${visibleNames.length}series`,
-              ].join('_'),
-              height: null, width: null, scale: 2,
-            },
-          }}
-          style={{ width: '100%', height: '100%' }}
-          useResizeHandler
-        />
+      {/* ── Gráfico + Legenda HTML ────────────────────────── */}
+      <div ref={containerRef} style={{ 
+        flex: 1, minHeight: 380, display: 'flex', 
+        flexDirection: (legendPosition === 'bottom' || legendPosition === 'top') ? 'column' : 'row', 
+        minWidth: 0 
+      }}>
+
+        {/* Área do Plot – cresce para preencher o espaço restante */}
+        <div ref={plotWrapperRef} style={{ flex: 1, minWidth: 0, minHeight: 0, overflow: 'hidden', position: 'relative', order: 1 }}>
+          <Plot
+            key={plotMountKey}
+            data={traces}
+            layout={layout}
+            revision={plotRevision}
+            onInitialized={(_, gd) => { plotDivRef.current = gd }}
+            onUpdate={(_, gd)       => { plotDivRef.current = gd }}
+            onRelayout={handleRelayout}
+            config={{
+              responsive: true,
+              displaylogo: false,
+              displayModeBar: true,
+              modeBarButtonsToRemove: [
+                'lasso2d', 'select2d',
+                'zoomIn2d', 'zoomOut2d',
+                'autoScale2d', 'hoverClosestCartesian', 'hoverCompareCartesian', 'toggleSpikelines',
+              ],
+              toImageButtonOptions: {
+                format: 'png',
+                filename: [
+                  'causa-raiz',
+                  usina || 'usina',
+                  data?.date || 'data',
+                  `${visibleNames.length}series`,
+                ].join('_'),
+                height: null, width: null, scale: 2,
+              },
+            }}
+            style={{ width: '100%', height: '100%' }}
+            useResizeHandler
+          />
+        </div>
+
+        {/* Painel de Legenda */}
+        {legendPosition !== 'none' && (
+          <div style={{
+            order: (legendPosition === 'left' || legendPosition === 'top') ? 0 : 2,
+            width: (legendPosition === 'bottom' || legendPosition === 'top') ? '100%' : 280,
+            flexShrink: 0,
+            overflowY: 'auto',
+            overflowX: (legendPosition === 'bottom' || legendPosition === 'top') ? 'auto' : 'hidden',
+            borderLeft: legendPosition === 'right' ? '1px solid #e2e8f0' : 'none',
+            borderRight: legendPosition === 'left' ? '1px solid #e2e8f0' : 'none',
+            borderTop: legendPosition === 'bottom' ? '1px solid #e2e8f0' : 'none',
+            borderBottom: legendPosition === 'top' ? '1px solid #e2e8f0' : 'none',
+            padding: (legendPosition === 'bottom' || legendPosition === 'top') ? '10px 16px' : '8px 6px 10px 8px',
+            display: 'flex',
+            flexDirection: (legendPosition === 'bottom' || legendPosition === 'top') ? 'row' : 'column',
+            flexWrap: (legendPosition === 'bottom' || legendPosition === 'top') ? 'wrap' : 'nowrap',
+            gap: (legendPosition === 'bottom' || legendPosition === 'top') ? 12 : 1,
+            background: '#fff',
+            maxHeight: (legendPosition === 'bottom' || legendPosition === 'top') ? 160 : 'none',
+            alignItems: (legendPosition === 'bottom' || legendPosition === 'top') ? 'center' : 'stretch',
+          }}>
+            {/* Cabeçalho com botão de exportação */}
+            <div style={{ 
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
+              marginBottom: (legendPosition === 'bottom' || legendPosition === 'top') ? 0 : 6, 
+              paddingBottom: (legendPosition === 'bottom' || legendPosition === 'top') ? 0 : 5, 
+              borderBottom: (legendPosition === 'bottom' || legendPosition === 'top') ? 'none' : '1px solid #f1f5f9',
+              marginRight: (legendPosition === 'bottom' || legendPosition === 'top') ? 12 : 0,
+              borderRight: (legendPosition === 'bottom' || legendPosition === 'top') ? '1px solid #e2e8f0' : 'none',
+              paddingRight: (legendPosition === 'bottom' || legendPosition === 'top') ? 16 : 0,
+            }}>
+              <span style={{ fontSize: 9.5, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 0.8, marginRight: (legendPosition === 'bottom' || legendPosition === 'top') ? 12 : 0 }}>
+                Legenda
+              </span>
+              <button
+                onClick={handleExportWithLegend}
+                title="Exportar PNG com legenda"
+                style={{ background: 'none', border: '1px solid #e2e8f0', borderRadius: 4, cursor: 'pointer', padding: '2px 5px', display: 'flex', alignItems: 'center', gap: 3, color: '#64748b', fontSize: 11 }}
+                onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
+                onMouseLeave={e => e.currentTarget.style.background = 'none'}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                </svg>
+                PNG
+              </button>
+            </div>
+            {seriesNames.map(name => {
+              const isHidden = isHiddenSeries(seriesAxisMap[name])
+              const color    = getColor(name)
+              const dash     = getDash(name)
+              const w        = Math.min(getWidth(name), 2.5)
+              const dashArr  = dash === 'dash' ? '4,3' : dash === 'dot' ? '2,2' : 'none'
+              return (
+                <div
+                  key={name}
+                  onClick={() => hideShow(name)}
+                  title={name}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '3px 4px', borderRadius: 4, cursor: 'pointer',
+                    opacity: isHidden ? 0.38 : 1,
+                    transition: 'opacity 0.15s, background 0.12s',
+                    width: (legendPosition === 'bottom' || legendPosition === 'top') ? 'max-content' : 'auto',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <svg width="22" height="10" style={{ flexShrink: 0 }}>
+                    <line x1="1" y1="5" x2="21" y2="5"
+                      stroke={isHidden ? '#94a3b8' : color}
+                      strokeWidth={w}
+                      strokeDasharray={dashArr}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <span style={{
+                    fontSize: 10.5, lineHeight: 1.3,
+                    color: isHidden ? '#94a3b8' : '#334155',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    flex: (legendPosition === 'bottom' || legendPosition === 'top') ? '0 1 auto' : 1, minWidth: 0,
+                    maxWidth: (legendPosition === 'bottom' || legendPosition === 'top') ? 220 : 'none',
+                  }}>
+                    {name}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
       </div>
     </div>
   )

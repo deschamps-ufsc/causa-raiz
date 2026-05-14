@@ -16,13 +16,15 @@ import SharedColorPicker from '../components/SharedColorPicker'
 import { useAuth } from '../hooks/AuthContext'
 import { fetchVisualizations, createVisualization, updateVisualization, deleteVisualization } from '../services/api'
 import { SaveVisualizationModal, LoadVisualizationModal } from '../components/VisualizationModals'
+import FluxogramaView from '../components/FluxogramaView'
 
 const TABS = [
   { id: 'chart',   label: '📈 Gráfico' },
   { id: 'table',   label: '📋 Tabela' },
   { id: 'heatmap', label: '🌡️ Mapa de Calor' },
   { id: 'ranking', label: '🏆 Ranking' },
-  { id: 'diagram', label: '🕸️ Diagrama' }
+  { id: 'diagram', label: '🕸️ Diagrama' },
+  { id: 'flow',    label: '🔀 Fluxograma' }
 ]
 
 export default function DashboardPage() {
@@ -62,6 +64,7 @@ export default function DashboardPage() {
     seriesWidths: {},
     seriesDashes: {},
     seriesFills: {},
+    legendPosition: 'right',
   })
 
   const [loadedVisualization, setLoadedVisualization] = useState(null)
@@ -69,6 +72,7 @@ export default function DashboardPage() {
   const [isLoadModalOpen, setIsLoadModalOpen] = useState(false)
   const [savedVisualizations, setSavedVisualizations] = useState([])
   const [pendingLoadVis, setPendingLoadVis] = useState(null)
+  const [isVisDropdownOpen, setIsVisDropdownOpen] = useState(false)
   const skipCleanup = useRef(false)
 
   // ── VISUALIZAÇÕES LOGIC ──────────────────────────────────────────
@@ -494,30 +498,62 @@ export default function DashboardPage() {
 
           {/* Linha 2: botões de Carregar/Salvar — só nas abas Gráfico e Tabela */}
           {(activeTab === 'chart' || activeTab === 'table') && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '0 20px 12px', flexWrap: 'wrap',
-            }}>
+            <div style={{ padding: '0 20px 12px', position: 'relative', display: 'flex' }}>
               <button
-                className="btn btn-sm btn-ghost"
-                onClick={() => setIsLoadModalOpen(true)}
-                title="Carregar Visualização"
-                style={{ padding: '4px 10px', fontSize: 13 }}
+                className="btn btn-sm"
+                style={{ 
+                  background: 'var(--bg-card)', border: '1px solid var(--border)', 
+                  padding: '6px 12px', fontSize: 13, display: 'flex', alignItems: 'center', 
+                  gap: 8, color: 'var(--text-primary)', borderRadius: 6, cursor: 'pointer' 
+                }}
+                onClick={() => setIsVisDropdownOpen(!isVisDropdownOpen)}
+                title="Gerenciar Visualizações"
               >
-                📂 Carregar
+                📄 {loadedVisualization ? loadedVisualization.name : 'Nova Visualização'} <span style={{ fontSize: 10 }}>▼</span>
               </button>
-              <button
-                className="btn btn-sm btn-primary"
-                onClick={() => setIsSaveModalOpen(true)}
-                title="Salvar Visualização"
-                style={{ padding: '4px 10px', fontSize: 13 }}
-              >
-                💾 Salvar
-              </button>
-              {loadedVisualization && (
-                <span style={{ fontSize: 12, color: 'var(--text-secondary)', marginLeft: 4 }}>
-                  Visualização: <strong>{loadedVisualization.name}</strong>
-                </span>
+
+              {isVisDropdownOpen && (
+                <>
+                  <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setIsVisDropdownOpen(false)} />
+                  <div style={{
+                    position: 'absolute', top: '100%', left: 20, marginTop: 4, zIndex: 50,
+                    background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: 6, minWidth: 200,
+                    display: 'flex', flexDirection: 'column', gap: 2
+                  }}>
+                    <button 
+                      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'transparent', border: 'none', textAlign: 'left', cursor: 'pointer', fontSize: 13, borderRadius: 4, color: 'var(--text-primary)' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      onClick={() => { setIsSaveModalOpen(true); setIsVisDropdownOpen(false); }}
+                    >
+                      💾 Salvar alterações
+                    </button>
+                    <button 
+                      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'transparent', border: 'none', textAlign: 'left', cursor: 'pointer', fontSize: 13, borderRadius: 4, color: 'var(--text-primary)' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      onClick={() => { setIsLoadModalOpen(true); setIsVisDropdownOpen(false); }}
+                    >
+                      📁 Abrir visualização
+                    </button>
+                    <button 
+                      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'transparent', border: 'none', textAlign: 'left', cursor: 'pointer', fontSize: 13, borderRadius: 4, color: 'var(--text-primary)' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      onClick={() => { 
+                        setLoadedVisualization(null);
+                        setSelectedSeries([]);
+                        setActiveFilters([]);
+                        setVisibleFilters([]);
+                        clear();
+                        setIsVisDropdownOpen(false); 
+                      }}
+                    >
+                      ➕ Nova visualização
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           )}
@@ -541,7 +577,7 @@ export default function DashboardPage() {
           )}
 
           {/* Chart e Table — dependem de dados carregados */}
-          {activeTab !== 'heatmap' && activeTab !== 'ranking' && activeTab !== 'diagram' && (
+          {activeTab !== 'heatmap' && activeTab !== 'ranking' && activeTab !== 'diagram' && activeTab !== 'flow' && (
             <>
               {dataLoading && <SkeletonChart />}
               {dataError && !dataLoading && <ErrorState message={dataError} onRetry={handleVisualize} />}
@@ -570,6 +606,12 @@ export default function DashboardPage() {
                 </div>
               )}
             </>
+          )}
+          {/* Fluxograma */}
+          {activeTab === 'flow' && (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+              <FluxogramaView elementos={elementos} />
+            </div>
           )}
         </div>
       </div>

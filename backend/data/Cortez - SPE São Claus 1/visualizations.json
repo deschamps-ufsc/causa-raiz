@@ -1,7 +1,7 @@
 [
   {
     "id": "a5da185f-942b-4c31-83a7-4ae3b8bfc618",
-    "created_at": "2026-05-12T13:48:42.714639",
+    "created_at": "2026-05-14T00:20:39.625705",
     "name": "Skid 1.1 - INV 01 - Irrad, Temp. Mód e Tracker",
     "user": "deschamps.ufsc@gmail.com",
     "selectedDates": [
@@ -40,8 +40,8 @@
         "max": ""
       },
       "y3Limits": {
-        "min": 0,
-        "max": 116
+        "min": "",
+        "max": ""
       },
       "appliedRanges": {},
       "seriesAxisMap": {
@@ -109,8 +109,8 @@
         "CLS01.1.MET-B.POA-Irrd_REAR": 20
       },
       "y4Limits": {
-        "min": -114,
-        "max": 102
+        "min": "",
+        "max": ""
       }
     }
   },
@@ -351,6 +351,126 @@
         "CLS01.1.MET-B.POA-Irrd": 15,
         "CLS01.1.MET-B.POA-Irrd_REAR": 20
       }
+    }
+  },
+  {
+    "id": "e20b24c8-936d-4cbf-905d-86f73191ac0a",
+    "created_at": "2026-05-14T00:24:23.012827",
+    "name": "Teste novo",
+    "user": "deschamps.ufsc@gmail.com",
+    "selectedDates": [
+      "2025-11-24",
+      "2025-11-25"
+    ],
+    "selectedSeries": [
+      "CLS01.5-INV08.CorrenteCC",
+      "CLS01.6-INV05-SB20.CorrenteCC_06"
+    ],
+    "activeFilters": [],
+    "visibleFilters": [],
+    "filterColors": {
+      "Flag 5 minutos": "#ef4444"
+    },
+    "chartConfig": {
+      "gridX": true,
+      "gridY1": true,
+      "gridY2": false,
+      "gridY3": false,
+      "xGridSpacing": "",
+      "xLimits": {
+        "min": "",
+        "max": ""
+      },
+      "y1Limits": {
+        "min": "",
+        "max": ""
+      },
+      "y2Limits": {
+        "min": "",
+        "max": ""
+      },
+      "y3Limits": {
+        "min": "",
+        "max": ""
+      },
+      "appliedRanges": {},
+      "seriesAxisMap": {
+        "CLS01.1.MET-B.POA-Irrd": "y1",
+        "CLS01.1.MET-B.POA-Irrd_REAR": "y1",
+        "CLS01.1-INV01.PotAt": "y2",
+        "CLS01.1-INV05.PotAt": "y2",
+        "CLS01.1-INV08.PotAt": "y2",
+        "CLS01.1-INV07.PotAt": "y2",
+        "CLS01.1-INV06.PotAt": "y2",
+        "CLS01.1-INV02.PotAt": "y2",
+        "CLS01.1-INV03.PotAt": "y2",
+        "CLS01.1-INV04.PotAt": "y2",
+        "CLS01.1.MET-B.T_MOD": "y3",
+        "CLS01.1-INV01-SB13-TR051.PosAngAtual": "y4",
+        "CLS01.1-INV01-SB13-TR051.PosAngAlvo": "y4",
+        "CLS01.5-INV08.CorrenteCC": "y2",
+        "CLS01.6-INV05-SB20.CorrenteCC_06": "y2"
+      },
+      "seriesColors": {
+        "CLS01.1.MET-B.POA-Irrd": "#F9CC00",
+        "CLS01.1.MET-B.POA-Irrd_REAR": "#F9A825",
+        "CLS01.1-INV01.PotAt": "#2E7D32",
+        "CLS01.1-INV05.PotAt": "#2E7D32",
+        "CLS01.1-INV08.PotAt": "#2E7D32",
+        "CLS01.1-INV07.PotAt": "#2E7D32",
+        "CLS01.1-INV06.PotAt": "#2E7D32",
+        "CLS01.1-INV02.PotAt": "#2E7D32",
+        "CLS01.1-INV03.PotAt": "#2E7D32",
+        "CLS01.1-INV04.PotAt": "#2E7D32",
+        "CLS01.1.MET-B.T_MOD": "#EF6C00",
+        "CLS01.1-INV01-SB13-TR051.PosAngAtual": "#6A1B9A",
+        "CLS01.1-INV01-SB13-TR051.PosAngAlvo": "#6A1B9A",
+        "CLS01.5-INV08.CorrenteCC": "#D81B60",
+        "CLS01.6-INV05-SB20.CorrenteCC_06": "#E8769F"
+      },
+      "seriesWidths": {
+        "CLS01.1.MET-B.POA-Irrd": 1,
+        "CLS01.1.MET-B.POA-Irrd_REAR": 1,
+        "CLS01.1-INV01.PotAt": 1,
+        "CLS01.1-INV05.PotAt": 1.5,
+        "CLS01.1-INV08.PotAt": 1.5,
+        "CLS01.1-INV07.PotAt": 1.5,
+        "CLS01.1-INV06.PotAt": 1.5,
+        "CLS01.1-INV02.PotAt": 1.5,
+        "CLS01.1-INV03.PotAt": 1.5,
+        "CLS01.1-INV04.PotAt": 1.5,
+        "CLS01.1.MET-B.T_MOD": 1,
+        "CLS01.1-INV01-SB13-TR051.PosAngAtual": 1,
+        "CLS01.1-INV01-SB13-TR051.PosAngAlvo": 1,
+        "CLS01.5-INV08.CorrenteCC": 1,
+        "CLS01.6-INV05-SB20.CorrenteCC_06": 1
+      },
+      "seriesDashes": {
+        "CLS01.1.MET-B.POA-Irrd": "solid",
+        "CLS01.1.MET-B.POA-Irrd_REAR": "solid",
+        "CLS01.1-INV01.PotAt": "solid",
+        "CLS01.1-INV05.PotAt": "solid",
+        "CLS01.1-INV08.PotAt": "solid",
+        "CLS01.1-INV07.PotAt": "solid",
+        "CLS01.1-INV06.PotAt": "solid",
+        "CLS01.1-INV02.PotAt": "solid",
+        "CLS01.1-INV03.PotAt": "solid",
+        "CLS01.1-INV04.PotAt": "solid",
+        "CLS01.1.MET-B.T_MOD": "solid",
+        "CLS01.1-INV01-SB13-TR051.PosAngAtual": "solid",
+        "CLS01.1-INV01-SB13-TR051.PosAngAlvo": "solid",
+        "CLS01.5-INV08.CorrenteCC": "solid",
+        "CLS01.6-INV05-SB20.CorrenteCC_06": "solid"
+      },
+      "seriesFills": {
+        "CLS01.1.MET-B.POA-Irrd": 15,
+        "CLS01.1.MET-B.POA-Irrd_REAR": 20
+      },
+      "y4Limits": {
+        "min": "",
+        "max": ""
+      },
+      "legendPosition": "none"
     }
   }
 ]
