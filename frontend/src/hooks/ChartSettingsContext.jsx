@@ -85,21 +85,21 @@ export function ChartSettingsProvider({ children }) {
   }
 
   // Métodos para filtros
-  const addFilterElement = (elementName) => {
+  const addFilterRule = (name, elementName) => {
     setFilterSettings(prev => {
-      if (prev.some(s => s.element === elementName)) return prev
-      return [...prev, { element: elementName, min_value: null, max_value: null, max_variation: null }]
+      if (prev.some(s => s.name === name)) return prev
+      return [...prev, { name, element: elementName, min_value: null, max_value: null, max_variation: null }]
     })
   }
 
-  const updateFilterSetting = (elementName, field, value) => {
+  const updateFilterSetting = (name, field, value) => {
     setFilterSettings(prev => prev.map(s => 
-      s.element === elementName ? { ...s, [field]: value } : s
+      s.name === name ? { ...s, [field]: value } : s
     ))
   }
 
-  const removeFilterElement = (elementName) => {
-    setFilterSettings(prev => prev.filter(s => s.element !== elementName))
+  const removeFilterRule = (name) => {
+    setFilterSettings(prev => prev.filter(s => s.name !== name))
   }
 
   return (
@@ -111,9 +111,9 @@ export function ChartSettingsProvider({ children }) {
       getSettingForElement,
       addCustomElement,
       removeCustomElement,
-      addFilterElement,
+      addFilterRule,
       updateFilterSetting,
-      removeFilterElement,
+      removeFilterRule,
     }}>
       {children}
     </ChartSettingsContext.Provider>

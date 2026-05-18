@@ -1,7 +1,29 @@
 [
   {
+    "name": "Irradiação_50_W",
     "element": "Irradiação",
     "min_value": 50,
+    "max_value": null,
+    "max_variation": null
+  },
+  {
+    "name": "Irradiação_100_W",
+    "element": "Irradiação",
+    "min_value": 100,
+    "max_value": null,
+    "max_variation": null
+  },
+  {
+    "name": "Pot_Inv_Cortez",
+    "element": "Potência CA Inv",
+    "min_value": 0,
+    "max_value": 1200,
+    "max_variation": 900
+  },
+  {
+    "name": "Irradiação_Qualidade",
+    "element": "Irradiação",
+    "min_value": 0,
     "max_value": 1800,
     "max_variation": 1200
   }

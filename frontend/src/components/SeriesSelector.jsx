@@ -2,10 +2,26 @@ import { useState, useMemo } from 'react'
 
 const MAX_SELECTION = 20
 
+export function formatSeriesName(name) {
+  if (!name) return name;
+  const nameLower = name.toLowerCase();
+  if (nameLower === 'gpoa') return 'Gpoa';
+  if (nameLower === 'grear') return 'Grear';
+  if (nameLower === 'geff') return 'Geff';
+  if (nameLower === 'tamb') return 'Tamb';
+  if (nameLower === 'tmod') return 'Tmod';
+  if (nameLower === 'tcel') return 'Tcel';
+  if (nameLower === 'sujidade') return 'Sujidade';
+  if (nameLower === 'energia') return 'Energia';
+  return name;
+}
+
 /**
  * Painel de seleção de séries com busca e filtros em cascata.
- * Elemento → Estação → SKID → Inversor → Stringbox
+ * Elemento → Estação → SKID → Inversor → Stringbox → String
  */
+const naturalSort = (a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
+
 export default function SeriesSelector({ series, selected, onChange, elementos }) {
   const [search, setSearch] = useState('')
   const [filterEl, setFilterEl] = useState('')
@@ -13,9 +29,10 @@ export default function SeriesSelector({ series, selected, onChange, elementos }
   const [filterSkid, setFilterSkid] = useState('')
   const [filterInv, setFilterInv] = useState('')
   const [filterSb, setFilterSb] = useState('')
+  const [filterStr, setFilterStr] = useState('')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
 
-  const hasActiveFilters = filterEl || filterEstacao || filterSkid || filterInv || filterSb
+  const hasActiveFilters = filterEl || filterEstacao || filterSkid || filterInv || filterSb || filterStr
 
   // Filtros em cascata
   const filteredSeries = useMemo(() => {
@@ -25,10 +42,11 @@ export default function SeriesSelector({ series, selected, onChange, elementos }
       if (filterSkid && s.skid !== filterSkid) return false
       if (filterInv && s.inversor !== filterInv) return false
       if (filterSb && s.stringbox !== filterSb) return false
+      if (filterStr && s.string !== filterStr) return false
       if (search && !s.coluna.toLowerCase().includes(search.toLowerCase())) return false
       return true
     })
-  }, [series, filterEl, filterEstacao, filterSkid, filterInv, filterSb, search])
+  }, [series, filterEl, filterEstacao, filterSkid, filterInv, filterSb, filterStr, search])
 
   const uniqueEstacoes = useMemo(() =>
     [...new Set(
@@ -36,7 +54,7 @@ export default function SeriesSelector({ series, selected, onChange, elementos }
         .filter((s) => !filterEl || s.elemento === filterEl)
         .map((s) => s.estacao)
         .filter(Boolean)
-    )].sort()
+    )].sort(naturalSort)
   , [series, filterEl])
 
   const uniqueSkids = useMemo(() =>
@@ -49,7 +67,7 @@ export default function SeriesSelector({ series, selected, onChange, elementos }
         })
         .map((s) => s.skid)
         .filter(Boolean)
-    )].sort()
+    )].sort(naturalSort)
   , [series, filterEl, filterEstacao])
 
   const uniqueInvs = useMemo(() =>
@@ -58,7 +76,7 @@ export default function SeriesSelector({ series, selected, onChange, elementos }
         .filter((s) => !filterSkid || s.skid === filterSkid)
         .map((s) => s.inversor)
         .filter(Boolean)
-    )].sort()
+    )].sort(naturalSort)
   , [series, filterSkid])
 
   const uniqueSbs = useMemo(() =>
@@ -67,8 +85,17 @@ export default function SeriesSelector({ series, selected, onChange, elementos }
         .filter((s) => !filterInv || s.inversor === filterInv)
         .map((s) => s.stringbox)
         .filter(Boolean)
-    )].sort()
+    )].sort(naturalSort)
   , [series, filterInv])
+
+  const uniqueStrings = useMemo(() =>
+    [...new Set(
+      series
+        .filter((s) => !filterSb || s.stringbox === filterSb)
+        .map((s) => s.string)
+        .filter(Boolean)
+    )].sort(naturalSort)
+  , [series, filterSb])
 
   const toggle = (col) => {
     if (selected.includes(col)) {
@@ -92,6 +119,7 @@ export default function SeriesSelector({ series, selected, onChange, elementos }
     setFilterSkid('')
     setFilterInv('')
     setFilterSb('')
+    setFilterStr('')
   }
 
   return (
@@ -162,6 +190,7 @@ export default function SeriesSelector({ series, selected, onChange, elementos }
                   setFilterSkid('')
                   setFilterInv('')
                   setFilterSb('')
+                  setFilterStr('')
                 }}
               >
                 <option value="">Todos os Elementos</option>
@@ -179,6 +208,7 @@ export default function SeriesSelector({ series, selected, onChange, elementos }
                     setFilterSkid('')
                     setFilterInv('')
                     setFilterSb('')
+                    setFilterStr('')
                   }}
                 >
                   <option value="">Todas as Estações</option>
@@ -196,6 +226,7 @@ export default function SeriesSelector({ series, selected, onChange, elementos }
                     setFilterSkid(e.target.value)
                     setFilterInv('')
                     setFilterSb('')
+                    setFilterStr('')
                   }}
                 >
                   <option value="">Todos os SKIDs</option>
@@ -212,6 +243,7 @@ export default function SeriesSelector({ series, selected, onChange, elementos }
                   onChange={(e) => {
                     setFilterInv(e.target.value)
                     setFilterSb('')
+                    setFilterStr('')
                   }}
                 >
                   <option value="">Todos os Inversores</option>
@@ -225,10 +257,26 @@ export default function SeriesSelector({ series, selected, onChange, elementos }
                   className="input"
                   style={{ fontSize: 12 }}
                   value={filterSb}
-                  onChange={(e) => setFilterSb(e.target.value)}
+                  onChange={(e) => {
+                    setFilterSb(e.target.value)
+                    setFilterStr('')
+                  }}
                 >
                   <option value="">Todos os Stringboxes</option>
                   {uniqueSbs.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              )}
+
+              {/* Filtro: Strings */}
+              {uniqueStrings.length > 0 && (
+                <select
+                  className="input"
+                  style={{ fontSize: 12 }}
+                  value={filterStr}
+                  onChange={(e) => setFilterStr(e.target.value)}
+                >
+                  <option value="">Todas as Strings</option>
+                  {uniqueStrings.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
               )}
 
@@ -307,7 +355,7 @@ export default function SeriesSelector({ series, selected, onChange, elementos }
                       fontSize: 12, fontWeight: isSelected ? 700 : 500, color: isSelected ? 'var(--amber)' : 'var(--text-primary)',
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     }}>
-                      {s.coluna}
+                      {formatSeriesName(s.coluna)}
                     </div>
                     {s.mapeada && (
                       <div style={{ fontSize: 10, color: 'var(--text-muted)', display: 'flex', gap: 4, flexWrap: 'nowrap', overflow: 'hidden', whiteSpace: 'nowrap', marginTop: 2 }}>
@@ -315,7 +363,8 @@ export default function SeriesSelector({ series, selected, onChange, elementos }
                         {s.estacao && <span style={{ color: '#14b8a6', flexShrink: 0 }}>📍 {s.estacao}</span>}
                         {s.skid && <span style={{ flexShrink: 0 }}>{s.skid}</span>}
                         {s.inversor && <span style={{ flexShrink: 0 }}>· {s.inversor}</span>}
-                        {s.stringbox && <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>· {s.stringbox}</span>}
+                        {s.stringbox && <span style={{ flexShrink: 0 }}>· {s.stringbox}</span>}
+                        {s.string && <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>· {s.string}</span>}
                       </div>
                     )}
                   </div>

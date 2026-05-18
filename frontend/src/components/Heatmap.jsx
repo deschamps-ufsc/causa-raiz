@@ -1,6 +1,20 @@
 import { useState, useEffect, useRef } from 'react'
 import Plot from 'react-plotly.js'
 
+export function formatSeriesName(name) {
+  if (!name) return name;
+  const nameLower = name.toLowerCase();
+  if (nameLower === 'gpoa') return 'Gpoa';
+  if (nameLower === 'grear') return 'Grear';
+  if (nameLower === 'geff') return 'Geff';
+  if (nameLower === 'tamb') return 'Tamb';
+  if (nameLower === 'tmod') return 'Tmod';
+  if (nameLower === 'tcel') return 'Tcel';
+  if (nameLower === 'sujidade') return 'Sujidade';
+  if (nameLower === 'energia') return 'Energia';
+  return name;
+}
+
 /**
  * Heatmap de todas as séries × timestamps.
  * Colorscale YlOrRd: verde=baixo, amarelo=médio, vermelho=alto.
@@ -33,7 +47,7 @@ export default function Heatmap({ data }) {
     type: 'heatmap',
     z: zValues,
     x: xLabels,
-    y: seriesNames,
+    y: seriesNames.map(formatSeriesName),
     colorscale: 'YlOrRd',
     showscale: true,
     hoverongaps: false,

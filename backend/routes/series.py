@@ -1,4 +1,4 @@
-﻿"""
+"""
 Rotas de séries e Mapeamento de Séries.
 """
 from fastapi import APIRouter, HTTPException, UploadFile, File, Query, Form
@@ -87,7 +87,7 @@ async def import_mapping_excel(
 ):
     """
     Importa um Excel de Mapeamento de Séries para mapear colunas a Elemento e hierarquia.
-    O Excel deve ter colunas: coluna_excel | elemento | skid | inversor | stringbox
+    O Excel deve ter colunas: coluna_excel | elemento | skid | inversor | stringbox | string
     """
     if not usina:
         raise HTTPException(status_code=400, detail="Usina não informada.")

@@ -1,4 +1,4 @@
-﻿"""
+"""
 Serviço do sistema de mapeamento de séries (Mapeamento de Séries).
 Responsável por:
   - Carregar / salvar series_map.json
@@ -207,6 +207,7 @@ def generate_template_excel(colunas_parquet: Optional[list[str]] = None) -> byte
             "estacao": [""] * len(colunas_parquet),
             "inversor": [""] * len(colunas_parquet),
             "stringbox": [""] * len(colunas_parquet),
+            "string": [""] * len(colunas_parquet),
         }
     else:
         # Template vazio com exemplos
@@ -225,6 +226,7 @@ def generate_template_excel(colunas_parquet: Optional[list[str]] = None) -> byte
             "estacao": ["EST-01", "EST-01", ""],
             "inversor": ["INV-01", "INV-01", "INV-01"],
             "stringbox": ["STB-01", "", ""],
+            "string": ["STR-01", "", ""],
         }
 
     df = pd.DataFrame(data)

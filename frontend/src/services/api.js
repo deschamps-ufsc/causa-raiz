@@ -215,4 +215,17 @@ export const updateVisualization = (usina, visId, data) =>
 export const deleteVisualization = (usina, visId) =>
   api.delete(`/visualizacoes/${encodeURIComponent(usina)}/${encodeURIComponent(visId)}`).then((r) => r.data)
 
+// ── Fluxograma (Save/Load) ────────────────────────────────────
+export const fetchFlowConfig = (usina) =>
+  api.get(`/flow/${encodeURIComponent(usina)}`).then((r) => r.data)
+
+export const saveFlowConfig = (usina, config) =>
+  api.post(`/flow/${encodeURIComponent(usina)}`, config).then((r) => r.data)
+
+export const runFlow = (usina) =>
+  api.post(`/flow/${encodeURIComponent(usina)}/run`).then((r) => r.data)
+
+export const fetchFlowIntegrals = (usina) =>
+  api.get(`/flow/${encodeURIComponent(usina)}/integrals`).then((r) => r.data)
+
 export default api

@@ -1,4 +1,4 @@
-﻿"""
+"""
 Serviço de acesso aos arquivos Parquet.
 Responsável por:
   - Listar datas disponíveis
@@ -43,20 +43,25 @@ def list_series_for_dates(dates_str: str, usina: str) -> list[dict]:
         usina: Nome da usina
 
     Returns:
-        Lista de dicts com keys: coluna, elemento, skid, inversor, stringbox, mapeada
+        Lista de dicts com keys: coluna, elemento, skid, inversor, stringbox, string, mapeada
     """
     colunas_set = set()
     dates = [d.strip() for d in dates_str.split(",") if d.strip()]
     
     for date in dates:
         path = _parquet_path(date, usina)
-        if not os.path.exists(path):
-            continue
-        schema = pq.read_schema(path)
-        colunas_set.update(f.name for f in schema if f.name != "timestamp")
+        if os.path.exists(path):
+            schema = pq.read_schema(path)
+            colunas_set.update(f.name for f in schema if f.name != "timestamp")
+        
+        # Incluir séries processadas (agregadores)
+        processed_path = os.path.join(DATA_DIR, usina, "processed", f"{date}.parquet")
+        if os.path.exists(processed_path):
+            schema_proc = pq.read_schema(processed_path)
+            colunas_set.update(f.name for f in schema_proc if f.name != "timestamp")
     
     if not colunas_set:
-        raise FileNotFoundError(f"Nenhum Parquet encontrado para as datas: {dates_str}")
+        raise FileNotFoundError(f"Nenhum dado encontrado para as datas: {dates_str}")
     from services.mapping_service import load_mapping
     mapping = load_mapping(usina)
     
@@ -69,6 +74,7 @@ def list_series_for_dates(dates_str: str, usina: str) -> list[dict]:
             "skid": info.get("skid"),
             "inversor": info.get("inversor"),
             "stringbox": info.get("stringbox"),
+            "string": info.get("string"),
             "estacao": info.get("estacao"),
             "mapeada": col in mapping,
         })
@@ -127,16 +133,37 @@ def query_data(
     dfs = []
     for date in dates:
         path = _parquet_path(date, usina)
-        if not os.path.exists(path):
-            logger.warning(f"Parquet ausente para data {date}")
+        processed_path = os.path.join(DATA_DIR, usina, "processed", f"{date}.parquet")
+        
+        df_day = None
+        
+        # 1. Tentar ler dados brutos
+        if os.path.exists(path):
+            schema = pq.read_schema(path)
+            parquet_cols = [f.name for f in schema]
+            read_cols = [c for c in final_cols if c in parquet_cols]
+            df_day = pd.read_parquet(path, columns=["timestamp"] + read_cols)
+        
+        # 2. Tentar ler dados processados (agregadores)
+        if os.path.exists(processed_path):
+            schema_proc = pq.read_schema(processed_path)
+            proc_cols = [f.name for f in schema_proc if f.name != "timestamp"]
+            read_proc = [c for c in final_cols if c in proc_cols]
+            
+            if read_proc:
+                df_proc = pd.read_parquet(processed_path, columns=["timestamp"] + read_proc)
+                if df_day is not None:
+                    # Garantir que timestamps batam para o merge
+                    df_day["timestamp"] = df_day["timestamp"].dt.floor("min")
+                    df_proc["timestamp"] = df_proc["timestamp"].dt.floor("min")
+                    df_day = df_day.merge(df_proc, on="timestamp", how="outer")
+                else:
+                    df_day = df_proc
+        
+        if df_day is None:
+            logger.warning(f"Nenhum dado (bruto ou processado) para data {date}")
             continue
 
-        schema = pq.read_schema(path)
-        parquet_cols = [f.name for f in schema]
-        read_cols = [c for c in final_cols if c in parquet_cols]
-        
-        df_day = pd.read_parquet(path, columns=["timestamp"] + read_cols)
-        
         if start_time or end_time:
             df_day = _apply_time_filter(df_day, date, start_time, end_time)
             

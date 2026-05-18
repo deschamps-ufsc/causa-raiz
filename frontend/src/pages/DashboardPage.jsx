@@ -18,13 +18,27 @@ import { fetchVisualizations, createVisualization, updateVisualization, deleteVi
 import { SaveVisualizationModal, LoadVisualizationModal } from '../components/VisualizationModals'
 import FluxogramaView from '../components/FluxogramaView'
 
+export function formatSeriesName(name) {
+  if (!name) return name;
+  const nameLower = name.toLowerCase();
+  if (nameLower === 'gpoa') return 'Gpoa';
+  if (nameLower === 'grear') return 'Grear';
+  if (nameLower === 'geff') return 'Geff';
+  if (nameLower === 'tamb') return 'Tamb';
+  if (nameLower === 'tmod') return 'Tmod';
+  if (nameLower === 'tcel') return 'Tcel';
+  if (nameLower === 'sujidade') return 'Sujidade';
+  if (nameLower === 'energia') return 'Energia';
+  return name;
+}
+
 const TABS = [
   { id: 'chart',   label: '📈 Gráfico' },
   { id: 'table',   label: '📋 Tabela' },
   { id: 'heatmap', label: '🌡️ Mapa de Calor' },
   { id: 'ranking', label: '🏆 Ranking' },
   { id: 'diagram', label: '🕸️ Diagrama' },
-  { id: 'flow',    label: '🔀 Fluxograma' }
+  { id: 'flow',    label: '📊 EPI' }
 ]
 
 export default function DashboardPage() {
@@ -377,7 +391,7 @@ export default function DashboardPage() {
                               onChange={(e) => setActiveFilters(prev => e.target.checked ? [...prev, s.coluna] : prev.filter(c => c !== s.coluna))}
                               style={{ accentColor: '#dc2626' }}
                             />
-                            <span style={{ fontWeight: 600, color: isActive ? '#dc2626' : 'var(--text-secondary)' }}>{s.coluna}</span>
+                            <span style={{ fontWeight: 600, color: isActive ? '#dc2626' : 'var(--text-secondary)' }}>{formatSeriesName(s.coluna)}</span>
                           </label>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <div style={{ position: 'relative' }}>
@@ -560,60 +574,87 @@ export default function DashboardPage() {
         </div>
 
         {/* Conteúdo das abas */}
-        <div style={{ flex: 1, overflow: 'auto', padding: 20 }}>
-          {/* Heatmap Yield — independente de séries selecionadas */}
-          {activeTab === 'heatmap' && (
-            <HeatmapYield usina={usinaAtual} dates={selectedDates.join(',')} activeFilters={activeFilters} />
-          )}
-
-          {/* Ranking — independente de séries selecionadas */}
-          {activeTab === 'ranking' && (
-            <RankingTab usina={usinaAtual} dates={selectedDates.join(',')} activeFilters={activeFilters} />
-          )}
-
-          {/* Diagrama da Usina — independente de data e séries */}
-          {activeTab === 'diagram' && (
-            <DiagramTab />
-          )}
-
-          {/* Chart e Table — dependem de dados carregados */}
-          {activeTab !== 'heatmap' && activeTab !== 'ranking' && activeTab !== 'diagram' && activeTab !== 'flow' && (
-            <>
-              {dataLoading && <SkeletonChart />}
-              {dataError && !dataLoading && <ErrorState message={dataError} onRetry={handleVisualize} />}
-
-              {!dataLoading && !dataError && !filteredData && (
-                <EmptyState
-                  icon="☀️"
-                  title="Selecione séries e clique em Visualizar"
-                  subtitle="Escolha uma data, selecione as séries no painel esquerdo e clique no botão"
-                  action={
-                    <button 
-                      className="btn btn-secondary" 
-                      onClick={() => setIsLoadModalOpen(true)}
-                      style={{ gap: 8 }}
-                    >
-                      📂 Carregar Visualização Salva
-                    </button>
-                  }
-                />
-              )}
-
-              {!dataLoading && !dataError && filteredData && (
-                <div className="fade-in" style={{ height: '100%' }}>
-                  {activeTab === 'chart' && <TimeSeriesChart data={filteredData} usina={usinaAtual} seriesDict={seriesDict} filterColors={filterColors} chartConfig={chartConfig} setChartConfig={setChartConfig} />}
-                  {activeTab === 'table' && <DataTable data={filteredData} seriesDict={seriesDict} />}
-                </div>
-              )}
-            </>
-          )}
-          {/* Fluxograma */}
-          {activeTab === 'flow' && (
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-              <FluxogramaView elementos={elementos} />
+        {activeTab === 'diagram' ? (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', padding: 20 }}>
+            {/* Cabeçalho Fixo do Diagrama */}
+            <div style={{ 
+              paddingBottom: '12px', 
+              borderBottom: '1px solid var(--border)', 
+              marginBottom: '0px',
+              flexShrink: 0
+            }}>
+              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                🕸️ Diagrama
+              </h2>
             </div>
-          )}
-        </div>
+            {/* Bloco de conteúdo rolável do Diagrama */}
+            <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+              <DiagramTab />
+            </div>
+          </div>
+        ) : activeTab === 'flow' ? (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', padding: 20 }}>
+            {/* Cabeçalho Fixo do EPI */}
+            <div style={{ 
+              paddingBottom: '12px', 
+              borderBottom: '1px solid var(--border)', 
+              marginBottom: '0px',
+              flexShrink: 0
+            }}>
+              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                📊 EPI - Energy Performance Index
+              </h2>
+            </div>
+            {/* Bloco de conteúdo rolável do Fluxograma e Integralização */}
+            <div style={{ flex: 1, overflow: 'auto' }}>
+              <FluxogramaView elementos={elementos} showTitle={false} />
+            </div>
+          </div>
+        ) : (
+          <div style={{ flex: 1, overflow: 'auto', padding: 20 }}>
+            {/* Heatmap Yield — independente de séries selecionadas */}
+            {activeTab === 'heatmap' && (
+              <HeatmapYield usina={usinaAtual} dates={selectedDates.join(',')} activeFilters={activeFilters} />
+            )}
+
+            {/* Ranking — independente de séries selecionadas */}
+            {activeTab === 'ranking' && (
+              <RankingTab usina={usinaAtual} dates={selectedDates.join(',')} activeFilters={activeFilters} />
+            )}
+
+            {/* Chart e Table — dependem de dados carregados */}
+            {activeTab !== 'heatmap' && activeTab !== 'ranking' && activeTab !== 'diagram' && (
+              <>
+                {dataLoading && <SkeletonChart />}
+                {dataError && !dataLoading && <ErrorState message={dataError} onRetry={handleVisualize} />}
+
+                {!dataLoading && !dataError && !filteredData && (
+                  <EmptyState
+                    icon="☀️"
+                    title="Selecione séries e clique em Visualizar"
+                    subtitle="Escolha uma data, selecione as séries no painel esquerdo e clique no botão"
+                    action={
+                      <button 
+                        className="btn btn-secondary" 
+                        onClick={() => setIsLoadModalOpen(true)}
+                        style={{ gap: 8 }}
+                      >
+                        📂 Carregar Visualização Salva
+                      </button>
+                    }
+                  />
+                )}
+
+                {!dataLoading && !dataError && filteredData && (
+                  <div className="fade-in" style={{ height: '100%' }}>
+                    {activeTab === 'chart' && <TimeSeriesChart data={filteredData} usina={usinaAtual} seriesDict={seriesDict} filterColors={filterColors} chartConfig={chartConfig} setChartConfig={setChartConfig} />}
+                    {activeTab === 'table' && <DataTable data={filteredData} seriesDict={seriesDict} />}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {colorPickerFilter && (

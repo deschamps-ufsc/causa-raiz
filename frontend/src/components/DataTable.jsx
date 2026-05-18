@@ -6,6 +6,20 @@ import {
   flexRender,
 } from '@tanstack/react-table'
 
+export function formatSeriesName(name) {
+  if (!name) return name;
+  const nameLower = name.toLowerCase();
+  if (nameLower === 'gpoa') return 'Gpoa';
+  if (nameLower === 'grear') return 'Grear';
+  if (nameLower === 'geff') return 'Geff';
+  if (nameLower === 'tamb') return 'Tamb';
+  if (nameLower === 'tmod') return 'Tmod';
+  if (nameLower === 'tcel') return 'Tcel';
+  if (nameLower === 'sujidade') return 'Sujidade';
+  if (nameLower === 'energia') return 'Energia';
+  return name;
+}
+
 /** Interpola cor entre verde e vermelho com base no valor normalizado [0,1] */
 function valueColor(norm) {
   if (norm === null || isNaN(norm)) return 'transparent'
@@ -75,7 +89,7 @@ export default function DataTable({ data, seriesDict = {} }) {
             </div>
             {Object.keys(sinfo).length > 2 && <div style={{ height: 1, background: 'var(--border)', margin: '1px 0 3px 0' }} />}
             <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--amber)', display: 'block', wordBreak: 'break-word', whiteSpace: 'normal', lineHeight: '1.2' }} title={name}>
-              {name}
+              {formatSeriesName(name)}
             </span>
           </div>
         ),

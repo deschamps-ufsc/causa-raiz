@@ -250,7 +250,18 @@ export default function DiagramTab() {
   }
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 600 }}>
+    <div style={{ 
+      flex: 1, 
+      display: 'flex', 
+      flexDirection: 'column', 
+      height: '100%', 
+      minHeight: 600,
+      background: 'var(--bg-card)',
+      borderRadius: '12px',
+      border: '1px solid var(--border)',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+      overflow: 'hidden'
+    }}>
       {tooltip && tooltip.series && (
           <div style={{
               position: 'fixed', left: tooltip.x + 20, top: tooltip.y + 20, zIndex: 9999,
@@ -300,8 +311,10 @@ export default function DiagramTab() {
           </div>
       )}
 
-      <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', background: 'var(--card-bg)', display: 'flex', gap: 24, alignItems: 'center' }}>
-        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>Fluxograma Operacional</h2>
+      <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', background: 'var(--bg-card)', display: 'flex', gap: 24, alignItems: 'center' }}>
+        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          🕸️ Diagrama
+        </h2>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Orientação:</span>
@@ -312,7 +325,7 @@ export default function DiagramTab() {
         </div>
       </div>
       
-      <div style={{ flex: 1, position: 'relative', background: '#f8fafc', height: '100%', width: '100%', minHeight: 500 }}>
+      <div style={{ flex: 1, position: 'relative', background: 'var(--bg-secondary)', height: '100%', width: '100%', minHeight: 500 }}>
         {loading ? (
              <div style={{ padding: 40, textAlign: 'center', color: '#475569' }}>Construindo malha hierárquica...</div>
         ) : (
@@ -329,7 +342,7 @@ export default function DiagramTab() {
               nodesConnectable={false}
               elementsSelectable={false}
               fitView
-              attributionPosition="bottom-right"
+              proOptions={{ hideAttribution: true }}
               minZoom={0.05}
             >
               <Background color="#cbd5e1" gap={20} size={1} />

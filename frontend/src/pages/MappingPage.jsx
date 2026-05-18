@@ -49,7 +49,7 @@ export default function MappingPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
           {[
             { n: '1', icon: '📥', title: 'Baixe o template', desc: 'Template vazio sugerindo o formato das colunas' },
-            { n: '2', icon: '✏️', title: 'Preencha o Mapeamento', desc: 'Vincule cada coluna ao Elemento, SKID, Inversor e Stringbox' },
+            { n: '2', icon: '✏️', title: 'Preencha o Mapeamento', desc: 'Vincule cada coluna ao Elemento, SKID, Inversor, Stringbox e String' },
             { n: '3', icon: '🚀', title: 'Importe de volta', desc: 'As séries ficam classificadas e filtráveis no dashboard' },
           ].map((step) => (
             <div key={step.n} style={{

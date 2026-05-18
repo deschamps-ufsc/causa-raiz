@@ -78,7 +78,7 @@ export default function SeriesMapImport({ onImported, usina }) {
           {file ? file.name : 'Arraste o Excel de Mapeamento de Séries aqui'}
         </div>
         <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
-          Colunas: coluna_excel | elemento | skid | estacao | inversor | stringbox
+          Colunas: coluna_excel | elemento | skid | estacao | inversor | stringbox | string
         </div>
       </div>
 

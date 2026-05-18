@@ -472,5 +472,97 @@
       },
       "legendPosition": "none"
     }
+  },
+  {
+    "id": "c3137da9-ef01-45c2-90bc-5ae372c2b959",
+    "created_at": "2026-05-18T01:00:48.322009",
+    "name": "EPI",
+    "user": "deschamps.ufsc@gmail.com",
+    "selectedDates": [
+      "2025-11-24",
+      "2025-11-25"
+    ],
+    "selectedSeries": [
+      "gpoa",
+      "grear",
+      "tamb",
+      "tmod",
+      "tcel",
+      "sujidade",
+      "energia",
+      "geff"
+    ],
+    "activeFilters": [],
+    "visibleFilters": [],
+    "filterColors": {
+      "Flag 5 minutos": "#ef4444"
+    },
+    "chartConfig": {
+      "gridX": true,
+      "gridY1": true,
+      "gridY2": false,
+      "gridY3": false,
+      "gridY4": false,
+      "xGridSpacing": "",
+      "xLimits": {
+        "min": "",
+        "max": ""
+      },
+      "y1Limits": {
+        "min": "",
+        "max": ""
+      },
+      "y2Limits": {
+        "min": "",
+        "max": ""
+      },
+      "y3Limits": {
+        "min": "",
+        "max": ""
+      },
+      "y4Limits": {
+        "min": "",
+        "max": ""
+      },
+      "appliedRanges": {},
+      "seriesAxisMap": {
+        "gpoa": "y1",
+        "grear": "y1",
+        "tamb": "y2",
+        "tmod": "y2",
+        "tcel": "y2",
+        "sujidade": "y4",
+        "energia": "y3",
+        "geff": "y1"
+      },
+      "seriesColors": {
+        "gpoa": "#F9CC00",
+        "grear": "#F9A825",
+        "tamb": "#7F87BE",
+        "tmod": "#535DA8",
+        "tcel": "#283593",
+        "sujidade": "#D81B60",
+        "energia": "#2E7D32",
+        "geff": "#EF6C00"
+      },
+      "seriesWidths": {
+        "gpoa": 1,
+        "grear": 1,
+        "tamb": 1,
+        "tmod": 1,
+        "tcel": 1,
+        "energia": 1,
+        "sujidade": 1,
+        "geff": 1
+      },
+      "seriesDashes": {
+        "sujidade": "dot"
+      },
+      "seriesFills": {
+        "gpoa": 15,
+        "grear": 20
+      },
+      "legendPosition": "right"
+    }
   }
 ]

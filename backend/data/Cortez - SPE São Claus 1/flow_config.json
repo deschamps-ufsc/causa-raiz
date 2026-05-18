@@ -1,0 +1,227 @@
+{
+  "nodes": [
+    {
+      "id": "gpoa",
+      "data": {
+        "label": "G<sub>poa</sub>",
+        "color": "yellow",
+        "aggregator": true,
+        "inputs": [
+          {
+            "series": "CLS01.1.MET-B.POA-Irrd",
+            "filter": "Irradiação_Qualidade"
+          },
+          {
+            "series": "CLS01.3.MET-B.POA-Irrd",
+            "filter": "Irradiação_Qualidade"
+          },
+          {
+            "series": "CLS01.5.MET-A.POA-Irrd",
+            "filter": "Irradiação_Qualidade"
+          }
+        ],
+        "operation": "mean",
+        "hasMultipleOutputs": true,
+        "outputFilter": "Irradiação_50_W"
+      },
+      "position": {
+        "x": 30,
+        "y": 20
+      },
+      "type": "box"
+    },
+    {
+      "id": "grear",
+      "data": {
+        "label": "G<sub>rear</sub>",
+        "color": "yellow",
+        "aggregator": true,
+        "inputs": [
+          {
+            "series": "CLS01.1.MET-B.POA-Irrd_REAR",
+            "filter": "Irradiação_Qualidade"
+          },
+          {
+            "series": "CLS01.3.MET-B.POA-Irrd_REAR",
+            "filter": "Irradiação_Qualidade"
+          },
+          {
+            "series": "CLS01.5.MET-A.POA-Irrd_REAR",
+            "filter": "Irradiação_Qualidade"
+          }
+        ],
+        "operation": "mean",
+        "outputFilter": ""
+      },
+      "position": {
+        "x": 30,
+        "y": 80
+      },
+      "type": "box"
+    },
+    {
+      "id": "tamb",
+      "data": {
+        "label": "T<sub>amb</sub>",
+        "color": "yellow",
+        "aggregator": true,
+        "inputs": [
+          {
+            "series": "CLS01.1.MET-EPE.T_SSTRH",
+            "filter": ""
+          },
+          {
+            "series": "",
+            "filter": ""
+          }
+        ],
+        "operation": "mean",
+        "outputFilter": ""
+      },
+      "position": {
+        "x": 30,
+        "y": 140
+      },
+      "type": "box"
+    },
+    {
+      "id": "tmod",
+      "data": {
+        "label": "T<sub>mod</sub>",
+        "color": "yellow",
+        "aggregator": true,
+        "inputs": [
+          {
+            "series": "CLS01.1.MET-B.T_MOD",
+            "filter": ""
+          },
+          {
+            "series": "CLS01.3.MET-B.T_MOD",
+            "filter": ""
+          },
+          {
+            "series": "CLS01.5.MET-A.T_MOD",
+            "filter": ""
+          }
+        ],
+        "operation": "mean"
+      },
+      "position": {
+        "x": 30,
+        "y": 200
+      },
+      "type": "box"
+    },
+    {
+      "id": "sujidade",
+      "data": {
+        "label": "Sujidade",
+        "color": "yellow",
+        "aggregator": true,
+        "inputs": [
+          {
+            "series": "CLS01.5.MET-A.TxaSuj_1",
+            "filter": ""
+          },
+          {
+            "series": "CLS01.5.MET-A.TxaSuj_2",
+            "filter": ""
+          }
+        ],
+        "operation": "mean",
+        "outputFilter": ""
+      },
+      "position": {
+        "x": 30,
+        "y": 260
+      },
+      "type": "box"
+    },
+    {
+      "id": "energia",
+      "data": {
+        "label": "Energia",
+        "color": "green",
+        "aggregator": true,
+        "inputs": [
+          {
+            "series": "CLS01.PPC.PotAt",
+            "filter": ""
+          }
+        ],
+        "operation": "mean",
+        "outputFilter": "Pot_Teste"
+      },
+      "position": {
+        "x": 30,
+        "y": 320
+      },
+      "type": "box"
+    },
+    {
+      "id": "geff",
+      "data": {
+        "label": "Geff",
+        "beta": 0.78,
+        "SSF": 0.123,
+        "MLF": 0.035
+      },
+      "position": {
+        "x": 240,
+        "y": 30
+      },
+      "type": "geff"
+    },
+    {
+      "id": "tcel",
+      "data": {
+        "label": "Tcel"
+      },
+      "position": {
+        "x": 200,
+        "y": 180
+      },
+      "type": "tcel"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-gpoa-geff",
+      "source": "gpoa",
+      "sourceHandle": "out-a",
+      "target": "geff",
+      "markerEnd": {
+        "type": "arrowclosed"
+      },
+      "type": "smoothstep"
+    },
+    {
+      "id": "e-grear-geff",
+      "source": "grear",
+      "target": "geff",
+      "markerEnd": {
+        "type": "arrowclosed"
+      },
+      "type": "smoothstep"
+    },
+    {
+      "id": "e-tmod-tcel",
+      "source": "tmod",
+      "target": "tcel",
+      "markerEnd": {
+        "type": "arrowclosed"
+      },
+      "type": "smoothstep"
+    },
+    {
+      "id": "e-gpoa-tcel",
+      "source": "gpoa",
+      "sourceHandle": "out-b",
+      "target": "tcel",
+      "markerEnd": {
+        "type": "arrowclosed"
+      },
+      "type": "smoothstep"
+    }
+  ]
+}

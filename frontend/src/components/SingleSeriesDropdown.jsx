@@ -1,5 +1,21 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react'
 
+const naturalSort = (a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
+
+export function formatSeriesName(name) {
+  if (!name) return name;
+  const nameLower = name.toLowerCase();
+  if (nameLower === 'gpoa') return 'Gpoa';
+  if (nameLower === 'grear') return 'Grear';
+  if (nameLower === 'geff') return 'Geff';
+  if (nameLower === 'tamb') return 'Tamb';
+  if (nameLower === 'tmod') return 'Tmod';
+  if (nameLower === 'tcel') return 'Tcel';
+  if (nameLower === 'sujidade') return 'Sujidade';
+  if (nameLower === 'energia') return 'Energia';
+  return name;
+}
+
 export default function SingleSeriesDropdown({ value, onChange, series = [], elementos = [] }) {
   const [isOpen, setIsOpen] = useState(false)
   
@@ -10,8 +26,27 @@ export default function SingleSeriesDropdown({ value, onChange, series = [], ele
   const [filterSkid, setFilterSkid] = useState('')
   const [filterInv, setFilterInv] = useState('')
   const [filterSb, setFilterSb] = useState('')
+  const [filterStr, setFilterStr] = useState('')
 
   const containerRef = useRef(null)
+  const [dropUp, setDropUp] = useState(false)
+
+  // Mede o espaço vertical disponível na tela ao abrir para decidir se joga para cima (Drop-up)
+  useEffect(() => {
+    if (isOpen && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect()
+      const spaceBelow = window.innerHeight - rect.bottom
+      const spaceAbove = rect.top
+      
+      // Se o espaço abaixo for menor que 360px (maxHeight 350px + 10px margem)
+      // e o espaço acima for maior que o de baixo, abre para cima
+      if (spaceBelow < 360 && spaceAbove > spaceBelow) {
+        setDropUp(true)
+      } else {
+        setDropUp(false)
+      }
+    }
+  }, [isOpen])
 
   // Fecha o dropdown ao clicar fora
   useEffect(() => {
@@ -26,7 +61,7 @@ export default function SingleSeriesDropdown({ value, onChange, series = [], ele
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [isOpen])
 
-  const hasActiveFilters = filterEl || filterEstacao || filterSkid || filterInv || filterSb
+  const hasActiveFilters = filterEl || filterEstacao || filterSkid || filterInv || filterSb || filterStr
 
   const filteredSeries = useMemo(() => {
     return series.filter((s) => {
@@ -35,15 +70,17 @@ export default function SingleSeriesDropdown({ value, onChange, series = [], ele
       if (filterSkid && s.skid !== filterSkid) return false
       if (filterInv && s.inversor !== filterInv) return false
       if (filterSb && s.stringbox !== filterSb) return false
+      if (filterStr && s.string !== filterStr) return false
       if (search && !s.coluna.toLowerCase().includes(search.toLowerCase())) return false
       return true
     })
-  }, [series, filterEl, filterEstacao, filterSkid, filterInv, filterSb, search])
+  }, [series, filterEl, filterEstacao, filterSkid, filterInv, filterSb, filterStr, search])
 
-  const uniqueEstacoes = useMemo(() => [...new Set(series.filter(s => !filterEl || s.elemento === filterEl).map(s => s.estacao).filter(Boolean))].sort(), [series, filterEl])
-  const uniqueSkids = useMemo(() => [...new Set(series.filter(s => (!filterEl || s.elemento === filterEl) && (!filterEstacao || s.estacao === filterEstacao)).map(s => s.skid).filter(Boolean))].sort(), [series, filterEl, filterEstacao])
-  const uniqueInvs = useMemo(() => [...new Set(series.filter(s => !filterSkid || s.skid === filterSkid).map(s => s.inversor).filter(Boolean))].sort(), [series, filterSkid])
-  const uniqueSbs = useMemo(() => [...new Set(series.filter(s => !filterInv || s.inversor === filterInv).map(s => s.stringbox).filter(Boolean))].sort(), [series, filterInv])
+  const uniqueEstacoes = useMemo(() => [...new Set(series.filter(s => !filterEl || s.elemento === filterEl).map(s => s.estacao).filter(Boolean))].sort(naturalSort), [series, filterEl])
+  const uniqueSkids = useMemo(() => [...new Set(series.filter(s => (!filterEl || s.elemento === filterEl) && (!filterEstacao || s.estacao === filterEstacao)).map(s => s.skid).filter(Boolean))].sort(naturalSort), [series, filterEl, filterEstacao])
+  const uniqueInvs = useMemo(() => [...new Set(series.filter(s => !filterSkid || s.skid === filterSkid).map(s => s.inversor).filter(Boolean))].sort(naturalSort), [series, filterSkid])
+  const uniqueSbs = useMemo(() => [...new Set(series.filter(s => !filterInv || s.inversor === filterInv).map(s => s.stringbox).filter(Boolean))].sort(naturalSort), [series, filterInv])
+  const uniqueStrings = useMemo(() => [...new Set(series.filter(s => !filterSb || s.stringbox === filterSb).map(s => s.string).filter(Boolean))].sort(naturalSort), [series, filterSb])
 
   const handleSelect = (coluna) => {
     onChange(coluna)
@@ -56,9 +93,28 @@ export default function SingleSeriesDropdown({ value, onChange, series = [], ele
     setFilterSkid('')
     setFilterInv('')
     setFilterSb('')
+    setFilterStr('')
   }
 
   const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const filterButtonRef = useRef(null)
+  const [filtersDropUp, setFiltersDropUp] = useState(false)
+
+  // Mede o espaço vertical disponível especificamente para o popover de filtros hierárquicos ao ser aberto
+  useEffect(() => {
+    if (isFilterOpen && filterButtonRef.current) {
+      const rect = filterButtonRef.current.getBoundingClientRect()
+      const spaceBelow = window.innerHeight - rect.bottom
+      const spaceAbove = rect.top
+      
+      // O popover de filtros tem ~300px de altura. Se faltar espaço abaixo e houver mais espaço acima, abre para cima
+      if (spaceBelow < 320 && spaceAbove > spaceBelow) {
+        setFiltersDropUp(true)
+      } else {
+        setFiltersDropUp(false)
+      }
+    }
+  }, [isFilterOpen])
 
   return (
     <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
@@ -73,7 +129,7 @@ export default function SingleSeriesDropdown({ value, onChange, series = [], ele
         }}
       >
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {value || 'Selecionar série...'}
+          {value ? formatSeriesName(value) : 'Selecionar série...'}
         </span>
         <span style={{ fontSize: '10px' }}>▼</span>
       </div>
@@ -81,7 +137,10 @@ export default function SingleSeriesDropdown({ value, onChange, series = [], ele
       {/* Popover */}
       {isOpen && (
         <div style={{
-          position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
+          position: 'absolute',
+          top: dropUp ? 'auto' : 'calc(100% + 4px)',
+          bottom: dropUp ? 'calc(100% + 4px)' : 'auto',
+          left: 0, right: 0,
           background: 'var(--bg-card)', border: '1px solid var(--border)',
           borderRadius: '8px', zIndex: 1050, boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
           display: 'flex', flexDirection: 'column', maxHeight: '350px'
@@ -107,6 +166,7 @@ export default function SingleSeriesDropdown({ value, onChange, series = [], ele
               </div>
 
               <button 
+                ref={filterButtonRef}
                 className={`btn ${hasActiveFilters ? 'btn-primary' : 'btn-ghost'}`} 
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
                 title="Filtros avançados (Elementos, Estações, etc)"
@@ -131,7 +191,10 @@ export default function SingleSeriesDropdown({ value, onChange, series = [], ele
                 <>
                   <div style={{ position: 'fixed', inset: 0, zIndex: 100 }} onClick={() => setIsFilterOpen(false)} />
                   <div style={{
-                    position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: 260, zIndex: 101,
+                    position: 'absolute',
+                    top: filtersDropUp ? 'auto' : 'calc(100% + 8px)',
+                    bottom: filtersDropUp ? 'calc(100% + 8px)' : 'auto',
+                    right: 0, width: 260, zIndex: 101,
                     background: 'var(--bg-card)', border: '1px solid var(--border)',
                     borderRadius: 12, padding: 14, boxShadow: '0 12px 40px rgba(0,0,0,0.4)',
                     display: 'flex', flexDirection: 'column', gap: 10
@@ -143,24 +206,34 @@ export default function SingleSeriesDropdown({ value, onChange, series = [], ele
                       )}
                     </div>
 
-                    <select className="input" style={{ fontSize: 12 }} value={filterEl} onChange={e => { setFilterEl(e.target.value); setFilterEstacao(''); setFilterSkid(''); setFilterInv(''); setFilterSb(''); }}>
+                    <select className="input" style={{ fontSize: 12 }} value={filterEl} onChange={e => { setFilterEl(e.target.value); setFilterEstacao(''); setFilterSkid(''); setFilterInv(''); setFilterSb(''); setFilterStr(''); }}>
                       <option value="">Todos os Elementos</option>
                       {elementos.map(el => <option key={el} value={el}>{el}</option>)}
                     </select>
 
-                    <select className="input" style={{ fontSize: 12 }} value={filterEstacao} onChange={e => { setFilterEstacao(e.target.value); setFilterSkid(''); setFilterInv(''); setFilterSb(''); }}>
+                    <select className="input" style={{ fontSize: 12 }} value={filterEstacao} onChange={e => { setFilterEstacao(e.target.value); setFilterSkid(''); setFilterInv(''); setFilterSb(''); setFilterStr(''); }}>
                       <option value="">Todas as Estações</option>
                       {uniqueEstacoes.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
 
-                    <select className="input" style={{ fontSize: 12 }} value={filterSkid} onChange={e => { setFilterSkid(e.target.value); setFilterInv(''); setFilterSb(''); }}>
+                    <select className="input" style={{ fontSize: 12 }} value={filterSkid} onChange={e => { setFilterSkid(e.target.value); setFilterInv(''); setFilterSb(''); setFilterStr(''); }}>
                       <option value="">Todos os SKIDs</option>
                       {uniqueSkids.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
 
-                    <select className="input" style={{ fontSize: 12 }} value={filterInv} onChange={e => { setFilterInv(e.target.value); setFilterSb(''); }}>
+                    <select className="input" style={{ fontSize: 12 }} value={filterInv} onChange={e => { setFilterInv(e.target.value); setFilterSb(''); setFilterStr(''); }}>
                       <option value="">Todos os Inversores</option>
                       {uniqueInvs.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+
+                    <select className="input" style={{ fontSize: 12 }} value={filterSb} onChange={e => { setFilterSb(e.target.value); setFilterStr(''); }}>
+                      <option value="">Todos os Stringboxes</option>
+                      {uniqueSbs.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+
+                    <select className="input" style={{ fontSize: 12 }} value={filterStr} onChange={e => setFilterStr(e.target.value)}>
+                      <option value="">Todas as Strings</option>
+                      {uniqueStrings.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
 
                     <button 
@@ -196,7 +269,7 @@ export default function SingleSeriesDropdown({ value, onChange, series = [], ele
                   onMouseEnter={e => { if (value !== s.coluna) e.currentTarget.style.background = 'var(--bg-hover)' }}
                   onMouseLeave={e => { if (value !== s.coluna) e.currentTarget.style.background = 'transparent' }}
                 >
-                  {s.coluna}
+                  {formatSeriesName(s.coluna)}
                 </div>
               ))
             )}

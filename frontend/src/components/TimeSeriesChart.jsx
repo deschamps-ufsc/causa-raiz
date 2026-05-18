@@ -13,6 +13,20 @@ const CHIP_HIDDEN = {
   textDecoration: 'line-through', opacity: 0.7,
 }
 
+export function formatSeriesName(name) {
+  if (!name) return name;
+  const nameLower = name.toLowerCase();
+  if (nameLower === 'gpoa') return 'Gpoa';
+  if (nameLower === 'grear') return 'Grear';
+  if (nameLower === 'geff') return 'Geff';
+  if (nameLower === 'tamb') return 'Tamb';
+  if (nameLower === 'tmod') return 'Tmod';
+  if (nameLower === 'tcel') return 'Tcel';
+  if (nameLower === 'sujidade') return 'Sujidade';
+  if (nameLower === 'energia') return 'Energia';
+  return name;
+}
+
 export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterColors = {}, chartConfig, setChartConfig }) {
   const {
     gridX, gridY1, gridY2, gridY3, gridY4,
@@ -260,12 +274,12 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
       const baseTrace = {
         type: 'scatter',
         mode: 'lines',
-        name,
+        name: formatSeriesName(name),
         yaxis: axis === 'y1' ? 'y' : axis,
         line: { color: getColor(name), width: getWidth(name), dash: getDash(name) },
         fill: isFilled ? 'tozeroy' : 'none',
         fillcolor: isFilled ? hexToRgba(getColor(name), seriesFills[name] / 100) : undefined,
-        hovertemplate: `&nbsp;&nbsp;<b>${name}</b><br>&nbsp;&nbsp;Valor: %{y:.4g}<extra></extra>`,
+        hovertemplate: `&nbsp;&nbsp;<b>${formatSeriesName(name)}</b><br>&nbsp;&nbsp;Valor: %{y:.4g}<extra></extra>`,
         connectgaps: false,
         legendgroup: name,
         showlegend: true
@@ -324,10 +338,10 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
         type: 'scatter',
         mode: 'lines',
         fill: 'tozeroy', // Preenche para formar blocos
-        name: `Filtro: ${name}`,
+        name: `Filtro: ${formatSeriesName(name)}`,
         yaxis: yAxisRef,
         line: { color: getColor(name), width: 0, shape: 'hv' },
-        hovertemplate: `<b>${name}</b><extra></extra>`,
+        hovertemplate: `<b>${formatSeriesName(name)}</b><extra></extra>`,
         connectgaps: false,
         hoverinfo: 'name'
       }
@@ -818,7 +832,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
           />
 
           <span style={{ maxWidth: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {name}
+            {formatSeriesName(name)}
           </span>
 
           <button
@@ -1052,11 +1066,12 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
         ctx.textAlign = 'left'
         ctx.textBaseline = 'middle'
         
-        let label = name
+        const formatted = formatSeriesName(name)
+        let label = formatted
         while (label.length > 3 && ctx.measureText(label).width > MAX_TEXT_W) {
           label = label.slice(0, -1)
         }
-        if (label !== name) label += '…'
+        if (label !== formatted) label += '…'
         ctx.fillText(label, x + LINE_W + PAD, y)
       })
 
@@ -1253,7 +1268,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
                     ),
                   }}>
                     <span style={{ width: 8, height: 8, borderRadius: 2, background: isHidden ? '#94a3b8' : color, display: 'inline-block', flexShrink: 0 }} />
-                    {name}
+                    {formatSeriesName(name)}
                   </span>
                 )
               })}
@@ -1439,7 +1454,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
                     flex: (legendPosition === 'bottom' || legendPosition === 'top') ? '0 1 auto' : 1, minWidth: 0,
                     maxWidth: (legendPosition === 'bottom' || legendPosition === 'top') ? 220 : 'none',
                   }}>
-                    {name}
+                    {formatSeriesName(name)}
                   </span>
                 </div>
               )
