@@ -4,7 +4,6 @@ import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import './index.css'
 
 import App from './App.jsx'
-import UploadPage from './pages/UploadPage.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
 import DiagramPage from './pages/DiagramPage.jsx'
 import SettingsPage from './pages/SettingsPage.jsx'
@@ -36,14 +35,7 @@ const router = createBrowserRouter([
       </PrivateRoute>
     ),
     children: [
-      {
-        index: true,
-        element: (
-          <PrivateRoute analystOrAdminOnly>
-            <UploadPage />
-          </PrivateRoute>
-        ),
-      },
+      { index: true, element: <Navigate to="/dashboard" replace /> },
       { path: 'dashboard', element: <DashboardPage /> },
       { path: 'diagram',   element: <DiagramPage /> },
       {

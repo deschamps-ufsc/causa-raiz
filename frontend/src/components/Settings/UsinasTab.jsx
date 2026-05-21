@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { fetchDetailedUsinas, createUsina, renameUsina, deleteUsina } from '../../services/api'
 import { useAuth } from '../../hooks/AuthContext'
+import UsinaDetail from './UsinaDetail'
 
 export default function UsinasTab({ readOnly = false }) {
   const { user: currentUser } = useAuth()
@@ -11,6 +12,7 @@ export default function UsinasTab({ readOnly = false }) {
   const [editingUsina, setEditingUsina] = useState(null)
   const [newName, setNewName] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [selectedUsina, setSelectedUsina] = useState(null) // usina object being viewed
 
   const loadUsinas = async () => {
     try {
@@ -63,6 +65,80 @@ export default function UsinasTab({ readOnly = false }) {
   }
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>Carregando usinas...</div>
+
+  // ── Sub-view: usina selecionada ──────────────────────────────────────────
+  if (selectedUsina) {
+    return (
+      <div>
+        {/* Breadcrumb + Voltar */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 10, paddingBottom: 12, borderBottom: '1px solid #e2e8f0', flexWrap: 'wrap' }}>
+          {/* Seletor de usina no canto esquerdo */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', padding: '0 10px', borderRadius: 8, border: '1px solid #e2e8f0', height: 32, boxSizing: 'border-box' }}>
+            <span style={{ fontSize: 13, color: '#64748b', whiteSpace: 'nowrap' }}>🏭 Usina:</span>
+            <select
+              value={selectedUsina.nome || ''}
+              onChange={e => {
+                const targetUsina = usinas.find(u => u.nome === e.target.value)
+                if (targetUsina) setSelectedUsina(targetUsina)
+              }}
+              style={{
+                background: 'transparent', border: 'none', color: '#0f172a',
+                fontSize: 13, fontWeight: 700, outline: 'none', cursor: 'pointer',
+                fontFamily: 'inherit', maxWidth: 260, height: '100%',
+              }}
+            >
+              {usinas.map(u => <option key={u.nome} value={u.nome}>{u.nome}</option>)}
+            </select>
+          </div>
+
+          {/* Badges + Botão Voltar no canto direito */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            {/* Badges de Informações da Usina */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginRight: 4 }}>
+              <div style={{ fontSize: 11, background: '#fff', border: '1px solid #e2e8f0', padding: '0 8px', borderRadius: 6, color: '#475569', display: 'flex', alignItems: 'center', height: 32, boxSizing: 'border-box' }} title="Potência da usina">
+                <span>⚡ <strong style={{ color: '#15803d' }}>{selectedUsina.total_mwp.toFixed(2)}</strong> MWp</span>
+              </div>
+              <div style={{ fontSize: 11, background: '#fff', border: '1px solid #e2e8f0', padding: '0 8px', borderRadius: 6, color: '#475569', display: 'flex', alignItems: 'center', height: 32, boxSizing: 'border-box' }} title="Total de Strings">
+                <span>🔌 <strong>{selectedUsina.total_strings}</strong> Strings</span>
+              </div>
+              <div style={{ fontSize: 11, background: '#fff', border: '1px solid #e2e8f0', padding: '0 8px', borderRadius: 6, color: '#475569', display: 'flex', alignItems: 'center', height: 32, boxSizing: 'border-box' }} title="Total de Módulos">
+                <span>📦 <strong>{selectedUsina.total_modulos}</strong> Módulos</span>
+              </div>
+              <div style={{ fontSize: 11, background: '#fff', border: '1px solid #e2e8f0', padding: '0 8px', borderRadius: 6, color: '#475569', display: 'flex', alignItems: 'center', height: 32, boxSizing: 'border-box' }} title="Total de Elementos">
+                <span>📊 <strong>{selectedUsina.count_elementos}</strong> Elementos</span>
+              </div>
+              <div style={{ fontSize: 11, background: '#fff', border: '1px solid #e2e8f0', padding: '0 8px', borderRadius: 6, color: '#475569', display: 'flex', alignItems: 'center', height: 32, boxSizing: 'border-box' }} title="Total de Séries">
+                <span>📈 <strong>{selectedUsina.count_series}</strong> Séries</span>
+              </div>
+              <div style={{ fontSize: 11, background: '#fff', border: '1px solid #e2e8f0', padding: '0 8px', borderRadius: 6, color: '#475569', display: 'flex', alignItems: 'center', height: 32, boxSizing: 'border-box' }} title="Total de Séries Sintéticas">
+                <span>🧪 <strong>{selectedUsina.total_sinteticas}</strong> Sintéticas</span>
+              </div>
+            </div>
+
+            {/* Botão Voltar Laranja */}
+            <button
+              onClick={() => setSelectedUsina(null)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '0 14px', borderRadius: 8,
+                border: 'none',
+                background: 'linear-gradient(135deg, #f59e0b, #f97316)',
+                color: '#fff', fontSize: 13, fontWeight: 700,
+                cursor: 'pointer', transition: 'all 0.15s',
+                boxShadow: '0 2px 6px rgba(245,158,11,0.2)',
+                height: 32, boxSizing: 'border-box'
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 10px rgba(245,158,11,0.3)' }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 6px rgba(245,158,11,0.2)' }}
+            >
+              ← Voltar
+            </button>
+          </div>
+        </div>
+        <UsinaDetail usina={selectedUsina.nome} />
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -126,8 +202,9 @@ export default function UsinasTab({ readOnly = false }) {
               <tbody>
                 {usinas.map(u => (
                   <tr key={u.nome}
-                    style={{ borderTop: '1px solid #f1f5f9', transition: 'background 0.12s' }}
-                    onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
+                    style={{ borderTop: '1px solid #f1f5f9', transition: 'background 0.12s', cursor: 'pointer' }}
+                    onClick={() => setSelectedUsina(u)}
+                    onMouseEnter={e => e.currentTarget.style.background = '#fef9ec'}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                   >
                     <td style={{ padding: '12px', fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap' }}>{u.nome}</td>
@@ -144,36 +221,41 @@ export default function UsinasTab({ readOnly = false }) {
                     <td style={{ padding: '12px', textAlign: 'center' }}>{u.count_series}</td>
                     <td style={{ padding: '12px', textAlign: 'center' }}>{u.total_sinteticas}</td>
                     <td style={{ padding: '12px', textAlign: 'center', minWidth: 100 }}>
-                      {!readOnly && (
-                        <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
-                          <button 
-                            onClick={() => { setEditingUsina(u); setNewName(u.nome); setShowModal(true) }}
-                            style={{ 
-                              padding: '5px 8px', borderRadius: 6, border: '1px solid #e2e8f0', 
-                              background: '#fff', cursor: 'pointer', transition: 'all 0.15s' 
-                            }}
-                            onMouseEnter={e => { e.currentTarget.style.borderColor = '#94a3b8'; e.currentTarget.style.background = '#f8fafc' }}
-                            onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#fff' }}
-                            title="Editar nome"
-                          >✏️</button>
-                          
-                          <button 
-                            onClick={() => setDeleteConfirm(u.nome)} 
-                            style={{ 
-                              padding: '5px 8px', borderRadius: 6, border: '1px solid #fee2e2', 
-                              background: '#fff', color: '#dc2626', cursor: 'pointer', transition: 'all 0.15s',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center'
-                            }}
-                            onMouseEnter={e => { e.currentTarget.style.background = '#fef2f2'; e.currentTarget.style.borderColor = '#fecaca' }}
-                            onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#fee2e2' }}
-                            title="Excluir usina"
-                          >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          </button>
-                        </div>
-                      )}
+                      <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+                        <button
+                          onClick={e => { e.stopPropagation(); setSelectedUsina(u) }}
+                          style={{
+                            padding: '5px 8px', borderRadius: 6, border: '1px solid rgba(245,158,11,0.4)',
+                            background: 'rgba(245,158,11,0.08)', color: '#b45309', cursor: 'pointer',
+                            fontSize: 11, fontWeight: 700, transition: 'all 0.15s'
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.18)' }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.08)' }}
+                          title="Abrir configurações"
+                        >⚙️</button>
+                        {!readOnly && (
+                          <>
+                            <button
+                              onClick={e => { e.stopPropagation(); setEditingUsina(u); setNewName(u.nome); setShowModal(true) }}
+                              style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', transition: 'all 0.15s' }}
+                              onMouseEnter={e => { e.currentTarget.style.borderColor = '#94a3b8'; e.currentTarget.style.background = '#f8fafc' }}
+                              onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#fff' }}
+                              title="Editar nome"
+                            >✏️</button>
+                            <button
+                              onClick={e => { e.stopPropagation(); setDeleteConfirm(u.nome) }}
+                              style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid #fee2e2', background: '#fff', color: '#dc2626', cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              onMouseEnter={e => { e.currentTarget.style.background = '#fef2f2'; e.currentTarget.style.borderColor = '#fecaca' }}
+                              onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#fee2e2' }}
+                              title="Excluir usina"
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

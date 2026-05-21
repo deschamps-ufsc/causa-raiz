@@ -31,7 +31,7 @@ export default function LoginPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%)',
+      background: 'linear-gradient(rgba(13, 17, 23, 0.2), rgba(13, 17, 23, 0.6)), url(/login_bg_new.png) center/cover no-repeat',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -61,80 +61,87 @@ export default function LoginPage() {
         backdropFilter: 'blur(20px)',
         border: '1px solid rgba(245,158,11,0.2)',
         borderRadius: 20,
-        padding: '40px 36px',
+        padding: '28px 36px',
         boxShadow: '0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04)',
         animation: 'slideUp 0.4s ease',
       }}>
 
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <div style={{ marginBottom: 4, display: 'flex', justifyContent: 'center' }}>
             <img
-              src="/logo_ufsc.png"
-              alt="Causa Raiz"
-              style={{ height: 56 }}
+              src="/logo_plataforma_transparent.png"
+              alt="Plataforma"
+              style={{ height: 180 }}
               onError={e => { e.target.style.display = 'none' }}
             />
           </div>
           <h1 style={{
-            margin: 0, fontSize: 18, fontWeight: 700,
+            margin: 0, fontSize: 24, fontWeight: 700,
             color: '#e6edf3', letterSpacing: -0.3, lineHeight: 1.3,
           }}>
-            Ferramenta de Análise de
+            Análise de Desempenho de
           </h1>
           <h1 style={{
-            margin: '2px 0 0', fontSize: 20, fontWeight: 800,
+            margin: '2px 0 0', fontSize: 28, fontWeight: 800,
             background: 'linear-gradient(135deg, #f59e0b, #f97316)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
             letterSpacing: -0.5,
           }}>
-            Causa Raiz
+            Usinas Fotovoltaicas
           </h1>
-          <p style={{ margin: '10px 0 0', fontSize: 13, color: '#8b949e' }}>
-            Entre com suas credenciais para continuar
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 16 }}>
+            <span style={{ fontSize: 12, color: '#8b949e', opacity: 0.8 }}>
+              por
+            </span>
+            <img src="/logo_ufsc_white.png" alt="Fotovoltaica UFSC" style={{ height: 42 }} />
+          </div>
+          <div style={{ width: 40, height: 1, background: 'rgba(245,158,11,0.5)', margin: '12px auto 0' }} />
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit}>
           {/* E-mail */}
-          <div style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: 12 }}>
             <label style={{
               display: 'block', fontSize: 12, fontWeight: 600,
               color: '#8b949e', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5,
             }}>
               E-mail
             </label>
-            <input
-              id="login-email"
-              type="email"
-              value={email}
-              onChange={e => { setEmail(e.target.value); setError('') }}
-              placeholder="seu@email.com"
-              autoComplete="email"
-              required
-              style={{
-                width: '100%', boxSizing: 'border-box',
-                background: 'rgba(255,255,255,0.05)',
-                border: `1.5px solid ${error ? 'rgba(220,38,38,0.6)' : 'rgba(255,255,255,0.1)'}`,
-                borderRadius: 10, color: '#e6edf3',
-                padding: '11px 14px', fontSize: 14,
-                fontFamily: 'inherit', outline: 'none',
-                transition: 'border-color 0.2s, box-shadow 0.2s',
-              }}
-              onFocus={e => {
-                e.target.style.borderColor = 'rgba(245,158,11,0.5)'
-                e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.1)'
-              }}
-              onBlur={e => {
-                e.target.style.borderColor = error ? 'rgba(220,38,38,0.6)' : 'rgba(255,255,255,0.1)'
-                e.target.style.boxShadow = 'none'
-              }}
-            />
+            <div style={{ position: 'relative' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', opacity: 0.8 }}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+              <input
+                id="login-email"
+                type="email"
+                value={email}
+                onChange={e => { setEmail(e.target.value); setError('') }}
+                placeholder="seu@email.com"
+                autoComplete="email"
+                required
+                style={{
+                  width: '100%', boxSizing: 'border-box',
+                  background: 'rgba(255,255,255,0.05)',
+                  border: `1.5px solid ${error ? 'rgba(220,38,38,0.6)' : 'rgba(255,255,255,0.1)'}`,
+                  borderRadius: 10, color: '#e6edf3',
+                  padding: '11px 14px 11px 42px', fontSize: 14,
+                  fontFamily: 'inherit', outline: 'none',
+                  transition: 'border-color 0.2s, box-shadow 0.2s',
+                }}
+                onFocus={e => {
+                  e.target.style.borderColor = 'rgba(245,158,11,0.5)'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.1)'
+                }}
+                onBlur={e => {
+                  e.target.style.borderColor = error ? 'rgba(220,38,38,0.6)' : 'rgba(255,255,255,0.1)'
+                  e.target.style.boxShadow = 'none'
+                }}
+              />
+            </div>
           </div>
 
           {/* Senha */}
-          <div style={{ marginBottom: 24 }}>
+          <div style={{ marginBottom: 16 }}>
             <label style={{
               display: 'block', fontSize: 12, fontWeight: 600,
               color: '#8b949e', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5,
@@ -142,6 +149,7 @@ export default function LoginPage() {
               Senha
             </label>
             <div style={{ position: 'relative' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', opacity: 0.8 }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
               <input
                 id="login-password"
                 type={showPass ? 'text' : 'password'}
@@ -155,7 +163,7 @@ export default function LoginPage() {
                   background: 'rgba(255,255,255,0.05)',
                   border: `1.5px solid ${error ? 'rgba(220,38,38,0.6)' : 'rgba(255,255,255,0.1)'}`,
                   borderRadius: 10, color: '#e6edf3',
-                  padding: '11px 44px 11px 14px', fontSize: 14,
+                  padding: '11px 44px 11px 42px', fontSize: 14,
                   fontFamily: 'inherit', outline: 'none',
                   transition: 'border-color 0.2s, box-shadow 0.2s',
                 }}
@@ -180,7 +188,11 @@ export default function LoginPage() {
                 tabIndex={-1}
                 title={showPass ? 'Ocultar senha' : 'Mostrar senha'}
               >
-                {showPass ? '🙈' : '👁️'}
+                {showPass ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                )}
               </button>
             </div>
           </div>
@@ -223,13 +235,16 @@ export default function LoginPage() {
                 Entrando...
               </>
             ) : (
-              <>🔐 Entrar</>
+              <>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+                Entrar
+              </>
             )}
           </button>
         </form>
 
         {/* Footer */}
-        <p style={{ textAlign: 'center', marginTop: 24, fontSize: 12, color: '#484f58' }}>
+        <p style={{ textAlign: 'center', marginTop: 16, fontSize: 12, color: '#484f58' }}>
           Acesso restrito — solicite uma conta ao administrador
         </p>
       </div>
@@ -241,6 +256,14 @@ export default function LoginPage() {
         }
         @keyframes spin {
           to { transform: rotate(360deg); }
+        }
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus, 
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #1e242d inset !important;
+            -webkit-text-fill-color: #e6edf3 !important;
+            transition: background-color 5000s ease-in-out 0s;
         }
       `}</style>
     </div>

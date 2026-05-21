@@ -22,6 +22,9 @@ export default function SeriesMapImport({ onImported, usina }) {
   }
 
   useEffect(() => {
+    setFile(null)
+    setError(null)
+    setResult(null)
     if (!usina) return
     
     let isMounted = true
@@ -102,7 +105,7 @@ export default function SeriesMapImport({ onImported, usina }) {
             {result.linhas_invalidas > 0 && <span style={{ marginLeft: 8, opacity: 0.8 }}> ({result.linhas_invalidas} linhas inválidas ignoradas)</span>}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
             <div className="stat-card" style={{ height: '100%' }}>
               <div className="stat-label">Elementos</div>
               <div className="stat-value" style={{ fontSize: 20 }}>{result.elementos_encontrados?.length || 0}</div>

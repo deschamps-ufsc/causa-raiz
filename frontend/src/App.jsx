@@ -1,26 +1,9 @@
-import { useEffect, useState, useRef } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { useUsina } from './hooks/UsinaContext'
 import { useAuth } from './hooks/AuthContext'
-import { fetchUsinas } from './services/api'
 
 export default function App() {
-  const { usinaAtual, setUsinaAtual } = useUsina()
   const { user, isAdmin, isAnalystOrAdmin, logout } = useAuth()
   const navigate = useNavigate()
-  const [usinas, setUsinas] = useState([])
-
-  const loadUsinas = async () => {
-    try {
-      const data = await fetchUsinas()
-      setUsinas(data || [])
-    } catch (err) {
-      console.error(err)
-    }
-  }
-
-  useEffect(() => { loadUsinas() }, [])
-
 
   const handleLogout = () => {
     logout()
@@ -41,40 +24,19 @@ export default function App() {
       {/* Navbar */}
       <nav className="navbar">
         <NavLink to={isAdmin ? "/" : "/dashboard"} className="navbar-brand">
-          <img src="/logo_ufsc.png" alt="Fotovoltaica UFSC" style={{ height: '36px', marginRight: '6px' }} />
-          <span style={{ fontSize: '15px' }}>Ferramenta de Análise de <strong>Causa Raiz</strong></span>
+          <img src="/logo_plataforma_transparent.png" alt="Plataforma" style={{ height: '38px', marginRight: '8px' }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+            <span style={{ fontSize: '13px', fontWeight: '700', lineHeight: '1.2' }}>
+              Análise de Desempenho de <strong style={{ color: '#f97316' }}>Usinas Fotovoltaicas</strong>
+            </span>
+            <span style={{ fontSize: '9px', color: '#8b949e', fontWeight: '500', lineHeight: '1.1' }}>
+              por Fotovoltaica UFSC
+            </span>
+          </div>
         </NavLink>
 
         <div className="navbar-links" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          {/* Seletor de Usina */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.1)', padding: '4px 12px', borderRadius: '6px', position: 'relative' }}>
-            <span style={{ fontSize: '14px', color: '#ddd' }}>Usina:</span>
-            <select
-              value={usinaAtual || ''}
-              onChange={e => setUsinaAtual(e.target.value)}
-              style={{
-                background: 'transparent', color: 'white', border: 'none',
-                outline: 'none', fontSize: '14px', cursor: 'pointer',
-                fontWeight: 'bold', minWidth: '100px'
-              }}
-            >
-              <option value="" style={{ color: 'black' }}>-- Selecionar --</option>
-              {usinas.map(u => (
-                <option key={u} value={u} style={{ color: 'black' }}>{u}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Links de navegação — Upload e Settings: Analista e Admin */}
-          {isAnalystOrAdmin && (
-            <NavLink
-              to="/"
-              end
-              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-            >
-              📤 Upload
-            </NavLink>
-          )}
+          {/* Links de navegação */}
           <NavLink
             to="/dashboard"
             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}

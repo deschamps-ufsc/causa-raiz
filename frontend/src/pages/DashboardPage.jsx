@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useSeries } from '../hooks/useSeries'
 import { useSeriesData } from '../hooks/useSeriesData'
-import { fetchElementos } from '../services/api'
+import { fetchElementos, fetchUsinas } from '../services/api'
 import { useUsina } from '../hooks/UsinaContext'
 import SeriesSelector from '../components/SeriesSelector'
 import TimeSeriesChart from '../components/TimeSeriesChart'
@@ -35,16 +35,17 @@ export function formatSeriesName(name) {
 const TABS = [
   { id: 'chart',   label: '📈 Gráfico' },
   { id: 'table',   label: '📋 Tabela' },
-  { id: 'heatmap', label: '🌡️ Mapa de Calor' },
   { id: 'ranking', label: '🏆 Ranking' },
   { id: 'diagram', label: '🕸️ Diagrama' },
-  { id: 'flow',    label: '📊 EPI' }
+  { id: 'flow',    label: '📊 EPI' },
+  { id: 'heatmap', label: '🌡️ Análise de Causa Raiz' }
 ]
 
 export default function DashboardPage() {
   const location = useLocation()
   const initialDate = location.state?.date || ''
-  const { usinaAtual } = useUsina()
+  const { usinaAtual, setUsinaAtual } = useUsina()
+  const [usinas, setUsinas] = useState([])
 
   const [selectedDates, setSelectedDates] = useState(initialDate ? [initialDate] : [])
   const [selectedSeries, setSelectedSeries] = useState([])
@@ -90,6 +91,10 @@ export default function DashboardPage() {
   const skipCleanup = useRef(false)
 
   // ── VISUALIZAÇÕES LOGIC ──────────────────────────────────────────
+  useEffect(() => {
+    fetchUsinas().then(setUsinas).catch(() => {})
+  }, [])
+
   useEffect(() => {
     if (usinaAtual) {
       fetchVisualizations(usinaAtual).then(setSavedVisualizations).catch(() => {})
@@ -286,22 +291,7 @@ export default function DashboardPage() {
     }
   }, [data, activeFilters, visibleFilters, filterSeries])
 
-  // Guard: usina não selecionada
-  if (!usinaAtual) {
-    return (
-      <div style={{
-        flex: 1,
-        background: 'var(--bg-primary)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexDirection: 'column', gap: 16, padding: '40px 20px',
-        color: 'var(--text-secondary)', textAlign: 'center',
-      }}>
-        <span style={{ fontSize: 56 }}>🏭</span>
-        <strong style={{ fontSize: 20, color: 'var(--text-primary)' }}>Nenhuma usina selecionada</strong>
-        <p style={{ fontSize: 14 }}>Selecione ou crie uma usina no menu superior para continuar.</p>
-      </div>
-    )
-  }
+  // Guard: usina não selecionada — mostrar mensagem inline na barra lateral, não bloqueia a página
 
   return (
     <div style={{ display: 'flex', height: 'calc(100vh - 60px)', overflow: 'hidden' }}>
@@ -489,7 +479,7 @@ export default function DashboardPage() {
           borderBottom: '1px solid var(--border)',
           background: 'var(--bg-card)', flexShrink: 0,
         }}>
-          {/* Linha 1: abas + badges */}
+          {/* Linha 1: abas + seletor de usina */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px' }}>
             <div className="tabs" style={{ flex: '0 0 auto' }}>
               {TABS.map((tab) => (
@@ -499,15 +489,33 @@ export default function DashboardPage() {
               ))}
             </div>
 
-            {filteredData && (
-              <div style={{ display: 'flex', gap: 8, fontSize: 12, color: 'var(--text-secondary)', marginLeft: 'auto' }}>
-                <span className="badge badge-amber">
-                  {filteredData.dates?.split(',').length} {filteredData.dates?.split(',').length === 1 ? 'dia' : 'dias'}
-                </span>
-                <span className="badge badge-blue">{Object.keys(filteredData.series).length} séries</span>
-                <span className="badge badge-gray">{filteredData.total_pontos.toLocaleString('pt-BR')} pts</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              {filteredData && (
+                <div style={{ display: 'flex', gap: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
+                  <span className="badge badge-amber">
+                    {filteredData.dates?.split(',').length} {filteredData.dates?.split(',').length === 1 ? 'dia' : 'dias'}
+                  </span>
+                  <span className="badge badge-blue">{Object.keys(filteredData.series).length} séries</span>
+                  <span className="badge badge-gray">{filteredData.total_pontos.toLocaleString('pt-BR')} pts</span>
+                </div>
+              )}
+              {/* Seletor de usina */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-secondary)', padding: '4px 10px', borderRadius: 8, border: '1px solid var(--border)' }}>
+                <span style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>🏭 Usina:</span>
+                <select
+                  value={usinaAtual || ''}
+                  onChange={e => setUsinaAtual(e.target.value)}
+                  style={{
+                    background: 'transparent', border: 'none', color: 'var(--text-primary)',
+                    fontSize: 13, fontWeight: 600, outline: 'none', cursor: 'pointer',
+                    fontFamily: 'inherit', maxWidth: 180,
+                  }}
+                >
+                  <option value="">-- Selecionar --</option>
+                  {usinas.map(u => <option key={u} value={u}>{u}</option>)}
+                </select>
               </div>
-            )}
+            </div>
           </div>
 
           {/* Linha 2: botões de Carregar/Salvar — só nas abas Gráfico e Tabela */}
