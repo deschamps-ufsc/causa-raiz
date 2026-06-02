@@ -22,7 +22,7 @@
         ],
         "operation": "mean",
         "hasMultipleOutputs": true,
-        "outputFilter": "Irradiação_50_W"
+        "outputFilter": "Irradiação_400_W"
       },
       "position": {
         "x": 30,

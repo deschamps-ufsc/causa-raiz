@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
+import ReactDOM from 'react-dom'
 import PlotWrapper from 'react-plotly.js'
 const Plot = PlotWrapper.default || PlotWrapper
 import Plotly from 'plotly.js/dist/plotly'
@@ -79,6 +80,186 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
   
   const [plotSize, setPlotSize] = useState({ width: 800, height: 400 })
 
+  const [hoverState, setHoverState] = useState(null)
+  const [hoverIndex, setHoverIndex] = useState(null)
+  const hoverMarkerCountRef = useRef(0)
+  const mousePosRef = useRef({ x: 0, y: 0 })
+
+  // Navegação por janela de dias
+  const [windowDays, setWindowDays] = useState(null)   // null = Max (sem filtro)
+  const [windowStartIdx, setWindowStartIdx] = useState(0)
+
+  // Dias únicos — declarado antes de qualquer useEffect que o referencia (evita TDZ)
+  const uniqueDays = useMemo(() => {
+    if (!data?.timestamps?.length) return []
+    const seen = new Set()
+    const days = []
+    for (const t of data.timestamps) {
+      const d = t.substring(0, 10)
+      if (!seen.has(d)) { seen.add(d); days.push(d) }
+    }
+    return days
+  }, [data])
+
+  const handlePlotHover = (eventData) => {
+    if (!eventData || !eventData.points || eventData.points.length === 0) return
+    const point = eventData.points[0]
+    const xVal = point.x
+    
+    const targetTime = new Date(xVal).getTime()
+    const globalIdx = data.timestamps.findIndex(t => new Date(t).getTime() === targetTime)
+    
+    if (globalIdx === -1) {
+      console.log('Hover time not found:', xVal)
+      return
+    }
+
+    const mouseEvent = eventData.event
+    if (!mouseEvent || !plotWrapperRef.current) return
+    
+    const containerRect = plotWrapperRef.current.getBoundingClientRect()
+    const mouseY = mouseEvent.clientY - containerRect.top
+    const containerWidth = containerRect.width
+    const containerHeight = containerRect.height
+
+    // Calcula as margens para saber o tamanho útil do gráfico
+    const y2Names = seriesNames.filter(n => seriesAxisMap[n] === 'y2')
+    const y3Names = seriesNames.filter(n => seriesAxisMap[n] === 'y3')
+    const y4Names = seriesNames.filter(n => seriesAxisMap[n] === 'y4')
+    const rightMargin = (y2Names.length > 0 || gridY2 ? 50 : 0) + 
+                        (y3Names.length > 0 || gridY3 ? 50 : 0) + 
+                        (y4Names.length > 0 || gridY4 ? 50 : 0) || 45
+
+    const plotWidth = containerWidth - 45 - rightMargin // margin.l = 45
+    const plotHeight = containerHeight - 45 - 50 // margin.t = 45, margin.b = 50
+
+    // Calcula a posição X exata matematicamente (infalível contra falhas do c2p do Plotly)
+    let spikePixelX = mouseEvent.clientX - containerRect.left
+    if (point.xaxis && point.xaxis.range) {
+      const r0 = point.xaxis.range[0]
+      const r1 = point.xaxis.range[1]
+      const minT = new Date(r0).getTime() || Number(r0)
+      const maxT = new Date(r1).getTime() || Number(r1)
+      const pT = new Date(point.x).getTime()
+      
+      if (maxT > minT && !isNaN(pT)) {
+        const ratioX = (pT - minT) / (maxT - minT)
+        if (ratioX >= 0 && ratioX <= 1) {
+          spikePixelX = 45 + ratioX * plotWidth
+        }
+      }
+    }
+
+    const points = visibleNames
+      .map(name => {
+        const val = data.series[name]?.[globalIdx]
+        return {
+          name,
+          value: val,
+          color: getColor(name),
+        }
+      })
+      .filter(pt => pt.value !== null && pt.value !== undefined && !Number.isNaN(pt.value))
+
+    if (points.length === 0) {
+      setHoverState(null)
+      return
+    }
+
+    const timeStr = typeof xVal === 'string' && xVal.length >= 16 ? xVal.substring(11, 16) : String(xVal)
+
+    // Usa a posição real do mouse (capturada via onMouseMove nativo, sem conversões)
+    const tooltipWidth = 240
+    const cursorX = mousePosRef.current.x
+    const cursorY = mousePosRef.current.y
+    const showOnLeft = cursorX + tooltipWidth + 14 > window.innerWidth
+    const fixedLeft = showOnLeft ? cursorX - tooltipWidth - 10 : cursorX + 12
+
+    const approxHalfHeight = (points.length * 20 + 40) / 2
+    const clampedTop = Math.max(
+      approxHalfHeight + 10,
+      Math.min(window.innerHeight - approxHalfHeight - 10, cursorY)
+    )
+
+    setHoverIndex(globalIdx)
+    setHoverState({
+      timeStr,
+      points,
+      fixedLeft,
+      fixedTop: clampedTop,
+    })
+  }
+
+  const handlePlotUnhover = () => {
+    setHoverState(null)
+    setHoverIndex(null)
+  }
+
+  // ── Hover Marker Traces (imperativo) ───────────────────────────────
+  // Usa a API imperativa do Plotly para adicionar/remover pontos sem re-render do React.
+  // Isso evita que o autorange dos eixos Y seja recalculado a cada hover.
+  useEffect(() => {
+    const gd = plotDivRef.current
+    if (!gd || !gd.data) return
+
+    // Remove os traces de marcadores anteriores
+    if (hoverMarkerCountRef.current > 0) {
+      const totalTraces = gd.data.length
+      const indicesToDelete = []
+      for (let i = totalTraces - hoverMarkerCountRef.current; i < totalTraces; i++) {
+        indicesToDelete.push(i)
+      }
+      if (indicesToDelete.length > 0) {
+        Plotly.deleteTraces(gd, indicesToDelete)
+      }
+      hoverMarkerCountRef.current = 0
+    }
+
+    // Adiciona novos traces de marcadores se há hover ativo
+    if (hoverIndex !== null && data?.timestamps) {
+      const markerTraces = visibleNames.flatMap(name => {
+        const val = data.series[name]?.[hoverIndex]
+        if (val === null || val === undefined || Number.isNaN(val)) return []
+        const axis = seriesAxisMap[name] || 'y1'
+        const ts = data.timestamps[hoverIndex]
+        return [{
+          type: 'scatter',
+          mode: 'markers',
+          x: [ts],
+          y: [val],
+          yaxis: axis === 'y1' ? 'y' : axis,
+          marker: { color: getColor(name), size: 8, line: { color: '#ffffff', width: 1.5 } },
+          hoverinfo: 'skip',
+          showlegend: false,
+          name: '',
+        }]
+      })
+
+      if (markerTraces.length > 0) {
+        // Captura os ranges atuais ANTES de adicionar os traces
+        const currentLayout = gd.layout
+        const rangeBefore = {}
+        ;['xaxis', 'yaxis', 'yaxis2', 'yaxis3', 'yaxis4'].forEach(ax => {
+          if (currentLayout[ax]?.range) {
+            rangeBefore[ax] = [...currentLayout[ax].range]
+          }
+        })
+        Plotly.addTraces(gd, markerTraces)
+        // Restaura os ranges imediatamente para cancelar qualquer autorange
+        const rangeUpdate = {}
+        Object.entries(rangeBefore).forEach(([ax, range]) => {
+          rangeUpdate[`${ax}.range`] = range
+          rangeUpdate[`${ax}.autorange`] = false
+        })
+        if (Object.keys(rangeUpdate).length > 0) {
+          Plotly.relayout(gd, rangeUpdate)
+        }
+        hoverMarkerCountRef.current = markerTraces.length
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hoverIndex])
+
   useEffect(() => {
     if (!plotWrapperRef.current) return
     const ro = new ResizeObserver(entries => {
@@ -114,6 +295,14 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
     observer.observe(el)
     return () => observer.disconnect()
   }, [containerRef.current, xGridSpacing]) // Re-vincula se a grade mudar para garantir estado fresco
+
+  // Aplica a janela de dias sempre que ela mudar
+  useEffect(() => {
+    // Pequeno delay para garantir que o Plotly já inicializou o gráfico
+    const t = setTimeout(() => applyDayWindow(windowStartIdx, windowDays), 80)
+    return () => clearTimeout(t)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [windowDays, windowStartIdx, uniqueDays])
 
   // Lookup helper: returns the ChartSettings entry for a series by its element
   const getElementDefault = (seriesName) => {
@@ -192,12 +381,30 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seriesNames])
 
+
   if (!data?.timestamps?.length) return null
 
   const baseDate     = data.date || ''
   // Helpers para o formato 'hidden:y2' que preserva o eixo anterior ao ocultar
   const isHiddenSeries = (axisVal) => axisVal != null && String(axisVal).startsWith('hidden')
   const prevAxisOf     = (axisVal) => String(axisVal).split(':')[1] || 'y1'
+
+  // Aplica janela de dias no eixo X via API imperativa (sem re-render)
+  const applyDayWindow = (startIdx, days) => {
+    const gd = plotDivRef.current
+    if (!gd) return
+    if (days === null || uniqueDays.length === 0) {
+      // Max: mostra tudo (autorange)
+      Plotly.relayout(gd, { 'xaxis.autorange': true })
+      return
+    }
+    const clampedStart = Math.max(0, Math.min(startIdx, uniqueDays.length - 1))
+    const endIdx = Math.min(clampedStart + days - 1, uniqueDays.length - 1)
+    Plotly.relayout(gd, {
+      'xaxis.range': [`${uniqueDays[clampedStart]} 00:00:00`, `${uniqueDays[endIdx]} 23:59:59`],
+      'xaxis.autorange': false,
+    })
+  }
 
   const visibleNames = seriesNames.filter(n => !isHiddenSeries(seriesAxisMap[n] || 'y1'))
   const hiddenNames  = seriesNames.filter(n => isHiddenSeries(seriesAxisMap[n]))
@@ -279,7 +486,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
         line: { color: getColor(name), width: getWidth(name), dash: getDash(name) },
         fill: isFilled ? 'tozeroy' : 'none',
         fillcolor: isFilled ? hexToRgba(getColor(name), seriesFills[name] / 100) : undefined,
-        hovertemplate: `&nbsp;&nbsp;<b>${formatSeriesName(name)}</b><br>&nbsp;&nbsp;Valor: %{y:.4g}<extra></extra>`,
+        hovertemplate: '<extra></extra>',
         connectgaps: false,
         legendgroup: name,
         showlegend: true
@@ -290,37 +497,56 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
       }
 
       // Plotly Bug: 'fill' bridges over nulls even when connectgaps is false.
-      // Solução: quebrar a série em vários pedaços (traces) onde houver dados contínuos.
-      const chunks = []
-      let currentX = []
-      let currentY = []
+      // Solução Otimizada: Em vez de criar centenas de traces (o que trava a renderização e hover do Plotly),
+      // criamos apenas 2 traces:
+      // 1. O trace da linha, sem preenchimento, que aceita nulls e corta a linha visualmente.
+      // 2. O trace do preenchimento, que injeta 0 nas bordas dos dados nulos para forçar a descida do preenchimento ao eixo X.
+      const fillX = []
+      const fillY = []
+      let inBlock = false
       const values = data.series[name]
       const times = data.timestamps
-      let chunkIndex = 0
 
       for (let i = 0; i < values.length; i++) {
         const val = values[i]
-        if (val === null || val === undefined || Number.isNaN(val)) {
-          if (currentX.length > 0) {
-            chunks.push({ ...baseTrace, x: currentX, y: currentY, showlegend: chunkIndex === 0 })
-            chunkIndex++
-            currentX = []
-            currentY = []
+        const isValid = val !== null && val !== undefined && !Number.isNaN(val)
+
+        if (isValid) {
+          if (!inBlock) {
+            fillX.push(times[i])
+            fillY.push(0)
+            inBlock = true
           }
+          fillX.push(times[i])
+          fillY.push(val)
         } else {
-          currentX.push(times[i])
-          currentY.push(val)
+          if (inBlock) {
+            fillX.push(times[i - 1])
+            fillY.push(0)
+            inBlock = false
+          }
         }
       }
 
-      if (currentX.length > 0) {
-        chunks.push({ ...baseTrace, x: currentX, y: currentY, showlegend: chunkIndex === 0 })
-      } else if (chunkIndex === 0) {
-        // Se a série inteira for nula, garantimos que ela apareça na legenda
-        chunks.push({ ...baseTrace, x: [], y: [] })
+      if (inBlock && values.length > 0) {
+        fillX.push(times[values.length - 1])
+        fillY.push(0)
       }
 
-      return chunks
+      const lineTrace = { ...baseTrace, mode: 'lines', fill: 'none', x: data.timestamps, y: data.series[name] }
+      const fillTrace = { 
+        ...baseTrace, 
+        mode: 'none', 
+        fill: 'tozeroy', 
+        x: fillX, 
+        y: fillY, 
+        showlegend: false, 
+        hoverinfo: 'skip', 
+        name: `${formatSeriesName(name)} (fill)` 
+      }
+
+      // Adicionamos primeiro o fill (para ficar por baixo) e depois a linha
+      return [fillTrace, lineTrace]
     })
 
     // ── Faixas de Filtro (Topo) ───────────────────────────────────────
@@ -341,9 +567,8 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
         name: `Filtro: ${formatSeriesName(name)}`,
         yaxis: yAxisRef,
         line: { color: getColor(name), width: 0, shape: 'hv' },
-        hovertemplate: `<b>${formatSeriesName(name)}</b><extra></extra>`,
+        hovertemplate: '<extra></extra>',
         connectgaps: false,
-        hoverinfo: 'name'
       }
     })
 
@@ -1334,7 +1559,104 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
       }}>
 
         {/* Área do Plot – cresce para preencher o espaço restante */}
-        <div ref={plotWrapperRef} style={{ flex: 1, minWidth: 0, minHeight: 0, overflow: 'hidden', position: 'relative', order: 1 }}>
+        <div 
+          ref={plotWrapperRef} 
+          onMouseMove={e => { mousePosRef.current = { x: e.clientX, y: e.clientY } }}
+          onMouseLeave={handlePlotUnhover}
+          style={{ flex: 1, minWidth: 0, minHeight: 0, overflow: 'hidden', position: 'relative', order: 1 }}
+        >
+          {/* ── Controle de Janela de Dias ── */}
+          {uniqueDays.length > 1 && (() => {
+            const DAY_OPTIONS = [1, 2, 3, 4, 5, 7, 10, null] // null = Max
+            const canPrev = windowDays !== null && windowStartIdx > 0
+            const canNext = windowDays !== null && windowStartIdx + windowDays < uniqueDays.length
+
+            const btnStyle = (enabled) => ({
+              background: '#ffffff',
+              border: '1px solid #cbd5e1',
+              borderRadius: 5,
+              color: enabled ? '#1e293b' : '#cbd5e1',
+              cursor: enabled ? 'pointer' : 'default',
+              fontFamily: 'Inter, sans-serif',
+              fontSize: 13,
+              fontWeight: 700,
+              lineHeight: 1,
+              padding: '4px 8px',
+              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+              transition: 'background 0.15s, color 0.15s',
+            })
+
+            return (
+              <div style={{
+                position: 'absolute',
+                top: 6,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 500,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                pointerEvents: 'all',
+              }}>
+                {/* Seta esquerda */}
+                <button
+                  style={btnStyle(canPrev)}
+                  title="Dia anterior"
+                  onClick={() => {
+                    if (!canPrev) return
+                    const next = windowStartIdx - 1
+                    setWindowStartIdx(next)
+                    applyDayWindow(next, windowDays)
+                  }}
+                >‹</button>
+
+                {/* Select de janela */}
+                <select
+                  value={windowDays === null ? 'max' : String(windowDays)}
+                  onChange={e => {
+                    const val = e.target.value === 'max' ? null : Number(e.target.value)
+                    setWindowDays(val)
+                    setWindowStartIdx(0)
+                    applyDayWindow(0, val)
+                  }}
+                  style={{
+                    background: '#ffffff',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: 5,
+                    color: '#1e293b',
+                    cursor: 'pointer',
+                    fontFamily: 'Inter, sans-serif',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    padding: '4px 6px',
+                    outline: 'none',
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+                  }}
+                >
+                  {DAY_OPTIONS.map(d => {
+                    const key = d === null ? 'max' : String(d)
+                    const label = d === null ? 'Max' : `${d}D`
+                    // Mostra apenas se faz sentido (dias disponíveis ≥ opção)
+                    if (d !== null && d > uniqueDays.length) return null
+                    return <option key={key} value={key}>{label}</option>
+                  })}
+                </select>
+
+                {/* Seta direita */}
+                <button
+                  style={btnStyle(canNext)}
+                  title="Próximo dia"
+                  onClick={() => {
+                    if (!canNext) return
+                    const next = windowStartIdx + 1
+                    setWindowStartIdx(next)
+                    applyDayWindow(next, windowDays)
+                  }}
+                >›</button>
+              </div>
+            )
+          })()}
+
           <Plot
             key={plotMountKey}
             data={traces}
@@ -1343,6 +1665,8 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
             onInitialized={(_, gd) => { plotDivRef.current = gd }}
             onUpdate={(_, gd)       => { plotDivRef.current = gd }}
             onRelayout={handleRelayout}
+            onHover={handlePlotHover}
+            onUnhover={handlePlotUnhover}
             config={{
               responsive: true,
               displaylogo: false,
@@ -1463,6 +1787,73 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
         )}
 
       </div>
+      
+      {/* Esconde as setas/balões nativos do Plotly mas mantém os círculos dos traces de marcadores */}
+      <style>{`
+        .js-plotly-plot .hoverlayer .hovertext { display: none !important; }
+        .js-plotly-plot .hoverlayer .axistext { display: none !important; }
+      `}</style>
+
+      
+      {hoverState && hoverState.points && hoverState.points.length > 0 && ReactDOM.createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            left: `${hoverState.fixedLeft}px`,
+            top: `${hoverState.fixedTop}px`,
+            transform: 'translate(0, -50%)',
+            backgroundColor: 'rgba(8, 44, 55, 0.92)',
+            backdropFilter: 'blur(4px)',
+            border: '1.5px solid #00bcd4',
+            borderRadius: '6px',
+            padding: '10px 14px',
+            color: '#ffffff',
+            fontSize: '12px',
+            fontFamily: 'Inter, sans-serif',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+            pointerEvents: 'none',
+            zIndex: 99999,
+            minWidth: '220px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '6px',
+          }}
+        >
+          <div style={{ 
+            fontWeight: '700', 
+            fontSize: '13px', 
+            borderBottom: '1px solid rgba(255,255,255,0.15)', 
+            paddingBottom: '6px',
+            marginBottom: '4px',
+            color: '#e2e8f0'
+          }}>
+            {hoverState.timeStr}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            {hoverState.points.map((pt, idx) => (
+              <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }}>
+                  <span style={{ 
+                    width: '8px', 
+                    height: '8px', 
+                    borderRadius: '50%', 
+                    backgroundColor: pt.color, 
+                    display: 'inline-block',
+                    flexShrink: 0
+                  }} />
+                  <span style={{ color: '#cbd5e1' }} title={pt.name}>
+                    {formatSeriesName(pt.name)}:
+                  </span>
+                </div>
+                <span style={{ fontWeight: '700', color: '#ffffff', whiteSpace: 'nowrap' }}>
+                  {pt.value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   )
 }

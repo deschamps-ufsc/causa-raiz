@@ -26,5 +26,12 @@
     "min_value": 0,
     "max_value": 1800,
     "max_variation": 1200
+  },
+  {
+    "name": "Irradiação_400_W",
+    "element": "Irradiação",
+    "min_value": 400,
+    "max_value": null,
+    "max_variation": null
   }
 ]
