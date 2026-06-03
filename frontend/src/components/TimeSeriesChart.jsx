@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, memo } from 'react'
 import ReactDOM from 'react-dom'
 import PlotWrapper from 'react-plotly.js'
 const Plot = PlotWrapper.default || PlotWrapper
@@ -28,7 +28,7 @@ export function formatSeriesName(name) {
   return name;
 }
 
-export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterColors = {}, chartConfig, setChartConfig }) {
+export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, filterColors = {}, chartConfig, setChartConfig, showEixosMenu, showSeriesMenu }) {
   const {
     gridX, gridY1, gridY2, gridY3, gridY4,
     xGridSpacing, xLimits, y1Limits, y2Limits, y3Limits, y4Limits, appliedRanges,
@@ -1318,142 +1318,94 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '12px' }}>
 
       {/* ── Controles ─────────────────────────────────────────── */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-        
-        {/* Bloco Eixos */}
-        <div style={{
-          flex: 1,
-          backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)',
-          borderRadius: '8px', padding: '6px 8px',
-          display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center'
-        }}>
-        <span style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginRight: 2 }}>Eixos</span>
-          <AxisGroup title="X">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <input type="time" className="input" style={{ width: 80, height: 28, padding: '4px 6px' }}
-              value={xLimits.min} onChange={e => setXLimits(p => ({...p, min: e.target.value}))}
-              onBlur={applyXLimits} onKeyDown={e => e.key === 'Enter' && e.target.blur()} />
-            <input type="time" className="input" style={{ width: 80, height: 28, padding: '4px 6px' }}
-              value={xLimits.max} onChange={e => setXLimits(p => ({...p, max: e.target.value}))}
-              onBlur={applyXLimits} onKeyDown={e => e.key === 'Enter' && e.target.blur()} />
-          </div>
-
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)' }}>Intervalo:</span>
-            <select className="input" style={{ padding: '2px 24px 2px 6px', minWidth: 60, fontSize: 12 }}
-              value={xGridSpacing}
-              onChange={e => { setXGridSpacing(e.target.value); bumpRevision() }}>
-              <option value="">Auto</option>
-              <option value="1">1h</option>
-              <option value="2">2h</option>
-              <option value="3">3h</option>
-              <option value="4">4h</option>
-              <option value="6">6h</option>
-            </select>
-          </div>
-
-
-          <label className="checkbox-row" style={{ padding: 0, gap: 4 }}>
-            <input type="checkbox" checked={gridX} onChange={e => { setGridX(e.target.checked); bumpRevision() }} />
-            <span style={{ fontSize: '11px', fontWeight: 600 }}>Grade</span>
-          </label>
-        </AxisGroup>
-
-        <AxisGroup title="Y1">
-          <YLimitsControl limits={y1Limits} setLimits={setY1Limits} applyFn={makeApplyY('y1', y1Limits)} />
-          <label className="checkbox-row" style={{ padding: 0, gap: 4 }}>
-            <input type="checkbox" checked={gridY1} onChange={e => { setGridY1(e.target.checked); bumpRevision() }} />
-            <span style={{ fontSize: '11px', fontWeight: 600 }}>Grade</span>
-          </label>
-        </AxisGroup>
-
-        <AxisGroup title="Y2">
-          <YLimitsControl limits={y2Limits} setLimits={setY2Limits} applyFn={makeApplyY('y2', y2Limits)} />
-          <label className="checkbox-row" style={{ padding: 0, gap: 4 }}>
-            <input type="checkbox" checked={gridY2} onChange={e => { setGridY2(e.target.checked); bumpRevision() }} />
-            <span style={{ fontSize: '11px', fontWeight: 600 }}>Grade</span>
-          </label>
-        </AxisGroup>
-
-        <AxisGroup title="Y3">
-          <YLimitsControl limits={y3Limits} setLimits={setY3Limits} applyFn={makeApplyY('y3', y3Limits)} />
-          <label className="checkbox-row" style={{ padding: 0, gap: 4 }}>
-            <input type="checkbox" checked={gridY3} onChange={e => { setGridY3(e.target.checked); bumpRevision() }} />
-            <span style={{ fontSize: '11px', fontWeight: 600 }}>Grade</span>
-          </label>
-        </AxisGroup>
-
-        <AxisGroup title="Y4">
-          <YLimitsControl limits={y4Limits ?? { min: '', max: '' }} setLimits={setY4Limits} applyFn={makeApplyY('y4', y4Limits ?? { min: '', max: '' })} />
-          <label className="checkbox-row" style={{ padding: 0, gap: 4 }}>
-            <input type="checkbox" checked={gridY4 ?? false} onChange={e => { setGridY4(e.target.checked); bumpRevision() }} />
-            <span style={{ fontSize: '11px', fontWeight: 600 }}>Grade</span>
-          </label>
-        </AxisGroup>
-
-        </div>
-
-        {/* Bloco Legenda */}
-        <div style={{
-          backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)',
-          borderRadius: '8px', padding: '6px 8px',
-          display: 'flex', alignItems: 'center', gap: 6
-        }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', paddingLeft: 4 }}>Legenda</span>
-          <div style={{ 
-            width: 32, height: 32, 
-            border: '1.5px solid #475569', borderRadius: 8, 
-            overflow: 'hidden', background: '#ffffff',
-            display: 'flex', flexDirection: 'column',
-            flexShrink: 0
+      {showEixosMenu && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          
+          {/* Bloco Eixos */}
+          <div style={{
+            flex: 1,
+            backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)',
+            borderRadius: '8px', padding: '6px 8px',
+            display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center'
           }}>
-            <div 
-              onClick={() => { setLegendPosition(legendPosition === 'top' ? 'none' : 'top'); bumpRevision() }}
-              title="Horizontal Acima"
-              style={{ 
-                height: '28%', background: legendPosition === 'top' ? '#3b82f6' : '#e2e8f0', 
-                cursor: 'pointer', transition: 'background 0.2s'
-              }} 
-            />
-            
-            <div style={{ display: 'flex', flex: 1, borderTop: '1.5px solid #475569', borderBottom: '1.5px solid #475569' }}>
-              <div 
-                onClick={() => { setLegendPosition(legendPosition === 'left' ? 'none' : 'left'); bumpRevision() }}
-                title="Vertical Esquerda"
-                style={{ 
-                  flex: 1, background: legendPosition === 'left' ? '#3b82f6' : '#e2e8f0', 
-                  cursor: 'pointer', borderRight: '1.5px solid #475569', transition: 'background 0.2s'
-                }} 
-              />
-              <div 
-                onClick={() => { setLegendPosition(legendPosition === 'right' ? 'none' : 'right'); bumpRevision() }}
-                title="Vertical Direita"
-                style={{ 
-                  flex: 1, background: legendPosition === 'right' ? '#3b82f6' : '#e2e8f0', 
-                  cursor: 'pointer', transition: 'background 0.2s'
-                }} 
-              />
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginRight: 2 }}>Eixos</span>
+            <AxisGroup title="X">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <input type="time" className="input" style={{ width: 80, height: 28, padding: '4px 6px' }}
+                value={xLimits.min} onChange={e => setXLimits(p => ({...p, min: e.target.value}))}
+                onBlur={applyXLimits} onKeyDown={e => e.key === 'Enter' && e.target.blur()} />
+              <input type="time" className="input" style={{ width: 80, height: 28, padding: '4px 6px' }}
+                value={xLimits.max} onChange={e => setXLimits(p => ({...p, max: e.target.value}))}
+                onBlur={applyXLimits} onKeyDown={e => e.key === 'Enter' && e.target.blur()} />
             </div>
 
-            <div 
-              onClick={() => { setLegendPosition(legendPosition === 'bottom' ? 'none' : 'bottom'); bumpRevision() }}
-              title="Horizontal Abaixo"
-              style={{ 
-                height: '28%', background: legendPosition === 'bottom' ? '#3b82f6' : '#e2e8f0', 
-                cursor: 'pointer', transition: 'background 0.2s'
-              }} 
-            />
-          </div>
-        </div>
 
-      </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)' }}>Intervalo:</span>
+              <select className="input" style={{ padding: '2px 24px 2px 6px', minWidth: 60, fontSize: 12 }}
+                value={xGridSpacing}
+                onChange={e => { setXGridSpacing(e.target.value); bumpRevision() }}>
+                <option value="">Auto</option>
+                <option value="1">1h</option>
+                <option value="2">2h</option>
+                <option value="3">3h</option>
+                <option value="4">4h</option>
+                <option value="6">6h</option>
+              </select>
+            </div>
+
+
+            <label className="checkbox-row" style={{ padding: 0, gap: 4 }}>
+              <input type="checkbox" checked={gridX} onChange={e => { setGridX(e.target.checked); bumpRevision() }} />
+              <span style={{ fontSize: '11px', fontWeight: 600 }}>Grade</span>
+            </label>
+          </AxisGroup>
+
+          <AxisGroup title="Y1">
+            <YLimitsControl limits={y1Limits} setLimits={setY1Limits} applyFn={makeApplyY('y1', y1Limits)} />
+            <label className="checkbox-row" style={{ padding: 0, gap: 4 }}>
+              <input type="checkbox" checked={gridY1} onChange={e => { setGridY1(e.target.checked); bumpRevision() }} />
+              <span style={{ fontSize: '11px', fontWeight: 600 }}>Grade</span>
+            </label>
+          </AxisGroup>
+
+          <AxisGroup title="Y2">
+            <YLimitsControl limits={y2Limits} setLimits={setY2Limits} applyFn={makeApplyY('y2', y2Limits)} />
+            <label className="checkbox-row" style={{ padding: 0, gap: 4 }}>
+              <input type="checkbox" checked={gridY2} onChange={e => { setGridY2(e.target.checked); bumpRevision() }} />
+              <span style={{ fontSize: '11px', fontWeight: 600 }}>Grade</span>
+            </label>
+          </AxisGroup>
+
+          <AxisGroup title="Y3">
+            <YLimitsControl limits={y3Limits} setLimits={setY3Limits} applyFn={makeApplyY('y3', y3Limits)} />
+            <label className="checkbox-row" style={{ padding: 0, gap: 4 }}>
+              <input type="checkbox" checked={gridY3} onChange={e => { setGridY3(e.target.checked); bumpRevision() }} />
+              <span style={{ fontSize: '11px', fontWeight: 600 }}>Grade</span>
+            </label>
+          </AxisGroup>
+
+          <AxisGroup title="Y4">
+            <YLimitsControl limits={y4Limits ?? { min: '', max: '' }} setLimits={setY4Limits} applyFn={makeApplyY('y4', y4Limits ?? { min: '', max: '' })} />
+            <label className="checkbox-row" style={{ padding: 0, gap: 4 }}>
+              <input type="checkbox" checked={gridY4 ?? false} onChange={e => { setGridY4(e.target.checked); bumpRevision() }} />
+              <span style={{ fontSize: '11px', fontWeight: 600 }}>Grade</span>
+            </label>
+          </AxisGroup>
+
+          </div>
+
+
+
+        </div>
+      )}
 
       {/* ── Eixos (drag & drop) ──────────────────────────────── */}
-      <div style={{
-        backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)',
-        borderRadius: 8, overflow: 'visible', flexShrink: 0, position: 'relative',
-      }}>
+      {showSeriesMenu && (
+        <div style={{
+          backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)',
+          borderRadius: 8, overflow: 'visible', flexShrink: 0, position: 'relative',
+        }}>
         <button
           onClick={() => setAxesOpen(o => !o)}
           style={{
@@ -1550,6 +1502,7 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
           </div>
         )}
       </div>
+      )}
 
       {/* ── Gráfico + Legenda HTML ────────────────────────── */}
       <div ref={containerRef} style={{ 
@@ -1857,3 +1810,4 @@ export default function TimeSeriesChart({ data, usina, seriesDict = {}, filterCo
     </div>
   )
 }
+)

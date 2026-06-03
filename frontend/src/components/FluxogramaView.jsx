@@ -8,7 +8,10 @@ import {
   useEdgesState,
   Handle,
   Position,
-  MarkerType
+  MarkerType,
+  useNodes,
+  useEdges,
+  useUpdateNodeInternals
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import SingleSeriesDropdown from './SingleSeriesDropdown'
@@ -30,17 +33,66 @@ const baseNodeStyle = {
   boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
 }
 
-const BoxNode = ({ data }) => {
+const BoxNode = ({ id, data }) => {
   const isAggregator = data.aggregator
-  const bgColor = data.color === 'yellow' ? '#fef08a' : data.color === 'green' ? '#bbf7d0' : 'var(--bg-card)'
+  const bgColor = data.color === 'yellow' ? '#fef08a' : data.color === 'green' ? '#bbf7d0' : data.color === 'purple' ? '#e9d5ff' : 'var(--bg-card)'
   const textColor = data.color ? '#334155' : 'var(--text-primary)'
-  const borderColor = data.color === 'yellow' ? '#facc15' : data.color === 'green' ? '#4ade80' : 'var(--border)'
+  const borderColor = data.color === 'yellow' ? '#facc15' : data.color === 'green' ? '#4ade80' : data.color === 'purple' ? '#c084fc' : 'var(--border)'
+
+  const nodes = useNodes()
+  const edges = useEdges()
+  const updateNodeInternals = useUpdateNodeInternals()
+  
+  const isSimultaneidade = data.label && data.label.includes('Simultaneidade')
+  
+  let topVal = 20
+  let bottomVal = 100
+  
+  if (isSimultaneidade) {
+    const myNode = nodes.find(n => n.id === id)
+    if (myNode) {
+      const myEdges = edges.filter(e => e.target === id)
+      const topEdge = myEdges.find(e => e.targetHandle === 'target-left-top')
+      const bottomEdge = myEdges.find(e => e.targetHandle === 'target-left-bottom')
+      
+      const topNode = topEdge ? nodes.find(n => n.id === topEdge.source) : null
+      const bottomNode = bottomEdge ? nodes.find(n => n.id === bottomEdge.source) : null
+      
+      const myY = myNode.position.y
+      
+      if (topNode) {
+        const topH = topNode.data?.height ? parseInt(topNode.data.height) : (['tcel', 'geff'].includes(topNode.type) ? 80 : 40)
+        topVal = topNode.position.y + (topH / 2) - myY
+      }
+      
+      if (bottomNode) {
+        const botH = bottomNode.data?.height ? parseInt(bottomNode.data.height) : (['tcel', 'geff'].includes(bottomNode.type) ? 80 : 40)
+        bottomVal = bottomNode.position.y + (botH / 2) - myY
+      }
+    }
+  }
+
+  let customTargets = data.customTargets
+  if (isSimultaneidade) {
+    customTargets = [
+      { id: 'target-top', position: Position.Top },
+      { id: 'target-bottom', position: Position.Bottom },
+      { id: 'target-left-top', position: Position.Left, style: { top: `${topVal}px` } },
+      { id: 'target-left-bottom', position: Position.Left, style: { top: `${bottomVal}px` } }
+    ]
+  }
+
+  useEffect(() => {
+    if (isSimultaneidade) {
+      updateNodeInternals(id)
+    }
+  }, [topVal, bottomVal, id, isSimultaneidade, updateNodeInternals])
 
   return (
     <div 
       style={{ 
-        ...baseNodeStyle, padding: '0 8px', borderRadius: '4px', position: 'relative',
-        width: '100px', height: '40px', fontSize: '14px', boxSizing: 'border-box',
+        ...baseNodeStyle, padding: '0 8px', borderRadius: '10px', position: 'relative',
+        width: data.width || '100px', height: data.height || '40px', fontSize: '14px', boxSizing: 'border-box',
         background: bgColor, color: textColor, borderColor: borderColor,
         cursor: isAggregator ? 'pointer' : 'default',
         transition: 'transform 0.1s, box-shadow 0.1s',
@@ -49,8 +101,22 @@ const BoxNode = ({ data }) => {
       onMouseEnter={e => isAggregator && (e.currentTarget.style.transform = 'scale(1.05)')}
       onMouseLeave={e => isAggregator && (e.currentTarget.style.transform = 'scale(1)')}
     >
-      {!isAggregator && <Handle type="target" position={Position.Left} style={{ background: '#555' }} />}
-      <div style={{ textDecoration: data.strike ? 'line-through' : 'none' }}>
+      {!isAggregator && (
+        customTargets ? (
+          customTargets.map(tgt => (
+            <Handle
+              key={tgt.id}
+              type="target"
+              position={tgt.position}
+              id={tgt.id}
+              style={{ background: '#555', ...tgt.style }}
+            />
+          ))
+        ) : (
+          <Handle type="target" position={Position.Left} style={{ background: '#555' }} />
+        )
+      )}
+      <div style={{ textDecoration: data.strike ? 'line-through' : 'none', textAlign: 'center' }}>
         <span dangerouslySetInnerHTML={{ __html: data.label }} />
       </div>
       {data.hasMultipleOutputs ? (
@@ -115,7 +181,7 @@ const ChartNode = ({ data }) => {
 const GeffNode = ({ data }) => (
   <div style={{
     padding: '8px', borderRadius: '10px', background: '#ffedd5',
-    border: '2px solid #f97316', color: '#334155',
+    border: '1px solid #f97316', color: '#334155',
     width: '100px', height: '80px', boxSizing: 'border-box',
     display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
     textAlign: 'center', boxShadow: '0 6px 15px rgba(0,0,0,0.3)',
@@ -135,7 +201,7 @@ const GeffNode = ({ data }) => (
 const TcelNode = ({ data }) => (
   <div style={{
     padding: '8px', borderRadius: '10px', background: '#ffedd5',
-    border: '2px solid #f97316', color: '#334155',
+    border: '1px solid #f97316', color: '#334155',
     width: '100px', height: '80px', boxSizing: 'border-box',
     display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
     textAlign: 'center', boxShadow: '0 6px 15px rgba(0,0,0,0.3)',
@@ -151,6 +217,41 @@ const TcelNode = ({ data }) => (
   </div>
 )
 
+const PVSystNode = ({ data }) => (
+  <div style={{
+    ...baseNodeStyle, padding: '12px', borderRadius: '10px', 
+    width: '120px', height: data.height || '120px', 
+    background: '#ffffff',
+    border: '1px solid #233772',
+    boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    gap: '8px'
+  }}>
+    <Handle type="target" position={Position.Left} style={{ background: '#233772' }} />
+    <div style={{ flex: 1, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <img 
+        src="/pvsyst.png" 
+        alt="" 
+        style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+        onError={(e) => {
+          e.target.style.display = 'none';
+        }}
+      />
+    </div>
+    <div style={{ width: '100%', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <img 
+        src="/pvsyst_text.png" 
+        alt="PVSYST" 
+        style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+        onError={(e) => {
+          e.target.style.display = 'none';
+        }}
+      />
+    </div>
+  </div>
+)
+
 const nodeTypes = {
   default: BoxNode,
   box: BoxNode,
@@ -158,7 +259,8 @@ const nodeTypes = {
   diamond: DiamondNode,
   chart: ChartNode,
   geff: GeffNode,
-  tcel: TcelNode
+  tcel: TcelNode,
+  pvsyst: PVSystNode
 }
 
 // ── INITIAL DATA ─────────────────────────────────────────────────────────
@@ -169,8 +271,27 @@ const initialNodes = [
   { id: 'tamb', type: 'box', position: { x: 30, y: 220 }, data: { label: 'T<sub>amb</sub>', color: 'yellow', aggregator: true, inputs: [], operation: 'sum' } },
   { id: 'tmod', type: 'box', position: { x: 30, y: 320 }, data: { label: 'T<sub>mod</sub>', color: 'yellow', aggregator: true, inputs: [], operation: 'sum' } },
   { id: 'sujidade', type: 'box', position: { x: 30, y: 420 }, data: { label: 'Sujidade', color: 'yellow', aggregator: true, inputs: [], operation: 'sum' } },
-  { id: 'geff', type: 'geff', position: { x: 240, y: 30 }, data: { label: 'Geff', beta: 1.0, SSF: 0.05, MLF: 0.02 } },
-  { id: 'tcel', type: 'tcel', position: { x: 200, y: 300 }, data: { label: 'Tcel' } }
+  { id: 'energia', type: 'box', position: { x: 30, y: 520 }, data: { label: 'Energia', color: 'green', aggregator: true, inputs: [], operation: 'sum' } },
+  { id: 'geff', type: 'geff', position: { x: 220, y: 30 }, data: { label: 'Geff', beta: 1.0, SSF: 0.05, MLF: 0.02 } },
+  { id: 'tcel', type: 'tcel', position: { x: 220, y: 280 }, data: { label: 'Tcel' } },
+  { 
+    id: 'simultaneidade', 
+    type: 'box', 
+    position: { x: 400, y: 130 }, 
+    data: { 
+      label: 'Filtro de<br/>Simultaneidade', 
+      color: 'purple', 
+      width: '130px', 
+      height: '120px',
+      customTargets: [
+        { id: 'target-top', position: Position.Top },
+        { id: 'target-bottom', position: Position.Bottom },
+        { id: 'target-left-top', position: Position.Left, style: { top: '20px' } },
+        { id: 'target-left-bottom', position: Position.Left, style: { top: '100px' } }
+      ]
+    } 
+  },
+  { id: 'pvsyst', type: 'pvsyst', position: { x: 600, y: 130 }, data: { height: '120px' } }
 ]
 
 const initialEdges = [
@@ -178,6 +299,11 @@ const initialEdges = [
   { id: 'e-grear-geff', source: 'grear', target: 'geff', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed } },
   { id: 'e-tmod-tcel', source: 'tmod', target: 'tcel', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed } },
   { id: 'e-gpoa-tcel', source: 'gpoa', sourceHandle: 'out-b', target: 'tcel', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed } },
+  { id: 'e-geff-simult', source: 'geff', target: 'simultaneidade', targetHandle: 'target-top', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed } },
+  { id: 'e-tamb-simult', source: 'tamb', target: 'simultaneidade', targetHandle: 'target-left-top', type: 'straight', markerEnd: { type: MarkerType.ArrowClosed } },
+  { id: 'e-tcel-simult', source: 'tcel', target: 'simultaneidade', targetHandle: 'target-left-bottom', type: 'straight', markerEnd: { type: MarkerType.ArrowClosed } },
+  { id: 'e-energia-simult', source: 'energia', target: 'simultaneidade', targetHandle: 'target-bottom', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed } },
+  { id: 'e-simult-pvsyst', source: 'simultaneidade', target: 'pvsyst', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed } },
 ]
 
 // ── COMPONENT ─────────────────────────────────────────────────────────
@@ -375,16 +501,28 @@ export default function FluxogramaView({ elementos = [], showTitle = true }) {
             // 1. Pegar todos os nós salvos
             const savedNodes = config.nodes.map(sn => {
               const initial = nds.find(i => i.id === sn.id)
-              return { 
-                ...sn, 
-                // Forçar posição do Geff para garantir alinhamento central
-                position: sn.id === 'geff' ? (initial?.position || sn.position) : sn.position,
+                // Desloca blocos se ainda estiverem nas posições antigas
+                let adjustedPosition = { ...sn.position };
+                if (sn.id === 'simultaneidade') {
+                  if (adjustedPosition.x === 450) adjustedPosition.x = 400;
+                  if (adjustedPosition.y === 140) adjustedPosition.y = 130;
+                } else if (sn.id === 'pvsyst') {
+                  if (adjustedPosition.x === 650) adjustedPosition.x = 600;
+                  if (adjustedPosition.y === 140) adjustedPosition.y = 130;
+                }
+
+                return { 
+                  ...sn, 
+                  position: adjustedPosition,
                 type: sn.type || (initial?.type || 'box'),
                 data: { 
                   ...(initial?.data || {}), 
                   ...sn.data,
                   // Garantir que o label com subscritos (<sub>) do código tenha prioridade
-                  label: initial?.data?.label || sn.data.label 
+                  label: initial?.data?.label || sn.data.label,
+                  width: initial?.data?.width || sn.data.width,
+                  height: initial?.data?.height || sn.data.height,
+                  customTargets: initial?.data?.customTargets || sn.data.customTargets
                 }
               }
             })
@@ -400,8 +538,38 @@ export default function FluxogramaView({ elementos = [], showTitle = true }) {
           })
           if (config.edges) {
             setEdges(eds => {
-              // Forçar smoothstep em todas as arestas carregadas
-              const finalEdges = config.edges.map(e => ({ ...e, type: 'smoothstep' }))
+              // Garantir tipos de arestas corretos ao carregar do BD
+              const finalEdges = config.edges.map(e => {
+                const initial = initialEdges.find(ie => ie.source === e.source && ie.target === e.target)
+                let targetHandle = initial?.targetHandle || e.targetHandle
+                let type = initial?.type || e.type || 'smoothstep'
+                
+                // Encontrar nó de origem e de destino para regras dinâmicas robustas (ignora mudanças de UUID)
+                const sourceNode = config.nodes.find(n => n.id === e.source) || initialNodes.find(n => n.id === e.source)
+                const targetNode = config.nodes.find(n => n.id === e.target) || initialNodes.find(n => n.id === e.target)
+                
+                if (targetNode && (targetNode.id === 'simultaneidade' || targetNode.data?.label?.includes('Simultaneidade'))) {
+                  if (sourceNode) {
+                    if (sourceNode.id === 'geff' || sourceNode.type === 'geff') targetHandle = 'target-top'
+                    else if (sourceNode.id === 'tamb' || sourceNode.data?.label?.includes('amb')) {
+                      targetHandle = 'target-left-top'
+                      type = 'straight'
+                    }
+                    else if (sourceNode.id === 'tcel' || sourceNode.type === 'tcel') {
+                      targetHandle = 'target-left-bottom'
+                      type = 'straight'
+                    }
+                    else if (sourceNode.id === 'energia' || sourceNode.data?.label?.includes('Energia')) targetHandle = 'target-bottom'
+                  }
+                }
+                
+                return {
+                  ...e,
+                  type,
+                  sourceHandle: initial?.sourceHandle || e.sourceHandle,
+                  targetHandle
+                }
+              })
               initialEdges.forEach(ie => {
                 if (!finalEdges.find(f => f.id === ie.id)) {
                   finalEdges.push(ie)

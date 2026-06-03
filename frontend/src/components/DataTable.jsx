@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, memo } from 'react'
 import {
   useReactTable,
   getCoreRowModel,
@@ -33,7 +33,7 @@ function valueColor(norm) {
  * Tabela interativa com TanStack Table v8.
  * Colunas: timestamp + cada série. Células coloridas por valor normalizado.
  */
-export default function DataTable({ data, seriesDict = {} }) {
+export default memo(function DataTable({ data, seriesDict = {} }) {
   if (!data || !data.timestamps?.length) return null
 
   const seriesNames = Object.keys(data.series)
@@ -175,3 +175,4 @@ export default function DataTable({ data, seriesDict = {} }) {
     </div>
   )
 }
+)

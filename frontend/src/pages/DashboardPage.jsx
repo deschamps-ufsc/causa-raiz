@@ -61,6 +61,9 @@ export default function DashboardPage() {
   const [isDataOpen, setIsDataOpen] = useState(true)
   const [isFiltersOpen, setIsFiltersOpen] = useState(true)
   const [isSeriesOpen, setIsSeriesOpen] = useState(true)
+  const [isSecondaryToolbarOpen, setIsSecondaryToolbarOpen] = useState(true)
+  const [showEixosMenu, setShowEixosMenu] = useState(false)
+  const [showSeriesMenu, setShowSeriesMenu] = useState(false)
   
   const { user } = useAuth()
   
@@ -135,6 +138,8 @@ export default function DashboardPage() {
     setLoadedVisualization(vis)
     setSelectedDates(vis.selectedDates || [])
     setPendingLoadVis(vis)
+    setShowEixosMenu(true)
+    setShowSeriesMenu(true)
     // A query será disparada pelo useEffect quando filterSeries estiver pronto
   }
 
@@ -226,6 +231,8 @@ export default function DashboardPage() {
       dates: selectedDates,
       series: allQuerySeries,
     })
+    setShowEixosMenu(true)
+    setShowSeriesMenu(true)
   }
 
   const seriesDict = useMemo(() => {
@@ -481,12 +488,33 @@ export default function DashboardPage() {
         }}>
           {/* Linha 1: abas + seletor de usina */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px' }}>
-            <div className="tabs" style={{ flex: '0 0 auto' }}>
-              {TABS.map((tab) => (
-                <button key={tab.id} className={`tab ${activeTab === tab.id ? 'active' : ''}`} onClick={() => setActiveTab(tab.id)}>
-                  {tab.label}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div className="tabs" style={{ flex: '0 0 auto' }}>
+                {TABS.map((tab) => (
+                  <button key={tab.id} className={`tab ${activeTab === tab.id ? 'active' : ''}`} onClick={() => setActiveTab(tab.id)}>
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Toggle Secondary Toolbar */}
+              {(activeTab === 'chart' || activeTab === 'table') && (
+                <button 
+                  onClick={() => setIsSecondaryToolbarOpen(!isSecondaryToolbarOpen)}
+                  style={{
+                    background: 'transparent', border: 'none', cursor: 'pointer',
+                    color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: '4px', borderRadius: '50%',
+                    transform: isSecondaryToolbarOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
+                    transition: 'transform 0.2s',
+                  }}
+                  title={isSecondaryToolbarOpen ? "Ocultar Controles" : "Mostrar Controles"}
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
                 </button>
-              ))}
+              )}
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -519,27 +547,28 @@ export default function DashboardPage() {
           </div>
 
           {/* Linha 2: botões de Carregar/Salvar — só nas abas Gráfico e Tabela */}
-          {(activeTab === 'chart' || activeTab === 'table') && (
-            <div style={{ padding: '0 20px 12px', position: 'relative', display: 'flex' }}>
-              <button
-                className="btn btn-sm"
-                style={{ 
-                  background: 'var(--bg-card)', border: '1px solid var(--border)', 
-                  padding: '6px 12px', fontSize: 13, display: 'flex', alignItems: 'center', 
-                  gap: 8, color: 'var(--text-primary)', borderRadius: 6, cursor: 'pointer' 
-                }}
-                onClick={() => setIsVisDropdownOpen(!isVisDropdownOpen)}
-                title="Gerenciar Visualizações"
-              >
-                📄 {loadedVisualization ? loadedVisualization.name : 'Nova Visualização'} <span style={{ fontSize: 10 }}>▼</span>
-              </button>
+          {(activeTab === 'chart' || activeTab === 'table') && isSecondaryToolbarOpen && (
+            <div style={{ padding: '0 20px 12px', display: 'flex', gap: '12px' }}>
+              <div style={{ position: 'relative' }}>
+                <button
+                  className="btn btn-sm"
+                  style={{ 
+                    background: 'var(--bg-card)', border: '1px solid var(--border)', 
+                    padding: '6px 12px', fontSize: 13, display: 'flex', alignItems: 'center', 
+                    gap: 8, color: 'var(--text-primary)', borderRadius: 6, cursor: 'pointer' 
+                  }}
+                  onClick={() => setIsVisDropdownOpen(!isVisDropdownOpen)}
+                  title="Gerenciar Visualizações"
+                >
+                  📄 {loadedVisualization ? loadedVisualization.name : 'Nova Visualização'} <span style={{ fontSize: 10 }}>▼</span>
+                </button>
 
-              {isVisDropdownOpen && (
-                <>
-                  <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setIsVisDropdownOpen(false)} />
-                  <div style={{
-                    position: 'absolute', top: '100%', left: 20, marginTop: 4, zIndex: 50,
-                    background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6,
+                {isVisDropdownOpen && (
+                  <>
+                    <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setIsVisDropdownOpen(false)} />
+                    <div style={{
+                      position: 'absolute', top: '100%', left: 0, marginTop: 4, zIndex: 50,
+                      background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6,
                     boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: 6, minWidth: 200,
                     display: 'flex', flexDirection: 'column', gap: 2
                   }}>
@@ -576,6 +605,91 @@ export default function DashboardPage() {
                     </button>
                   </div>
                 </>
+              )}
+              </div>
+
+              {activeTab === 'chart' && (
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    className={`btn btn-sm ${showEixosMenu ? 'btn-active' : ''}`}
+                    style={{
+                      background: showEixosMenu ? 'var(--bg-secondary)' : 'var(--bg-card)',
+                      border: '1px solid var(--border)',
+                      padding: '6px 12px', fontSize: 13, display: 'flex', alignItems: 'center',
+                      gap: 8, color: 'var(--text-primary)', borderRadius: 6, cursor: 'pointer',
+                      boxShadow: showEixosMenu ? 'inset 0 2px 4px rgba(0,0,0,0.05)' : 'none'
+                    }}
+                    onClick={() => setShowEixosMenu(!showEixosMenu)}
+                  >
+                    <span style={{ fontSize: 14 }}>{showEixosMenu ? '🛠️' : '🔧'}</span> Eixos
+                  </button>
+                  <button
+                    className={`btn btn-sm ${showSeriesMenu ? 'btn-active' : ''}`}
+                    style={{
+                      background: showSeriesMenu ? 'var(--bg-secondary)' : 'var(--bg-card)',
+                      border: '1px solid var(--border)',
+                      padding: '6px 12px', fontSize: 13, display: 'flex', alignItems: 'center',
+                      gap: 8, color: 'var(--text-primary)', borderRadius: 6, cursor: 'pointer',
+                      boxShadow: showSeriesMenu ? 'inset 0 2px 4px rgba(0,0,0,0.05)' : 'none'
+                    }}
+                    onClick={() => setShowSeriesMenu(!showSeriesMenu)}
+                  >
+                    <span style={{ fontSize: 14 }}>{showSeriesMenu ? '📊' : '📈'}</span> Séries
+                  </button>
+
+                  {/* Bloco Legenda */}
+                  <div style={{
+                    backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)',
+                    borderRadius: '6px', padding: '2px 8px', marginLeft: 'auto',
+                    display: 'flex', alignItems: 'center', gap: 6,
+                  }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#1e293b' }}>Legenda</span>
+                    <div style={{ 
+                      width: 26, height: 26, 
+                      border: '1.5px solid #475569', borderRadius: 6, 
+                      overflow: 'hidden', background: '#ffffff',
+                      display: 'flex', flexDirection: 'column',
+                      flexShrink: 0
+                    }}>
+                      <div 
+                        onClick={() => setChartConfig(p => ({...p, legendPosition: (p.legendPosition || 'right') === 'top' ? 'none' : 'top'}))}
+                        title="Horizontal Acima"
+                        style={{ 
+                          height: '28%', background: (chartConfig.legendPosition || 'right') === 'top' ? '#3b82f6' : '#e2e8f0', 
+                          cursor: 'pointer', transition: 'background 0.2s'
+                        }} 
+                      />
+                      
+                      <div style={{ display: 'flex', flex: 1, borderTop: '1.5px solid #475569', borderBottom: '1.5px solid #475569' }}>
+                        <div 
+                          onClick={() => setChartConfig(p => ({...p, legendPosition: (p.legendPosition || 'right') === 'left' ? 'none' : 'left'}))}
+                          title="Vertical Esquerda"
+                          style={{ 
+                            flex: 1, background: (chartConfig.legendPosition || 'right') === 'left' ? '#3b82f6' : '#e2e8f0', 
+                            cursor: 'pointer', borderRight: '1.5px solid #475569', transition: 'background 0.2s'
+                          }} 
+                        />
+                        <div 
+                          onClick={() => setChartConfig(p => ({...p, legendPosition: (p.legendPosition || 'right') === 'right' ? 'none' : 'right'}))}
+                          title="Vertical Direita"
+                          style={{ 
+                            flex: 1, background: (chartConfig.legendPosition || 'right') === 'right' ? '#3b82f6' : '#e2e8f0', 
+                            cursor: 'pointer', transition: 'background 0.2s'
+                          }} 
+                        />
+                      </div>
+
+                      <div 
+                        onClick={() => setChartConfig(p => ({...p, legendPosition: (p.legendPosition || 'right') === 'bottom' ? 'none' : 'bottom'}))}
+                        title="Horizontal Abaixo"
+                        style={{ 
+                          height: '28%', background: (chartConfig.legendPosition || 'right') === 'bottom' ? '#3b82f6' : '#e2e8f0', 
+                          cursor: 'pointer', transition: 'background 0.2s'
+                        }} 
+                      />
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
           )}
@@ -655,7 +769,7 @@ export default function DashboardPage() {
 
                 {!dataLoading && !dataError && filteredData && (
                   <div className="fade-in" style={{ height: '100%' }}>
-                    {activeTab === 'chart' && <TimeSeriesChart data={filteredData} usina={usinaAtual} seriesDict={seriesDict} filterColors={filterColors} chartConfig={chartConfig} setChartConfig={setChartConfig} />}
+                    {activeTab === 'chart' && <TimeSeriesChart data={filteredData} usina={usinaAtual} seriesDict={seriesDict} filterColors={filterColors} chartConfig={chartConfig} setChartConfig={setChartConfig} showEixosMenu={showEixosMenu} showSeriesMenu={showSeriesMenu} />}
                     {activeTab === 'table' && <DataTable data={filteredData} seriesDict={seriesDict} />}
                   </div>
                 )}

@@ -475,7 +475,7 @@
   },
   {
     "id": "c3137da9-ef01-45c2-90bc-5ae372c2b959",
-    "created_at": "2026-05-18T01:00:48.322009",
+    "created_at": "2026-06-03T11:25:57.923012",
     "name": "EPI",
     "user": "deschamps.ufsc@gmail.com",
     "selectedDates": [
@@ -562,7 +562,7 @@
         "gpoa": 15,
         "grear": 20
       },
-      "legendPosition": "right"
+      "legendPosition": "none"
     }
   },
   {
