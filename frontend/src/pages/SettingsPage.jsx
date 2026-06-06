@@ -10,11 +10,12 @@ import FiltrosTab from '../components/Settings/FiltrosTab'
 // ── Linha de elemento ─────────────────────────────────────────────────────────
 const MAX_COLORS = 5
 
-function ElementRow({ setting, index, updateElementSetting, removeCustomElement, readOnly = false }) {
+function ElementRow({ setting, index, updateElementSetting, removeCustomElement, reorderElementSettings, readOnly = false, draggedIndex, setDraggedIndex, draggedOverIndex, setDraggedOverIndex }) {
   const [pickerFor, setPickerFor] = useState(null) // index in colors array that has picker open
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [isHovered, setIsHovered] = useState(false)
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
   const hoverTimersRef = useRef({})
 
   const colors  = setting.colors ?? (setting.color ? [setting.color] : ['#000000'])
@@ -55,14 +56,96 @@ function ElementRow({ setting, index, updateElementSetting, removeCustomElement,
     delete hoverTimersRef.current[idx]
   }
 
+  const handleDragStart = (e) => {
+    if (readOnly) return;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index);
+    setDraggedIndex(index);
+    setTimeout(() => setIsDragging(true), 0);
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    setDraggedIndex(null);
+    setDraggedOverIndex(null);
+  };
+
+  const handleDragOver = (e) => {
+    if (readOnly) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (draggedOverIndex !== index) {
+      setDraggedOverIndex(index);
+    }
+  };
+
+  const handleDrop = (e) => {
+    if (readOnly) return;
+    e.preventDefault();
+    setDraggedIndex(null);
+    setDraggedOverIndex(null);
+    const dragIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
+    if (!isNaN(dragIndex) && dragIndex !== index) {
+      reorderElementSettings(dragIndex, index);
+    }
+  };
+
+  const isDragOver = draggedOverIndex === index;
+  let dragBorderTop = '1px solid #f1f5f9';
+  let dragBorderBottom = 'none';
+
+  if (isDragOver && draggedIndex !== null && draggedIndex !== index) {
+    if (draggedIndex > index) {
+      dragBorderTop = '2px solid #0ea5e9';
+    } else {
+      dragBorderBottom = '2px solid #0ea5e9';
+    }
+  }
+
   return (
-    <tr style={{ borderTop: '1px solid #f1f5f9' }}
-      onMouseEnter={e => { e.currentTarget.style.background = '#f8fafc'; setIsHovered(true) }}
-      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; setIsHovered(false); setIsConfirmingDelete(false) }}
+    <tr style={{ 
+        borderTop: dragBorderTop,
+        borderBottom: dragBorderBottom,
+        background: isDragging ? '#f8fafc' : 'transparent',
+        opacity: isDragging ? 0.4 : 1,
+        transition: 'background 0.15s, opacity 0.15s'
+      }}
+      draggable={!readOnly}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+      onMouseEnter={e => { if (!isDragging) e.currentTarget.style.background = '#f8fafc'; setIsHovered(true) }}
+      onMouseLeave={e => { if (!isDragging) e.currentTarget.style.background = 'transparent'; setIsHovered(false); setIsConfirmingDelete(false) }}
     >
       {/* Elemento */}
       <td style={{ padding: '10px 16px', color: '#1e293b', fontWeight: 500, fontSize: 13, whiteSpace: 'nowrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {!readOnly && (
+            <div
+              title="Arraste para reordenar"
+              style={{
+                cursor: 'grab',
+                color: isHovered ? '#94a3b8' : 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginLeft: -8,
+                marginRight: -4,
+                padding: '0 4px',
+                transition: 'color 0.15s'
+              }}
+            >
+              <svg width="10" height="14" viewBox="0 0 12 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="4" cy="4" r="1.5" />
+                <circle cx="8" cy="4" r="1.5" />
+                <circle cx="4" cy="8" r="1.5" />
+                <circle cx="8" cy="8" r="1.5" />
+                <circle cx="4" cy="12" r="1.5" />
+                <circle cx="8" cy="12" r="1.5" />
+              </svg>
+            </div>
+          )}
           <div style={{ width: 9, height: 9, borderRadius: '50%', background: firstColor, flexShrink: 0, boxShadow: `0 0 0 2px ${firstColor}33` }} />
           {setting.element}
           {isHovered && !readOnly && (
@@ -237,8 +320,10 @@ function ElementRow({ setting, index, updateElementSetting, removeCustomElement,
 
 // ── Aba Elementos ──────────────────────────────────────────────────────────────
 function ElementosTab({ readOnly = false }) {
-  const { elementSettings, updateElementSetting, addCustomElement, removeCustomElement, loading } = useChartSettings()
+  const { elementSettings, updateElementSetting, addCustomElement, removeCustomElement, reorderElementSettings, loading } = useChartSettings()
   const [newElementName, setNewElementName] = useState('')
+  const [draggedIndex, setDraggedIndex] = useState(null)
+  const [draggedOverIndex, setDraggedOverIndex] = useState(null)
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>Carregando elementos...</div>
 
@@ -310,7 +395,7 @@ function ElementosTab({ readOnly = false }) {
         </thead>
         <tbody>
           {elementSettings.map((setting, idx) => (
-            <ElementRow key={setting.element} setting={setting} index={idx} updateElementSetting={updateElementSetting} removeCustomElement={removeCustomElement} readOnly={readOnly} />
+            <ElementRow key={setting.element} setting={setting} index={idx} updateElementSetting={updateElementSetting} removeCustomElement={removeCustomElement} reorderElementSettings={reorderElementSettings} readOnly={readOnly} draggedIndex={draggedIndex} setDraggedIndex={setDraggedIndex} draggedOverIndex={draggedOverIndex} setDraggedOverIndex={setDraggedOverIndex} />
           ))}
         </tbody>
       </table>
@@ -459,6 +544,137 @@ function NewUserModal({ onClose, onCreated }) {
   )
 }
 
+function UserRow({ u, index, isSelf, currentUser, readOnly, setDeleteConfirm, reorderUsers, draggedIndex, setDraggedIndex, draggedOverIndex, setDraggedOverIndex }) {
+  const [isHovered, setIsHovered] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+
+  const handleDragStart = (e) => {
+    if (readOnly) return;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index);
+    setDraggedIndex(index);
+    setTimeout(() => setIsDragging(true), 0);
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    setDraggedIndex(null);
+    setDraggedOverIndex(null);
+  };
+
+  const handleDragOver = (e) => {
+    if (readOnly) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (draggedOverIndex !== index) {
+      setDraggedOverIndex(index);
+    }
+  };
+
+  const handleDrop = (e) => {
+    if (readOnly) return;
+    e.preventDefault();
+    setDraggedIndex(null);
+    setDraggedOverIndex(null);
+    const dragIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
+    if (!isNaN(dragIndex) && dragIndex !== index) {
+      reorderUsers(dragIndex, index);
+    }
+  };
+
+  const isDragOver = draggedOverIndex === index;
+  let dragBorderTop = '1px solid #f1f5f9';
+  let dragBorderBottom = 'none';
+
+  if (isDragOver && draggedIndex !== null && draggedIndex !== index) {
+    if (draggedIndex > index) {
+      dragBorderTop = '2px solid #0ea5e9';
+    } else {
+      dragBorderBottom = '2px solid #0ea5e9';
+    }
+  }
+
+  return (
+    <tr
+      style={{ 
+        borderTop: dragBorderTop,
+        borderBottom: dragBorderBottom,
+        background: isDragging ? '#f8fafc' : 'transparent',
+        opacity: isDragging ? 0.4 : 1,
+        transition: 'background 0.12s, opacity 0.15s'
+      }}
+      draggable={!readOnly}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+      onMouseEnter={e => { if (!isDragging) e.currentTarget.style.background = '#f8fafc'; setIsHovered(true) }}
+      onMouseLeave={e => { if (!isDragging) e.currentTarget.style.background = 'transparent'; setIsHovered(false) }}
+    >
+      <td style={{ padding: '12px 16px', fontWeight: 600, color: '#0f172a' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {!readOnly && (
+            <div
+              title="Arraste para reordenar"
+              style={{
+                cursor: 'grab',
+                color: isHovered ? '#94a3b8' : 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginLeft: -8,
+                marginRight: -4,
+                padding: '0 4px',
+                transition: 'color 0.15s'
+              }}
+            >
+              <svg width="10" height="14" viewBox="0 0 12 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="4" cy="4" r="1.5" />
+                <circle cx="8" cy="4" r="1.5" />
+                <circle cx="4" cy="8" r="1.5" />
+                <circle cx="8" cy="8" r="1.5" />
+                <circle cx="4" cy="12" r="1.5" />
+                <circle cx="8" cy="12" r="1.5" />
+              </svg>
+            </div>
+          )}
+          <div style={{
+            width: 28, height: 28, borderRadius: '50%',
+            background: u.role === 'admin' ? 'linear-gradient(135deg,#f59e0b,#f97316)' : 'linear-gradient(135deg,#2563eb,#7c3aed)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 10, fontWeight: 800, color: '#fff', flexShrink: 0,
+          }}>
+            {(() => { const p = (u.name || u.email || '').split(' ').filter(Boolean); return ((p[0]?.[0] || '') + (p[p.length - 1]?.[0] || '')).toUpperCase() || '?' })()} 
+          </div>
+          <span>{u.name || '—'}</span>
+          {isSelf && <span style={{ fontSize: 10, color: '#94a3b8', fontStyle: 'italic' }}>(você)</span>}
+        </div>
+      </td>
+      <td style={{ padding: '12px 16px', color: '#475569' }}>{u.email}</td>
+      <td style={{ padding: '12px 16px', textAlign: 'center' }}><UserBadge role={u.role} /></td>
+      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+        {!isSelf && !readOnly && (
+          <button
+            onClick={() => setDeleteConfirm(u.email)}
+            title="Remover usuário"
+            style={{
+              margin: '0 auto', background: 'none', border: '1px solid #fee2e2', cursor: 'pointer',
+              color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: '6px', transition: 'all 0.15s', borderRadius: 6
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#fef2f2'; e.currentTarget.style.borderColor = '#fecaca' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.borderColor = '#fee2e2' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        )}
+      </td>
+    </tr>
+  )
+}
+
 function UsuariosTab({ readOnly = false }) {
   const { user: currentUser } = useAuth()
   const [users, setUsers] = useState([])
@@ -466,6 +682,17 @@ function UsuariosTab({ readOnly = false }) {
   const [showModal, setShowModal] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [feedback, setFeedback] = useState(null) // { type: 'success'|'error', msg }
+  const [draggedIndex, setDraggedIndex] = useState(null)
+  const [draggedOverIndex, setDraggedOverIndex] = useState(null)
+
+  const reorderUsers = (dragIndex, dropIndex) => {
+    setUsers(prev => {
+      const result = Array.from(prev);
+      const [removed] = result.splice(dragIndex, 1);
+      result.splice(dropIndex, 0, removed);
+      return result;
+    });
+  }
 
   const loadUsers = async () => {
     try {
@@ -558,50 +785,23 @@ function UsuariosTab({ readOnly = false }) {
               </tr>
             </thead>
             <tbody>
-              {users.map(u => {
+              {users.map((u, idx) => {
                 const isSelf = u.email === currentUser?.email
                 return (
-                  <tr key={u.email}
-                    style={{ borderTop: '1px solid #f1f5f9', transition: 'background 0.12s' }}
-                    onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                  >
-                    <td style={{ padding: '12px 16px', fontWeight: 600, color: '#0f172a' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{
-                          width: 28, height: 28, borderRadius: '50%',
-                          background: u.role === 'admin' ? 'linear-gradient(135deg,#f59e0b,#f97316)' : 'linear-gradient(135deg,#2563eb,#7c3aed)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: 10, fontWeight: 800, color: '#fff', flexShrink: 0,
-                        }}>
-                          {(() => { const p = (u.name || u.email || '').split(' ').filter(Boolean); return ((p[0]?.[0] || '') + (p[p.length - 1]?.[0] || '')).toUpperCase() || '?' })()} 
-                        </div>
-                        <span>{u.name || '—'}</span>
-                        {isSelf && <span style={{ fontSize: 10, color: '#94a3b8', fontStyle: 'italic' }}>(você)</span>}
-                      </div>
-                    </td>
-                    <td style={{ padding: '12px 16px', color: '#475569' }}>{u.email}</td>
-                    <td style={{ padding: '12px 16px', textAlign: 'center' }}><UserBadge role={u.role} /></td>
-                    <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                      {!isSelf && !readOnly && (
-                        <button
-                          onClick={() => setDeleteConfirm(u.email)}
-                          title="Remover usuário"
-                          style={{
-                            margin: '0 auto', background: 'none', border: '1px solid #fee2e2', cursor: 'pointer',
-                            color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            padding: '6px', transition: 'all 0.15s', borderRadius: 6
-                          }}
-                          onMouseEnter={e => { e.currentTarget.style.background = '#fef2f2'; e.currentTarget.style.borderColor = '#fecaca' }}
-                          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.borderColor = '#fee2e2' }}
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </button>
-                      )}
-                    </td>
-                  </tr>
+                  <UserRow
+                    key={u.email}
+                    u={u}
+                    index={idx}
+                    isSelf={isSelf}
+                    currentUser={currentUser}
+                    readOnly={readOnly}
+                    setDeleteConfirm={setDeleteConfirm}
+                    reorderUsers={reorderUsers}
+                    draggedIndex={draggedIndex}
+                    setDraggedIndex={setDraggedIndex}
+                    draggedOverIndex={draggedOverIndex}
+                    setDraggedOverIndex={setDraggedOverIndex}
+                  />
                 )
               })}
             </tbody>

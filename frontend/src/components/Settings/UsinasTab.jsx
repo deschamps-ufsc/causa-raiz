@@ -3,6 +3,158 @@ import { fetchDetailedUsinas, createUsina, renameUsina, deleteUsina } from '../.
 import { useAuth } from '../../hooks/AuthContext'
 import UsinaDetail from './UsinaDetail'
 
+function UsinaRow({ u, index, readOnly, setSelectedUsina, setEditingUsina, setNewName, setShowModal, setDeleteConfirm, reorderUsinas, draggedIndex, setDraggedIndex, draggedOverIndex, setDraggedOverIndex }) {
+  const [isHovered, setIsHovered] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+
+  const handleDragStart = (e) => {
+    if (readOnly) return;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index);
+    setDraggedIndex(index);
+    setTimeout(() => setIsDragging(true), 0);
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    setDraggedIndex(null);
+    setDraggedOverIndex(null);
+  };
+
+  const handleDragOver = (e) => {
+    if (readOnly) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (draggedOverIndex !== index) {
+      setDraggedOverIndex(index);
+    }
+  };
+
+  const handleDrop = (e) => {
+    if (readOnly) return;
+    e.preventDefault();
+    setDraggedIndex(null);
+    setDraggedOverIndex(null);
+    const dragIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
+    if (!isNaN(dragIndex) && dragIndex !== index) {
+      reorderUsinas(dragIndex, index);
+    }
+  };
+
+  const isDragOver = draggedOverIndex === index;
+  let dragBorderTop = '1px solid #f1f5f9';
+  let dragBorderBottom = 'none';
+
+  if (isDragOver && draggedIndex !== null && draggedIndex !== index) {
+    if (draggedIndex > index) {
+      dragBorderTop = '2px solid #0ea5e9';
+    } else {
+      dragBorderBottom = '2px solid #0ea5e9';
+    }
+  }
+
+  return (
+    <tr
+      style={{ 
+        borderTop: dragBorderTop,
+        borderBottom: dragBorderBottom,
+        background: isDragging ? '#f8fafc' : 'transparent',
+        opacity: isDragging ? 0.4 : 1,
+        transition: 'background 0.12s, opacity 0.15s',
+        cursor: 'pointer' 
+      }}
+      draggable={!readOnly}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+      onClick={() => setSelectedUsina(u)}
+      onMouseEnter={e => { if (!isDragging) e.currentTarget.style.background = '#fef9ec'; setIsHovered(true) }}
+      onMouseLeave={e => { if (!isDragging) e.currentTarget.style.background = 'transparent'; setIsHovered(false) }}
+    >
+      <td style={{ padding: '12px', fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {!readOnly && (
+            <div
+              title="Arraste para reordenar"
+              style={{
+                cursor: 'grab',
+                color: isHovered ? '#94a3b8' : 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginLeft: -8,
+                marginRight: -4,
+                padding: '0 4px',
+                transition: 'color 0.15s'
+              }}
+            >
+              <svg width="10" height="14" viewBox="0 0 12 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="4" cy="4" r="1.5" />
+                <circle cx="8" cy="4" r="1.5" />
+                <circle cx="4" cy="8" r="1.5" />
+                <circle cx="8" cy="8" r="1.5" />
+                <circle cx="4" cy="12" r="1.5" />
+                <circle cx="8" cy="12" r="1.5" />
+              </svg>
+            </div>
+          )}
+          {u.nome}
+        </div>
+      </td>
+      <td style={{ padding: '12px', textAlign: 'center', color: '#64748b', fontSize: 11, minWidth: 100 }}>
+        <div style={{ fontWeight: 500 }}>{new Date(u.criado_em).toLocaleDateString()}</div>
+        <div style={{ fontSize: 9, opacity: 0.8 }}>por {u.criado_por}</div>
+      </td>
+      <td style={{ padding: '12px', textAlign: 'center', fontWeight: 700, color: '#15803d' }}>
+        {u.total_mwp.toFixed(2)} <span style={{ fontSize: 9, fontWeight: 400 }}>MWp</span>
+      </td>
+      <td style={{ padding: '12px', textAlign: 'center' }}>{u.total_strings}</td>
+      <td style={{ padding: '12px', textAlign: 'center' }}>{u.total_modulos}</td>
+      <td style={{ padding: '12px', textAlign: 'center' }}>{u.count_elementos}</td>
+      <td style={{ padding: '12px', textAlign: 'center' }}>{u.count_series}</td>
+      <td style={{ padding: '12px', textAlign: 'center' }}>{u.total_sinteticas}</td>
+      <td style={{ padding: '12px', textAlign: 'center', minWidth: 100 }}>
+        <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+          <button
+            onClick={e => { e.stopPropagation(); setSelectedUsina(u) }}
+            style={{
+              padding: '5px 8px', borderRadius: 6, border: '1px solid rgba(245,158,11,0.4)',
+              background: 'rgba(245,158,11,0.08)', color: '#b45309', cursor: 'pointer',
+              fontSize: 11, fontWeight: 700, transition: 'all 0.15s'
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.18)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.08)' }}
+            title="Abrir configurações"
+          >⚙️</button>
+          {!readOnly && (
+            <>
+              <button
+                onClick={e => { e.stopPropagation(); setEditingUsina(u); setNewName(u.nome); setShowModal(true) }}
+                style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', transition: 'all 0.15s' }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = '#94a3b8'; e.currentTarget.style.background = '#f8fafc' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#fff' }}
+                title="Editar nome"
+              >✏️</button>
+              <button
+                onClick={e => { e.stopPropagation(); setDeleteConfirm(u.nome) }}
+                style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid #fee2e2', background: '#fff', color: '#dc2626', cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                onMouseEnter={e => { e.currentTarget.style.background = '#fef2f2'; e.currentTarget.style.borderColor = '#fecaca' }}
+                onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#fee2e2' }}
+                title="Excluir usina"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </>
+          )}
+        </div>
+      </td>
+    </tr>
+  )
+}
+
 export default function UsinasTab({ readOnly = false }) {
   const { user: currentUser } = useAuth()
   const [usinas, setUsinas] = useState([])
@@ -13,6 +165,17 @@ export default function UsinasTab({ readOnly = false }) {
   const [newName, setNewName] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [selectedUsina, setSelectedUsina] = useState(null) // usina object being viewed
+  const [draggedIndex, setDraggedIndex] = useState(null)
+  const [draggedOverIndex, setDraggedOverIndex] = useState(null)
+
+  const reorderUsinas = (dragIndex, dropIndex) => {
+    setUsinas(prev => {
+      const result = Array.from(prev);
+      const [removed] = result.splice(dragIndex, 1);
+      result.splice(dropIndex, 0, removed);
+      return result;
+    });
+  }
 
   const loadUsinas = async () => {
     try {
@@ -200,64 +363,23 @@ export default function UsinasTab({ readOnly = false }) {
                 </tr>
               </thead>
               <tbody>
-                {usinas.map(u => (
-                  <tr key={u.nome}
-                    style={{ borderTop: '1px solid #f1f5f9', transition: 'background 0.12s', cursor: 'pointer' }}
-                    onClick={() => setSelectedUsina(u)}
-                    onMouseEnter={e => e.currentTarget.style.background = '#fef9ec'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                  >
-                    <td style={{ padding: '12px', fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap' }}>{u.nome}</td>
-                    <td style={{ padding: '12px', textAlign: 'center', color: '#64748b', fontSize: 11, minWidth: 100 }}>
-                      <div style={{ fontWeight: 500 }}>{new Date(u.criado_em).toLocaleDateString()}</div>
-                      <div style={{ fontSize: 9, opacity: 0.8 }}>por {u.criado_por}</div>
-                    </td>
-                    <td style={{ padding: '12px', textAlign: 'center', fontWeight: 700, color: '#15803d' }}>
-                      {u.total_mwp.toFixed(2)} <span style={{ fontSize: 9, fontWeight: 400 }}>MWp</span>
-                    </td>
-                    <td style={{ padding: '12px', textAlign: 'center' }}>{u.total_strings}</td>
-                    <td style={{ padding: '12px', textAlign: 'center' }}>{u.total_modulos}</td>
-                    <td style={{ padding: '12px', textAlign: 'center' }}>{u.count_elementos}</td>
-                    <td style={{ padding: '12px', textAlign: 'center' }}>{u.count_series}</td>
-                    <td style={{ padding: '12px', textAlign: 'center' }}>{u.total_sinteticas}</td>
-                    <td style={{ padding: '12px', textAlign: 'center', minWidth: 100 }}>
-                      <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
-                        <button
-                          onClick={e => { e.stopPropagation(); setSelectedUsina(u) }}
-                          style={{
-                            padding: '5px 8px', borderRadius: 6, border: '1px solid rgba(245,158,11,0.4)',
-                            background: 'rgba(245,158,11,0.08)', color: '#b45309', cursor: 'pointer',
-                            fontSize: 11, fontWeight: 700, transition: 'all 0.15s'
-                          }}
-                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.18)' }}
-                          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.08)' }}
-                          title="Abrir configurações"
-                        >⚙️</button>
-                        {!readOnly && (
-                          <>
-                            <button
-                              onClick={e => { e.stopPropagation(); setEditingUsina(u); setNewName(u.nome); setShowModal(true) }}
-                              style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', transition: 'all 0.15s' }}
-                              onMouseEnter={e => { e.currentTarget.style.borderColor = '#94a3b8'; e.currentTarget.style.background = '#f8fafc' }}
-                              onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#fff' }}
-                              title="Editar nome"
-                            >✏️</button>
-                            <button
-                              onClick={e => { e.stopPropagation(); setDeleteConfirm(u.nome) }}
-                              style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid #fee2e2', background: '#fff', color: '#dc2626', cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                              onMouseEnter={e => { e.currentTarget.style.background = '#fef2f2'; e.currentTarget.style.borderColor = '#fecaca' }}
-                              onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#fee2e2' }}
-                              title="Excluir usina"
-                            >
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
+                {usinas.map((u, idx) => (
+                  <UsinaRow
+                    key={u.nome}
+                    u={u}
+                    index={idx}
+                    readOnly={readOnly}
+                    setSelectedUsina={setSelectedUsina}
+                    setEditingUsina={setEditingUsina}
+                    setNewName={setNewName}
+                    setShowModal={setShowModal}
+                    setDeleteConfirm={setDeleteConfirm}
+                    reorderUsinas={reorderUsinas}
+                    draggedIndex={draggedIndex}
+                    setDraggedIndex={setDraggedIndex}
+                    draggedOverIndex={draggedOverIndex}
+                    setDraggedOverIndex={setDraggedOverIndex}
+                  />
                 ))}
               </tbody>
             </table>

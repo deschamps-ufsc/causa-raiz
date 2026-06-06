@@ -14,7 +14,7 @@ import {
   useUpdateNodeInternals
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import SingleSeriesDropdown from './SingleSeriesDropdown'
+import SingleSeriesDropdown, { formatSeriesName } from './SingleSeriesDropdown'
 import { useUsina } from '../hooks/UsinaContext'
 import { fetchMappingData, fetchFlowConfig, saveFlowConfig, runFlow, fetchFlowIntegrals } from '../services/api'
 import { useChartSettings } from '../hooks/ChartSettingsContext'
@@ -35,9 +35,9 @@ const baseNodeStyle = {
 
 const BoxNode = ({ id, data }) => {
   const isAggregator = data.aggregator
-  const bgColor = data.color === 'yellow' ? '#fef08a' : data.color === 'green' ? '#bbf7d0' : data.color === 'purple' ? '#e9d5ff' : 'var(--bg-card)'
+  const bgColor = data.color === 'yellow' ? '#fef08a' : data.color === 'green' ? '#bbf7d0' : data.color === 'purple' ? '#e9d5ff' : data.color === 'teal' ? '#bbdefb' : data.color === 'darkblue' ? '#bbdefb' : 'var(--bg-card)'
   const textColor = data.color ? '#334155' : 'var(--text-primary)'
-  const borderColor = data.color === 'yellow' ? '#facc15' : data.color === 'green' ? '#4ade80' : data.color === 'purple' ? '#c084fc' : 'var(--border)'
+  const borderColor = data.color === 'yellow' ? '#facc15' : data.color === 'green' ? '#4ade80' : data.color === 'purple' ? '#c084fc' : data.color === 'teal' ? '#0277BD' : data.color === 'darkblue' ? '#0277BD' : 'var(--border)'
 
   const nodes = useNodes()
   const edges = useEdges()
@@ -226,8 +226,10 @@ const PVSystNode = ({ data }) => (
     boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
     flexDirection: 'column',
     justifyContent: 'center',
-    gap: '8px'
-  }}>
+    gap: '8px',
+    cursor: 'pointer',
+    transition: 'all 0.2s'
+  }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
     <Handle type="target" position={Position.Left} style={{ background: '#233772' }} />
     <div style={{ flex: 1, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <img 
@@ -271,13 +273,15 @@ const initialNodes = [
   { id: 'tamb', type: 'box', position: { x: 30, y: 220 }, data: { label: 'T<sub>amb</sub>', color: 'yellow', aggregator: true, inputs: [], operation: 'sum' } },
   { id: 'tmod', type: 'box', position: { x: 30, y: 320 }, data: { label: 'T<sub>mod</sub>', color: 'yellow', aggregator: true, inputs: [], operation: 'sum' } },
   { id: 'sujidade', type: 'box', position: { x: 30, y: 420 }, data: { label: 'Sujidade', color: 'yellow', aggregator: true, inputs: [], operation: 'sum' } },
-  { id: 'energia', type: 'box', position: { x: 30, y: 520 }, data: { label: 'Energia', color: 'green', aggregator: true, inputs: [], operation: 'sum' } },
+  { id: 'tracker', type: 'box', position: { x: 30, y: 520 }, data: { label: 'Tracker', color: 'purple', aggregator: true, inputs: [], operation: 'sum' } },
+  { id: 'energia', type: 'box', position: { x: 30, y: 620 }, data: { label: 'Potência', color: 'green', aggregator: true, inputs: [], operation: 'sum' } },
+  { id: 'energia_pmi', type: 'box', position: { x: 30, y: 720 }, data: { label: 'Energia PMI', color: 'teal', aggregator: true, inputs: [], operation: 'sum' } },
   { id: 'geff', type: 'geff', position: { x: 220, y: 30 }, data: { label: 'Geff', beta: 1.0, SSF: 0.05, MLF: 0.02 } },
   { id: 'tcel', type: 'tcel', position: { x: 220, y: 280 }, data: { label: 'Tcel' } },
   { 
     id: 'simultaneidade', 
     type: 'box', 
-    position: { x: 400, y: 130 }, 
+    position: { x: 400, y: 230 }, 
     data: { 
       label: 'Filtro de<br/>Simultaneidade', 
       color: 'purple', 
@@ -291,7 +295,7 @@ const initialNodes = [
       ]
     } 
   },
-  { id: 'pvsyst', type: 'pvsyst', position: { x: 600, y: 130 }, data: { height: '120px' } }
+  { id: 'pvsyst', type: 'pvsyst', position: { x: 600, y: 230 }, data: { height: '120px' } }
 ]
 
 const initialEdges = [
@@ -308,7 +312,7 @@ const initialEdges = [
 
 // ── COMPONENT ─────────────────────────────────────────────────────────
 
-export default function FluxogramaView({ elementos = [], showTitle = true }) {
+export default function FluxogramaView({ elementos = [], showTitle = true, mode = 'all' }) {
   const { usinaAtual } = useUsina()
   const { filterSettings } = useChartSettings()
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
@@ -319,6 +323,7 @@ export default function FluxogramaView({ elementos = [], showTitle = true }) {
   const [operation, setOperation] = useState('sum')
   const [outputFilter, setOutputFilter] = useState('')
   const [geffParams, setGeffParams] = useState({ beta: 1, SSF: 0, MLF: 0 })
+  const [trackerParams, setTrackerParams] = useState({ latitude: -23.55, longitude: -46.63, gcr: 0.3, max_angle: 60, tolerance: 10 })
   const [allSeries, setAllSeries] = useState([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [toast, setToast] = useState(null)
@@ -336,7 +341,9 @@ export default function FluxogramaView({ elementos = [], showTitle = true }) {
     tmod: true,
     tcel: true,
     sujidade: true,
-    energia: true
+    energia: true,
+    tracker: true,
+    energia_pmi: true
   })
 
   const loadIntegrals = (usina) => {
@@ -386,18 +393,39 @@ export default function FluxogramaView({ elementos = [], showTitle = true }) {
                            col.key.toLowerCase().startsWith('tmod') || 
                            col.key.toLowerCase().startsWith('tcel') ||
                            col.key.toLowerCase().startsWith('sujidade');
+      const isTracker = col.key.toLowerCase().startsWith('tracker');
+
       let sum = 0
       let count = 0
       let hasNumber = false
+
+      let sumErrors = 0
+      let sumValidPoints = 0
+      let hasTrackerData = false
+
       integralsData.rows.forEach(row => {
         const val = row[col.key]
-        if (typeof val === 'number') {
+        if (isTracker && typeof val === 'string') {
+          const match = val.match(/^(\d+)\s*\(([\d.]+)%\)$/);
+          if (match) {
+            const errors = parseInt(match[1], 10);
+            const perc = parseFloat(match[2]);
+            const valid = perc > 0 ? (errors / (perc / 100)) : 0;
+            sumErrors += errors;
+            sumValidPoints += valid;
+            hasTrackerData = true;
+          }
+        } else if (typeof val === 'number') {
           sum += val
           count++
           hasNumber = true
         }
       })
-      if (hasNumber) {
+      
+      if (isTracker && hasTrackerData) {
+        const overallPerc = sumValidPoints > 0 ? (sumErrors / sumValidPoints) * 100 : 0;
+        totals[col.key] = `${Math.round(sumErrors)} (${overallPerc.toFixed(1)}%)`;
+      } else if (hasNumber) {
         totals[col.key] = isAverageCol ? (sum / count) : sum
       } else {
         totals[col.key] = '-'
@@ -422,7 +450,9 @@ export default function FluxogramaView({ elementos = [], showTitle = true }) {
       if (colKey.startsWith('tmod') && !visibleVars.tmod) return false;
       if (colKey.startsWith('tcel') && !visibleVars.tcel) return false;
       if (colKey.startsWith('sujidade') && !visibleVars.sujidade) return false;
-      if (colKey.startsWith('energia') && !visibleVars.energia) return false;
+      if (colKey.startsWith('tracker') && !visibleVars.tracker) return false;
+      if (colKey.startsWith('energia_pmi')) return visibleVars.energia_pmi;
+      if (colKey.startsWith('energia')) return visibleVars.energia;
 
       return true;
     });
@@ -633,12 +663,26 @@ export default function FluxogramaView({ elementos = [], showTitle = true }) {
         bgCell: 'rgba(249, 115, 22, 0.02)',
         bgTotal: 'rgba(249, 115, 22, 0.08)'
       };
-    } else if (key.startsWith('energia')) {
+    } else if (key === 'tracker') {
+      return {
+        color: '#6A1B9A', // Roxo escuro (cor do Elemento Tracker)
+        bgHeader: 'rgba(106, 27, 154, 0.05)',
+        bgCell: 'rgba(106, 27, 154, 0.02)',
+        bgTotal: 'rgba(106, 27, 154, 0.08)'
+      };
+    } else if (key === 'energia') {
       return {
         color: '#10b981', // Verde
         bgHeader: 'rgba(16, 185, 129, 0.05)',
         bgCell: 'rgba(16, 185, 129, 0.02)',
         bgTotal: 'rgba(16, 185, 129, 0.08)'
+      };
+    } else if (key === 'energia_pmi') {
+      return {
+        color: '#0277BD', // Azul (cor do Elemento Energia PMI)
+        bgHeader: 'rgba(2, 119, 189, 0.05)',
+        bgCell: 'rgba(2, 119, 189, 0.02)',
+        bgTotal: 'rgba(2, 119, 189, 0.08)'
       };
     }
     return {
@@ -685,7 +729,11 @@ export default function FluxogramaView({ elementos = [], showTitle = true }) {
       case 'sujidade':
         return <span>Sujidade - Entradas</span>;
       case 'energia':
-        return <span>Energia - Entradas</span>;
+        return <span>Potência - Entradas</span>;
+      case 'energia_pmi':
+        return <span>Energia PMI - Entradas</span>;
+      case 'tracker':
+        return <span>Tracker - Entradas</span>;
       default:
         return <span>{nodeId} - Entradas</span>;
     }
@@ -704,7 +752,11 @@ export default function FluxogramaView({ elementos = [], showTitle = true }) {
       case 'sujidade':
         return <>Sujidade - Fator de Sujidade</>;
       case 'energia':
-        return <>Energia - Geração de Energia</>;
+        return <>Potência - Geração de Potência</>;
+      case 'energia_pmi':
+        return <>Energia PMI - Geração de Energia (PMI)</>;
+      case 'tracker':
+        return <>Tracker - Posição/Ângulo do Seguidor</>;
       default:
         return nodeId;
     }
@@ -731,6 +783,7 @@ export default function FluxogramaView({ elementos = [], showTitle = true }) {
       )}
 
       {/* ── SEÇÃO DO FLUXOGRAMA ── */}
+      {(mode === 'all' || mode === 'config') && (
       <div style={{ 
         width: '100%', 
         background: 'var(--bg-card)', 
@@ -790,6 +843,9 @@ export default function FluxogramaView({ elementos = [], showTitle = true }) {
                 setInputsList(normalized)
                 setOperation(node.data.operation || 'sum')
                 setOutputFilter(node.data.outputFilter || '')
+                if (node.id === 'tracker') {
+                  setTrackerParams(node.data.trackerParams || { latitude: -23.55, longitude: -46.63, gcr: 0.3, max_angle: 60, tolerance: 10 })
+                }
               }
             }}
             nodeTypes={nodeTypes}
@@ -808,6 +864,7 @@ export default function FluxogramaView({ elementos = [], showTitle = true }) {
           </ReactFlow>
         </div>
       </div>
+      )}
 
       {/* Modal Bloco Agregador */}
       {selectedBlock && selectedBlock.aggregator && (
@@ -822,59 +879,139 @@ export default function FluxogramaView({ elementos = [], showTitle = true }) {
             width: '600px', maxWidth: '90vw', minHeight: '500px', maxHeight: '90vh', boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
             display: 'flex', flexDirection: 'column'
           }}>
-            <h3 style={{ marginTop: 0, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
+            <h3 style={{ marginTop: 0, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', paddingBottom: '12px', paddingRight: '80px' }}>
               {getAggregatorDescription(selectedNodeId)}
             </h3>
+            {(() => {
+              const getBadgeProps = (nodeId) => {
+                if (!nodeId) return null;
+                if (nodeId.startsWith('gpoa') || nodeId.startsWith('grear') || nodeId.startsWith('geff')) return { label: 'Irradiação', color: '#F9CC00' };
+                if (nodeId.startsWith('tmod') || nodeId.startsWith('tamb') || nodeId.startsWith('tcel')) return { label: 'Temperatura', color: '#EF6C00' };
+                if (nodeId.startsWith('sujidade')) return { label: 'Sujidade', color: '#6D4C41' };
+                if (nodeId.startsWith('tracker')) return { label: 'Tracker', color: '#6A1B9A' };
+                if (nodeId.startsWith('energia_pmi')) return { label: 'Energia PMI', color: '#0277BD' };
+                if (nodeId.startsWith('energia')) return { label: 'Potência', color: '#2E7D32' };
+                return null;
+              };
+              const badge = getBadgeProps(selectedNodeId);
+              if (!badge) return null;
+              return (
+                <div style={{
+                  position: 'absolute', top: '24px', right: '24px',
+                  background: badge.color, padding: '4px 8px', borderRadius: '4px',
+                  fontSize: '11px', fontWeight: 700, color: '#fff',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)', zIndex: 10,
+                  letterSpacing: '0.5px'
+                }}>
+                  {badge.label.toUpperCase()}
+                </div>
+              );
+            })()}
             
             <div style={{ margin: '20px 0', flex: 1, display: 'flex', flexDirection: 'column' }}>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-                Selecione as séries de entrada: (Disponíveis: {allSeries?.length || 0})
-              </p>
+              {(() => {
+                const nodeFilteredSeries = allSeries.filter(s => {
+                  if (selectedNodeId === 'tmod' || selectedNodeId === 'tamb' || selectedNodeId === 'tcel') return s.elemento === 'Temperatura';
+                  if (selectedNodeId === 'gpoa' || selectedNodeId === 'grear' || selectedNodeId === 'geff') return s.elemento === 'Irradiação';
+                  if (selectedNodeId === 'tracker') return s.elemento === 'Tracker';
+                  if (selectedNodeId === 'sujidade') return s.elemento === 'Sujidade';
+                  if (selectedNodeId === 'energia_pmi') return s.elemento === 'Energia PMI';
+                  if (selectedNodeId === 'energia') return s.elemento && s.elemento.startsWith('Potência');
+                  return true;
+                });
+                return (
+                  <>
+                    <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+                      Selecione as séries de entrada: (Disponíveis: {nodeFilteredSeries?.length || 0})
+                    </p>
 
-              {/* Toggle de Operação e Filtro de Saída Final */}
-              <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Operação:</span>
-                  <div style={{ display: 'flex', background: 'var(--bg-secondary)', borderRadius: 8, padding: 4 }}>
-                    <button
-                      onClick={() => setOperation('sum')}
+              {/* Toggle de Operação e Filtro de Saída Final (Oculto se for tracker) */}
+              {selectedNodeId !== 'tracker' && (
+                <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Operação:</span>
+                    <div style={{ display: 'flex', background: 'var(--bg-secondary)', borderRadius: 8, padding: 4 }}>
+                      <button
+                        onClick={() => setOperation('sum')}
+                        style={{
+                          padding: '6px 16px', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 600,
+                          cursor: 'pointer', transition: 'all 0.2s',
+                          background: operation === 'sum' ? 'var(--amber)' : 'transparent',
+                          color: operation === 'sum' ? '#000' : 'var(--text-muted)'
+                        }}
+                      >SOMA</button>
+                      <button
+                        onClick={() => setOperation('mean')}
+                        style={{
+                          padding: '6px 16px', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 600,
+                          cursor: 'pointer', transition: 'all 0.2s',
+                          background: operation === 'mean' ? 'var(--amber)' : 'transparent',
+                          color: operation === 'mean' ? '#000' : 'var(--text-muted)'
+                        }}
+                      >MÉDIA</button>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Filtro de Saída:</span>
+                    <select
+                      value={outputFilter || ''}
+                      onChange={(e) => setOutputFilter(e.target.value)}
                       style={{
-                        padding: '6px 16px', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 600,
-                        cursor: 'pointer', transition: 'all 0.2s',
-                        background: operation === 'sum' ? 'var(--amber)' : 'transparent',
-                        color: operation === 'sum' ? '#000' : 'var(--text-muted)'
+                        width: '200px', padding: '8px 10px', borderRadius: '4px', border: '1px solid var(--border)',
+                        fontSize: '12px', background: 'var(--bg-card)', color: 'var(--text-primary)',
+                        outline: 'none', cursor: 'pointer'
                       }}
-                    >SOMA</button>
-                    <button
-                      onClick={() => setOperation('mean')}
-                      style={{
-                        padding: '6px 16px', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 600,
-                        cursor: 'pointer', transition: 'all 0.2s',
-                        background: operation === 'mean' ? 'var(--amber)' : 'transparent',
-                        color: operation === 'mean' ? '#000' : 'var(--text-muted)'
-                      }}
-                    >MÉDIA</button>
+                    >
+                      <option value="">Sem filtro</option>
+                      {filterSettings.map(f => (
+                        <option key={f.name} value={f.name}>{f.name} ({f.element})</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
+              )}
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Filtro de Saída:</span>
-                  <select
-                    value={outputFilter || ''}
-                    onChange={(e) => setOutputFilter(e.target.value)}
-                    style={{
-                      width: '200px', padding: '8px 10px', borderRadius: '4px', border: '1px solid var(--border)',
-                      fontSize: '12px', background: 'var(--bg-card)', color: 'var(--text-primary)',
-                      outline: 'none', cursor: 'pointer'
-                    }}
-                  >
-                    <option value="">Sem filtro</option>
-                    {filterSettings.map(f => (
-                      <option key={f.name} value={f.name}>{f.name} ({f.element})</option>
-                    ))}
-                  </select>
+              {/* Parâmetros do Tracker (PVLIB) */}
+              {selectedNodeId === 'tracker' && (
+                <div style={{ marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 12, padding: '16px', background: 'rgba(106, 27, 154, 0.05)', borderRadius: '8px', borderLeft: '4px solid #6A1B9A' }}>
+                  <h4 style={{ margin: 0, fontSize: '13px', color: '#6A1B9A' }}>Parâmetros da Curva de Referência (PVLib)</h4>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '120px' }}>
+                      <label style={{ fontSize: 12, fontWeight: 600 }}>Latitude:</label>
+                      <input type="number" step="0.0001" className="input" value={trackerParams.latitude} onChange={e => setTrackerParams({ ...trackerParams, latitude: parseFloat(e.target.value) || 0 })} style={{ padding: '6px' }} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '120px' }}>
+                      <label style={{ fontSize: 12, fontWeight: 600 }}>Longitude:</label>
+                      <input type="number" step="0.0001" className="input" value={trackerParams.longitude} onChange={e => setTrackerParams({ ...trackerParams, longitude: parseFloat(e.target.value) || 0 })} style={{ padding: '6px' }} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '100px' }}>
+                      <label style={{ fontSize: 12, fontWeight: 600 }}>GCR:</label>
+                      <input type="number" step="0.01" className="input" value={trackerParams.gcr} onChange={e => setTrackerParams({ ...trackerParams, gcr: parseFloat(e.target.value) || 0 })} style={{ padding: '6px' }} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '100px' }}>
+                      <label style={{ fontSize: 12, fontWeight: 600 }}>Ângulo Máx (°):</label>
+                      <input type="number" step="1" className="input" value={trackerParams.max_angle} onChange={e => setTrackerParams({ ...trackerParams, max_angle: parseFloat(e.target.value) || 0 })} style={{ padding: '6px' }} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '100px' }}>
+                      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--red)' }}>Tolerância (°):</label>
+                      <input type="number" step="1" className="input" value={trackerParams.tolerance} onChange={e => setTrackerParams({ ...trackerParams, tolerance: parseFloat(e.target.value) || 0 })} style={{ padding: '6px', borderColor: 'var(--red)' }} title="Diferença máxima aceitável em relação à referência." />
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: '8px' }}>
+                    <input 
+                      type="checkbox" 
+                      id="inverterSinal"
+                      checked={trackerParams.inverter_sinal || false}
+                      onChange={e => setTrackerParams({ ...trackerParams, inverter_sinal: e.target.checked })}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    <label htmlFor="inverterSinal" style={{ fontSize: 12, fontWeight: 600, cursor: 'pointer', color: '#6A1B9A' }}>
+                      Inverter Sinal da Curva (-/+)
+                    </label>
+                  </div>
                 </div>
-              </div>
+              )}
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '2px', overflowY: 'visible', zIndex: 10 }}>
                 {inputsList.map((val, idx) => (
@@ -888,8 +1025,15 @@ export default function FluxogramaView({ elementos = [], showTitle = true }) {
                           newList[idx] = { ...newList[idx], series: newVal }
                           setInputsList(newList)
                         }}
-                        series={allSeries}
+                        series={nodeFilteredSeries}
                         elementos={elementos}
+                        fixedElement={
+                          (selectedNodeId === 'tmod' || selectedNodeId === 'tamb' || selectedNodeId === 'tcel') ? 'Temperatura' :
+                          (selectedNodeId === 'gpoa' || selectedNodeId === 'grear' || selectedNodeId === 'geff') ? 'Irradiação' :
+                          (selectedNodeId === 'tracker') ? 'Tracker' :
+                          (selectedNodeId === 'sujidade') ? 'Sujidade' :
+                          (selectedNodeId === 'energia_pmi') ? 'Energia PMI' : ''
+                        }
                       />
                     </div>
                     <div style={{ flex: 2 }}>
@@ -950,6 +1094,9 @@ export default function FluxogramaView({ elementos = [], showTitle = true }) {
               >
                 + Adicionar outra entrada
               </button>
+              </>
+              );
+              })()}
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
@@ -963,7 +1110,11 @@ export default function FluxogramaView({ elementos = [], showTitle = true }) {
                 onClick={() => {
                   const updatedNodes = nodes.map(n => {
                     if (n.id === selectedNodeId) {
-                      return { ...n, data: { ...n.data, inputs: inputsList, operation: operation, outputFilter: outputFilter } }
+                      const newData = { ...n.data, inputs: inputsList, operation: operation, outputFilter: outputFilter }
+                      if (n.id === 'tracker') {
+                        newData.trackerParams = trackerParams;
+                      }
+                      return { ...n, data: newData }
                     }
                     return n
                   })
@@ -999,9 +1150,34 @@ export default function FluxogramaView({ elementos = [], showTitle = true }) {
             width: '450px', maxWidth: '90vw', boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
             display: 'flex', flexDirection: 'column'
           }}>
-            <h3 style={{ marginTop: 0, color: '#f97316', borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
+            <h3 style={{ marginTop: 0, color: '#f97316', borderBottom: '1px solid var(--border)', paddingBottom: '12px', paddingRight: '80px' }}>
               G<sub>eff</sub> - Irradiância Efetiva
             </h3>
+            {(() => {
+              const getBadgeProps = (nodeId) => {
+                if (!nodeId) return null;
+                if (nodeId.startsWith('gpoa') || nodeId.startsWith('grear') || nodeId.startsWith('geff')) return { label: 'Irradiação', color: '#F9CC00' };
+                if (nodeId.startsWith('tmod') || nodeId.startsWith('tamb') || nodeId.startsWith('tcel')) return { label: 'Temperatura', color: '#EF6C00' };
+                if (nodeId.startsWith('sujidade')) return { label: 'Sujidade', color: '#6D4C41' };
+                if (nodeId.startsWith('tracker')) return { label: 'Tracker', color: '#6A1B9A' };
+                if (nodeId.startsWith('energia_pmi')) return { label: 'Energia PMI', color: '#0277BD' };
+                if (nodeId.startsWith('energia')) return { label: 'Potência', color: '#2E7D32' };
+                return null;
+              };
+              const badge = getBadgeProps(selectedNodeId);
+              if (!badge) return null;
+              return (
+                <div style={{
+                  position: 'absolute', top: '24px', right: '24px',
+                  background: badge.color, padding: '4px 8px', borderRadius: '4px',
+                  fontSize: '11px', fontWeight: 700, color: '#fff',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)', zIndex: 10,
+                  letterSpacing: '0.5px'
+                }}>
+                  {badge.label.toUpperCase()}
+                </div>
+              );
+            })()}
             
             <div style={{ margin: '20px 0', display: 'flex', flexDirection: 'column', gap: 16 }}>
               <p style={{ fontSize: '13px', color: 'var(--text-muted)', background: 'rgba(249,115,22,0.1)', padding: '10px', borderRadius: '6px', borderLeft: '4px solid #f97316' }}>
@@ -1136,7 +1312,63 @@ export default function FluxogramaView({ elementos = [], showTitle = true }) {
         </>
       )}
 
+      {/* Modal Bloco PVSyst */}
+      {selectedNodeId === 'pvsyst' && (
+        <>
+          <div 
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000 }} 
+            onClick={() => setSelectedNodeId(null)} 
+          />
+          <div style={{
+            position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+            background: 'var(--bg-card)', padding: '24px', borderRadius: '8px', zIndex: 1001,
+            width: '500px', maxWidth: '90vw', boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+            display: 'flex', flexDirection: 'column'
+          }}>
+            <h3 style={{ marginTop: 0, color: '#233772', borderBottom: '1px solid var(--border)', paddingBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <img src="/pvsyst.png" alt="PVSyst Logo" style={{ height: '24px', objectFit: 'contain' }} />
+                <span>Simulação PVSyst</span>
+              </div>
+              <button onClick={() => setSelectedNodeId(null)} style={{ background: 'none', border: 'none', fontSize: '16px', cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
+            </h3>
+            
+            <div style={{ margin: '20px 0', display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <p style={{ fontSize: '14px', color: 'var(--text-primary)' }}>
+                Nesta etapa, você pode exportar as séries filtradas para uso no software PVSYST, ou carregar os resultados de uma simulação já realizada.
+              </p>
+              
+              <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginTop: '10px' }}>
+                <button 
+                  onClick={() => {
+                    alert("Download do arquivo de importação do PVSYST em desenvolvimento.")
+                  }} 
+                  className="btn"
+                  style={{ flex: 1, background: '#233772', color: '#fff', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '16px', height: 'auto' }}
+                >
+                  <span style={{ fontSize: '24px' }}>⬇️</span>
+                  <span>Baixar Arquivo de<br/>Importação</span>
+                </button>
+
+                <button 
+                  onClick={() => {
+                    alert("Upload do resultado da simulação do PVSYST em desenvolvimento.")
+                  }} 
+                  className="btn"
+                  style={{ flex: 1, background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '16px', height: 'auto' }}
+                >
+                  <span style={{ fontSize: '24px' }}>⬆️</span>
+                  <span>Fazer Upload<br/>do Resultado</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </>
+      )}
+
       {/* ── SEÇÃO DA TABELA DE INTEGRAIS DIÁRIAS ── */}
+      {(mode === 'all' || mode === 'validacao') && (
       <div style={{ 
         width: '100%', 
         background: 'var(--bg-card)', 
@@ -1218,8 +1450,16 @@ export default function FluxogramaView({ elementos = [], showTitle = true }) {
                   <span>Sujidade</span>
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.tracker} onChange={() => setVisibleVars(prev => ({ ...prev, tracker: !prev.tracker }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>Tracker</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
                   <input type="checkbox" checked={visibleVars.energia} onChange={() => setVisibleVars(prev => ({ ...prev, energia: !prev.energia }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
-                  <span>Energia</span>
+                  <span>Potência</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.energia_pmi} onChange={() => setVisibleVars(prev => ({ ...prev, energia_pmi: !prev.energia_pmi }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>Energia PMI</span>
                 </label>
               </div>
             </details>
@@ -1269,7 +1509,9 @@ export default function FluxogramaView({ elementos = [], showTitle = true }) {
                       background: 'var(--bg-secondary)',
                       zIndex: 3,
                       boxShadow: '2px 0 5px rgba(0,0,0,0.05)',
-                      verticalAlign: 'middle'
+                      verticalAlign: 'middle',
+                      whiteSpace: 'nowrap',
+                      minWidth: '95px'
                     }}
                   >
                     Data
@@ -1376,7 +1618,9 @@ export default function FluxogramaView({ elementos = [], showTitle = true }) {
                       left: 0,
                       background: 'var(--bg-card)',
                       zIndex: 1,
-                      boxShadow: '2px 0 5px rgba(0,0,0,0.05)'
+                      boxShadow: '2px 0 5px rgba(0,0,0,0.05)',
+                      whiteSpace: 'nowrap',
+                      minWidth: '95px'
                     }}>
                       {row.date}
                     </td>
@@ -1384,9 +1628,12 @@ export default function FluxogramaView({ elementos = [], showTitle = true }) {
                       const theme = getColumnTheme(col);
                       const isOutput = !col.label.includes('Entrada');
                       const val = row[col.key];
-                      const formattedVal = typeof val === 'number' 
+                      let formattedVal = typeof val === 'number' 
                         ? val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
                         : val;
+                      if (col.key.toLowerCase().includes('sujidade') && typeof val === 'number') {
+                        formattedVal += '%';
+                      }
                       return (
                         <td 
                           key={col.key} 
@@ -1426,9 +1673,12 @@ export default function FluxogramaView({ elementos = [], showTitle = true }) {
                       const theme = getColumnTheme(col);
                       const isOutput = !col.label.includes('Entrada');
                       const val = totalsRow[col.key];
-                      const formattedVal = typeof val === 'number' 
+                      let formattedVal = typeof val === 'number' 
                         ? val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
                         : val;
+                      if (col.key.toLowerCase().includes('sujidade') && typeof val === 'number') {
+                        formattedVal += '%';
+                      }
                       return (
                         <td 
                           key={col.key} 
@@ -1453,6 +1703,7 @@ export default function FluxogramaView({ elementos = [], showTitle = true }) {
           </div>
         )}
       </div>
+      )}
 
       {/* Toast Notification */}
       {toast && (

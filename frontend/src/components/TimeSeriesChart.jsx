@@ -4,7 +4,7 @@ import PlotWrapper from 'react-plotly.js'
 const Plot = PlotWrapper.default || PlotWrapper
 import Plotly from 'plotly.js/dist/plotly'
 
-import { EXCEL_THEME, COLORS } from '../constants/palette'
+import { EXCEL_THEME, COLORS, LINE_WIDTHS } from '../constants/palette'
 import SharedColorPicker from './SharedColorPicker'
 import { useChartSettings } from '../hooks/ChartSettingsContext'
 
@@ -24,11 +24,11 @@ export function formatSeriesName(name) {
   if (nameLower === 'tmod') return 'Tmod';
   if (nameLower === 'tcel') return 'Tcel';
   if (nameLower === 'sujidade') return 'Sujidade';
-  if (nameLower === 'energia') return 'Energia';
+  if (nameLower === 'energia') return 'Potência';
   return name;
 }
 
-export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, filterColors = {}, chartConfig, setChartConfig, showEixosMenu, showSeriesMenu }) {
+export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, filterColors = {}, chartConfig, setChartConfig, showEixosMenu, showSeriesMenu, visibleFilters = [] }) {
   const {
     gridX, gridY1, gridY2, gridY3, gridY4,
     xGridSpacing, xLimits, y1Limits, y2Limits, y3Limits, y4Limits, appliedRanges,
@@ -328,7 +328,11 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
     setY2Limits({ min: '', max: '' })
     setY3Limits({ min: '', max: '' })
     setY4Limits({ min: '', max: '' })
-  }, [data])
+  // data.timestamps muda de referência apenas em nova query da API.
+  // Ao aplicar filtro de máscara, o spread {...rawData} reutiliza o mesmo array,
+  // então este effect NÃO dispara, preservando os ranges do gráfico.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.timestamps])
   // When new series appear, apply defaults from ChartSettingsContext (element config)
   // Colors are assigned sequentially per element (1st series → colors[0], 2nd → colors[1], ...)
   useEffect(() => {
@@ -550,11 +554,12 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
     })
 
     // ── Faixas de Filtro (Topo) ───────────────────────────────────────
-    const visibleFilters = data?.visibleFilters || []
     const filterTraces = visibleFilters.map((name, i) => {
       const yAxisRef = `y${i + 5}`
+      const fillColor = filterColors?.[name] || getColor(name) || '#ef4444'
       
-      // Mapeia onde o filtro é 1, e caso contrário 0 (cria uma onda quadrada com shape 'hv')
+      // 0 onde flag=0 cria uma onda quadrada: fill só aparece onde y=1, não onde y=0.
+      // Usar null causaria preenchimento contínuo pelo Plotly (preenche entre segmentos).
       const rawVals = data?.filterData?.[name] || data?.series?.[name] || []
       const yVals = rawVals.map(v => (v === 1 || v === 1.0 || v === "1" || v === true) ? 1 : 0)
       
@@ -563,12 +568,16 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
         y: yVals,
         type: 'scatter',
         mode: 'lines',
-        fill: 'tozeroy', // Preenche para formar blocos
+        fill: 'tozeroy',
+        fillcolor: fillColor.startsWith('#') 
+          ? `rgba(${parseInt(fillColor.slice(1,3),16)},${parseInt(fillColor.slice(3,5),16)},${parseInt(fillColor.slice(5,7),16)},0.35)` 
+          : fillColor,
         name: `Filtro: ${formatSeriesName(name)}`,
         yaxis: yAxisRef,
-        line: { color: getColor(name), width: 0, shape: 'hv' },
+        line: { color: 'transparent', width: 0, shape: 'hv' },
         hovertemplate: '<extra></extra>',
         connectgaps: false,
+        showlegend: false,
       }
     })
 
@@ -591,12 +600,12 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
 
     return [...mainTraces, ...filterTraces, ...dummyY1]
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, seriesAxisMap, seriesColors, seriesWidths, seriesDashes, seriesFills, filterColors])
+  }, [data, seriesAxisMap, seriesColors, seriesWidths, seriesDashes, seriesFills, filterColors, visibleFilters])
 
   // ── Layout ────────────────────────────────────────────────────────
   const layout = useMemo(() => {
-    const visibleFilters = data?.visibleFilters || []
-    
+    // visibleFilters vem da prop — não de data (para evitar redraw desnecessario)
+
     // Margens e Domínios otimizados com base em pixels fixos
     const AXIS_SPACE_PX = 35 // Espaço fixo em pixels para cada eixo Y extra
     
@@ -627,6 +636,7 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
     const yDomain = [0, mainYTop]
 
     // Anotações para os títulos dos eixos no topo e DATAS no eixo X
+    let rangebreaks = []
     const dateAnnotations = []
     if (data?.timestamps?.length) {
       const uniqueDays = []
@@ -634,6 +644,7 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
         const d = ts.substring(0, 10)
         if (!uniqueDays.includes(d)) uniqueDays.push(d)
       })
+      
       uniqueDays.forEach(d => {
         dateAnnotations.push({
           xref: 'x', yref: 'paper',
@@ -646,6 +657,29 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
           yanchor: 'top'
         })
       })
+
+      // Calcular dias vazios para omiti-los no gráfico
+      if (uniqueDays.length > 1) {
+        const minDay = new Date(uniqueDays[0] + 'T00:00:00')
+        const maxDay = new Date(uniqueDays[uniqueDays.length - 1] + 'T00:00:00')
+        const missingDays = []
+        
+        let currentDay = new Date(minDay)
+        currentDay.setDate(currentDay.getDate() + 1)
+        
+        while (currentDay < maxDay) {
+          const dStr = currentDay.toISOString().substring(0, 10)
+          if (!uniqueDays.includes(dStr)) {
+            missingDays.push(dStr)
+          }
+          currentDay.setDate(currentDay.getDate() + 1)
+        }
+        
+        if (missingDays.length > 0) {
+          // values precisa ser um array de strings de datas (ex: '2025-11-26')
+          rangebreaks = [{ values: missingDays }]
+        }
+      }
     }
 
     const annotations = [
@@ -743,6 +777,7 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
         spikethickness: 1,
         tickmode:   xGridSpacing ? 'array' : 'auto',
         tickvals:   xGridSpacing ? generateXTicks() : undefined,
+        rangebreaks: rangebreaks.length > 0 ? rangebreaks : undefined,
         range:      appliedRanges.x,
       },
       yaxis: {
@@ -805,22 +840,25 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
       modebar: { bgcolor: 'transparent', color: '#94a3b8', activecolor: '#f59e0b' },
     }
 
-    // Injeta os mini-eixos Y para cada Filtro visivel
+    // Injeta os mini-eixos Y para cada Filtro visível
     visibleFilters.forEach((name, i) => {
-      const bottom = mainYTop + (i * filterHeight)
-      const top = bottom + filterHeight * 0.85 // gap entre faixas
+      const bottom = mainYTop + 0.01 + (i * filterHeight)
+      const top = Math.min(0.995, bottom + filterHeight * 0.85)
       baseLayout[`yaxis${i + 5}`] = {
         domain: [bottom, top],
+        anchor: 'x',
         showgrid: false,
         zeroline: false,
         showticklabels: false,
-        range: [0, 1.05], // Maximize a ocupação do fill 'tozeroy' (1.0 faria o topo tocar o limite)
-        fixedrange: true, // fixo
+        showline: false,
+        ticks: '',
+        range: [0, 1.05],
+        fixedrange: true,
       }
     })
 
     return baseLayout
-  }, [plotSize, gridX, gridY1, gridY2, gridY3, gridY4, xGridSpacing, appliedRanges, visibleNames.length, baseDate, hasY3, hasY4, data, filterColors, y2Names.length, y3Names.length, y4Names.length])
+  }, [plotSize, gridX, gridY1, gridY2, gridY3, gridY4, xGridSpacing, appliedRanges, visibleNames.length, baseDate, hasY3, hasY4, data, filterColors, y2Names.length, y3Names.length, y4Names.length, visibleFilters])
 
   // ── onRelayout ────────────────────────────────────────────────────
   const handleRelayout = (e) => {
@@ -937,10 +975,10 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
 
           <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
             {/* Espessura */}
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1.3 }}>
               <div style={{ fontSize: 9, color: '#94a3b8', fontWeight: 600, marginBottom: 4 }}>ESPESSURA</div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f8fafc', padding: '4px 8px', borderRadius: 4, border: '1px solid #e2e8f0' }}>
-                {[1, 1.5, 2.5, 3.5, 5].map((w) => (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f8fafc', padding: '4px 6px', borderRadius: 4, border: '1px solid #e2e8f0' }}>
+                {LINE_WIDTHS.map((w) => (
                   <button
                     key={`width-${w}`}
                     onClick={() => applyWidth(w)}
@@ -958,9 +996,9 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
             </div>
 
             {/* Tipo */}
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 0.7 }}>
               <div style={{ fontSize: 9, color: '#94a3b8', fontWeight: 600, marginBottom: 4 }}>TIPO</div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f8fafc', padding: '4px 8px', borderRadius: 4, border: '1px solid #e2e8f0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f8fafc', padding: '4px 6px', borderRadius: 4, border: '1px solid #e2e8f0' }}>
                 {[
                   { id: 'solid', label: 'Contínua', dashArray: 'none' },
                   { id: 'dash',  label: 'Tracejada', dashArray: '4, 3' },
@@ -1520,7 +1558,7 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
         >
           {/* ── Controle de Janela de Dias ── */}
           {uniqueDays.length > 1 && (() => {
-            const DAY_OPTIONS = [1, 2, 3, 4, 5, 7, 10, null] // null = Max
+            const DAY_OPTIONS = [1, 2, 3, 5, 7, 10, 30, null] // null = Max
             const canPrev = windowDays !== null && windowStartIdx > 0
             const canNext = windowDays !== null && windowStartIdx + windowDays < uniqueDays.length
 
@@ -1548,12 +1586,51 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
                 zIndex: 500,
                 display: 'flex',
                 alignItems: 'center',
-                gap: 4,
+                gap: 2,
                 pointerEvents: 'all',
+                background: '#ffffff',
+                padding: '3px',
+                borderRadius: '8px',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                border: '1px solid #e2e8f0'
               }}>
+                {DAY_OPTIONS.map(d => {
+                  if (d !== null && d > uniqueDays.length) return null
+                  const isActive = windowDays === d
+                  const label = d === null ? 'Max' : `${d}D`
+                  return (
+                    <button
+                      key={d === null ? 'max' : d}
+                      onClick={() => {
+                        setWindowDays(d)
+                        setWindowStartIdx(0)
+                        applyDayWindow(0, d)
+                      }}
+                      style={{
+                        background: isActive ? '#f1f5f9' : 'transparent',
+                        color: isActive ? '#0f172a' : '#64748b',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: 'pointer',
+                        fontFamily: 'Inter, sans-serif',
+                        fontSize: 12,
+                        fontWeight: isActive ? 700 : 600,
+                        padding: '4px 8px',
+                        transition: 'all 0.15s',
+                      }}
+                      onMouseEnter={e => !isActive && (e.currentTarget.style.background = '#f8fafc')}
+                      onMouseLeave={e => !isActive && (e.currentTarget.style.background = 'transparent')}
+                    >
+                      {label}
+                    </button>
+                  )
+                })}
+
+                <div style={{ width: '1px', height: '14px', background: '#cbd5e1', margin: '0 4px' }} />
+
                 {/* Seta esquerda */}
                 <button
-                  style={btnStyle(canPrev)}
+                  style={{ ...btnStyle(canPrev), border: 'none', background: 'transparent', boxShadow: 'none', padding: '4px 6px' }}
                   title="Dia anterior"
                   onClick={() => {
                     if (!canPrev) return
@@ -1561,43 +1638,13 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
                     setWindowStartIdx(next)
                     applyDayWindow(next, windowDays)
                   }}
+                  onMouseEnter={e => canPrev && (e.currentTarget.style.background = '#f1f5f9')}
+                  onMouseLeave={e => canPrev && (e.currentTarget.style.background = 'transparent')}
                 >‹</button>
-
-                {/* Select de janela */}
-                <select
-                  value={windowDays === null ? 'max' : String(windowDays)}
-                  onChange={e => {
-                    const val = e.target.value === 'max' ? null : Number(e.target.value)
-                    setWindowDays(val)
-                    setWindowStartIdx(0)
-                    applyDayWindow(0, val)
-                  }}
-                  style={{
-                    background: '#ffffff',
-                    border: '1px solid #cbd5e1',
-                    borderRadius: 5,
-                    color: '#1e293b',
-                    cursor: 'pointer',
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: 12,
-                    fontWeight: 600,
-                    padding: '4px 6px',
-                    outline: 'none',
-                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
-                  }}
-                >
-                  {DAY_OPTIONS.map(d => {
-                    const key = d === null ? 'max' : String(d)
-                    const label = d === null ? 'Max' : `${d}D`
-                    // Mostra apenas se faz sentido (dias disponíveis ≥ opção)
-                    if (d !== null && d > uniqueDays.length) return null
-                    return <option key={key} value={key}>{label}</option>
-                  })}
-                </select>
 
                 {/* Seta direita */}
                 <button
-                  style={btnStyle(canNext)}
+                  style={{ ...btnStyle(canNext), border: 'none', background: 'transparent', boxShadow: 'none', padding: '4px 6px' }}
                   title="Próximo dia"
                   onClick={() => {
                     if (!canNext) return
@@ -1605,6 +1652,8 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
                     setWindowStartIdx(next)
                     applyDayWindow(next, windowDays)
                   }}
+                  onMouseEnter={e => canNext && (e.currentTarget.style.background = '#f1f5f9')}
+                  onMouseLeave={e => canNext && (e.currentTarget.style.background = 'transparent')}
                 >›</button>
               </div>
             )

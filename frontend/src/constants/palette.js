@@ -43,7 +43,7 @@ export const COLORS = [
 ]
 
 // Opções de espessura de linha
-export const LINE_WIDTHS = [1, 1.5, 2.5, 3.5, 5]
+export const LINE_WIDTHS = [0.5, 1, 1.5, 2.5, 3.5, 5]
 export const DEFAULT_LINE_WIDTH = 1.5
 
 // Opções de estilo de linha

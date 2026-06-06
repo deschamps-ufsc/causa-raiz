@@ -22,7 +22,7 @@
         ],
         "operation": "mean",
         "hasMultipleOutputs": true,
-        "outputFilter": "Irradiação_400_W"
+        "outputFilter": "Irradiação_50_W"
       },
       "position": {
         "x": 30,
@@ -121,15 +121,18 @@
         "inputs": [
           {
             "series": "CLS01.5.MET-A.TxaSuj_1",
-            "filter": ""
+            "filter": "Sujidade"
           },
           {
             "series": "CLS01.5.MET-A.TxaSuj_2",
-            "filter": ""
+            "filter": "Sujidade"
           }
         ],
         "operation": "mean",
-        "outputFilter": ""
+        "outputFilter": "",
+        "startTime": "11:30",
+        "endTime": "12:30",
+        "trimPercent": "25"
       },
       "position": {
         "x": 30,
@@ -140,21 +143,24 @@
     {
       "id": "energia",
       "data": {
-        "label": "Energia",
+        "label": "Potência",
         "color": "green",
         "aggregator": true,
         "inputs": [
           {
             "series": "CLS01.PPC.PotAt",
-            "filter": ""
+            "filter": "Potência_PPC"
           }
         ],
         "operation": "mean",
-        "outputFilter": "Pot_Teste"
+        "outputFilter": "Pot_Teste",
+        "startTime": "",
+        "endTime": "",
+        "trimPercent": ""
       },
       "position": {
         "x": 30,
-        "y": 320
+        "y": 380
       },
       "type": "box"
     },
@@ -182,6 +188,110 @@
         "y": 180
       },
       "type": "tcel"
+    },
+    {
+      "id": "simultaneidade",
+      "data": {
+        "label": "Filtro de<br/>Simultaneidade",
+        "color": "purple",
+        "width": "130px",
+        "height": "120px",
+        "customTargets": [
+          {
+            "id": "target-top",
+            "position": "top"
+          },
+          {
+            "id": "target-bottom",
+            "position": "bottom"
+          },
+          {
+            "id": "target-left-top",
+            "position": "left",
+            "style": {
+              "top": "20px"
+            }
+          },
+          {
+            "id": "target-left-bottom",
+            "position": "left",
+            "style": {
+              "top": "100px"
+            }
+          }
+        ]
+      },
+      "position": {
+        "x": 400,
+        "y": 130
+      },
+      "type": "box"
+    },
+    {
+      "id": "pvsyst",
+      "data": {
+        "height": "120px"
+      },
+      "position": {
+        "x": 600,
+        "y": 130
+      },
+      "type": "pvsyst"
+    },
+    {
+      "id": "tracker",
+      "data": {
+        "label": "Tracker",
+        "color": "purple",
+        "aggregator": true,
+        "inputs": [
+          {
+            "series": "CLS01.1-INV04-SB12-TR046.PosAngAtual",
+            "filter": ""
+          },
+          {
+            "series": "CLS01.3-INV04-SB12-TR046.PosAngAtual",
+            "filter": ""
+          },
+          {
+            "series": "CLS01.5-INV04-SB12-TR046.PosAngAtual",
+            "filter": ""
+          }
+        ],
+        "operation": "mean",
+        "outputFilter": "",
+        "startTime": "",
+        "endTime": "",
+        "trimPercent": "",
+        "trackerParams": {
+          "latitude": -23.55,
+          "longitude": -46.63,
+          "gcr": 0.3,
+          "max_angle": 60,
+          "tolerance": 10,
+          "inverter_sinal": true
+        }
+      },
+      "position": {
+        "x": 30,
+        "y": 320
+      },
+      "type": "box"
+    },
+    {
+      "id": "energia_pmi",
+      "data": {
+        "label": "Energia PMI",
+        "color": "darkblue",
+        "aggregator": true,
+        "inputs": [],
+        "operation": "sum"
+      },
+      "position": {
+        "x": 30,
+        "y": 440
+      },
+      "type": "box"
     }
   ],
   "edges": [
@@ -222,6 +332,55 @@
         "type": "arrowclosed"
       },
       "type": "smoothstep"
+    },
+    {
+      "id": "e-geff-simult",
+      "source": "geff",
+      "target": "simultaneidade",
+      "targetHandle": "target-top",
+      "type": "smoothstep",
+      "markerEnd": {
+        "type": "arrowclosed"
+      }
+    },
+    {
+      "id": "e-tamb-simult",
+      "source": "tamb",
+      "target": "simultaneidade",
+      "targetHandle": "target-left-top",
+      "type": "straight",
+      "markerEnd": {
+        "type": "arrowclosed"
+      }
+    },
+    {
+      "id": "e-tcel-simult",
+      "source": "tcel",
+      "target": "simultaneidade",
+      "targetHandle": "target-left-bottom",
+      "type": "straight",
+      "markerEnd": {
+        "type": "arrowclosed"
+      }
+    },
+    {
+      "id": "e-energia-simult",
+      "source": "energia",
+      "target": "simultaneidade",
+      "targetHandle": "target-bottom",
+      "type": "smoothstep",
+      "markerEnd": {
+        "type": "arrowclosed"
+      }
+    },
+    {
+      "id": "e-simult-pvsyst",
+      "source": "simultaneidade",
+      "target": "pvsyst",
+      "type": "smoothstep",
+      "markerEnd": {
+        "type": "arrowclosed"
+      }
     }
   ]
 }

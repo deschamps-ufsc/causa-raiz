@@ -1,17 +1,18 @@
 [
   {
+    "name": "Irradiação_Qualidade",
+    "element": "Irradiação",
+    "min_value": 0,
+    "max_value": 1800,
+    "max_variation": 1200
+  },
+  {
     "name": "Irradiação_50_W",
     "element": "Irradiação",
     "min_value": 50,
     "max_value": null,
-    "max_variation": null
-  },
-  {
-    "name": "Irradiação_100_W",
-    "element": "Irradiação",
-    "min_value": 100,
-    "max_value": null,
-    "max_variation": null
+    "max_variation": null,
+    "min_action": "excluir"
   },
   {
     "name": "Pot_Inv_Cortez",
@@ -21,16 +22,17 @@
     "max_variation": 900
   },
   {
-    "name": "Irradiação_Qualidade",
-    "element": "Irradiação",
-    "min_value": 0,
-    "max_value": 1800,
-    "max_variation": 1200
+    "name": "Sujidade",
+    "element": "Sujidade",
+    "min_value": null,
+    "max_value": 100,
+    "max_variation": null,
+    "max_action": "substituir"
   },
   {
-    "name": "Irradiação_400_W",
-    "element": "Irradiação",
-    "min_value": 400,
+    "name": "Potência_PPC",
+    "element": "Potência CA PPC",
+    "min_value": 0,
     "max_value": null,
     "max_variation": null
   }

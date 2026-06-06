@@ -38888,7 +38888,7 @@
     "string": null
   },
   "CLS01.1.MET-EPE.T_SSTRH": {
-    "elemento": "",
+    "elemento": "Temperatura",
     "skid": "CLS01.1",
     "inversor": null,
     "stringbox": null,
@@ -38896,7 +38896,7 @@
     "string": null
   },
   "CLS01.1.MET-B.T_MOD": {
-    "elemento": "Temperatura Módulo",
+    "elemento": "Temperatura",
     "skid": "CLS01.1",
     "inversor": null,
     "stringbox": null,
@@ -38904,7 +38904,7 @@
     "string": null
   },
   "CLS01.5.MET-A.T_MOD": {
-    "elemento": "Temperatura Módulo",
+    "elemento": "Temperatura",
     "skid": "CLS01.5",
     "inversor": null,
     "stringbox": null,
@@ -38912,7 +38912,7 @@
     "string": null
   },
   "CLS01.3.MET-B.T_MOD": {
-    "elemento": "Temperatura Módulo",
+    "elemento": "Temperatura",
     "skid": "CLS01.3",
     "inversor": null,
     "stringbox": null,

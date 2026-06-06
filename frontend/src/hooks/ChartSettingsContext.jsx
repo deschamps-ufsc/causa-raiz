@@ -78,6 +78,15 @@ export function ChartSettingsProvider({ children }) {
     setFilterSettings(prev => prev.filter(s => s.element !== elementName)) // Remove filtro também
   }
 
+  const reorderElementSettings = (dragIndex, dropIndex) => {
+    setElementSettings(prev => {
+      const result = Array.from(prev);
+      const [removed] = result.splice(dragIndex, 1);
+      result.splice(dropIndex, 0, removed);
+      return result;
+    });
+  }
+
   const getSettingForElement = (elementName) => {
     return elementSettings.find(s =>
       elementName && s.element.toLowerCase() === elementName.toLowerCase()
@@ -102,6 +111,15 @@ export function ChartSettingsProvider({ children }) {
     setFilterSettings(prev => prev.filter(s => s.name !== name))
   }
 
+  const reorderFilterSettings = (dragIndex, dropIndex) => {
+    setFilterSettings(prev => {
+      const result = Array.from(prev);
+      const [removed] = result.splice(dragIndex, 1);
+      result.splice(dropIndex, 0, removed);
+      return result;
+    });
+  }
+
   return (
     <ChartSettingsContext.Provider value={{
       elementSettings,
@@ -111,9 +129,11 @@ export function ChartSettingsProvider({ children }) {
       getSettingForElement,
       addCustomElement,
       removeCustomElement,
+      reorderElementSettings,
       addFilterRule,
       updateFilterSetting,
       removeFilterRule,
+      reorderFilterSettings,
     }}>
       {children}
     </ChartSettingsContext.Provider>

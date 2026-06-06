@@ -1,12 +1,15 @@
 [
   {
     "id": "a5da185f-942b-4c31-83a7-4ae3b8bfc618",
-    "created_at": "2026-05-14T00:20:39.625705",
+    "created_at": "2026-06-05T17:43:54.304066",
     "name": "Skid 1.1 - INV 01 - Irrad, Temp. Mód e Tracker",
     "user": "deschamps.ufsc@gmail.com",
     "selectedDates": [
       "2025-11-24",
-      "2025-11-25"
+      "2025-11-25",
+      "2025-11-28",
+      "2025-12-01",
+      "2025-12-04"
     ],
     "selectedSeries": [
       "CLS01.1-INV01.PotAt",
@@ -354,133 +357,16 @@
     }
   },
   {
-    "id": "e20b24c8-936d-4cbf-905d-86f73191ac0a",
-    "created_at": "2026-05-14T00:24:23.012827",
-    "name": "Teste novo",
-    "user": "deschamps.ufsc@gmail.com",
-    "selectedDates": [
-      "2025-11-24",
-      "2025-11-25"
-    ],
-    "selectedSeries": [
-      "CLS01.5-INV08.CorrenteCC",
-      "CLS01.6-INV05-SB20.CorrenteCC_06"
-    ],
-    "activeFilters": [],
-    "visibleFilters": [],
-    "filterColors": {
-      "Flag 5 minutos": "#ef4444"
-    },
-    "chartConfig": {
-      "gridX": true,
-      "gridY1": true,
-      "gridY2": false,
-      "gridY3": false,
-      "xGridSpacing": "",
-      "xLimits": {
-        "min": "",
-        "max": ""
-      },
-      "y1Limits": {
-        "min": "",
-        "max": ""
-      },
-      "y2Limits": {
-        "min": "",
-        "max": ""
-      },
-      "y3Limits": {
-        "min": "",
-        "max": ""
-      },
-      "appliedRanges": {},
-      "seriesAxisMap": {
-        "CLS01.1.MET-B.POA-Irrd": "y1",
-        "CLS01.1.MET-B.POA-Irrd_REAR": "y1",
-        "CLS01.1-INV01.PotAt": "y2",
-        "CLS01.1-INV05.PotAt": "y2",
-        "CLS01.1-INV08.PotAt": "y2",
-        "CLS01.1-INV07.PotAt": "y2",
-        "CLS01.1-INV06.PotAt": "y2",
-        "CLS01.1-INV02.PotAt": "y2",
-        "CLS01.1-INV03.PotAt": "y2",
-        "CLS01.1-INV04.PotAt": "y2",
-        "CLS01.1.MET-B.T_MOD": "y3",
-        "CLS01.1-INV01-SB13-TR051.PosAngAtual": "y4",
-        "CLS01.1-INV01-SB13-TR051.PosAngAlvo": "y4",
-        "CLS01.5-INV08.CorrenteCC": "y2",
-        "CLS01.6-INV05-SB20.CorrenteCC_06": "y2"
-      },
-      "seriesColors": {
-        "CLS01.1.MET-B.POA-Irrd": "#F9CC00",
-        "CLS01.1.MET-B.POA-Irrd_REAR": "#F9A825",
-        "CLS01.1-INV01.PotAt": "#2E7D32",
-        "CLS01.1-INV05.PotAt": "#2E7D32",
-        "CLS01.1-INV08.PotAt": "#2E7D32",
-        "CLS01.1-INV07.PotAt": "#2E7D32",
-        "CLS01.1-INV06.PotAt": "#2E7D32",
-        "CLS01.1-INV02.PotAt": "#2E7D32",
-        "CLS01.1-INV03.PotAt": "#2E7D32",
-        "CLS01.1-INV04.PotAt": "#2E7D32",
-        "CLS01.1.MET-B.T_MOD": "#EF6C00",
-        "CLS01.1-INV01-SB13-TR051.PosAngAtual": "#6A1B9A",
-        "CLS01.1-INV01-SB13-TR051.PosAngAlvo": "#6A1B9A",
-        "CLS01.5-INV08.CorrenteCC": "#D81B60",
-        "CLS01.6-INV05-SB20.CorrenteCC_06": "#E8769F"
-      },
-      "seriesWidths": {
-        "CLS01.1.MET-B.POA-Irrd": 1,
-        "CLS01.1.MET-B.POA-Irrd_REAR": 1,
-        "CLS01.1-INV01.PotAt": 1,
-        "CLS01.1-INV05.PotAt": 1.5,
-        "CLS01.1-INV08.PotAt": 1.5,
-        "CLS01.1-INV07.PotAt": 1.5,
-        "CLS01.1-INV06.PotAt": 1.5,
-        "CLS01.1-INV02.PotAt": 1.5,
-        "CLS01.1-INV03.PotAt": 1.5,
-        "CLS01.1-INV04.PotAt": 1.5,
-        "CLS01.1.MET-B.T_MOD": 1,
-        "CLS01.1-INV01-SB13-TR051.PosAngAtual": 1,
-        "CLS01.1-INV01-SB13-TR051.PosAngAlvo": 1,
-        "CLS01.5-INV08.CorrenteCC": 1,
-        "CLS01.6-INV05-SB20.CorrenteCC_06": 1
-      },
-      "seriesDashes": {
-        "CLS01.1.MET-B.POA-Irrd": "solid",
-        "CLS01.1.MET-B.POA-Irrd_REAR": "solid",
-        "CLS01.1-INV01.PotAt": "solid",
-        "CLS01.1-INV05.PotAt": "solid",
-        "CLS01.1-INV08.PotAt": "solid",
-        "CLS01.1-INV07.PotAt": "solid",
-        "CLS01.1-INV06.PotAt": "solid",
-        "CLS01.1-INV02.PotAt": "solid",
-        "CLS01.1-INV03.PotAt": "solid",
-        "CLS01.1-INV04.PotAt": "solid",
-        "CLS01.1.MET-B.T_MOD": "solid",
-        "CLS01.1-INV01-SB13-TR051.PosAngAtual": "solid",
-        "CLS01.1-INV01-SB13-TR051.PosAngAlvo": "solid",
-        "CLS01.5-INV08.CorrenteCC": "solid",
-        "CLS01.6-INV05-SB20.CorrenteCC_06": "solid"
-      },
-      "seriesFills": {
-        "CLS01.1.MET-B.POA-Irrd": 15,
-        "CLS01.1.MET-B.POA-Irrd_REAR": 20
-      },
-      "y4Limits": {
-        "min": "",
-        "max": ""
-      },
-      "legendPosition": "none"
-    }
-  },
-  {
     "id": "c3137da9-ef01-45c2-90bc-5ae372c2b959",
-    "created_at": "2026-06-03T11:25:57.923012",
+    "created_at": "2026-06-05T14:57:50.682023",
     "name": "EPI",
     "user": "deschamps.ufsc@gmail.com",
     "selectedDates": [
       "2025-11-24",
-      "2025-11-25"
+      "2025-11-25",
+      "2025-11-28",
+      "2025-12-01",
+      "2025-12-04"
     ],
     "selectedSeries": [
       "gpoa",
@@ -566,26 +452,27 @@
     }
   },
   {
-    "id": "7ea4fe96-409d-4bd9-8bbc-a4f1f8c27ea7",
-    "created_at": "2026-06-02T15:06:57.972537",
-    "name": "Grafico do Rafa S2",
+    "id": "3c1e3255-3951-44e6-812e-2dd0a1ff2ed1",
+    "created_at": "2026-06-06T02:16:11.351270",
+    "name": "Tracker",
     "user": "deschamps.ufsc@gmail.com",
     "selectedDates": [
       "2025-11-24",
-      "2025-11-25"
+      "2025-11-25",
+      "2025-11-28",
+      "2025-12-01",
+      "2025-12-04"
     ],
     "selectedSeries": [
-      "CLS01.1.MET-EPE.GHI-Irrd_1_SR100",
-      "CLS01.1.MET-B.POA-Irrd_REAR",
-      "CLS01.1-INV03.PotAt",
-      "CLS01.3-INV07-SB31-TR124.PosAngAlvo"
+      "grear",
+      "Tracker_is_backtracking",
+      "gpoa",
+      "Tracker Ref.",
+      "flag_tracker_erro_CLS01.1-INV04-SB12-TR046.PosAngAtual",
+      "CLS01.1-INV04-SB12-TR046.PosAngAlvo"
     ],
-    "activeFilters": [
-      "Flag 5 minutos"
-    ],
-    "visibleFilters": [
-      "Flag 5 minutos"
-    ],
+    "activeFilters": [],
+    "visibleFilters": [],
     "filterColors": {
       "Flag 5 minutos": "#ef4444"
     },
@@ -597,55 +484,89 @@
       "gridY4": false,
       "xGridSpacing": "",
       "xLimits": {
-        "min": "",
+        "min": "00:00",
         "max": "23:59"
       },
       "y1Limits": {
         "min": 0,
-        "max": 1541
+        "max": 1395
       },
       "y2Limits": {
-        "min": 0,
-        "max": 1176
-      },
-      "y3Limits": {
-        "min": -67,
-        "max": 67
-      },
-      "y4Limits": {
         "min": "",
         "max": ""
       },
+      "y3Limits": {
+        "min": 0,
+        "max": 1
+      },
+      "y4Limits": {
+        "min": -67,
+        "max": 67
+      },
       "appliedRanges": {},
       "seriesAxisMap": {
-        "CLS01.1.MET-EPE.GHI-Irrd_1_SR100": "y1",
-        "CLS01.1.MET-B.POA-Irrd_REAR": "y1",
-        "CLS01.1-INV03.PotAt": "y2",
-        "CLS01.3-INV07-SB31-TR124.PosAngAlvo": "y3"
+        "gpoa": "y1",
+        "grear": "y1",
+        "tamb": "y2",
+        "tmod": "y2",
+        "tcel": "y2",
+        "sujidade": "y4",
+        "energia": "y3",
+        "geff": "y1",
+        "Tracker_is_backtracking": "y3",
+        "Tracker Ref.": "y4",
+        "flag_tracker_erro_CLS01.1-INV04-SB12-TR046.PosAngAtual": "y3",
+        "CLS01.1-INV04-SB12-TR046.PosAngAlvo": "y4"
       },
       "seriesColors": {
-        "CLS01.1.MET-EPE.GHI-Irrd_1_SR100": "#F9CC00",
-        "CLS01.1.MET-B.POA-Irrd_REAR": "#F9A825",
-        "CLS01.1-INV03.PotAt": "#2E7D32",
-        "CLS01.3-INV07-SB31-TR124.PosAngAlvo": "#6A1B9A"
+        "gpoa": "#F9CC00",
+        "grear": "#F9A825",
+        "tamb": "#7F87BE",
+        "tmod": "#535DA8",
+        "tcel": "#283593",
+        "sujidade": "#D81B60",
+        "energia": "#2E7D32",
+        "geff": "#EF6C00",
+        "Tracker_is_backtracking": "#C62828",
+        "Tracker Ref.": "#329BD2",
+        "flag_tracker_erro_CLS01.1-INV04-SB12-TR046.PosAngAtual": "#666666",
+        "CLS01.1-INV04-SB12-TR046.PosAngAlvo": "#6A1B9A"
       },
       "seriesWidths": {
-        "CLS01.1.MET-EPE.GHI-Irrd_1_SR100": 1,
-        "CLS01.1.MET-B.POA-Irrd_REAR": 1,
-        "CLS01.1-INV03.PotAt": 1,
-        "CLS01.3-INV07-SB31-TR124.PosAngAlvo": 1
+        "gpoa": 1,
+        "grear": 1,
+        "tamb": 1,
+        "tmod": 1,
+        "tcel": 1,
+        "energia": 1,
+        "sujidade": 1,
+        "geff": 1,
+        "Tracker_is_backtracking": 1,
+        "Tracker Ref.": 1.5,
+        "flag_tracker_erro_CLS01.1-INV04-SB12-TR046.PosAngAtual": 1,
+        "CLS01.1-INV04-SB12-TR046.PosAngAlvo": 1.5
       },
       "seriesDashes": {
-        "CLS01.1.MET-EPE.GHI-Irrd_1_SR100": "solid",
-        "CLS01.1.MET-B.POA-Irrd_REAR": "solid",
-        "CLS01.1-INV03.PotAt": "solid",
-        "CLS01.3-INV07-SB31-TR124.PosAngAlvo": "solid"
+        "sujidade": "dot",
+        "gpoa": "solid",
+        "grear": "solid",
+        "tamb": "solid",
+        "tmod": "solid",
+        "tcel": "solid",
+        "energia": "solid",
+        "geff": "solid",
+        "Tracker_is_backtracking": "solid",
+        "Tracker Ref.": "solid",
+        "flag_tracker_erro_CLS01.1-INV04-SB12-TR046.PosAngAtual": "solid",
+        "CLS01.1-INV04-SB12-TR046.PosAngAlvo": "solid"
       },
       "seriesFills": {
-        "CLS01.1.MET-EPE.GHI-Irrd_1_SR100": 20,
-        "CLS01.1.MET-B.POA-Irrd_REAR": 20
+        "gpoa": 15,
+        "grear": 20,
+        "flag_tracker_erro_CLS01.1-INV04-SB12-TR046.PosAngAtual": 10,
+        "Tracker_is_backtracking": 10
       },
-      "legendPosition": "right"
+      "legendPosition": "top"
     }
   }
 ]

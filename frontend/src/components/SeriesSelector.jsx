@@ -12,8 +12,18 @@ export function formatSeriesName(name) {
   if (nameLower === 'tmod') return 'Tmod';
   if (nameLower === 'tcel') return 'Tcel';
   if (nameLower === 'sujidade') return 'Sujidade';
-  if (nameLower === 'energia') return 'Energia';
+  if (nameLower === 'energia') return 'Potência';
   return name;
+}
+
+export function getSerieType(s) {
+  if (s.sintetica) return 'Sintético';
+  const col = s.coluna.toLowerCase();
+  const flowOps = ['gpoa', 'grear', 'geff', 'tamb', 'tmod', 'tcel', 'sujidade', 'tracker', 'energia', 'energia_pmi'];
+  if (col.startsWith('agg_') || flowOps.includes(col) || col === 'tracker ref.' || col === 'tracker_is_backtracking' || col.startsWith('flag_tracker_erro')) {
+    return 'Processado';
+  }
+  return 'Original';
 }
 
 /**
@@ -30,13 +40,15 @@ export default function SeriesSelector({ series, selected, onChange, elementos }
   const [filterInv, setFilterInv] = useState('')
   const [filterSb, setFilterSb] = useState('')
   const [filterStr, setFilterStr] = useState('')
+  const [filterTipo, setFilterTipo] = useState('')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
 
-  const hasActiveFilters = filterEl || filterEstacao || filterSkid || filterInv || filterSb || filterStr
+  const hasActiveFilters = filterTipo || filterEl || filterEstacao || filterSkid || filterInv || filterSb || filterStr
 
   // Filtros em cascata
   const filteredSeries = useMemo(() => {
     return series.filter((s) => {
+      if (filterTipo && getSerieType(s) !== filterTipo) return false
       if (filterEl && s.elemento !== filterEl) return false
       if (filterEstacao && s.estacao !== filterEstacao) return false
       if (filterSkid && s.skid !== filterSkid) return false
@@ -46,7 +58,7 @@ export default function SeriesSelector({ series, selected, onChange, elementos }
       if (search && !s.coluna.toLowerCase().includes(search.toLowerCase())) return false
       return true
     })
-  }, [series, filterEl, filterEstacao, filterSkid, filterInv, filterSb, filterStr, search])
+  }, [series, filterTipo, filterEl, filterEstacao, filterSkid, filterInv, filterSb, filterStr, search])
 
   const uniqueEstacoes = useMemo(() =>
     [...new Set(
@@ -114,6 +126,7 @@ export default function SeriesSelector({ series, selected, onChange, elementos }
   const clearAll = () => onChange([])
 
   const clearFilters = () => {
+    setFilterTipo('')
     setFilterEl('')
     setFilterEstacao('')
     setFilterSkid('')
@@ -178,6 +191,27 @@ export default function SeriesSelector({ series, selected, onChange, elementos }
                   <button onClick={clearFilters} style={{ background: 'none', border: 'none', color: 'var(--red)', fontSize: 10, fontWeight: 700, cursor: 'pointer', padding: 0 }}>LIMPAR</button>
                 )}
               </div>
+
+              {/* Filtro: Tipo */}
+              <select
+                className="input"
+                style={{ fontSize: 12 }}
+                value={filterTipo}
+                onChange={(e) => {
+                  setFilterTipo(e.target.value)
+                  setFilterEl('')
+                  setFilterEstacao('')
+                  setFilterSkid('')
+                  setFilterInv('')
+                  setFilterSb('')
+                  setFilterStr('')
+                }}
+              >
+                <option value="">Todos os Tipos</option>
+                <option value="Original">Original</option>
+                <option value="Sintético">Sintético</option>
+                <option value="Processado">Processado</option>
+              </select>
 
               {/* Filtro: Elemento */}
               <select
@@ -357,7 +391,7 @@ export default function SeriesSelector({ series, selected, onChange, elementos }
                     }}>
                       {formatSeriesName(s.coluna)}
                     </div>
-                    {s.mapeada && (
+                    {(s.mapeada || s.elemento) && (
                       <div style={{ fontSize: 10, color: 'var(--text-muted)', display: 'flex', gap: 4, flexWrap: 'nowrap', overflow: 'hidden', whiteSpace: 'nowrap', marginTop: 2 }}>
                         {s.elemento && <span style={{ color: 'var(--amber)', flexShrink: 0, fontWeight: 600 }}>{s.elemento}</span>}
                         {s.estacao && <span style={{ color: '#14b8a6', flexShrink: 0 }}>📍 {s.estacao}</span>}

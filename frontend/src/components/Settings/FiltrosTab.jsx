@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useChartSettings } from '../../hooks/ChartSettingsContext'
 
-function FilterRow({ setting, updateFilterSetting, removeFilterRule, allElements = [], readOnly = false }) {
+function FilterRow({ setting, index, updateFilterSetting, removeFilterRule, reorderFilterSettings, allElements = [], readOnly = false, draggedIndex, setDraggedIndex, draggedOverIndex, setDraggedOverIndex }) {
   const [isEditing, setIsEditing] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
 
   const handleNumChange = (field, val) => {
     if (val === '') {
@@ -22,14 +23,98 @@ function FilterRow({ setting, updateFilterSetting, removeFilterRule, allElements
     transition: 'border-color 0.2s'
   }
 
+  const handleDragStart = (e) => {
+    if (readOnly) return;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index);
+    setDraggedIndex(index);
+    setTimeout(() => setIsDragging(true), 0);
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    setDraggedIndex(null);
+    setDraggedOverIndex(null);
+  };
+
+  const handleDragOver = (e) => {
+    if (readOnly) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (draggedOverIndex !== index) {
+      setDraggedOverIndex(index);
+    }
+  };
+
+  const handleDrop = (e) => {
+    if (readOnly) return;
+    e.preventDefault();
+    setDraggedIndex(null);
+    setDraggedOverIndex(null);
+    const dragIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
+    if (!isNaN(dragIndex) && dragIndex !== index) {
+      reorderFilterSettings(dragIndex, index);
+    }
+  };
+
+  const isDragOver = draggedOverIndex === index;
+  let dragBorderTop = '1px solid #f1f5f9';
+  let dragBorderBottom = 'none';
+
+  if (isDragOver && draggedIndex !== null && draggedIndex !== index) {
+    if (draggedIndex > index) {
+      dragBorderTop = '2px solid #0ea5e9';
+    } else {
+      dragBorderBottom = '2px solid #0ea5e9';
+    }
+  }
+
   return (
-    <tr style={{ borderTop: '1px solid #f1f5f9' }}
-      onMouseEnter={e => { e.currentTarget.style.background = '#f8fafc'; setIsHovered(true) }}
-      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; setIsHovered(false); setIsConfirmingDelete(false) }}
+    <tr style={{ 
+        borderTop: dragBorderTop,
+        borderBottom: dragBorderBottom,
+        background: isDragging ? '#f8fafc' : 'transparent',
+        opacity: isDragging ? 0.4 : 1,
+        transition: 'background 0.15s, opacity 0.15s'
+      }}
+      draggable={!readOnly}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+      onMouseEnter={e => { if (!isDragging) e.currentTarget.style.background = '#f8fafc'; setIsHovered(true) }}
+      onMouseLeave={e => { if (!isDragging) e.currentTarget.style.background = 'transparent'; setIsHovered(false); setIsConfirmingDelete(false) }}
     >
       {/* Nome - FIXO após criado */}
-      <td style={{ padding: '10px 16px', color: '#0f172a', fontWeight: 700, fontSize: 13, background: '#f8fafc' }}>
-        {setting.name}
+      <td style={{ padding: '10px 16px', color: '#0f172a', fontWeight: 700, fontSize: 13, background: isDragging ? 'transparent' : '#f8fafc' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {!readOnly && (
+            <div
+              title="Arraste para reordenar"
+              style={{
+                cursor: 'grab',
+                color: isHovered ? '#94a3b8' : 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginLeft: -8,
+                marginRight: -4,
+                padding: '0 4px',
+                transition: 'color 0.15s'
+              }}
+            >
+              <svg width="10" height="14" viewBox="0 0 12 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="4" cy="4" r="1.5" />
+                <circle cx="8" cy="4" r="1.5" />
+                <circle cx="4" cy="8" r="1.5" />
+                <circle cx="8" cy="8" r="1.5" />
+                <circle cx="4" cy="12" r="1.5" />
+                <circle cx="8" cy="12" r="1.5" />
+              </svg>
+            </div>
+          )}
+          {setting.name}
+        </div>
       </td>
 
       {/* Elemento */}
@@ -60,6 +145,17 @@ function FilterRow({ setting, updateFilterSetting, removeFilterRule, allElements
           onBlur={e => isEditing && !readOnly && (e.target.style.borderColor = '#e2e8f0')}
         />
       </td>
+      <td style={{ padding: '10px 6px' }}>
+        <select
+          value={setting.min_action || 'excluir'}
+          onChange={e => updateFilterSetting(setting.name, 'min_action', e.target.value)}
+          disabled={readOnly || !isEditing}
+          style={{ ...inputStyle, padding: '6px 4px', fontSize: 11, textAlign: 'center', opacity: (readOnly || !isEditing) ? 0.7 : 1, cursor: isEditing ? 'pointer' : 'default' }}
+        >
+          <option value="excluir">Excluir</option>
+          <option value="substituir">Substituir</option>
+        </select>
+      </td>
       <td style={{ padding: '10px 12px' }}>
         <input 
           type="number" 
@@ -71,6 +167,17 @@ function FilterRow({ setting, updateFilterSetting, removeFilterRule, allElements
           onFocus={e => isEditing && !readOnly && (e.target.style.borderColor = '#f59e0b')}
           onBlur={e => isEditing && !readOnly && (e.target.style.borderColor = '#e2e8f0')}
         />
+      </td>
+      <td style={{ padding: '10px 6px' }}>
+        <select
+          value={setting.max_action || 'excluir'}
+          onChange={e => updateFilterSetting(setting.name, 'max_action', e.target.value)}
+          disabled={readOnly || !isEditing}
+          style={{ ...inputStyle, padding: '6px 4px', fontSize: 11, textAlign: 'center', opacity: (readOnly || !isEditing) ? 0.7 : 1, cursor: isEditing ? 'pointer' : 'default' }}
+        >
+          <option value="excluir">Excluir</option>
+          <option value="substituir">Substituir</option>
+        </select>
       </td>
       <td style={{ padding: '10px 12px' }}>
         <input 
@@ -160,9 +267,11 @@ function FilterRow({ setting, updateFilterSetting, removeFilterRule, allElements
 }
 
 export default function FiltrosTab({ readOnly = false }) {
-  const { elementSettings, filterSettings, addFilterRule, updateFilterSetting, removeFilterRule, loading } = useChartSettings()
+  const { elementSettings, filterSettings, addFilterRule, updateFilterSetting, removeFilterRule, reorderFilterSettings, loading } = useChartSettings()
   const [selectedElement, setSelectedElement] = useState('')
   const [newName, setNewName] = useState('')
+  const [draggedIndex, setDraggedIndex] = useState(null)
+  const [draggedOverIndex, setDraggedOverIndex] = useState(null)
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>Carregando filtros...</div>
 
@@ -214,11 +323,13 @@ export default function FiltrosTab({ readOnly = false }) {
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
         <colgroup>
           <col style={{ width: '20%' }} />
-          <col style={{ width: '20%' }} />
           <col style={{ width: '15%' }} />
-          <col style={{ width: '15%' }} />
-          <col style={{ width: '15%' }} />
-          <col style={{ width: '15%' }} />
+          <col style={{ width: '12%' }} />
+          <col style={{ width: '10%' }} />
+          <col style={{ width: '12%' }} />
+          <col style={{ width: '10%' }} />
+          <col style={{ width: '11%' }} />
+          <col style={{ width: '10%' }} />
         </colgroup>
         <thead>
           <tr style={{ background: '#f8fafc' }}>
@@ -226,7 +337,9 @@ export default function FiltrosTab({ readOnly = false }) {
               ['Nome', 'left'],
               ['Elemento', 'left'],
               ['Valor Mínimo', 'right'],
+              ['Ação Mín.', 'center'],
               ['Valor Máximo', 'right'],
+              ['Ação Máx.', 'center'],
               ['Variação Máxima', 'right'],
               ['Ações', 'center'],
             ].map(([label, align]) => (
@@ -241,19 +354,25 @@ export default function FiltrosTab({ readOnly = false }) {
         <tbody>
           {filterSettings.length === 0 ? (
             <tr>
-              <td colSpan="6" style={{ padding: '32px', textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
+              <td colSpan="8" style={{ padding: '32px', textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
                 Nenhum filtro configurado. Adicione um elemento abaixo.
               </td>
             </tr>
           ) : (
-            filterSettings.map(setting => (
+            filterSettings.map((setting, idx) => (
               <FilterRow 
-                key={setting.element} 
-                setting={setting} 
+                key={setting.element + setting.name} 
+                setting={setting}
+                index={idx}
                 updateFilterSetting={updateFilterSetting} 
                 removeFilterRule={removeFilterRule} 
+                reorderFilterSettings={reorderFilterSettings}
                 allElements={allElements}
-                readOnly={readOnly} 
+                readOnly={readOnly}
+                draggedIndex={draggedIndex}
+                setDraggedIndex={setDraggedIndex}
+                draggedOverIndex={draggedOverIndex}
+                setDraggedOverIndex={setDraggedOverIndex}
               />
             ))
           )}

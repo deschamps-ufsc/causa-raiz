@@ -28,7 +28,7 @@ ELEMENTOS_VALIDOS = [
     "Potência CA Inv",
     "Potência CA PPC",
     "Sujidade",
-    "Temperatura Módulo",
+    "Temperatura",
     "Tensão CA Inv",
     "Tensão CC Inv",
     "Tensão CC Stringbox",

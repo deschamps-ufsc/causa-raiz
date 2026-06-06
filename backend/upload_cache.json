@@ -18,5 +18,10 @@
     "date": "2025-01-12",
     "series_count": 5255,
     "parquet_path": "E:\\Antigravity\\Causa Raiz\\backend\\data\\Cortez - SPE São Claus 1\\2025-01-12.parquet"
+  },
+  "00625a931ffce6dedc9cb048cebbf431_Cortez - SPE São Claus 1": {
+    "date": "2025-04-12",
+    "series_count": 5255,
+    "parquet_path": "E:\\Antigravity\\Causa Raiz\\backend\\data\\Cortez - SPE São Claus 1\\2025-04-12.parquet"
   }
 }

@@ -68,9 +68,26 @@ def list_series_for_dates(dates_str: str, usina: str) -> list[dict]:
     result = []
     for col in colunas_set:
         info = mapping.get(col, {})
+        
+        elemento = info.get("elemento")
+        # Preencher elemento para séries sintéticas
+        if not elemento:
+            if col in ["gpoa", "grear", "geff"]:
+                elemento = "Irradiação"
+            elif col in ["tamb", "tmod", "tcel"]:
+                elemento = "Temperatura"
+            elif col == "sujidade":
+                elemento = "Sujidade"
+            elif col == "tracker" or col == "Tracker Ref." or col.startswith("flag_tracker") or col.startswith("Tracker_is"):
+                elemento = "Tracker"
+            elif col == "energia":
+                elemento = "Potência CA PPC"
+            elif col == "energia_pmi":
+                elemento = "Energia PMI"
+
         result.append({
             "coluna": col,
-            "elemento": info.get("elemento"),
+            "elemento": elemento,
             "skid": info.get("skid"),
             "inversor": info.get("inversor"),
             "stringbox": info.get("stringbox"),

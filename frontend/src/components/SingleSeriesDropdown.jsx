@@ -2,6 +2,16 @@ import React, { useState, useMemo, useRef, useEffect } from 'react'
 
 const naturalSort = (a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
 
+export function getSerieType(s) {
+  if (s.sintetica) return 'Sintético';
+  const col = s.coluna.toLowerCase();
+  const flowOps = ['gpoa', 'grear', 'geff', 'tamb', 'tmod', 'tcel', 'sujidade', 'tracker', 'energia', 'energia_pmi'];
+  if (col.startsWith('agg_') || flowOps.includes(col) || col === 'tracker ref.' || col === 'tracker_is_backtracking' || col.startsWith('flag_tracker_erro')) {
+    return 'Processado';
+  }
+  return 'Original';
+}
+
 export function formatSeriesName(name) {
   if (!name) return name;
   const nameLower = name.toLowerCase();
@@ -12,21 +22,23 @@ export function formatSeriesName(name) {
   if (nameLower === 'tmod') return 'Tmod';
   if (nameLower === 'tcel') return 'Tcel';
   if (nameLower === 'sujidade') return 'Sujidade';
-  if (nameLower === 'energia') return 'Energia';
+  if (nameLower === 'energia') return 'Potência';
   return name;
 }
 
-export default function SingleSeriesDropdown({ value, onChange, series = [], elementos = [] }) {
+export default function SingleSeriesDropdown({ value, onChange, series = [], elementos = [], fixedElement = null }) {
   const [isOpen, setIsOpen] = useState(false)
   
   // Filtros
   const [search, setSearch] = useState('')
-  const [filterEl, setFilterEl] = useState('')
+  const [filterElState, setFilterElState] = useState('')
+  const filterEl = fixedElement || filterElState;
   const [filterEstacao, setFilterEstacao] = useState('')
   const [filterSkid, setFilterSkid] = useState('')
   const [filterInv, setFilterInv] = useState('')
   const [filterSb, setFilterSb] = useState('')
   const [filterStr, setFilterStr] = useState('')
+  const [filterTipo, setFilterTipo] = useState('')
 
   const containerRef = useRef(null)
   const [dropUp, setDropUp] = useState(false)
@@ -61,10 +73,11 @@ export default function SingleSeriesDropdown({ value, onChange, series = [], ele
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [isOpen])
 
-  const hasActiveFilters = filterEl || filterEstacao || filterSkid || filterInv || filterSb || filterStr
+  const hasActiveFilters = filterTipo || filterEl || filterEstacao || filterSkid || filterInv || filterSb || filterStr
 
   const filteredSeries = useMemo(() => {
     return series.filter((s) => {
+      if (filterTipo && getSerieType(s) !== filterTipo) return false
       if (filterEl && s.elemento !== filterEl) return false
       if (filterEstacao && s.estacao !== filterEstacao) return false
       if (filterSkid && s.skid !== filterSkid) return false
@@ -74,7 +87,7 @@ export default function SingleSeriesDropdown({ value, onChange, series = [], ele
       if (search && !s.coluna.toLowerCase().includes(search.toLowerCase())) return false
       return true
     })
-  }, [series, filterEl, filterEstacao, filterSkid, filterInv, filterSb, filterStr, search])
+  }, [series, filterTipo, filterEl, filterEstacao, filterSkid, filterInv, filterSb, filterStr, search])
 
   const uniqueEstacoes = useMemo(() => [...new Set(series.filter(s => !filterEl || s.elemento === filterEl).map(s => s.estacao).filter(Boolean))].sort(naturalSort), [series, filterEl])
   const uniqueSkids = useMemo(() => [...new Set(series.filter(s => (!filterEl || s.elemento === filterEl) && (!filterEstacao || s.estacao === filterEstacao)).map(s => s.skid).filter(Boolean))].sort(naturalSort), [series, filterEl, filterEstacao])
@@ -88,7 +101,8 @@ export default function SingleSeriesDropdown({ value, onChange, series = [], ele
   }
 
   const clearFilters = () => {
-    setFilterEl('')
+    setFilterTipo('')
+    setFilterElState('')
     setFilterEstacao('')
     setFilterSkid('')
     setFilterInv('')
@@ -206,10 +220,19 @@ export default function SingleSeriesDropdown({ value, onChange, series = [], ele
                       )}
                     </div>
 
-                    <select className="input" style={{ fontSize: 12 }} value={filterEl} onChange={e => { setFilterEl(e.target.value); setFilterEstacao(''); setFilterSkid(''); setFilterInv(''); setFilterSb(''); setFilterStr(''); }}>
-                      <option value="">Todos os Elementos</option>
-                      {elementos.map(el => <option key={el} value={el}>{el}</option>)}
+                    <select className="input" style={{ fontSize: 12 }} value={filterTipo} onChange={e => { setFilterTipo(e.target.value); setFilterElState(''); setFilterEstacao(''); setFilterSkid(''); setFilterInv(''); setFilterSb(''); setFilterStr(''); }}>
+                      <option value="">Todos os Tipos</option>
+                      <option value="Original">Original</option>
+                      <option value="Sintético">Sintético</option>
+                      <option value="Processado">Processado</option>
                     </select>
+
+                    {!fixedElement && (
+                      <select className="input" style={{ fontSize: 12 }} value={filterElState} onChange={e => { setFilterElState(e.target.value); setFilterEstacao(''); setFilterSkid(''); setFilterInv(''); setFilterSb(''); setFilterStr(''); }}>
+                        <option value="">Todos os Elementos</option>
+                        {elementos.map(el => <option key={el} value={el}>{el}</option>)}
+                      </select>
+                    )}
 
                     <select className="input" style={{ fontSize: 12 }} value={filterEstacao} onChange={e => { setFilterEstacao(e.target.value); setFilterSkid(''); setFilterInv(''); setFilterSb(''); setFilterStr(''); }}>
                       <option value="">Todas as Estações</option>
@@ -264,12 +287,23 @@ export default function SingleSeriesDropdown({ value, onChange, series = [], ele
                     cursor: 'pointer', borderRadius: '4px', flexShrink: 0,
                     background: value === s.coluna ? 'rgba(245,158,11,0.1)' : 'transparent',
                     border: value === s.coluna ? '1px solid var(--amber)' : '1px solid transparent',
-                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between'
                   }}
                   onMouseEnter={e => { if (value !== s.coluna) e.currentTarget.style.background = 'var(--bg-hover)' }}
                   onMouseLeave={e => { if (value !== s.coluna) e.currentTarget.style.background = 'transparent' }}
                 >
-                  {formatSeriesName(s.coluna)}
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {formatSeriesName(s.coluna)}
+                  </span>
+                  {s.elemento && (
+                    <span style={{ 
+                      fontSize: '10px', background: 'var(--bg-secondary)', padding: '2px 6px', 
+                      borderRadius: '12px', color: 'var(--text-secondary)', fontWeight: 600,
+                      border: '1px solid var(--border)', flexShrink: 0, marginLeft: 8
+                    }}>
+                      {s.elemento}
+                    </span>
+                  )}
                 </div>
               ))
             )}

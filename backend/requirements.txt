@@ -7,3 +7,5 @@ python-multipart
 pydantic
 python-jose[cryptography]
 bcrypt
+
+pvlib

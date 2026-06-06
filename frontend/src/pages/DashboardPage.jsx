@@ -34,10 +34,9 @@ export function formatSeriesName(name) {
 
 const TABS = [
   { id: 'chart',   label: '📈 Gráfico' },
-  { id: 'table',   label: '📋 Tabela' },
   { id: 'ranking', label: '🏆 Ranking' },
   { id: 'diagram', label: '🕸️ Diagrama' },
-  { id: 'flow',    label: '📊 EPI' },
+  { id: 'desempenho', label: '📊 Desempenho' },
   { id: 'heatmap', label: '🌡️ Análise de Causa Raiz' }
 ]
 
@@ -55,6 +54,7 @@ export default function DashboardPage() {
   const [colorPickerFilter, setColorPickerFilter] = useState(null)
   
   const [activeTab, setActiveTab] = useState('chart')
+  const [desempenhoTab, setDesempenhoTab] = useState('config')
   const [elementos, setElementos] = useState([])
   
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -92,6 +92,7 @@ export default function DashboardPage() {
   const [pendingLoadVis, setPendingLoadVis] = useState(null)
   const [isVisDropdownOpen, setIsVisDropdownOpen] = useState(false)
   const skipCleanup = useRef(false)
+  const pendingVisualize = useRef(false)
 
   // ── VISUALIZAÇÕES LOGIC ──────────────────────────────────────────
   useEffect(() => {
@@ -203,6 +204,14 @@ export default function DashboardPage() {
     clear()
   }, [selectedDates, usinaAtual])
 
+  // Auto-re-visualiza quando um novo dia é adicionado a uma visualização existente
+  useEffect(() => {
+    if (pendingVisualize.current && !seriesLoading) {
+      pendingVisualize.current = false
+      handleVisualize()
+    }
+  }, [seriesLoading])
+
   // Define cores iniciais sincronizadas para os filtros
   useEffect(() => {
     if (!filterSeries || filterSeries.length === 0) return
@@ -258,7 +267,7 @@ export default function DashboardPage() {
          if (filterSeries.find(fs => fs.coluna === k)) extractedFilters[k] = vals
          else cleanSeries[k] = vals
       })
-      return { ...data, series: cleanSeries, filterData: extractedFilters, visibleFilters }
+      return { ...data, series: cleanSeries, filterData: extractedFilters }
     }
 
     // Cria a mascara multiplicativa baseada em todos os filtros ativos
@@ -294,9 +303,8 @@ export default function DashboardPage() {
       series: newSeries,
       filterData: extractedFilters,
       total_pontos: validCount,
-      visibleFilters // Injecao para repasse ao Grafico
     }
-  }, [data, activeFilters, visibleFilters, filterSeries])
+  }, [data, activeFilters, filterSeries])
 
   // Guard: usina não selecionada — mostrar mensagem inline na barra lateral, não bloqueia a página
 
@@ -342,6 +350,11 @@ export default function DashboardPage() {
                         type="checkbox" 
                         checked={selectedDates.includes(d)} 
                         onChange={(e) => {
+                          if (e.target.checked && data) {
+                            // Adicionar dia a visualização existente: preserva séries e config
+                            skipCleanup.current = true
+                            pendingVisualize.current = true
+                          }
                           setSelectedDates(prev => {
                             if (e.target.checked) return [...prev, d].sort((a,b) => a.localeCompare(b))
                             return prev.filter(x => x !== d)
@@ -640,10 +653,10 @@ export default function DashboardPage() {
                   {/* Bloco Legenda */}
                   <div style={{
                     backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)',
-                    borderRadius: '6px', padding: '2px 8px', marginLeft: 'auto',
-                    display: 'flex', alignItems: 'center', gap: 6,
+                    borderRadius: '6px', padding: '6px 12px', marginLeft: 'auto',
+                    display: 'flex', alignItems: 'center', gap: 8,
                   }}>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: '#1e293b' }}>Legenda</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Legenda</span>
                     <div style={{ 
                       width: 26, height: 26, 
                       border: '1.5px solid #475569', borderRadius: 6, 
@@ -714,22 +727,44 @@ export default function DashboardPage() {
               <DiagramTab />
             </div>
           </div>
-        ) : activeTab === 'flow' ? (
+        ) : activeTab === 'desempenho' ? (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', padding: 20 }}>
-            {/* Cabeçalho Fixo do EPI */}
-            <div style={{ 
-              paddingBottom: '12px', 
-              borderBottom: '1px solid var(--border)', 
-              marginBottom: '0px',
-              flexShrink: 0
-            }}>
-              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                📊 EPI - Energy Performance Index
-              </h2>
+            {/* Cabeçalho Fixo do Desempenho */}
+            <div style={{ display: 'flex', gap: 2, marginBottom: 16, borderBottom: '2px solid #e2e8f0', flexShrink: 0 }}>
+              {[
+                { id: 'config', icon: '⚙️', label: 'Configurações' },
+                { id: 'validacao', icon: '✅', label: 'Validação de Dados' },
+                { id: 'epi', icon: '📈', label: 'EPI' },
+              ].map(tab => {
+                const isActive = desempenhoTab === tab.id
+                return (
+                  <button key={tab.id} onClick={() => setDesempenhoTab(tab.id)}
+                    style={{ padding: '7px 18px', fontSize: 13, fontWeight: 600,
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      color: isActive ? '#0f172a' : '#94a3b8',
+                      borderBottom: isActive ? '2px solid #0f172a' : '2px solid transparent',
+                      marginBottom: -2, transition: 'color 0.15s', display: 'flex', alignItems: 'center', gap: 6,
+                    }}
+                  >
+                    <span style={{ fontSize: 14 }}>{tab.icon}</span>
+                    <span>{tab.label}</span>
+                  </button>
+                )
+              })}
             </div>
-            {/* Bloco de conteúdo rolável do Fluxograma e Integralização */}
-            <div style={{ flex: 1, overflow: 'auto' }}>
-              <FluxogramaView elementos={elementos} showTitle={false} />
+            {/* Bloco de conteúdo */}
+            <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+
+              {/* Configurações e Validação: FluxogramaView com mode controla o que exibir */}
+              {(desempenhoTab === 'config' || desempenhoTab === 'validacao') && (
+                <FluxogramaView elementos={elementos} showTitle={false} mode={desempenhoTab} />
+              )}
+
+              {desempenhoTab === 'epi' && (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+                  Aba EPI - Em construção
+                </div>
+              )}
             </div>
           </div>
         ) : (
@@ -744,8 +779,8 @@ export default function DashboardPage() {
               <RankingTab usina={usinaAtual} dates={selectedDates.join(',')} activeFilters={activeFilters} />
             )}
 
-            {/* Chart e Table — dependem de dados carregados */}
-            {activeTab !== 'heatmap' && activeTab !== 'ranking' && activeTab !== 'diagram' && (
+            {/* Chart — dependem de dados carregados */}
+            {activeTab === 'chart' && (
               <>
                 {dataLoading && <SkeletonChart />}
                 {dataError && !dataLoading && <ErrorState message={dataError} onRetry={handleVisualize} />}
@@ -769,8 +804,7 @@ export default function DashboardPage() {
 
                 {!dataLoading && !dataError && filteredData && (
                   <div className="fade-in" style={{ height: '100%' }}>
-                    {activeTab === 'chart' && <TimeSeriesChart data={filteredData} usina={usinaAtual} seriesDict={seriesDict} filterColors={filterColors} chartConfig={chartConfig} setChartConfig={setChartConfig} showEixosMenu={showEixosMenu} showSeriesMenu={showSeriesMenu} />}
-                    {activeTab === 'table' && <DataTable data={filteredData} seriesDict={seriesDict} />}
+                    <TimeSeriesChart data={filteredData} usina={usinaAtual} seriesDict={seriesDict} filterColors={filterColors} chartConfig={chartConfig} setChartConfig={setChartConfig} showEixosMenu={showEixosMenu} showSeriesMenu={showSeriesMenu} visibleFilters={visibleFilters} />
                   </div>
                 )}
               </>

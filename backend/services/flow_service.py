@@ -85,9 +85,15 @@ def run_flow_processing(usina: str):
                 if filter_name and filter_name in filter_map:
                     f_def = filter_map[filter_name]
                     if f_def.get("min_value") is not None:
-                        s_data[s_data < f_def["min_value"]] = np.nan
+                        if f_def.get("min_action") == "substituir":
+                            s_data[s_data < f_def["min_value"]] = f_def["min_value"]
+                        else:
+                            s_data[s_data < f_def["min_value"]] = np.nan
                     if f_def.get("max_value") is not None:
-                        s_data[s_data > f_def["max_value"]] = np.nan
+                        if f_def.get("max_action") == "substituir":
+                            s_data[s_data > f_def["max_value"]] = f_def["max_value"]
+                        else:
+                            s_data[s_data > f_def["max_value"]] = np.nan
                     if f_def.get("max_variation") is not None:
                         diff = s_data.diff().abs()
                         s_data[diff > f_def["max_variation"]] = np.nan
@@ -107,14 +113,70 @@ def run_flow_processing(usina: str):
                 if out_filter_name and out_filter_name in filter_map:
                     f_def = filter_map[out_filter_name]
                     if f_def.get("min_value") is not None:
-                        agg_result[agg_result < f_def["min_value"]] = np.nan
+                        if f_def.get("min_action") == "substituir":
+                            agg_result[agg_result < f_def["min_value"]] = f_def["min_value"]
+                        else:
+                            agg_result[agg_result < f_def["min_value"]] = np.nan
                     if f_def.get("max_value") is not None:
-                        agg_result[agg_result > f_def["max_value"]] = np.nan
+                        if f_def.get("max_action") == "substituir":
+                            agg_result[agg_result > f_def["max_value"]] = f_def["max_value"]
+                        else:
+                            agg_result[agg_result > f_def["max_value"]] = np.nan
                     if f_def.get("max_variation") is not None:
                         diff = agg_result.diff().abs()
                         agg_result[diff > f_def["max_variation"]] = np.nan
 
                 processed_df[agg_id] = agg_result
+            
+            if agg_id == "tracker":
+                try:
+                    import pvlib
+                    tracker_params = agg.get("data", {}).get("trackerParams", {})
+                    lat = float(tracker_params.get("latitude", -23.55))
+                    lon = float(tracker_params.get("longitude", -46.63))
+                    gcr = float(tracker_params.get("gcr", 0.3))
+                    max_angle = float(tracker_params.get("max_angle", 60))
+                    tol = float(tracker_params.get("tolerance", 10))
+                    
+                    times = raw_df.index
+                    times_for_pvlib = pd.DatetimeIndex(times.values)
+                    if times_for_pvlib.tz is None:
+                        times_for_pvlib = times_for_pvlib.tz_localize('America/Sao_Paulo', ambiguous='NaT', nonexistent='NaT')
+                    
+                    solpos = pvlib.solarposition.get_solarposition(times_for_pvlib, lat, lon)
+                    
+                    trk_true = pvlib.tracking.singleaxis(solpos['apparent_zenith'], solpos['azimuth'], 
+                                                         max_angle=max_angle, backtrack=True, gcr=gcr)
+                    
+                    trk_false = pvlib.tracking.singleaxis(solpos['apparent_zenith'], solpos['azimuth'], 
+                                                          max_angle=max_angle, backtrack=False, gcr=gcr)
+
+                    ref_theta_vals = trk_true['tracker_theta'].values
+                    trk_false_vals = trk_false['tracker_theta'].values
+                    
+                    if tracker_params.get("inverter_sinal", False):
+                        ref_theta_vals = -ref_theta_vals
+                        trk_false_vals = -trk_false_vals
+                    
+                    is_backtracking_vals = (np.round(ref_theta_vals, 2) != np.round(trk_false_vals, 2)).astype(float)
+                    
+                    ref_theta = pd.Series(ref_theta_vals, index=raw_df.index)
+                    is_backtracking = pd.Series(is_backtracking_vals, index=raw_df.index).fillna(0).astype(int)
+                    
+                    processed_df["Tracker Ref."] = ref_theta
+                    processed_df["Tracker_is_backtracking"] = is_backtracking
+
+                    for inp, s_data in zip(inputs, all_input_series):
+                        s_name = inp.get("series") if isinstance(inp, dict) else inp
+                        if s_name:
+                            diff = (s_data - ref_theta).abs()
+                            flag = ((diff > tol) & (is_backtracking == 0) & ref_theta.notna()).astype(int)
+                            processed_df[f"flag_tracker_erro_{s_name}"] = flag
+                            
+                except Exception as e:
+                    logger.error(f"[TRACKER] Erro ao calcular PVLib para {date}: {e}")
+                
+                continue
 
         # --- Depois processa o Bloco Geff (depende de Gpoa e Grear) ---
         for geff in geff_nodes:
@@ -194,15 +256,15 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
         "tamb": "Tamb",
         "tmod": "Tmod",
         "sujidade": "Sujidade",
-        "energia": "Energia"
+        "tracker": "Tracker",
+        "energia": "Potência",
+        "energia_pmi": "Energia PMI"
     }
 
-    # Determinar a ordem das colunas
-    # Queremos: Gpoa (entradas e saida) -> Grear (entradas e saida) -> Geff -> Tamb (entradas e saida) -> Tmod (entradas e saida) -> Tcel -> Sujidade (entradas e saida) -> Energia (entradas e saida)
     column_definitions = []
     
-    # Ordem fixa dos grupos
-    group_order = ["gpoa", "grear", "geff", "tamb", "tmod", "tcel", "sujidade", "energia"]
+    # Ordem desejada para as colunas
+    group_order = ["gpoa", "grear", "geff", "tamb", "tmod", "tcel", "sujidade", "tracker", "energia", "energia_pmi"]
 
     for group in group_order:
         # Achar o nó correspondente
@@ -239,12 +301,41 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                 })
             
             # Depois o output do agregador
+            is_sujidade_restricted = (group == "sujidade" and node.get("data", {}).get("startTime") and node.get("data", {}).get("endTime"))
+            is_sujidade_trimmed = (group == "sujidade" and node.get("data", {}).get("trimPercent"))
+            
             column_definitions.append({
                 "key": group,
-                "label": agg_label,
+                "label": f"{agg_label} (Dia completo)" if (is_sujidade_restricted or is_sujidade_trimmed) else agg_label,
                 "type": "output",
                 "node_id": group
             })
+            
+            if is_sujidade_restricted:
+                column_definitions.append({
+                    "key": f"{group}_restricted",
+                    "label": f"{agg_label} (Hora Restrita)",
+                    "type": "output",
+                    "node_id": group,
+                    "restricted": True,
+                    "start_time": node.get("data", {}).get("startTime"),
+                    "end_time": node.get("data", {}).get("endTime")
+                })
+                
+            if is_sujidade_trimmed:
+                try:
+                    trim_val = float(node.get("data", {}).get("trimPercent"))
+                    if trim_val > 0:
+                        column_definitions.append({
+                            "key": f"{group}_trimmed",
+                            "label": f"{agg_label} (Média Interna)",
+                            "type": "output",
+                            "node_id": group,
+                            "trimmed": True,
+                            "trim_percent": trim_val
+                        })
+                except ValueError:
+                    pass
         else:
             # Geff e Tcel
             node_type = node.get("type", "")
@@ -276,6 +367,8 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                 processed_df.set_index("timestamp", inplace=True)
         
         row_data = {"date": date}
+        tracker_errors_for_day = []
+        tracker_valid_points_for_day = 0
         
         for col in column_definitions:
             val = None
@@ -323,8 +416,31 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                         else:
                             val = s_data.mean(skipna=True)
                     elif is_soiling:
-                        # Média simples
+                        # Média simples percentual de sujeira
                         val = s_data.mean(skipna=True)
+                        if pd.notna(val):
+                            val = 100 - val if val > 1 else (1 - val) * 100
+                    elif col["node_id"] == "tracker":
+                        if processed_df is not None and f"flag_tracker_erro_{series_name}" in processed_df.columns:
+                            flag_series = processed_df[f"flag_tracker_erro_{series_name}"]
+                            is_bt_series = processed_df.get("Tracker_is_backtracking")
+                            
+                            total_errors = flag_series.sum(skipna=True)
+                            if is_bt_series is not None:
+                                total_valid_points = (is_bt_series == 0).sum()
+                            else:
+                                total_valid_points = len(flag_series.dropna())
+                            
+                            tracker_errors_for_day.append(total_errors)
+                            tracker_valid_points_for_day = total_valid_points
+                            
+                            if total_valid_points > 0:
+                                perc = (total_errors / total_valid_points) * 100
+                                val = f"{int(total_errors)} ({perc:.1f}%)"
+                            else:
+                                val = f"{int(total_errors)} (0.0%)"
+                        else:
+                            val = None
                     else:
                         # Calcular integral (soma) e converter de 1-min para base horária / kW
                         raw_sum = s_data.sum(min_count=1)
@@ -334,8 +450,38 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                             val = None
             else:
                 # Output ou special (ler do processed_df)
-                if processed_df is not None and col_key in processed_df.columns:
-                    s_data = processed_df[col_key]
+                is_restricted = col.get("restricted", False)
+                is_trimmed = col.get("trimmed", False)
+                
+                base_key = col_key
+                if is_restricted:
+                    base_key = base_key.replace("_restricted", "")
+                elif is_trimmed:
+                    base_key = base_key.replace("_trimmed", "")
+                
+                if processed_df is not None and base_key in processed_df.columns:
+                    s_data = processed_df[base_key].copy()
+                    
+                    if is_restricted:
+                        try:
+                            start_t = pd.to_datetime(col["start_time"]).time()
+                            end_t = pd.to_datetime(col["end_time"]).time()
+                            s_data = s_data.between_time(start_t, end_t)
+                        except Exception as e:
+                            logger.error(f"Erro ao filtrar tempo restrito para sujidade: {e}")
+                            
+                    if is_trimmed:
+                        try:
+                            trim_p = col.get("trim_percent", 0) / 100.0
+                            if trim_p > 0:
+                                lower_p = trim_p / 2
+                                upper_p = 1.0 - (trim_p / 2)
+                                lower_bound = s_data.quantile(lower_p)
+                                upper_bound = s_data.quantile(upper_p)
+                                s_data = s_data[(s_data >= lower_bound) & (s_data <= upper_bound)]
+                        except Exception as e:
+                            logger.error(f"Erro ao calcular média interna para sujidade: {e}")
+                    
                     if is_temp:
                         # Média ponderada por Gpoa
                         gpoa_series = None
@@ -351,8 +497,17 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                         else:
                             val = s_data.mean(skipna=True)
                     elif is_soiling:
-                        # Média simples
+                        # Média simples percentual de sujeira
                         val = s_data.mean(skipna=True)
+                        if pd.notna(val):
+                            val = 100 - val if val > 1 else (1 - val) * 100
+                    elif col["node_id"] == "tracker":
+                        if tracker_errors_for_day and tracker_valid_points_for_day > 0:
+                            avg_errors = sum(tracker_errors_for_day) / len(tracker_errors_for_day)
+                            perc = (avg_errors / tracker_valid_points_for_day) * 100
+                            val = f"{int(round(avg_errors))} ({perc:.1f}%)"
+                        else:
+                            val = "-"
                     else:
                         # Calcular integral (soma) e converter de 1-min para base horária / kW
                         raw_sum = s_data.sum(min_count=1)
@@ -364,6 +519,8 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
             # Formatando o valor
             if pd.isna(val) or val is None:
                 row_data[col_key] = "-"
+            elif isinstance(val, str):
+                row_data[col_key] = val
             else:
                 row_data[col_key] = float(val)
                 
