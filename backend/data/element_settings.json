@@ -97,25 +97,6 @@
     "dash": "solid"
   },
   {
-    "element": "Temperatura Módulo",
-    "axis": "y3",
-    "colors": [
-      "#EF6C00",
-      "#F6A866"
-    ],
-    "width": 1,
-    "dash": "solid"
-  },
-  {
-    "element": "Temperatura Ambiente",
-    "axis": "y3",
-    "colors": [
-      "#F9A825"
-    ],
-    "width": 1,
-    "dash": "solid"
-  },
-  {
     "element": "Velocidade do Vento",
     "axis": "y3",
     "colors": [
@@ -157,15 +138,6 @@
     "colors": [
       "#6A1B9A",
       "#A576C3"
-    ],
-    "width": 1,
-    "dash": "solid"
-  },
-  {
-    "element": "Filtro",
-    "axis": "y4",
-    "colors": [
-      "#7BFF19"
     ],
     "width": 1,
     "dash": "solid"

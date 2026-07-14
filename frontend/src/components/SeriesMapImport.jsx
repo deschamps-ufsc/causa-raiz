@@ -105,26 +105,29 @@ export default function SeriesMapImport({ onImported, usina }) {
             {result.linhas_invalidas > 0 && <span style={{ marginLeft: 8, opacity: 0.8 }}> ({result.linhas_invalidas} linhas inválidas ignoradas)</span>}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-            <div className="stat-card" style={{ height: '100%' }}>
-              <div className="stat-label">Elementos</div>
-              <div className="stat-value" style={{ fontSize: 20 }}>{result.elementos_encontrados?.length || 0}</div>
-              <div className="stat-sub" style={{ whiteSpace: 'normal', lineHeight: 1.4, marginTop: 4 }}>
-                {result.elementos_encontrados?.map((el, i) => {
-                  const isMissing = result.elementos_nao_cadastrados?.includes(el)
-                  return (
-                    <span key={el}>
-                      {isMissing ? (
-                        <span style={{ color: '#dc2626', fontWeight: 600 }}>
-                          {el} <span style={{ fontSize: 10 }}>(Não cadastrado)</span>
-                        </span>
-                      ) : el}
-                      {i < result.elementos_encontrados.length - 1 ? ', ' : ''}
-                    </span>
-                  )
-                })}
-              </div>
+          {/* Linha 1 — Elementos (largura total) */}
+          <div className="stat-card" style={{ width: '100%' }}>
+            <div className="stat-label">Elementos</div>
+            <div className="stat-value" style={{ fontSize: 20 }}>{result.elementos_encontrados?.length || 0}</div>
+            <div className="stat-sub" style={{ whiteSpace: 'normal', lineHeight: 1.4, marginTop: 4 }}>
+              {result.elementos_encontrados?.map((el, i) => {
+                const isMissing = result.elementos_nao_cadastrados?.includes(el)
+                return (
+                  <span key={el}>
+                    {isMissing ? (
+                      <span style={{ color: '#dc2626', fontWeight: 600 }}>
+                        {el} <span style={{ fontSize: 10 }}>(Não cadastrado)</span>
+                      </span>
+                    ) : el}
+                    {i < result.elementos_encontrados.length - 1 ? ', ' : ''}
+                  </span>
+                )
+              })}
             </div>
+          </div>
+
+          {/* Linhas seguintes — demais cards em grid 2 por linha */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
             <div className="stat-card" style={{ height: '100%' }}>
               <div className="stat-label">SKIDs</div>
               <div className="stat-value" style={{ fontSize: 20 }}>{result.skids_encontrados?.length || 0}</div>
@@ -159,9 +162,18 @@ export default function SeriesMapImport({ onImported, usina }) {
                 </div>
               </div>
             )}
+            {(result.trackers_encontrados?.length > 0) && (
+              <div className="stat-card" style={{ height: '100%' }}>
+                <div className="stat-label">Trackers</div>
+                <div className="stat-value" style={{ fontSize: 20 }}>{result.trackers_encontrados.length}</div>
+                <div className="stat-sub" style={{ whiteSpace: 'normal', lineHeight: 1.4, marginTop: 4 }}>
+                  {result.trackers_encontrados.join(', ')}
+                </div>
+              </div>
+            )}
             {(result.strings_encontradas?.length > 0) && (
               <div className="stat-card" style={{ height: '100%' }}>
-                <div className="stat-label">STRINGS</div>
+                <div className="stat-label">Strings</div>
                 <div className="stat-value" style={{ fontSize: 20 }}>{result.strings_encontradas.length}</div>
                 <div className="stat-sub" style={{ whiteSpace: 'normal', lineHeight: 1.4, marginTop: 4 }}>
                   {result.strings_encontradas.join(', ')}

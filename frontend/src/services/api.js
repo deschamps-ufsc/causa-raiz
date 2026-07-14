@@ -79,6 +79,9 @@ export const createUsina = (nome) =>
 export const renameUsina = (nome, novoNome) =>
   api.patch(`/usinas/${encodeURIComponent(nome)}`, { novo_nome: novoNome }).then(r => r.data)
 
+export const updateUsinaDriveLink = (nome, driveLink) =>
+  api.patch(`/usinas/${encodeURIComponent(nome)}/drive-link`, { drive_link: driveLink }).then(r => r.data)
+
 export const deleteUsina = (nome) =>
   api.delete(`/usinas/${encodeURIComponent(nome)}`).then(r => r.data)
 
@@ -107,11 +110,28 @@ export const fetchPivotHeatmap = (usina, dates, elemento, filters = []) =>
 export const fetchYieldHeatmap = (usina, dates, elemento, filters = [], rowCat = 'skid', colCat = 'inversor') =>
   api.get('/heatmap/yield', { params: { usina, dates, elemento: elemento || undefined, filters: filters?.join(',') || undefined, row_cat: rowCat, col_cat: colCat } }).then((r) => r.data)
 
+export const fetchMapaHeatmap = (usina, dates, filters = []) =>
+  api.get('/heatmap/mapa', { params: { usina, dates, filters: filters?.join(',') || undefined } }).then((r) => r.data)
+
+export const fetchTrackerAnalysis = (usina, dates, filters = []) =>
+  api.get('/heatmap/trackers', { params: { usina, dates, filters: filters?.join(',') || undefined } }).then((r) => r.data)
+
+export const fetchMapaTimes = (usina, date) =>
+  api.get('/heatmap/times', { params: { usina, date } }).then((r) => r.data)
+
+export const fetchMapaInstant = (usina, date, time, filters = []) =>
+  api.get('/heatmap/mapa/instant', { params: { usina, date, time, filters: filters?.join(',') || undefined } }).then((r) => r.data)
+
+export const fetchTrackersInstant = (usina, date, time, filters = []) =>
+  api.get('/heatmap/trackers/instant', { params: { usina, date, time, filters: filters?.join(',') || undefined } }).then((r) => r.data)
+
+
 // ── Upload de Excel diário ────────────────────────────────────
-export const uploadExcel = (usina, file, onProgress) => {
+export const uploadExcel = (usina, file, onProgress, skipUnmapped = false) => {
   const form = new FormData()
   form.append('usina', usina)
   form.append('file', file)
+  if (skipUnmapped) form.append('skip_unmapped', 'true')
   return api.post('/upload', form, {
     headers: { 'Content-Type': 'multipart/form-data' },
     onUploadProgress: (e) => {
@@ -122,13 +142,41 @@ export const uploadExcel = (usina, file, onProgress) => {
   }).then((r) => r.data)
 }
 
-// ── Datas disponíveis ─────────────────────────────────────────
+// ── Upload do Excel de Mapa de Strings ────────────────────────
+export const uploadMapa = (usina, file, onProgress) => {
+  const form = new FormData()
+  form.append('usina', usina)
+  form.append('file', file)
+  return api.post('/upload/mapa', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    onUploadProgress: (e) => {
+      if (onProgress && e.total) {
+        onProgress(Math.round((e.loaded / e.total) * 100))
+      }
+    },
+  }).then((r) => r.data)
+}
+
+export const fetchMapaLayout = (usina) =>
+  api.get('/upload/mapa', { params: { usina } }).then((r) => r.data)
+
+// ── Datas disponíveis ─────────────────────────────────────────────────────────
 export const fetchDates = (usina) =>
-  api.get('/dates', { params: { usina } }).then((r) => r.data)
+  api.get('/dates', { params: { usina } }).then(r => r.data)
+
+export const fetchDatesSummary = (usina) =>
+  api.get('/dates/summary', { params: { usina } }).then(r => r.data)
+
+export const fetchDateDetails = (usina, date) =>
+  api.get(`/dates/${encodeURIComponent(date)}/details`, { params: { usina } }).then(r => r.data)
+
 
 // ── Listar séries de uma data ─────────────────────────────────
 export const fetchSeries = (usina, dates) =>
   api.get('/series', { params: { usina, dates } }).then((r) => r.data)
+
+export const deleteSeries = (usina, series, dates) =>
+  api.delete('/series', { data: { usina, series, dates } }).then((r) => r.data)
 
 // ── Elementos válidos ─────────────────────────────────────────
 export const fetchElementos = (usina) =>
@@ -222,8 +270,8 @@ export const fetchFlowConfig = (usina) =>
 export const saveFlowConfig = (usina, config) =>
   api.post(`/flow/${encodeURIComponent(usina)}`, config).then((r) => r.data)
 
-export const runFlow = (usina) =>
-  api.post(`/flow/${encodeURIComponent(usina)}/run`).then((r) => r.data)
+export const runFlow = (usina, dates) =>
+  api.post(`/flow/${encodeURIComponent(usina)}/run${dates ? `?dates=${dates}` : ''}`).then((r) => r.data)
 
 export const fetchFlowIntegrals = (usina) =>
   api.get(`/flow/${encodeURIComponent(usina)}/integrals`).then((r) => r.data)

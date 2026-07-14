@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { fetchSeries, fetchDates, fetchMappingData } from '../services/api'
 
 /**
@@ -30,10 +30,11 @@ export function useSeries(selectedDates, usina) {
     ])
       .then(([parquetSeries, mapping]) => {
         const parquetKeys = new Set(parquetSeries.map(s => s.coluna))
-        const synthetics = []
+        const parquetSeriesWithData = parquetSeries.map(s => ({ ...s, hasData: true }))
+        const missingFromParquet = []
         Object.entries(mapping).forEach(([col, meta]) => {
           if (!parquetKeys.has(col) && meta.elemento) {
-            synthetics.push({
+            missingFromParquet.push({
               coluna: col,
               elemento: meta.elemento,
               skid: meta.skid || '',
@@ -42,11 +43,12 @@ export function useSeries(selectedDates, usina) {
               estacao: meta.estacao || '',
               string: meta.string || '',
               mapeada: true,
-              sintetica: true,
+              sintetica: meta.sintetica || false,
+              hasData: false,
             })
           }
         })
-        setSeries([...parquetSeries, ...synthetics])
+        setSeries([...parquetSeriesWithData, ...missingFromParquet])
         setLoading(false)
       })
       .catch((e) => { setError(e.message); setLoading(false) })

@@ -13,7 +13,7 @@ def get_processed_path(date: str, usina: str) -> str:
     os.makedirs(processed_dir, exist_ok=True)
     return os.path.join(processed_dir, f"{date}.parquet")
 
-def run_flow_processing(usina: str):
+def run_flow_processing(usina: str, dates_str: str = None):
     """
     Executa o processamento de todo o fluxograma para a usina.
     """
@@ -39,8 +39,13 @@ def run_flow_processing(usina: str):
     filter_map = {f['name']: f for f in filters}
     
     available_dates = list_available_dates(usina)
+    
+    if dates_str:
+        target_dates = set(dates_str.split(","))
+        available_dates = [d for d in available_dates if d in target_dates]
+        
     if not available_dates:
-        return {"status": "error", "message": "Nenhum dado bruto encontrado."}
+        return {"status": "error", "message": "Nenhum dado bruto encontrado para as datas selecionadas."}
 
     # 2. Identificar Agregadores e Blocos Especiais
     aggregators = [n for n in nodes if n.get("data", {}).get("aggregator")]
@@ -58,14 +63,83 @@ def run_flow_processing(usina: str):
         
         processed_df = pd.DataFrame(index=raw_df.index)
         
+        # --- Tracker: Pré-processamento ---
+        invalidated_sensors_map = {}
+        tracker_node = next((n for n in aggregators if n["id"] == "tracker"), None)
+        if tracker_node:
+            tracker_inputs = tracker_node.get("data", {}).get("inputs", [])
+            tracker_params = tracker_node.get("data", {}).get("trackerParams", {})
+            try:
+                import pvlib
+                lat = float(tracker_params.get("latitude", -23.55))
+                lon = float(tracker_params.get("longitude", -46.63))
+                gcr = float(tracker_params.get("gcr", 0.3))
+                max_angle = float(tracker_params.get("max_angle", 60))
+                tol = float(tracker_params.get("tolerance", 10))
+                
+                times = raw_df.index
+                times_for_pvlib = pd.DatetimeIndex(times.values)
+                if times_for_pvlib.tz is None:
+                    times_for_pvlib = times_for_pvlib.tz_localize('America/Sao_Paulo', ambiguous='NaT', nonexistent='NaT')
+                
+                solpos = pvlib.solarposition.get_solarposition(times_for_pvlib, lat, lon)
+                
+                trk_true = pvlib.tracking.singleaxis(solpos['apparent_zenith'], solpos['azimuth'], 
+                                                     max_angle=max_angle, backtrack=True, gcr=gcr)
+                
+                trk_false = pvlib.tracking.singleaxis(solpos['apparent_zenith'], solpos['azimuth'], 
+                                                      max_angle=max_angle, backtrack=False, gcr=gcr)
+
+                ref_theta_vals = trk_true['tracker_theta'].values
+                trk_false_vals = trk_false['tracker_theta'].values
+                
+                if tracker_params.get("inverter_sinal", False):
+                    ref_theta_vals = -ref_theta_vals
+                    trk_false_vals = -trk_false_vals
+                
+                is_backtracking_vals = (np.round(ref_theta_vals, 2) != np.round(trk_false_vals, 2)).astype(float)
+                
+                ref_theta = pd.Series(ref_theta_vals, index=raw_df.index)
+                is_backtracking = pd.Series(is_backtracking_vals, index=raw_df.index).fillna(0).astype(int)
+                
+                time_offset = int(tracker_params.get("time_offset", 0))
+                if time_offset != 0:
+                    ref_theta = ref_theta.shift(time_offset).bfill().ffill()
+                    is_backtracking = is_backtracking.shift(time_offset).bfill().ffill().astype(int)
+                
+                processed_df["Tracker Ref."] = ref_theta
+                processed_df["Tracker_is_backtracking"] = is_backtracking
+
+                for inp in tracker_inputs:
+                    if isinstance(inp, str):
+                        s_name = inp
+                        sensors = []
+                    else:
+                        s_name = inp.get("series")
+                        sensors = inp.get("sensors", [])
+                    
+                    if s_name and s_name in raw_df.columns:
+                        s_data_tracker = raw_df[s_name]
+                        diff_tracker = (s_data_tracker - ref_theta).abs()
+                        flag_col_name = f"flag_tracker_erro_{s_name}"
+                        flag = ((diff_tracker > tol) & (is_backtracking == 0) & ref_theta.notna()).astype(int)
+                        processed_df[flag_col_name] = flag
+                        
+                        for sensor in sensors:
+                            invalidated_sensors_map[sensor] = flag_col_name
+            except Exception as e:
+                logger.error(f"[TRACKER] Erro ao calcular PVLib para {date}: {e}")
+
         # --- Primeiro processa os agregadores (Gpoa e Grear são agregadores) ---
         for agg in aggregators:
             # ... (lógica de agregação mantida)
             agg_id = agg["id"]
+            if agg_id == "tracker": continue
             inputs = agg.get("data", {}).get("inputs", [])
             if not inputs: continue
             
             all_input_series = []
+            all_input_series_semTR = []
             for inp in inputs:
                 if isinstance(inp, str): inp = {"series": inp, "filter": "" }
                 series_name = inp.get("series")
@@ -82,31 +156,77 @@ def run_flow_processing(usina: str):
                 
                 if s_data is None: continue
                 
+                # Cópia para a série sem tracker antes de invalidar
+                s_data_semTR = s_data.copy()
+                
+                # Invalida sensor se mapeado para erro de tracker
+                if series_name in invalidated_sensors_map:
+                    flag_col = invalidated_sensors_map[series_name]
+                    if flag_col in processed_df.columns:
+                        s_data[processed_df[flag_col] == 1] = np.nan
+                
                 if filter_name and filter_name in filter_map:
                     f_def = filter_map[filter_name]
                     if f_def.get("min_value") is not None:
                         if f_def.get("min_action") == "substituir":
                             s_data[s_data < f_def["min_value"]] = f_def["min_value"]
+                            s_data_semTR[s_data_semTR < f_def["min_value"]] = f_def["min_value"]
                         else:
                             s_data[s_data < f_def["min_value"]] = np.nan
+                            s_data_semTR[s_data_semTR < f_def["min_value"]] = np.nan
                     if f_def.get("max_value") is not None:
                         if f_def.get("max_action") == "substituir":
                             s_data[s_data > f_def["max_value"]] = f_def["max_value"]
+                            s_data_semTR[s_data_semTR > f_def["max_value"]] = f_def["max_value"]
                         else:
                             s_data[s_data > f_def["max_value"]] = np.nan
+                            s_data_semTR[s_data_semTR > f_def["max_value"]] = np.nan
                     if f_def.get("max_variation") is not None:
-                        diff = s_data.diff().abs()
+                        median_window = f_def.get("median_window")
+                        if median_window and median_window > 1:
+                            med = s_data.rolling(window=median_window, center=True, min_periods=1).median()
+                            diff = (s_data - med).abs()
+                            med_semTR = s_data_semTR.rolling(window=median_window, center=True, min_periods=1).median()
+                            diff_semTR = (s_data_semTR - med_semTR).abs()
+                        else:
+                            diff = s_data.diff().abs()
+                            diff_semTR = s_data_semTR.diff().abs()
+                        
                         s_data[diff > f_def["max_variation"]] = np.nan
+                        s_data_semTR[diff_semTR > f_def["max_variation"]] = np.nan
+                    if f_def.get("min_variation") is not None:
+                        min_time = f_def.get("min_time", 1)
+                        diff = s_data.diff().abs()
+                        mask = diff < f_def["min_variation"]
+                        if min_time > 1:
+                            group = (~mask).cumsum()
+                            run_lengths = mask.groupby(group).transform('sum')
+                            mask = mask & (run_lengths >= min_time)
+                        s_data[mask] = np.nan
+                        
+                        diff_semTR = s_data_semTR.diff().abs()
+                        mask_semTR = diff_semTR < f_def["min_variation"]
+                        if min_time > 1:
+                            group_semTR = (~mask_semTR).cumsum()
+                            run_lengths_semTR = mask_semTR.groupby(group_semTR).transform('sum')
+                            mask_semTR = mask_semTR & (run_lengths_semTR >= min_time)
+                        s_data_semTR[mask_semTR] = np.nan
                 
                 all_input_series.append(s_data)
+                all_input_series_semTR.append(s_data_semTR)
             
             if all_input_series:
                 op = agg.get("data", {}).get("operation", "sum")
+                
                 combined = pd.concat(all_input_series, axis=1)
+                combined_semTR = pd.concat(all_input_series_semTR, axis=1)
+                
                 if op == "mean":
                     agg_result = combined.mean(axis=1)
+                    agg_result_semTR = combined_semTR.mean(axis=1)
                 else:
                     agg_result = combined.sum(axis=1, min_count=1)
+                    agg_result_semTR = combined_semTR.sum(axis=1, min_count=1)
                 
                 # Filtro final de saída
                 out_filter_name = agg.get("data", {}).get("outputFilter")
@@ -115,68 +235,55 @@ def run_flow_processing(usina: str):
                     if f_def.get("min_value") is not None:
                         if f_def.get("min_action") == "substituir":
                             agg_result[agg_result < f_def["min_value"]] = f_def["min_value"]
+                            agg_result_semTR[agg_result_semTR < f_def["min_value"]] = f_def["min_value"]
                         else:
                             agg_result[agg_result < f_def["min_value"]] = np.nan
+                            agg_result_semTR[agg_result_semTR < f_def["min_value"]] = np.nan
                     if f_def.get("max_value") is not None:
                         if f_def.get("max_action") == "substituir":
                             agg_result[agg_result > f_def["max_value"]] = f_def["max_value"]
+                            agg_result_semTR[agg_result_semTR > f_def["max_value"]] = f_def["max_value"]
                         else:
                             agg_result[agg_result > f_def["max_value"]] = np.nan
+                            agg_result_semTR[agg_result_semTR > f_def["max_value"]] = np.nan
                     if f_def.get("max_variation") is not None:
-                        diff = agg_result.diff().abs()
+                        median_window = f_def.get("median_window")
+                        if median_window and median_window > 1:
+                            med = agg_result.rolling(window=median_window, center=True, min_periods=1).median()
+                            diff = (agg_result - med).abs()
+                            med_semTR = agg_result_semTR.rolling(window=median_window, center=True, min_periods=1).median()
+                            diff_semTR = (agg_result_semTR - med_semTR).abs()
+                        else:
+                            diff = agg_result.diff().abs()
+                            diff_semTR = agg_result_semTR.diff().abs()
+
                         agg_result[diff > f_def["max_variation"]] = np.nan
+                        agg_result_semTR[diff_semTR > f_def["max_variation"]] = np.nan
+                    if f_def.get("min_variation") is not None:
+                        min_time = f_def.get("min_time", 1)
+                        diff = agg_result.diff().abs()
+                        mask = diff < f_def["min_variation"]
+                        if min_time > 1:
+                            group = (~mask).cumsum()
+                            run_lengths = mask.groupby(group).transform('sum')
+                            mask = mask & (run_lengths >= min_time)
+                        agg_result[mask] = np.nan
+                        
+                        diff_semTR = agg_result_semTR.diff().abs()
+                        mask_semTR = diff_semTR < f_def["min_variation"]
+                        if min_time > 1:
+                            group_semTR = (~mask_semTR).cumsum()
+                            run_lengths_semTR = mask_semTR.groupby(group_semTR).transform('sum')
+                            mask_semTR = mask_semTR & (run_lengths_semTR >= min_time)
+                        agg_result_semTR[mask_semTR] = np.nan
+
+                # Filtro de PPC removido e migrado para bloco próprio de Curtailment
 
                 processed_df[agg_id] = agg_result
+                if agg_id in ["gpoa", "grear", "potencia_ppc"] or agg_id.startswith("potencia_ppc"):
+                    processed_df[f"{agg_id}_semTR"] = agg_result_semTR
             
-            if agg_id == "tracker":
-                try:
-                    import pvlib
-                    tracker_params = agg.get("data", {}).get("trackerParams", {})
-                    lat = float(tracker_params.get("latitude", -23.55))
-                    lon = float(tracker_params.get("longitude", -46.63))
-                    gcr = float(tracker_params.get("gcr", 0.3))
-                    max_angle = float(tracker_params.get("max_angle", 60))
-                    tol = float(tracker_params.get("tolerance", 10))
-                    
-                    times = raw_df.index
-                    times_for_pvlib = pd.DatetimeIndex(times.values)
-                    if times_for_pvlib.tz is None:
-                        times_for_pvlib = times_for_pvlib.tz_localize('America/Sao_Paulo', ambiguous='NaT', nonexistent='NaT')
-                    
-                    solpos = pvlib.solarposition.get_solarposition(times_for_pvlib, lat, lon)
-                    
-                    trk_true = pvlib.tracking.singleaxis(solpos['apparent_zenith'], solpos['azimuth'], 
-                                                         max_angle=max_angle, backtrack=True, gcr=gcr)
-                    
-                    trk_false = pvlib.tracking.singleaxis(solpos['apparent_zenith'], solpos['azimuth'], 
-                                                          max_angle=max_angle, backtrack=False, gcr=gcr)
 
-                    ref_theta_vals = trk_true['tracker_theta'].values
-                    trk_false_vals = trk_false['tracker_theta'].values
-                    
-                    if tracker_params.get("inverter_sinal", False):
-                        ref_theta_vals = -ref_theta_vals
-                        trk_false_vals = -trk_false_vals
-                    
-                    is_backtracking_vals = (np.round(ref_theta_vals, 2) != np.round(trk_false_vals, 2)).astype(float)
-                    
-                    ref_theta = pd.Series(ref_theta_vals, index=raw_df.index)
-                    is_backtracking = pd.Series(is_backtracking_vals, index=raw_df.index).fillna(0).astype(int)
-                    
-                    processed_df["Tracker Ref."] = ref_theta
-                    processed_df["Tracker_is_backtracking"] = is_backtracking
-
-                    for inp, s_data in zip(inputs, all_input_series):
-                        s_name = inp.get("series") if isinstance(inp, dict) else inp
-                        if s_name:
-                            diff = (s_data - ref_theta).abs()
-                            flag = ((diff > tol) & (is_backtracking == 0) & ref_theta.notna()).astype(int)
-                            processed_df[f"flag_tracker_erro_{s_name}"] = flag
-                            
-                except Exception as e:
-                    logger.error(f"[TRACKER] Erro ao calcular PVLib para {date}: {e}")
-                
-                continue
 
         # --- Depois processa o Bloco Geff (depende de Gpoa e Grear) ---
         for geff in geff_nodes:
@@ -190,12 +297,18 @@ def run_flow_processing(usina: str):
             # Busca gpoa e grear no que já foi processado hoje
             gpoa = processed_df.get("gpoa")
             grear = processed_df.get("grear")
+            gpoa_semTR = processed_df.get("gpoa_semTR")
+            grear_semTR = processed_df.get("grear_semTR")
             
             if gpoa is not None and grear is not None:
                 geff_result = gpoa + beta * grear * (1 - SSF) * (1 - MLF)
                 processed_df[geff_id] = geff_result
             else:
                 logger.warning(f"[GEFF] gpoa ou grear ausentes para {geff_id} em {date}")
+                
+            if gpoa_semTR is not None and grear_semTR is not None:
+                geff_result_semTR = gpoa_semTR + beta * grear_semTR * (1 - SSF) * (1 - MLF)
+                processed_df[f"{geff_id}_semTR"] = geff_result_semTR
 
         # --- Depois processa o Bloco Tcel (depende de Tmod e Gpoa) ---
         tcel_nodes = [n for n in nodes if n.get("type") == "tcel" or n.get("id") == "tcel"]
@@ -203,12 +316,129 @@ def run_flow_processing(usina: str):
             tcel_id = tcel["id"]
             tmod = processed_df.get("tmod")
             gpoa = processed_df.get("gpoa")
+            gpoa_semTR = processed_df.get("gpoa_semTR")
             
             if tmod is not None and gpoa is not None:
                 tcel_result = tmod + (gpoa / 1000.0) * 3.0
                 processed_df[tcel_id] = tcel_result
             else:
                 logger.warning(f"[TCEL] tmod ou gpoa ausentes para {tcel_id} em {date}")
+                
+            if tmod is not None and gpoa_semTR is not None:
+                tcel_result_semTR = tmod + (gpoa_semTR / 1000.0) * 3.0
+                processed_df[f"{tcel_id}_semTR"] = tcel_result_semTR
+
+        # --- Depois processa o Bloco Curtailment ---
+        curtailment_nodes = [n for n in nodes if n.get("type") == "curtailment" or n.get("id") == "curtailment"]
+        for curtailment in curtailment_nodes:
+            curtailment_id = curtailment["id"]
+            data = curtailment.get("data", {})
+            ref_min = data.get("curtailmentRefMin", 52.8)
+            ref_margin = data.get("curtailmentRefMargin", 3.0)
+            diff_margin = data.get("curtailmentDiffMargin", 5.0)
+            
+            energia = processed_df.get("energia")
+            
+            # Buscar a série do PPC
+            ppc_cols = [c for c in processed_df.columns if c.startswith("potencia_ppc") and not c.endswith("_semTR") and not c.endswith("_válida")]
+            if energia is not None and ppc_cols:
+                ppc_data = processed_df[ppc_cols[0]]
+                try:
+                    threshold_min = float(ref_min) * (1 - (float(ref_margin) / 100.0))
+                    cond_1 = ppc_data < threshold_min
+                    
+                    threshold_diff = ppc_data * (1 - (float(diff_margin) / 100.0))
+                    cond_2 = energia >= threshold_diff
+                    
+                    # Curtailment efetivo (0) se cond_1 e cond_2 forem verdadeiras. Caso contrário, válido (1)
+                    curtailment_flag = ~(cond_1 & cond_2)
+                    processed_df[curtailment_id] = curtailment_flag.astype(int)
+                except Exception as e:
+                    logger.error(f"[FLOW] Erro ao calcular curtailment: {e}")
+                    processed_df[curtailment_id] = 1
+            else:
+                logger.warning(f"[CURTAILMENT] energia ou potencia_ppc ausentes para {curtailment_id} em {date}")
+                processed_df[curtailment_id] = 1
+
+        # --- Depois processa o Bloco Simultaneidade/Dados Válidos ---
+        simult_nodes = [n for n in nodes if n.get("id") == "simultaneidade" or n.get("data", {}).get("label", "").find("Simultaneidade") != -1 or n.get("data", {}).get("label", "").find("Dados Válidos") != -1]
+        for node in simult_nodes:
+            data = node.get("data", {})
+            out_name = "Dados Válidos"
+            params = data.get("simultParams", {})
+            
+            check_geff = params.get("geff", True)
+            check_tamb = params.get("tamb", True)
+            check_tcel = params.get("tcel", True)
+            check_energia = params.get("energia", False) # Desativado conforme pedido
+            check_energia_pmi = params.get("energia_pmi", True)
+            check_curtailment = params.get("curtailment", False)
+            
+            valid_mask = pd.Series(True, index=processed_df.index)
+            
+            if check_geff:
+                geff_data = processed_df.get("geff")
+                if geff_data is not None:
+                    valid_mask = valid_mask & geff_data.notna()
+                else:
+                    valid_mask = False
+                    
+            if check_tamb:
+                tamb_data = processed_df.get("tamb")
+                if tamb_data is not None:
+                    valid_mask = valid_mask & tamb_data.notna()
+                else:
+                    valid_mask = False
+                    
+            if check_tcel:
+                tcel_data = processed_df.get("tcel")
+                if tcel_data is not None:
+                    valid_mask = valid_mask & tcel_data.notna()
+                else:
+                    valid_mask = False
+                    
+            # check_energia removido da lógica de simultaneidade conforme pedido
+                    
+            if check_energia_pmi:
+                energia_pmi_data = processed_df.get("energia_pmi")
+                if energia_pmi_data is not None:
+                    valid_mask = valid_mask & energia_pmi_data.notna()
+                else:
+                    valid_mask = False
+                    
+            # A flag Simultaneidade observa apenas as séries dela
+            if isinstance(valid_mask, bool):
+                processed_df["Simultaneidade"] = int(valid_mask)
+            else:
+                processed_df["Simultaneidade"] = valid_mask.astype(int)
+
+            if check_curtailment:
+                curtailment_data = processed_df.get("curtailment")
+                if curtailment_data is not None:
+                    # A série de curtailment já é 0 ou 1 (1 = válido)
+                    valid_mask = valid_mask & (curtailment_data == 1)
+                else:
+                    valid_mask = False
+            
+            if isinstance(valid_mask, bool):
+                processed_df[out_name] = int(valid_mask)
+            else:
+                processed_df[out_name] = valid_mask.astype(int)
+
+            # --- Cria as séries "_válida" multiplicando pela flag de Dados Válidos ---
+            simult_flag = processed_df[out_name]
+            for col in list(processed_df.columns):
+                if col != out_name and col != "Simultaneidade" and not col.endswith("_válida") and not col.startswith("curtailment"):
+                    # Multiplica as séries originais pela flag (0 ou 1)
+                    processed_df[f"{col}_válida"] = processed_df[col] * simult_flag
+
+            # --- Cria as séries de 15min para gpoa ---
+            if "gpoa" in processed_df.columns:
+                processed_df["gpoa_15min"] = processed_df.groupby(pd.Grouper(freq="15min"))["gpoa"].transform("mean")
+            
+            if "gpoa_válida" in processed_df.columns:
+                processed_df["gpoa_válida_15min"] = processed_df.groupby(pd.Grouper(freq="15min"))["gpoa_válida"].transform("mean")
+
 
         # Salvar o dia processado
         if not processed_df.empty:
@@ -223,6 +453,33 @@ def run_flow_processing(usina: str):
         "processed_days": len(results_summary),
         "aggregators": [a["id"] for a in aggregators]
     }
+
+def check_3_hours_consecutive(series: pd.Series, threshold: float = 600, required_minutes: int = 180) -> str:
+    if series is None or series.empty or series.isna().all():
+        return "NÃO_OK|0 pts - 0,00 h totais | 0 pts - 0,00 h consecutivos"
+    
+    mask = series > threshold
+    total_pts = int(mask.sum())
+    total_h = total_pts / 60.0
+    
+    if total_pts == 0:
+        return "NÃO_OK|0 pts - 0,00 h totais | 0 pts - 0,00 h consecutivos"
+    
+    group = (~mask).cumsum()
+    consecutive_counts = mask.groupby(group).sum()
+    max_consec_pts = int(consecutive_counts.max()) if not consecutive_counts.empty else 0
+    max_consec_h = max_consec_pts / 60.0
+    
+    stats_str = f"{total_pts} pts - {total_h:.2f} h totais | {max_consec_pts} pts - {max_consec_h:.2f} h consecutivos"
+    stats_str = stats_str.replace(".", ",")
+    
+    if max_consec_pts >= required_minutes:
+        return f"OK|{stats_str}"
+    elif total_pts >= required_minutes:
+        return f"OK_RESSALVA|{stats_str}"
+    else:
+        return f"NÃO_OK|{stats_str}"
+
 
 def get_flow_integrals(usina: str) -> Dict[str, Any]:
     """
@@ -347,6 +604,22 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                 "node_id": group
             })
 
+    # Adicionar grupo de validação (sempre no final)
+    validation_cols = [
+        {"key": "val_irrad_3h_medidos", "label": "Irradiância maior que 600 W/m² - Dados Medidos"},
+        {"key": "val_irrad_3h_validos", "label": "Irradiância maior que 600 W/m² - Dados Válidos"},
+        {"key": "val_irrad_3kwh_medidos", "label": "Irradiação maior que 3 kWh/m² - Dados Medidos"},
+        {"key": "val_irrad_3kwh_validos", "label": "Irradiação maior que 3 kWh/m² - Dados Válidos"},
+        {"key": "val_validacao", "label": "Validação"}
+    ]
+    for v_col in validation_cols:
+        column_definitions.append({
+            "key": v_col["key"],
+            "label": v_col["label"],
+            "type": "validation",
+            "node_id": "validacao"
+        })
+
     # Agora vamos calcular as linhas dia a dia
     rows = []
     
@@ -370,7 +643,47 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
         tracker_errors_for_day = []
         tracker_valid_points_for_day = 0
         
+        # --- Cálculo das Colunas de Validação ---
+        if processed_df is not None:
+            if "gpoa_15min" in processed_df.columns:
+                row_data["val_irrad_3h_medidos"] = check_3_hours_consecutive(processed_df["gpoa_15min"])
+            else:
+                row_data["val_irrad_3h_medidos"] = "NÃO_OK|0 pts - 0,00 h totais | 0 pts - 0,00 h consecutivos"
+                
+            if "gpoa_válida_15min" in processed_df.columns:
+                row_data["val_irrad_3h_validos"] = check_3_hours_consecutive(processed_df["gpoa_válida_15min"])
+            else:
+                row_data["val_irrad_3h_validos"] = "NÃO_OK|0 pts - 0,00 h totais | 0 pts - 0,00 h consecutivos"
+                
+            if "gpoa" in processed_df.columns:
+                gpoa_sum = processed_df["gpoa"].sum(skipna=True) / 60000.0
+                status = "OK" if gpoa_sum >= 3.0 else "NÃO_OK"
+                row_data["val_irrad_3kwh_medidos"] = f"{status}|{gpoa_sum:.2f} kWh/m²".replace(".", ",")
+            else:
+                row_data["val_irrad_3kwh_medidos"] = "NÃO_OK|0,00 kWh/m²"
+                
+            if "gpoa_válida" in processed_df.columns:
+                gpoa_val_sum = processed_df["gpoa_válida"].sum(skipna=True) / 60000.0
+                status = "OK" if gpoa_val_sum >= 3.0 else "NÃO_OK"
+                row_data["val_irrad_3kwh_validos"] = f"{status}|{gpoa_val_sum:.2f} kWh/m²".replace(".", ",")
+            else:
+                row_data["val_irrad_3kwh_validos"] = "NÃO_OK|0,00 kWh/m²"
+        else:
+            row_data["val_irrad_3h_medidos"] = "NÃO_OK|0 pts - 0,00 h totais | 0 pts - 0,00 h consecutivos"
+            row_data["val_irrad_3h_validos"] = "NÃO_OK|0 pts - 0,00 h totais | 0 pts - 0,00 h consecutivos"
+            row_data["val_irrad_3kwh_medidos"] = "NÃO_OK|0,00 kWh/m²"
+            row_data["val_irrad_3kwh_validos"] = "NÃO_OK|0,00 kWh/m²"
+            
+        # Validação final: se qualquer coluna de Dados Válidos estiver NÃO_OK, o dia é Inválido
+        irrad_600_ok = not row_data.get("val_irrad_3h_validos", "").startswith("NÃO_OK")
+        irrad_3kwh_ok = not row_data.get("val_irrad_3kwh_validos", "").startswith("NÃO_OK")
+        row_data["val_validacao"] = "Dia Válido" if (irrad_600_ok and irrad_3kwh_ok) else "Dia Inválido"
+        # ----------------------------------------
+        
         for col in column_definitions:
+            if col["type"] == "validation":
+                continue # já calculado acima
+
             val = None
             col_key = col["key"]
             is_temp = col["node_id"] in ["tamb", "tmod", "tcel"]
@@ -398,8 +711,22 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                         if f_def.get("max_value") is not None:
                             s_data[s_data > f_def["max_value"]] = np.nan
                         if f_def.get("max_variation") is not None:
-                            diff = s_data.diff().abs()
+                            median_window = f_def.get("median_window")
+                            if median_window and median_window > 1:
+                                med = s_data.rolling(window=median_window, center=True, min_periods=1).median()
+                                diff = (s_data - med).abs()
+                            else:
+                                diff = s_data.diff().abs()
                             s_data[diff > f_def["max_variation"]] = np.nan
+                        if f_def.get("min_variation") is not None:
+                            min_time = f_def.get("min_time", 1)
+                            diff = s_data.diff().abs()
+                            mask = diff < f_def["min_variation"]
+                            if min_time > 1:
+                                group = (~mask).cumsum()
+                                run_lengths = mask.groupby(group).transform('sum')
+                                mask = mask & (run_lengths >= min_time)
+                            s_data[mask] = np.nan
                     
                     if is_temp:
                         # Média ponderada por Gpoa
@@ -459,7 +786,14 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                 elif is_trimmed:
                     base_key = base_key.replace("_trimmed", "")
                 
-                if processed_df is not None and base_key in processed_df.columns:
+                if col["node_id"] == "tracker":
+                    if tracker_errors_for_day and tracker_valid_points_for_day > 0:
+                        avg_errors = sum(tracker_errors_for_day) / len(tracker_errors_for_day)
+                        perc = (avg_errors / tracker_valid_points_for_day) * 100
+                        val = f"{int(round(avg_errors))} ({perc:.1f}%)"
+                    else:
+                        val = "-"
+                elif processed_df is not None and base_key in processed_df.columns:
                     s_data = processed_df[base_key].copy()
                     
                     if is_restricted:
@@ -501,13 +835,6 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                         val = s_data.mean(skipna=True)
                         if pd.notna(val):
                             val = 100 - val if val > 1 else (1 - val) * 100
-                    elif col["node_id"] == "tracker":
-                        if tracker_errors_for_day and tracker_valid_points_for_day > 0:
-                            avg_errors = sum(tracker_errors_for_day) / len(tracker_errors_for_day)
-                            perc = (avg_errors / tracker_valid_points_for_day) * 100
-                            val = f"{int(round(avg_errors))} ({perc:.1f}%)"
-                        else:
-                            val = "-"
                     else:
                         # Calcular integral (soma) e converter de 1-min para base horária / kW
                         raw_sum = s_data.sum(min_count=1)
@@ -538,3 +865,57 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
         ],
         "rows": rows
     }
+
+def export_pvsyst_xlsx(usina: str) -> bytes:
+    """Gera um XLSX com Timestamp, Geff, Tamb e Tcel multiplicados pelo filtro de Simultaneidade."""
+    import io
+    processed_dir = os.path.join(DATA_DIR, usina, "processed")
+    if not os.path.exists(processed_dir):
+        return b""
+        
+    dfs = []
+    for f in sorted(os.listdir(processed_dir)):
+        if f.endswith(".parquet"):
+            try:
+                df = pd.read_parquet(os.path.join(processed_dir, f))
+                dfs.append(df)
+            except Exception as e:
+                logger.error(f"[FLOW EXPORT] Erro ao ler {f}: {e}")
+                
+    if not dfs:
+        return b""
+        
+    full_df = pd.concat(dfs, ignore_index=True)
+    cols = full_df.columns
+    
+    geff_col = next((c for c in cols if c.lower() == 'geff'), None)
+    tamb_col = next((c for c in cols if c.lower() == 'tamb'), None)
+    tcel_col = next((c for c in cols if c.lower() == 'tcel'), None)
+    simult_col = next((c for c in cols if c.lower() == 'simultaneidade'), None)
+    
+    output_df = pd.DataFrame()
+    if 'timestamp' in cols:
+        output_df['Timestamp'] = full_df['timestamp']
+    elif full_df.index.name == 'timestamp':
+        output_df['Timestamp'] = full_df.index
+        
+    if simult_col and geff_col and tamb_col and tcel_col:
+        mask = full_df[simult_col].fillna(0).astype(int)
+        output_df['Geff'] = full_df[geff_col].where(mask == 1, np.nan)
+        output_df['Tamb'] = full_df[tamb_col].where(mask == 1, np.nan)
+        output_df['Tcel'] = full_df[tcel_col].where(mask == 1, np.nan)
+    else:
+        logger.warning(f"[FLOW EXPORT] Faltam colunas para exportação completa.")
+        if geff_col: output_df['Geff'] = full_df[geff_col]
+        if tamb_col: output_df['Tamb'] = full_df[tamb_col]
+        if tcel_col: output_df['Tcel'] = full_df[tcel_col]
+        
+    # Remove timezone so Excel can save it, if it is tz-aware
+    if pd.api.types.is_datetime64tz_dtype(output_df['Timestamp']):
+        output_df['Timestamp'] = output_df['Timestamp'].dt.tz_localize(None)
+
+    excel_buffer = io.BytesIO()
+    with pd.ExcelWriter(excel_buffer, engine="openpyxl") as writer:
+        output_df.to_excel(writer, index=False, sheet_name="PVSyst Export")
+    return excel_buffer.getvalue()
+

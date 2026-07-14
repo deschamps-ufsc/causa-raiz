@@ -11,7 +11,9 @@ export function formatSeriesName(name) {
   if (nameLower === 'tmod') return 'Tmod';
   if (nameLower === 'tcel') return 'Tcel';
   if (nameLower === 'sujidade') return 'Sujidade';
-  if (nameLower === 'energia') return 'Potência';
+  if (nameLower === 'energia') return 'Potência PPC';
+  if (nameLower === 'simultaneidade') return 'Simultaneidade';
+  if (nameLower === 'curtailment') return 'Curtailment';
   return name;
 }
 

@@ -97,7 +97,7 @@ def import_from_excel(content: bytes, usina: str) -> dict:
 
         entry = {"elemento": elemento}
 
-        for field in ["skid", "inversor", "stringbox", "estacao", "string"]:
+        for field in ["skid", "inversor", "stringbox", "tracker", "estacao", "string"]:
             val = row.get(field, None)
             if pd.notna(val) and str(val).strip().lower() not in ("", "nan"):
                 val_str = str(val).strip()
@@ -116,8 +116,17 @@ def import_from_excel(content: bytes, usina: str) -> dict:
     skids_encontrados = list({v["skid"] for v in mapping.values() if v.get("skid")})
     inversores_encontrados = list({v["inversor"] for v in mapping.values() if v.get("inversor")})
     stringboxes_encontrados = list({v["stringbox"] for v in mapping.values() if v.get("stringbox")})
+    trackers_encontrados = list({v["tracker"] for v in mapping.values() if v.get("tracker")})
     estacoes_encontradas = list({v["estacao"] for v in mapping.values() if v.get("estacao")})
-    strings_encontradas = list({v["string"] for v in mapping.values() if v.get("string")})
+    
+    strings_set = set()
+    for v in mapping.values():
+        if v.get("string"):
+            for s in str(v["string"]).split(";"):
+                s_str = s.strip()
+                if s_str and s_str != "nan":
+                    strings_set.add(s_str)
+    strings_encontradas = list(strings_set)
 
     logger.info(
         f"[MAPPING] Importado: {len(mapping)} entradas, "
@@ -135,6 +144,7 @@ def import_from_excel(content: bytes, usina: str) -> dict:
         "skids_encontrados": sorted([s for s in skids_encontrados if s and s != 'nan'], key=_natural_sort_key),
         "inversores_encontrados": sorted([i for i in inversores_encontrados if i and i != 'nan'], key=_natural_sort_key),
         "stringboxes_encontrados": sorted([sb for sb in stringboxes_encontrados if sb and sb != 'nan'], key=_natural_sort_key),
+        "trackers_encontrados": sorted([tr for tr in trackers_encontrados if tr and tr != 'nan'], key=_natural_sort_key),
         "estacoes_encontradas": sorted([es for es in estacoes_encontradas if es and es != 'nan'], key=_natural_sort_key),
         "strings_encontradas": sorted([st for st in strings_encontradas if st and st != 'nan'], key=_natural_sort_key),
     }
@@ -150,20 +160,37 @@ def get_mapping_summary(usina: str) -> dict:
     skids_encontrados = list({v["skid"] for v in mapping.values() if v.get("skid")})
     inversores_encontrados = list({v["inversor"] for v in mapping.values() if v.get("inversor")})
     stringboxes_encontrados = list({v["stringbox"] for v in mapping.values() if v.get("stringbox")})
+    trackers_encontrados = list({v["tracker"] for v in mapping.values() if v.get("tracker")})
     estacoes_encontradas = list({v["estacao"] for v in mapping.values() if v.get("estacao")})
-    strings_encontradas = list({v["string"] for v in mapping.values() if v.get("string")})
+    
+    from services.synthetic_service import build_lookup
+    synth_lookup = build_lookup(usina)
+    total_sinteticas = sum(1 for k in mapping.keys() if k in synth_lookup)
+    total_nativas = len(mapping) - total_sinteticas
+    
+    strings_set = set()
+    for v in mapping.values():
+        if v.get("string"):
+            for s in str(v["string"]).split(";"):
+                s_str = s.strip()
+                if s_str and s_str != "nan":
+                    strings_set.add(s_str)
+    strings_encontradas = list(strings_set)
 
     registered_elements = get_registered_elements_names()
     elementos_nao_cadastrados = sorted([e for e in elementos_encontrados if e and e != 'nan' and e not in registered_elements], key=_natural_sort_key)
 
     return {
         "total_mapeamentos": len(mapping),
+        "total_nativas": total_nativas,
+        "total_sinteticas": total_sinteticas,
         "linhas_invalidas": 0,
         "elementos_encontrados": sorted([e for e in elementos_encontrados if e and e != 'nan'], key=_natural_sort_key),
         "elementos_nao_cadastrados": elementos_nao_cadastrados,
         "skids_encontrados": sorted([s for s in skids_encontrados if s and s != 'nan'], key=_natural_sort_key),
         "inversores_encontrados": sorted([i for i in inversores_encontrados if i and i != 'nan'], key=_natural_sort_key),
         "stringboxes_encontrados": sorted([sb for sb in stringboxes_encontrados if sb and sb != 'nan'], key=_natural_sort_key),
+        "trackers_encontrados": sorted([tr for tr in trackers_encontrados if tr and tr != 'nan'], key=_natural_sort_key),
         "estacoes_encontradas": sorted([es for es in estacoes_encontradas if es and es != 'nan'], key=_natural_sort_key),
         "strings_encontradas": sorted([st for st in strings_encontradas if st and st != 'nan'], key=_natural_sort_key),
     }
@@ -207,6 +234,7 @@ def generate_template_excel(colunas_parquet: Optional[list[str]] = None) -> byte
             "estacao": [""] * len(colunas_parquet),
             "inversor": [""] * len(colunas_parquet),
             "stringbox": [""] * len(colunas_parquet),
+            "tracker": [""] * len(colunas_parquet),
             "string": [""] * len(colunas_parquet),
         }
     else:
@@ -226,6 +254,7 @@ def generate_template_excel(colunas_parquet: Optional[list[str]] = None) -> byte
             "estacao": ["EST-01", "EST-01", ""],
             "inversor": ["INV-01", "INV-01", "INV-01"],
             "stringbox": ["STB-01", "", ""],
+            "tracker": ["TR-01", "", ""],
             "string": ["STR-01", "", ""],
         }
 

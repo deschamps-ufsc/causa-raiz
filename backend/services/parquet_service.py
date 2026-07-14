@@ -45,21 +45,42 @@ def list_series_for_dates(dates_str: str, usina: str) -> list[dict]:
     Returns:
         Lista de dicts com keys: coluna, elemento, skid, inversor, stringbox, string, mapeada
     """
-    colunas_set = set()
+    raw_cols = set()
+    proc_cols = set()
     dates = [d.strip() for d in dates_str.split(",") if d.strip()]
+    if dates == ["all"]:
+        dates = list_available_dates(usina)
     
     for date in dates:
         path = _parquet_path(date, usina)
         if os.path.exists(path):
             schema = pq.read_schema(path)
-            colunas_set.update(f.name for f in schema if f.name != "timestamp")
+            raw_cols.update(f.name for f in schema if f.name != "timestamp")
         
         # Incluir séries processadas (agregadores)
         processed_path = os.path.join(DATA_DIR, usina, "processed", f"{date}.parquet")
         if os.path.exists(processed_path):
             schema_proc = pq.read_schema(processed_path)
-            colunas_set.update(f.name for f in schema_proc if f.name != "timestamp")
+            proc_cols.update(f.name for f in schema_proc if f.name != "timestamp")
     
+    from services.synthetic_service import build_lookup
+    synth_lookup = build_lookup(usina)
+    
+    synth_cols = set()
+    all_parquet_cols = raw_cols.union(proc_cols)
+    for s_name, s_def in synth_lookup.items():
+        s1 = s_def.get("serie_1")
+        s2 = s_def.get("serie_2")
+        s3 = s_def.get("serie_3")
+        if s1 and s1 not in all_parquet_cols:
+            continue
+        if s2 and str(s2).strip() != "nan" and s2 not in all_parquet_cols:
+            continue
+        if s3 and str(s3).strip() != "nan" and s3 not in all_parquet_cols:
+            continue
+        synth_cols.add(s_name)
+    
+    colunas_set = all_parquet_cols.union(synth_cols)
     if not colunas_set:
         raise FileNotFoundError(f"Nenhum dado encontrado para as datas: {dates_str}")
     from services.mapping_service import load_mapping
@@ -72,18 +93,21 @@ def list_series_for_dates(dates_str: str, usina: str) -> list[dict]:
         elemento = info.get("elemento")
         # Preencher elemento para séries sintéticas
         if not elemento:
-            if col in ["gpoa", "grear", "geff"]:
+            col_lower = col.lower()
+            if col_lower.startswith("gpoa") or col_lower.startswith("grear") or col_lower.startswith("geff"):
                 elemento = "Irradiação"
-            elif col in ["tamb", "tmod", "tcel"]:
+            elif col_lower.startswith("tamb") or col_lower.startswith("tmod") or col_lower.startswith("tcel"):
                 elemento = "Temperatura"
-            elif col == "sujidade":
+            elif col_lower.startswith("sujidade"):
                 elemento = "Sujidade"
-            elif col == "tracker" or col == "Tracker Ref." or col.startswith("flag_tracker") or col.startswith("Tracker_is"):
+            elif col_lower.startswith("tracker") or col_lower == "tracker ref." or col_lower.startswith("flag_tracker"):
                 elemento = "Tracker"
-            elif col == "energia":
+            elif col_lower.startswith("energia") and not col_lower.startswith("energia_pmi"):
                 elemento = "Potência CA PPC"
-            elif col == "energia_pmi":
+            elif col_lower.startswith("energia_pmi"):
                 elemento = "Energia PMI"
+            elif col_lower.startswith("simultaneidade"):
+                elemento = "Filtro"
 
         result.append({
             "coluna": col,
@@ -91,9 +115,12 @@ def list_series_for_dates(dates_str: str, usina: str) -> list[dict]:
             "skid": info.get("skid"),
             "inversor": info.get("inversor"),
             "stringbox": info.get("stringbox"),
+            "tracker": info.get("tracker"),
             "string": info.get("string"),
             "estacao": info.get("estacao"),
             "mapeada": col in mapping,
+            "processada": (col in proc_cols) and (col not in raw_cols),
+            "sintetica": col in synth_cols,
         })
 
     return result
@@ -297,3 +324,67 @@ def _reindex_to_full_period(
     # Left join: mantém todos os minutos do período, preenche lacunas com NaN
     merged = full_df.merge(df, on="timestamp", how="left")
     return merged
+
+
+def delete_series_from_parquet(usina: str, dates: list[str], series_to_delete: list[str]) -> dict:
+    """
+    Remove colunas específicas dos arquivos Parquet da usina.
+    Se a data for 'all', remove de todos os arquivos Parquet encontrados na usina.
+    Retorna a quantidade de colunas removidas e a quantidade de arquivos deletados.
+    """
+    usina_dir = os.path.join(DATA_DIR, usina)
+    if not os.path.exists(usina_dir):
+        return {"columns_dropped": 0, "files_deleted": 0}
+
+    import pyarrow.parquet as pq
+
+    if not dates or dates == ["all"]:
+        # Seleciona todos os .parquet
+        files_to_process = [f for f in os.listdir(usina_dir) if f.endswith(".parquet")]
+    else:
+        files_to_process = [f"{d}.parquet" for d in dates]
+
+    total_cols_dropped = 0
+    total_files_deleted = 0
+
+    for fname in files_to_process:
+        path = os.path.join(usina_dir, fname)
+        if not os.path.exists(path):
+            continue
+
+        try:
+            # Ler apenas o schema para ver se a série existe no arquivo
+            schema = pq.read_schema(path)
+            cols_in_file = schema.names
+            cols_to_drop = [c for c in series_to_delete if c in cols_in_file]
+
+            if not cols_to_drop:
+                continue
+
+            # Se vai excluir colunas, lê a tabela e usa drop_columns
+            table = pq.read_table(path)
+            table = table.drop_columns(cols_to_drop)
+            
+            total_cols_dropped += len(cols_to_drop)
+
+            # Verifica se sobrou apenas a coluna timestamp
+            if len(table.column_names) <= 1:
+                # O arquivo ficou vazio (só timestamp ou nada), então remove
+                os.remove(path)
+                total_files_deleted += 1
+                logger.info(f"[DELETE] Arquivo '{fname}' deletado pois ficou sem séries.")
+            else:
+                # Salva o arquivo novamente
+                pq.write_table(table, path, compression="snappy")
+                logger.info(f"[DELETE] {len(cols_to_drop)} séries removidas de '{fname}'.")
+
+        except Exception as e:
+            logger.error(f"[DELETE] Erro ao processar '{fname}' para deleção: {e}")
+
+    # Limpar cache do MD5 (como modificamos os arquivos, o cache do excel original já não serve muito, 
+    # mas o importante é que os arquivos parquet mudaram. As próximas consultas os lerão do disco)
+    
+    return {
+        "columns_dropped": total_cols_dropped,
+        "files_deleted": total_files_deleted,
+    }

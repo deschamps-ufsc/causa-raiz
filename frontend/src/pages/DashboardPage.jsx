@@ -4,12 +4,14 @@ import { useSeries } from '../hooks/useSeries'
 import { useSeriesData } from '../hooks/useSeriesData'
 import { fetchElementos, fetchUsinas } from '../services/api'
 import { useUsina } from '../hooks/UsinaContext'
+import { useChartSettings } from '../hooks/ChartSettingsContext'
 import SeriesSelector from '../components/SeriesSelector'
 import TimeSeriesChart from '../components/TimeSeriesChart'
 import DataTable from '../components/DataTable'
 import Heatmap from '../components/Heatmap'
 import HeatmapYield from '../components/HeatmapYield'
 import RankingTab from '../components/RankingTab'
+import TrackerAnalysis from '../components/TrackerAnalysis'
 import DiagramTab from '../pages/DiagramPage'
 import { SkeletonChart, SkeletonList, ErrorState, EmptyState } from '../components/StateComponents'
 import SharedColorPicker from '../components/SharedColorPicker'
@@ -17,6 +19,7 @@ import { useAuth } from '../hooks/AuthContext'
 import { fetchVisualizations, createVisualization, updateVisualization, deleteVisualization } from '../services/api'
 import { SaveVisualizationModal, LoadVisualizationModal } from '../components/VisualizationModals'
 import FluxogramaView from '../components/FluxogramaView'
+import MapaView from '../components/MapaView'
 
 export function formatSeriesName(name) {
   if (!name) return name;
@@ -28,16 +31,19 @@ export function formatSeriesName(name) {
   if (nameLower === 'tmod') return 'Tmod';
   if (nameLower === 'tcel') return 'Tcel';
   if (nameLower === 'sujidade') return 'Sujidade';
-  if (nameLower === 'energia') return 'Energia';
+  if (nameLower === 'energia') return 'Potência PPC';
+  if (nameLower === 'simultaneidade') return 'Simultaneidade';
+  if (nameLower === 'curtailment') return 'Curtailment';
   return name;
 }
 
 const TABS = [
   { id: 'chart',   label: '📈 Gráfico' },
-  { id: 'ranking', label: '🏆 Ranking' },
+  { id: 'table',   label: '📋 Tabela' },
   { id: 'diagram', label: '🕸️ Diagrama' },
   { id: 'desempenho', label: '📊 Desempenho' },
-  { id: 'heatmap', label: '🌡️ Análise de Causa Raiz' }
+  { id: 'heatmap', label: '🌡️ Análise de Causa Raiz' },
+  { id: 'mapa', label: '🗺️ Mapa' }
 ]
 
 export default function DashboardPage() {
@@ -55,12 +61,14 @@ export default function DashboardPage() {
   
   const [activeTab, setActiveTab] = useState('chart')
   const [desempenhoTab, setDesempenhoTab] = useState('config')
+  const [causaRaizTab, setCausaRaizTab] = useState('integralizacao')
   const [elementos, setElementos] = useState([])
   
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [isDataOpen, setIsDataOpen] = useState(true)
   const [isFiltersOpen, setIsFiltersOpen] = useState(true)
   const [isSeriesOpen, setIsSeriesOpen] = useState(true)
+  const [isSeriesModalOpen, setIsSeriesModalOpen] = useState(false)
   const [isSecondaryToolbarOpen, setIsSecondaryToolbarOpen] = useState(true)
   const [showEixosMenu, setShowEixosMenu] = useState(false)
   const [showSeriesMenu, setShowSeriesMenu] = useState(false)
@@ -159,9 +167,32 @@ export default function DashboardPage() {
   const { series, dates, loading: seriesLoading } = useSeries(selectedDates, usinaAtual)
   const { data, loading: dataLoading, error: dataError, query, clear } = useSeriesData()
 
-  // Separa as séries normais dos filtros
-  const normalSeries = useMemo(() => series?.filter(s => s.elemento?.toLowerCase() !== 'filtro') || [], [series])
-  const filterSeries = useMemo(() => series?.filter(s => s.elemento?.toLowerCase() === 'filtro') || [], [series])
+  const { elementSettings } = useChartSettings() || {}
+
+  // Identifica séries de filtro pela coluna (começa com 'simultaneidade')
+  // independentemente do Elemento 'Filtro' estar ou não cadastrado
+  const isFilterSerie = (s) => {
+    const col = s.coluna?.toLowerCase() || '';
+    return col.startsWith('simultaneidade') || col === 'curtailment' || col === 'dados válidos';
+  }
+
+  const normalSeries = useMemo(() => {
+    return series?.filter(s => !isFilterSerie(s)) || []
+  }, [series])
+
+  const filterSeries = useMemo(() => {
+    const filters = series?.filter(s => isFilterSerie(s)) || []
+    return filters.sort((a, b) => {
+      const getOrder = (col) => {
+        const c = col.toLowerCase()
+        if (c.startsWith('simultaneidade')) return 1
+        if (c === 'curtailment') return 2
+        if (c === 'dados válidos') return 3
+        return 99
+      }
+      return getOrder(a.coluna) - getOrder(b.coluna)
+    })
+  }, [series])
 
   useEffect(() => {
     if (pendingLoadVis && filterSeries.length > 0) {
@@ -222,7 +253,16 @@ export default function DashboardPage() {
       const newColors = { ...prev }
       filterSeries.forEach((s, idx) => {
         if (!newColors[s.coluna]) {
-          newColors[s.coluna] = defaultPalette[idx % defaultPalette.length]
+          const col = s.coluna.toLowerCase()
+          if (col === 'curtailment') {
+            newColors[s.coluna] = '#059669' // Green
+          } else if (col === 'dados válidos') {
+            newColors[s.coluna] = '#7c3aed' // Purple
+          } else if (col.startsWith('simultaneidade')) {
+            newColors[s.coluna] = '#ef4444' // Red
+          } else {
+            newColors[s.coluna] = defaultPalette[idx % defaultPalette.length]
+          }
           changed = true
         }
       })
@@ -338,33 +378,72 @@ export default function DashboardPage() {
                 onClick={() => setIsDataOpen(!isDataOpen)}
                 title="Clique para expandir/recolher"
               >
-                <span>📅 Data {selectedDates.length > 0 && <span className="badge badge-amber" style={{marginLeft: 8}}>{selectedDates.length} selecionados</span>}</span>
+                <span>📅 Data {dates.length > 0 && <span className="badge badge-amber" style={{marginLeft: 8}}>{dates.length} TOTAL</span>}</span>
                 <span style={{ fontSize: '10px' }}>{isDataOpen ? '▼' : '▶'}</span>
               </div>
               {isDataOpen && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 200, overflowY: 'auto', padding: '0 4px' }}>
-                  {dates.length === 0 && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Nenhuma data</span>}
-                  {dates.map((d) => (
-                    <label key={d} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, background: 'var(--bg-card)', padding: '6px 10px', borderRadius: 6, border: '1px solid var(--border)' }}>
-                      <input 
-                        type="checkbox" 
-                        checked={selectedDates.includes(d)} 
-                        onChange={(e) => {
-                          if (e.target.checked && data) {
-                            // Adicionar dia a visualização existente: preserva séries e config
-                            skipCleanup.current = true
-                            pendingVisualize.current = true
-                          }
-                          setSelectedDates(prev => {
-                            if (e.target.checked) return [...prev, d].sort((a,b) => a.localeCompare(b))
-                            return prev.filter(x => x !== d)
-                          })
-                        }}
-                      />
-                      <span>{d}</span>
-                    </label>
-                  ))}
+                <>
+                  {dates.length > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, padding: '0 4px' }}>
+                      <div style={{ color: '#d97706', fontSize: 11, fontWeight: 600, lineHeight: 1.2 }}>
+                        {selectedDates.length}/{dates.length} selecionadas
+                      </div>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button 
+                          className="btn btn-ghost btn-sm"
+                          style={{ fontSize: 10, padding: '2px 6px' }}
+                          onClick={() => setSelectedDates([...dates].sort((a,b) => a.localeCompare(b)))}
+                        >
+                          Sel. todos
+                        </button>
+                        <button 
+                          className="btn btn-ghost btn-sm"
+                          style={{ fontSize: 10, padding: '2px 6px' }}
+                          onClick={() => setSelectedDates([])}
+                        >
+                          Limpar
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, maxHeight: 200, overflowY: 'auto', padding: '0 4px' }}>
+                    {dates.length === 0 && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Nenhuma data</span>}
+                  {dates.map((d) => {
+                    const isSelected = selectedDates.includes(d)
+                    return (
+                    <button 
+                      key={d}
+                      onClick={() => {
+                        const checked = !isSelected
+                        if (checked && data) {
+                          // Adicionar dia a visualização existente: preserva séries e config
+                          skipCleanup.current = true
+                          pendingVisualize.current = true
+                        }
+                        setSelectedDates(prev => {
+                          if (checked) return [...prev, d].sort((a,b) => a.localeCompare(b))
+                          return prev.filter(x => x !== d)
+                        })
+                      }}
+                      style={{
+                        padding: '6px 8px',
+                        borderRadius: 6,
+                        fontSize: 12,
+                        fontWeight: isSelected ? 600 : 500,
+                        cursor: 'pointer',
+                        border: '1px solid',
+                        borderColor: isSelected ? '#fed7aa' : 'var(--border)',
+                        color: isSelected ? '#ea580c' : 'var(--text-primary)',
+                        background: isSelected ? '#fff7ed' : 'var(--bg-card)',
+                        transition: 'all 0.2s',
+                        textAlign: 'center'
+                      }}
+                    >
+                      {d}
+                    </button>
+                  )})}
                 </div>
+                </>
               )}
             </div>
 
@@ -456,7 +535,21 @@ export default function DashboardPage() {
                     <span>📡 Séries</span>
                     {seriesLoading && <span style={{ color: 'var(--text-muted)', fontSize: 11, textTransform: 'lowercase' }}>carregando...</span>}
                     {!seriesLoading && normalSeries.length > 0 && (
-                      <span className="badge badge-amber">{normalSeries.length.toLocaleString('pt-BR')} total</span>
+                      <>
+                        <span className="badge badge-amber">{normalSeries.length.toLocaleString('pt-BR')} total</span>
+                        <button 
+                          className="btn btn-ghost btn-sm" 
+                          style={{ padding: '4px', height: 'auto', minHeight: 'auto', marginLeft: '4px' }}
+                          onClick={(e) => { e.stopPropagation(); setIsSeriesModalOpen(true); }}
+                          title="Abrir em Tela Cheia"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                            <polyline points="15 3 21 3 21 9"></polyline>
+                            <line x1="10" y1="14" x2="21" y2="3"></line>
+                          </svg>
+                        </button>
+                      </>
                     )}
                   </div>
                   <span style={{ fontSize: '10px' }}>{isSeriesOpen ? '▼' : '▶'}</span>
@@ -562,13 +655,14 @@ export default function DashboardPage() {
           {/* Linha 2: botões de Carregar/Salvar — só nas abas Gráfico e Tabela */}
           {(activeTab === 'chart' || activeTab === 'table') && isSecondaryToolbarOpen && (
             <div style={{ padding: '0 20px 12px', display: 'flex', gap: '12px' }}>
-              <div style={{ position: 'relative' }}>
+              <div style={{ position: 'relative', display: 'flex' }}>
                 <button
                   className="btn btn-sm"
                   style={{ 
                     background: 'var(--bg-card)', border: '1px solid var(--border)', 
                     padding: '6px 12px', fontSize: 13, display: 'flex', alignItems: 'center', 
-                    gap: 8, color: 'var(--text-primary)', borderRadius: 6, cursor: 'pointer' 
+                    gap: 8, color: 'var(--text-primary)', borderRadius: 6, cursor: 'pointer',
+                    height: '100%'
                   }}
                   onClick={() => setIsVisDropdownOpen(!isVisDropdownOpen)}
                   title="Gerenciar Visualizações"
@@ -708,109 +802,166 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Conteúdo das abas */}
-        {activeTab === 'diagram' ? (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', padding: 20 }}>
-            {/* Cabeçalho Fixo do Diagrama */}
-            <div style={{ 
-              paddingBottom: '12px', 
-              borderBottom: '1px solid var(--border)', 
-              marginBottom: '0px',
-              flexShrink: 0
-            }}>
-              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                🕸️ Diagrama
-              </h2>
+        {/* Conteúdo das abas — todos os painéis permanecem montados, visibilidade controlada por display:none */}
+
+        {/* ── Diagrama ─────────────────────────────────────────── */}
+        <div style={{ display: activeTab === 'diagram' ? 'flex' : 'none', flex: 1, flexDirection: 'column', height: '100%', overflow: 'hidden', padding: 20 }}>
+          <div style={{ paddingBottom: '12px', borderBottom: '1px solid var(--border)', marginBottom: '0px', flexShrink: 0 }}>
+            <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              🕸️ Diagrama
+            </h2>
+          </div>
+          <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+            <DiagramTab />
+          </div>
+        </div>
+
+        {/* ── Desempenho ───────────────────────────────────────── */}
+        <div style={{ display: activeTab === 'desempenho' ? 'flex' : 'none', flex: 1, flexDirection: 'column', height: '100%', overflow: 'hidden', padding: '10px 20px 20px 20px' }}>
+          <div style={{ display: 'flex', gap: 2, marginBottom: 8, borderBottom: '2px solid #e2e8f0', flexShrink: 0 }}>
+            {[
+              { id: 'config', icon: '🔀', label: 'Fluxograma' },
+              { id: 'validacao', icon: '✅', label: 'Validação de Dados' },
+              { id: 'epi', icon: '📈', label: 'EPI' },
+            ].map(tab => {
+              const isActive = desempenhoTab === tab.id
+              return (
+                <button key={tab.id} onClick={() => setDesempenhoTab(tab.id)}
+                  style={{ padding: '7px 18px', fontSize: 13, fontWeight: 600,
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: isActive ? '#0f172a' : '#94a3b8',
+                    borderBottom: isActive ? '2px solid #0f172a' : '2px solid transparent',
+                    marginBottom: -2, transition: 'color 0.15s', display: 'flex', alignItems: 'center', gap: 6,
+                  }}
+                >
+                  <span style={{ fontSize: 14 }}>{tab.icon}</span>
+                  <span>{tab.label}</span>
+                </button>
+              )
+            })}
+          </div>
+          {/* Sub-abas de Desempenho — sempre montadas, cada uma com scroll independente */}
+          <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+            <div style={{ display: desempenhoTab === 'config' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'auto' }}>
+              <FluxogramaView elementos={elementos} selectedDates={selectedDates} showTitle={false} mode="config" onEpiClick={() => setDesempenhoTab('epi')} />
             </div>
-            {/* Bloco de conteúdo rolável do Diagrama */}
-            <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
-              <DiagramTab />
+            <div style={{ display: desempenhoTab === 'validacao' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'auto' }}>
+              <FluxogramaView elementos={elementos} selectedDates={selectedDates} showTitle={false} mode="validacao" onEpiClick={() => setDesempenhoTab('epi')} />
+            </div>
+            <div style={{ display: desempenhoTab === 'epi' ? 'flex' : 'none', flex: 1, overflow: 'auto', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+              Aba EPI - Em construção
             </div>
           </div>
-        ) : activeTab === 'desempenho' ? (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', padding: 20 }}>
-            {/* Cabeçalho Fixo do Desempenho */}
-            <div style={{ display: 'flex', gap: 2, marginBottom: 16, borderBottom: '2px solid #e2e8f0', flexShrink: 0 }}>
-              {[
-                { id: 'config', icon: '⚙️', label: 'Configurações' },
-                { id: 'validacao', icon: '✅', label: 'Validação de Dados' },
-                { id: 'epi', icon: '📈', label: 'EPI' },
-              ].map(tab => {
-                const isActive = desempenhoTab === tab.id
-                return (
-                  <button key={tab.id} onClick={() => setDesempenhoTab(tab.id)}
-                    style={{ padding: '7px 18px', fontSize: 13, fontWeight: 600,
-                      background: 'none', border: 'none', cursor: 'pointer',
-                      color: isActive ? '#0f172a' : '#94a3b8',
-                      borderBottom: isActive ? '2px solid #0f172a' : '2px solid transparent',
-                      marginBottom: -2, transition: 'color 0.15s', display: 'flex', alignItems: 'center', gap: 6,
-                    }}
-                  >
-                    <span style={{ fontSize: 14 }}>{tab.icon}</span>
-                    <span>{tab.label}</span>
-                  </button>
-                )
-              })}
-            </div>
-            {/* Bloco de conteúdo */}
-            <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+        </div>
 
-              {/* Configurações e Validação: FluxogramaView com mode controla o que exibir */}
-              {(desempenhoTab === 'config' || desempenhoTab === 'validacao') && (
-                <FluxogramaView elementos={elementos} showTitle={false} mode={desempenhoTab} />
+        {/* ── Análise de Causa Raiz ────────────────────────────── */}
+        <div style={{ display: activeTab === 'heatmap' ? 'flex' : 'none', flex: 1, flexDirection: 'column', height: '100%', overflow: 'hidden', padding: '10px 20px 20px 20px' }}>
+          <div style={{ display: 'flex', gap: 2, marginBottom: 8, borderBottom: '2px solid #e2e8f0', flexShrink: 0 }}>
+            {[
+              { id: 'integralizacao', icon: '🌡️', label: 'Integralização' },
+              { id: 'ranking', icon: '🏆', label: 'Ranking' },
+              { id: 'trackers', icon: '🎯', label: 'Trackers' },
+            ].map(tab => {
+              const isActive = causaRaizTab === tab.id
+              return (
+                <button key={tab.id} onClick={() => setCausaRaizTab(tab.id)}
+                  style={{ padding: '7px 18px', fontSize: 13, fontWeight: 600,
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: isActive ? '#0f172a' : '#94a3b8',
+                    borderBottom: isActive ? '2px solid #0f172a' : '2px solid transparent',
+                    marginBottom: -2, transition: 'color 0.15s', display: 'flex', alignItems: 'center', gap: 6,
+                  }}
+                >
+                  <span style={{ fontSize: 14 }}>{tab.icon}</span>
+                  <span>{tab.label}</span>
+                </button>
+              )
+            })}
+          </div>
+          {/* Sub-abas de Causa Raiz — sempre montadas, cada uma com scroll independente */}
+          <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+            <div style={{ display: causaRaizTab === 'integralizacao' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'auto' }}>
+              <HeatmapYield usina={usinaAtual} dates={selectedDates.join(',')} activeFilters={activeFilters} />
+            </div>
+            <div style={{ display: causaRaizTab === 'ranking' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'auto' }}>
+              <RankingTab usina={usinaAtual} dates={selectedDates.join(',')} activeFilters={activeFilters} />
+            </div>
+            <div style={{ display: causaRaizTab === 'trackers' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'auto' }}>
+              <TrackerAnalysis usina={usinaAtual} dates={selectedDates.join(',')} activeFilters={activeFilters} />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Mapa ─────────────────────────────────────────────── */}
+        <div style={{ display: activeTab === 'mapa' ? 'flex' : 'none', flex: 1, flexDirection: 'column', height: '100%', overflow: 'hidden', padding: '10px 20px 20px 20px' }}>
+          <MapaView usina={usinaAtual} dates={selectedDates.join(',')} activeFilters={activeFilters} />
+        </div>
+
+        {/* ── Gráfico + Tabela ─────────────────────────────────── */}
+        <div style={{ display: (activeTab === 'chart' || activeTab === 'table') ? 'flex' : 'none', flex: 1, overflow: 'auto', padding: 20, flexDirection: 'column' }}>
+
+          {/* Chart */}
+          {activeTab === 'chart' && (
+            <>
+              {dataLoading && <SkeletonChart />}
+              {dataError && !dataLoading && <ErrorState message={dataError} onRetry={handleVisualize} />}
+
+              {!dataLoading && !dataError && !filteredData && (
+                <EmptyState
+                  icon="☀️"
+                  title="Selecione séries e clique em Visualizar"
+                  subtitle="Escolha uma data, selecione as séries no painel esquerdo e clique no botão"
+                  action={
+                    <button 
+                      className="btn btn-secondary" 
+                      onClick={() => setIsLoadModalOpen(true)}
+                      style={{ gap: 8 }}
+                    >
+                      📂 Carregar Visualização Salva
+                    </button>
+                  }
+                />
               )}
 
-              {desempenhoTab === 'epi' && (
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-                  Aba EPI - Em construção
+              {!dataLoading && !dataError && filteredData && (
+                <div className="fade-in" style={{ height: '100%' }}>
+                  <TimeSeriesChart data={filteredData} usina={usinaAtual} seriesDict={seriesDict} filterColors={filterColors} chartConfig={chartConfig} setChartConfig={setChartConfig} showEixosMenu={showEixosMenu} showSeriesMenu={showSeriesMenu} visibleFilters={visibleFilters} />
                 </div>
               )}
-            </div>
-          </div>
-        ) : (
-          <div style={{ flex: 1, overflow: 'auto', padding: 20 }}>
-            {/* Heatmap Yield — independente de séries selecionadas */}
-            {activeTab === 'heatmap' && (
-              <HeatmapYield usina={usinaAtual} dates={selectedDates.join(',')} activeFilters={activeFilters} />
-            )}
+            </>
+          )}
 
-            {/* Ranking — independente de séries selecionadas */}
-            {activeTab === 'ranking' && (
-              <RankingTab usina={usinaAtual} dates={selectedDates.join(',')} activeFilters={activeFilters} />
-            )}
+          {/* Table */}
+          {activeTab === 'table' && (
+            <>
+              {dataLoading && <SkeletonChart />}
+              {dataError && !dataLoading && <ErrorState message={dataError} onRetry={handleVisualize} />}
 
-            {/* Chart — dependem de dados carregados */}
-            {activeTab === 'chart' && (
-              <>
-                {dataLoading && <SkeletonChart />}
-                {dataError && !dataLoading && <ErrorState message={dataError} onRetry={handleVisualize} />}
+              {!dataLoading && !dataError && !filteredData && (
+                <EmptyState
+                  icon="☀️"
+                  title="Selecione séries e clique em Visualizar"
+                  subtitle="Escolha uma data, selecione as séries no painel esquerdo e clique no botão"
+                  action={
+                    <button 
+                      className="btn btn-secondary" 
+                      onClick={() => setIsLoadModalOpen(true)}
+                      style={{ gap: 8 }}
+                    >
+                      📂 Carregar Visualização Salva
+                    </button>
+                  }
+                />
+              )}
 
-                {!dataLoading && !dataError && !filteredData && (
-                  <EmptyState
-                    icon="☀️"
-                    title="Selecione séries e clique em Visualizar"
-                    subtitle="Escolha uma data, selecione as séries no painel esquerdo e clique no botão"
-                    action={
-                      <button 
-                        className="btn btn-secondary" 
-                        onClick={() => setIsLoadModalOpen(true)}
-                        style={{ gap: 8 }}
-                      >
-                        📂 Carregar Visualização Salva
-                      </button>
-                    }
-                  />
-                )}
-
-                {!dataLoading && !dataError && filteredData && (
-                  <div className="fade-in" style={{ height: '100%' }}>
-                    <TimeSeriesChart data={filteredData} usina={usinaAtual} seriesDict={seriesDict} filterColors={filterColors} chartConfig={chartConfig} setChartConfig={setChartConfig} showEixosMenu={showEixosMenu} showSeriesMenu={showSeriesMenu} visibleFilters={visibleFilters} />
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
+              {!dataLoading && !dataError && filteredData && (
+                <div className="fade-in" style={{ height: '100%', overflow: 'hidden' }}>
+                  <DataTable data={filteredData} seriesDict={seriesDict} />
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       {colorPickerFilter && (
@@ -845,6 +996,39 @@ export default function DashboardPage() {
         onDelete={handleDeleteVisualization}
         visualizations={savedVisualizations}
       />
+
+      {isSeriesModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: 'var(--bg-primary)', width: '90vw', height: '90vh', borderRadius: '12px', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)' }}>
+            <div style={{ padding: '8px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
+              <h2 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                📡 Seleção de Séries
+              </h2>
+              <button 
+                className="btn btn-ghost" 
+                onClick={() => setIsSeriesModalOpen(false)}
+                style={{ padding: '8px', fontSize: '20px', lineHeight: '1', color: 'var(--text-muted)', border: 'none', background: 'transparent', cursor: 'pointer' }}
+              >
+                &times;
+              </button>
+            </div>
+            <div style={{ flex: 1, padding: '16px 24px 8px 24px', overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)' }}>
+              <SeriesSelector
+                series={normalSeries}
+                selected={selectedSeries}
+                onChange={setSelectedSeries}
+                elementos={elementos}
+                isKanban={true}
+              />
+            </div>
+            <div style={{ padding: '8px 24px', borderTop: '1px solid var(--border)', background: 'var(--bg-secondary)', display: 'flex', justifyContent: 'flex-end' }}>
+              <button className="btn btn-primary" onClick={() => setIsSeriesModalOpen(false)}>
+                Concluído
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

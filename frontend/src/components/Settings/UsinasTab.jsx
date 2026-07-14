@@ -298,7 +298,7 @@ export default function UsinasTab({ readOnly = false }) {
             </button>
           </div>
         </div>
-        <UsinaDetail usina={selectedUsina.nome} />
+        <UsinaDetail usina={selectedUsina.nome} usinaObj={selectedUsina} />
       </div>
     )
   }

@@ -8,24 +8,28 @@
         "aggregator": true,
         "inputs": [
           {
+            "sensors": [],
             "series": "CLS01.1.MET-B.POA-Irrd",
             "filter": "Irradiação_Qualidade"
           },
           {
+            "sensors": [],
             "series": "CLS01.3.MET-B.POA-Irrd",
             "filter": "Irradiação_Qualidade"
           },
           {
+            "sensors": [],
             "series": "CLS01.5.MET-A.POA-Irrd",
             "filter": "Irradiação_Qualidade"
           }
         ],
         "operation": "mean",
         "hasMultipleOutputs": true,
+        "leftTarget": true,
         "outputFilter": "Irradiação_50_W"
       },
       "position": {
-        "x": 30,
+        "x": 60,
         "y": 20
       },
       "type": "box"
@@ -38,23 +42,27 @@
         "aggregator": true,
         "inputs": [
           {
+            "sensors": [],
             "series": "CLS01.1.MET-B.POA-Irrd_REAR",
             "filter": "Irradiação_Qualidade"
           },
           {
+            "sensors": [],
             "series": "CLS01.3.MET-B.POA-Irrd_REAR",
             "filter": "Irradiação_Qualidade"
           },
           {
+            "sensors": [],
             "series": "CLS01.5.MET-A.POA-Irrd_REAR",
             "filter": "Irradiação_Qualidade"
           }
         ],
         "operation": "mean",
+        "leftTarget": true,
         "outputFilter": ""
       },
       "position": {
-        "x": 30,
+        "x": 60,
         "y": 80
       },
       "type": "box"
@@ -63,14 +71,16 @@
       "id": "tamb",
       "data": {
         "label": "T<sub>amb</sub>",
-        "color": "yellow",
+        "color": "orange",
         "aggregator": true,
         "inputs": [
           {
+            "sensors": [],
             "series": "CLS01.1.MET-EPE.T_SSTRH",
-            "filter": ""
+            "filter": "Temperatura Ambiente"
           },
           {
+            "sensors": [],
             "series": "",
             "filter": ""
           }
@@ -79,8 +89,8 @@
         "outputFilter": ""
       },
       "position": {
-        "x": 30,
-        "y": 140
+        "x": 60,
+        "y": 200
       },
       "type": "box"
     },
@@ -88,7 +98,7 @@
       "id": "tmod",
       "data": {
         "label": "T<sub>mod</sub>",
-        "color": "yellow",
+        "color": "orange",
         "aggregator": true,
         "inputs": [
           {
@@ -107,8 +117,8 @@
         "operation": "mean"
       },
       "position": {
-        "x": 30,
-        "y": 200
+        "x": 60,
+        "y": 260
       },
       "type": "box"
     },
@@ -116,7 +126,7 @@
       "id": "sujidade",
       "data": {
         "label": "Sujidade",
-        "color": "yellow",
+        "color": "brown",
         "aggregator": true,
         "inputs": [
           {
@@ -129,37 +139,40 @@
           }
         ],
         "operation": "mean",
+        "hideRightSource": true,
         "outputFilter": "",
         "startTime": "11:30",
         "endTime": "12:30",
         "trimPercent": "25"
       },
       "position": {
-        "x": 30,
-        "y": 260
+        "x": 60,
+        "y": 320
       },
       "type": "box"
     },
     {
       "id": "energia",
       "data": {
-        "label": "Potência",
+        "label": "Potência PPC",
         "color": "green",
         "aggregator": true,
         "inputs": [
           {
+            "sensors": [],
             "series": "CLS01.PPC.PotAt",
-            "filter": "Potência_PPC"
+            "filter": "PotÃªncia_PPC"
           }
         ],
         "operation": "mean",
+        "hasMultipleOutputs": false,
         "outputFilter": "Pot_Teste",
         "startTime": "",
         "endTime": "",
         "trimPercent": ""
       },
       "position": {
-        "x": 30,
+        "x": 60,
         "y": 380
       },
       "type": "box"
@@ -173,7 +186,7 @@
         "MLF": 0.035
       },
       "position": {
-        "x": 240,
+        "x": 270,
         "y": 30
       },
       "type": "geff"
@@ -184,16 +197,17 @@
         "label": "Tcel"
       },
       "position": {
-        "x": 200,
-        "y": 180
+        "x": 270,
+        "y": 240
       },
       "type": "tcel"
     },
     {
       "id": "simultaneidade",
       "data": {
-        "label": "Filtro de<br/>Simultaneidade",
-        "color": "purple",
+        "label": "Dados Válidos",
+        "color": "gray",
+        "outputName": "Simultaneidade",
         "width": "130px",
         "height": "120px",
         "customTargets": [
@@ -202,8 +216,18 @@
             "position": "top"
           },
           {
-            "id": "target-bottom",
-            "position": "bottom"
+            "id": "target-bottom-1",
+            "position": "bottom",
+            "style": {
+              "left": "33%"
+            }
+          },
+          {
+            "id": "target-bottom-2",
+            "position": "bottom",
+            "style": {
+              "left": "67%"
+            }
           },
           {
             "id": "target-left-top",
@@ -219,11 +243,18 @@
               "top": "100px"
             }
           }
-        ]
+        ],
+        "simultParams": {
+          "geff": true,
+          "tamb": true,
+          "tcel": true,
+          "energia_pmi": false,
+          "curtailment": true
+        }
       },
       "position": {
-        "x": 400,
-        "y": 130
+        "x": 430,
+        "y": 190
       },
       "type": "box"
     },
@@ -233,8 +264,8 @@
         "height": "120px"
       },
       "position": {
-        "x": 600,
-        "y": 130
+        "x": 630,
+        "y": 190
       },
       "type": "pvsyst"
     },
@@ -246,35 +277,50 @@
         "aggregator": true,
         "inputs": [
           {
+            "sensors": [
+              "CLS01.1.MET-B.POA-Irrd",
+              "CLS01.1.MET-B.POA-Irrd_REAR"
+            ],
             "series": "CLS01.1-INV04-SB12-TR046.PosAngAtual",
             "filter": ""
           },
           {
+            "sensors": [
+              "CLS01.3.MET-B.POA-Irrd",
+              "CLS01.3.MET-B.POA-Irrd_REAR"
+            ],
             "series": "CLS01.3-INV04-SB12-TR046.PosAngAtual",
             "filter": ""
           },
           {
+            "sensors": [
+              "CLS01.5.MET-A.POA-Irrd",
+              "CLS01.5.MET-A.POA-Irrd_REAR"
+            ],
             "series": "CLS01.5-INV04-SB12-TR046.PosAngAtual",
             "filter": ""
           }
         ],
         "operation": "mean",
+        "leftSource": true,
+        "hideRightSource": true,
         "outputFilter": "",
         "startTime": "",
         "endTime": "",
         "trimPercent": "",
         "trackerParams": {
-          "latitude": -23.55,
-          "longitude": -46.63,
-          "gcr": 0.3,
+          "latitude": -11.1006,
+          "longitude": -41.2715,
+          "gcr": 0.34,
           "max_angle": 60,
           "tolerance": 10,
-          "inverter_sinal": true
+          "inverter_sinal": true,
+          "time_offset": 0
         }
       },
       "position": {
-        "x": 30,
-        "y": 320
+        "x": 60,
+        "y": 140
       },
       "type": "box"
     },
@@ -288,10 +334,52 @@
         "operation": "sum"
       },
       "position": {
-        "x": 30,
+        "x": 60,
+        "y": 500
+      },
+      "type": "box"
+    },
+    {
+      "id": "potencia_ppc",
+      "data": {
+        "label": "Referência PPC",
+        "color": "cyan",
+        "aggregator": true,
+        "inputs": [
+          {
+            "sensors": [],
+            "series": "CLS01.PPC.RefPotAt",
+            "filter": "Potência_PPC"
+          }
+        ],
+        "operation": "mean",
+        "hideRightSource": false,
+        "outputFilter": "",
+        "startTime": "",
+        "endTime": "",
+        "trimPercent": "",
+        "ppcRefValue": "52.8",
+        "ppcMargin": "3"
+      },
+      "position": {
+        "x": 60,
         "y": 440
       },
       "type": "box"
+    },
+    {
+      "id": "curtailment",
+      "data": {
+        "label": "Curtailment",
+        "curtailmentRefMin": 52.8,
+        "curtailmentRefMargin": 3,
+        "curtailmentDiffMargin": 5
+      },
+      "position": {
+        "x": 260,
+        "y": 380
+      },
+      "type": "curtailment"
     }
   ],
   "edges": [
@@ -303,7 +391,10 @@
       "markerEnd": {
         "type": "arrowclosed"
       },
-      "type": "smoothstep"
+      "type": "offsetSmoothStep",
+      "data": {
+        "centerX": 200
+      }
     },
     {
       "id": "e-grear-geff",
@@ -312,7 +403,10 @@
       "markerEnd": {
         "type": "arrowclosed"
       },
-      "type": "smoothstep"
+      "type": "offsetSmoothStep",
+      "data": {
+        "centerX": 200
+      }
     },
     {
       "id": "e-tmod-tcel",
@@ -321,7 +415,8 @@
       "markerEnd": {
         "type": "arrowclosed"
       },
-      "type": "smoothstep"
+      "type": "smoothstep",
+      "data": {}
     },
     {
       "id": "e-gpoa-tcel",
@@ -331,7 +426,8 @@
       "markerEnd": {
         "type": "arrowclosed"
       },
-      "type": "smoothstep"
+      "type": "smoothstep",
+      "data": {}
     },
     {
       "id": "e-geff-simult",
@@ -341,7 +437,8 @@
       "type": "smoothstep",
       "markerEnd": {
         "type": "arrowclosed"
-      }
+      },
+      "data": {}
     },
     {
       "id": "e-tamb-simult",
@@ -351,7 +448,8 @@
       "type": "straight",
       "markerEnd": {
         "type": "arrowclosed"
-      }
+      },
+      "data": {}
     },
     {
       "id": "e-tcel-simult",
@@ -361,17 +459,8 @@
       "type": "straight",
       "markerEnd": {
         "type": "arrowclosed"
-      }
-    },
-    {
-      "id": "e-energia-simult",
-      "source": "energia",
-      "target": "simultaneidade",
-      "targetHandle": "target-bottom",
-      "type": "smoothstep",
-      "markerEnd": {
-        "type": "arrowclosed"
-      }
+      },
+      "data": {}
     },
     {
       "id": "e-simult-pvsyst",
@@ -380,7 +469,84 @@
       "type": "smoothstep",
       "markerEnd": {
         "type": "arrowclosed"
-      }
+      },
+      "data": {}
+    },
+    {
+      "id": "e-tracker-gpoa",
+      "source": "tracker",
+      "sourceHandle": "left-source",
+      "target": "gpoa",
+      "targetHandle": "target",
+      "type": "smoothstep",
+      "markerEnd": {
+        "type": "arrowclosed"
+      },
+      "markerStart": {
+        "type": "arrowclosed",
+        "orient": "auto-start-reverse"
+      },
+      "data": {}
+    },
+    {
+      "id": "e-tracker-grear",
+      "source": "tracker",
+      "sourceHandle": "left-source",
+      "target": "grear",
+      "targetHandle": "target",
+      "type": "smoothstep",
+      "markerEnd": {
+        "type": "arrowclosed"
+      },
+      "markerStart": {
+        "type": "arrowclosed",
+        "orient": "auto-start-reverse"
+      },
+      "data": {}
+    },
+    {
+      "id": "e-energiapmi-simult",
+      "source": "energia_pmi",
+      "target": "simultaneidade",
+      "targetHandle": "target-bottom-2",
+      "type": "smoothstep",
+      "markerEnd": {
+        "type": "arrowclosed"
+      },
+      "data": {}
+    },
+    {
+      "id": "e-energia-curtailment",
+      "source": "energia",
+      "target": "curtailment",
+      "targetHandle": "target-1",
+      "type": "straight",
+      "markerEnd": {
+        "type": "arrowclosed"
+      },
+      "data": {}
+    },
+    {
+      "id": "e-ppc-curtailment",
+      "source": "potencia_ppc",
+      "target": "curtailment",
+      "targetHandle": "target-2",
+      "type": "straight",
+      "markerEnd": {
+        "type": "arrowclosed"
+      },
+      "data": {}
+    },
+    {
+      "id": "e-curtailment-simult",
+      "source": "curtailment",
+      "target": "simultaneidade",
+      "targetHandle": "target-bottom-1",
+      "type": "smoothstep",
+      "markerEnd": {
+        "type": "arrowclosed"
+      },
+      "data": {}
     }
   ]
 }

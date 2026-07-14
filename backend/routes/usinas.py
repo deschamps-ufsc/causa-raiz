@@ -28,6 +28,7 @@ class UsinaDetailed(BaseModel):
     total_strings: int
     total_modulos: int
     total_sinteticas: int
+    drive_link: str | None = None
 
 @router.get("", response_model=List[str])
 def list_usinas():
@@ -58,6 +59,7 @@ def list_usinas_detailed(_: dict = Depends(require_analyst_or_admin)):
                 nome=item,
                 criado_em=meta.get("criado_em", ""),
                 criado_por=meta.get("criado_por", ""),
+                drive_link=meta.get("drive_link"),
                 **stats
             ))
             
@@ -114,3 +116,19 @@ def remove_usina(nome: str, _: dict = Depends(require_analyst_or_admin)):
     except Exception as e:
         logger.error(f"[USINAS] Erro ao remover usina {nome}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+class UsinaDriveLink(BaseModel):
+    drive_link: str
+
+@router.patch("/{nome}/drive-link", response_model=dict)
+def update_drive_link(nome: str, body: UsinaDriveLink = Body(...), _: dict = Depends(require_analyst_or_admin)):
+    """Atualiza o link do Google Drive da usina."""
+    try:
+        meta = usina_service.get_usina_metadata(nome)
+        meta["drive_link"] = body.drive_link.strip()
+        usina_service.save_usina_metadata(nome, meta)
+        return {"status": "ok", "mensagem": "Link do Drive atualizado com sucesso.", "drive_link": meta["drive_link"]}
+    except Exception as e:
+        logger.error(f"[USINAS] Erro ao atualizar link do drive da usina {nome}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+

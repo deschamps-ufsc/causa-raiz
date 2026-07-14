@@ -182,10 +182,46 @@ function FilterRow({ setting, index, updateFilterSetting, removeFilterRule, reor
       <td style={{ padding: '10px 12px' }}>
         <input 
           type="number" 
+          value={setting.min_variation ?? ''} 
+          onChange={e => handleNumChange('min_variation', e.target.value)} 
+          disabled={readOnly || !isEditing}
+          placeholder={isEditing ? "Nenhuma" : ""}
+          style={{ ...inputStyle, textAlign: 'right', opacity: (readOnly || !isEditing) ? 0.7 : 1, cursor: isEditing ? 'text' : 'default' }} 
+          onFocus={e => isEditing && !readOnly && (e.target.style.borderColor = '#f59e0b')}
+          onBlur={e => isEditing && !readOnly && (e.target.style.borderColor = '#e2e8f0')}
+        />
+      </td>
+      <td style={{ padding: '10px 12px' }}>
+        <input 
+          type="number" 
+          value={setting.min_time ?? ''} 
+          onChange={e => handleNumChange('min_time', e.target.value)} 
+          disabled={readOnly || !isEditing}
+          placeholder={isEditing ? "Imediato" : ""}
+          style={{ ...inputStyle, textAlign: 'right', opacity: (readOnly || !isEditing) ? 0.7 : 1, cursor: isEditing ? 'text' : 'default' }} 
+          onFocus={e => isEditing && !readOnly && (e.target.style.borderColor = '#f59e0b')}
+          onBlur={e => isEditing && !readOnly && (e.target.style.borderColor = '#e2e8f0')}
+        />
+      </td>
+      <td style={{ padding: '10px 12px' }}>
+        <input 
+          type="number" 
           value={setting.max_variation ?? ''} 
           onChange={e => handleNumChange('max_variation', e.target.value)} 
           disabled={readOnly || !isEditing}
           placeholder={isEditing ? "Ilimitado" : ""}
+          style={{ ...inputStyle, textAlign: 'right', opacity: (readOnly || !isEditing) ? 0.7 : 1, cursor: isEditing ? 'text' : 'default' }} 
+          onFocus={e => isEditing && !readOnly && (e.target.style.borderColor = '#f59e0b')}
+          onBlur={e => isEditing && !readOnly && (e.target.style.borderColor = '#e2e8f0')}
+        />
+      </td>
+      <td style={{ padding: '10px 12px' }}>
+        <input 
+          type="number" 
+          value={setting.median_window ?? ''} 
+          onChange={e => handleNumChange('median_window', e.target.value)} 
+          disabled={readOnly || !isEditing}
+          placeholder={isEditing ? "Padrão" : ""}
           style={{ ...inputStyle, textAlign: 'right', opacity: (readOnly || !isEditing) ? 0.7 : 1, cursor: isEditing ? 'text' : 'default' }} 
           onFocus={e => isEditing && !readOnly && (e.target.style.borderColor = '#f59e0b')}
           onBlur={e => isEditing && !readOnly && (e.target.style.borderColor = '#e2e8f0')}
@@ -272,6 +308,7 @@ export default function FiltrosTab({ readOnly = false }) {
   const [newName, setNewName] = useState('')
   const [draggedIndex, setDraggedIndex] = useState(null)
   const [draggedOverIndex, setDraggedOverIndex] = useState(null)
+  const [showHelp, setShowHelp] = useState(false)
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>Carregando filtros...</div>
 
@@ -313,23 +350,67 @@ export default function FiltrosTab({ readOnly = false }) {
         padding: '14px 18px', borderBottom: '1px solid #f1f5f9',
         background: 'linear-gradient(to right, #f8fafc, #fff)', borderRadius: '14px 14px 0 0',
       }}>
-        <h2 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Configurações de Filtro de Dados</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <h2 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Configurações de Filtro de Dados</h2>
+          <button 
+            onClick={() => setShowHelp(true)}
+            title="Como funcionam os filtros?"
+            style={{ 
+              background: 'none', border: 'none', cursor: 'pointer', color: '#3b82f6', 
+              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+          </button>
+        </div>
         <p style={{ margin: '3px 0 0', fontSize: 12, color: '#94a3b8' }}>
           Defina os limites padrão de qualidade para os dados brutos importados no sistema. Deixe vazio para não restringir.
         </p>
       </div>
 
+      {/* Modal de Ajuda */}
+      {showHelp && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: '24px 28px', width: '100%', maxWidth: 750, maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.2)', border: '1px solid #e2e8f0', animation: 'fadeIn 0.2s ease' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0f172a' }}>Entendendo os Filtros</h3>
+              <button onClick={() => setShowHelp(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <div style={{ fontSize: 14, color: '#475569', lineHeight: 1.6 }}>
+              <p style={{ marginBottom: 12 }}><strong>Valor Mínimo / Máximo:</strong> Detecta qualquer valor que esteja abaixo do mínimo ou acima do máximo configurado. Útil para limites físicos (ex: Irradiação não pode ser negativa).</p>
+              <p style={{ marginBottom: 12 }}><strong>Ação Mín. / Máx.:</strong> Define o que fazer quando o limite mínimo ou máximo é ultrapassado. A opção "Excluir" remove o ponto do gráfico por ser inválido. Já a opção "Substituir" força o valor corrompido a se tornar o limite exato que você definiu na caixa ao lado.</p>
+              <p style={{ marginBottom: 12 }}><strong>Variação Mín. (Dado Travado):</strong> Se a diferença entre o ponto atual e o anterior for MENOR que esse valor, o dado é candidato a ser excluído.</p>
+              <p style={{ marginBottom: 12 }}><strong>Tempo Mín.:</strong> Trabalha em conjunto com a Variação Mín. Define por quantos minutos o dado precisa ficar "travado" antes de ser deletado. Se deixar vazio, deleta imediatamente.</p>
+              <p style={{ marginBottom: 12 }}><strong>Variação Máx. (Picos/Anomalias):</strong> Usado para detectar <em>Saltos ou Quedas Bruscas</em>. Se a variação for MAIOR que esse valor, o dado é excluído.</p>
+              <p style={{ marginBottom: 12 }}><strong>Janela Med.:</strong> Trabalha em conjunto com a Variação Máx. Se preenchido (ex: 11 minutos), a variação passa a ser calculada contra a <em>Mediana Móvel</em> da janela. Isso protege saltos legítimos do sensor (degraus/rampas) e corta apenas picos temporários e anomalias rápidas.</p>
+            </div>
+            <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowHelp(false)} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#3b82f6', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>Entendi</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Table */}
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
         <colgroup>
-          <col style={{ width: '20%' }} />
           <col style={{ width: '15%' }} />
-          <col style={{ width: '12%' }} />
-          <col style={{ width: '10%' }} />
-          <col style={{ width: '12%' }} />
-          <col style={{ width: '10%' }} />
-          <col style={{ width: '11%' }} />
-          <col style={{ width: '10%' }} />
+          <col style={{ width: '13%' }} />
+          <col style={{ width: '8%' }} />
+          <col style={{ width: '8%' }} />
+          <col style={{ width: '8%' }} />
+          <col style={{ width: '8%' }} />
+          <col style={{ width: '8%' }} />
+          <col style={{ width: '8%' }} />
+          <col style={{ width: '8%' }} />
+          <col style={{ width: '8%' }} />
+          <col style={{ width: '8%' }} />
         </colgroup>
         <thead>
           <tr style={{ background: '#f8fafc' }}>
@@ -340,7 +421,10 @@ export default function FiltrosTab({ readOnly = false }) {
               ['Ação Mín.', 'center'],
               ['Valor Máximo', 'right'],
               ['Ação Máx.', 'center'],
-              ['Variação Máxima', 'right'],
+              ['Variação Mín.', 'right'],
+              ['Tempo Mín.', 'right'],
+              ['Variação Máx.', 'right'],
+              ['Janela Med.', 'right'],
               ['Ações', 'center'],
             ].map(([label, align]) => (
               <th key={label} style={{ padding: '8px 12px 8px', textAlign: align, fontWeight: 700,
@@ -354,7 +438,7 @@ export default function FiltrosTab({ readOnly = false }) {
         <tbody>
           {filterSettings.length === 0 ? (
             <tr>
-              <td colSpan="8" style={{ padding: '32px', textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
+              <td colSpan="11" style={{ padding: '32px', textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
                 Nenhum filtro configurado. Adicione um elemento abaixo.
               </td>
             </tr>

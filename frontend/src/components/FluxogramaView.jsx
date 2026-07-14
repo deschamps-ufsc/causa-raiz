@@ -11,13 +11,47 @@ import {
   MarkerType,
   useNodes,
   useEdges,
-  useUpdateNodeInternals
+  useUpdateNodeInternals,
+  BaseEdge,
+  getSmoothStepPath
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import SingleSeriesDropdown, { formatSeriesName } from './SingleSeriesDropdown'
 import { useUsina } from '../hooks/UsinaContext'
 import { fetchMappingData, fetchFlowConfig, saveFlowConfig, runFlow, fetchFlowIntegrals } from '../services/api'
 import { useChartSettings } from '../hooks/ChartSettingsContext'
+
+// ── CUSTOM EDGES ─────────────────────────────────────────────────────────
+
+const OffsetSmoothStepEdge = ({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+  style = {},
+  markerEnd,
+  data
+}) => {
+  const [edgePath] = getSmoothStepPath({
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition,
+    centerX: data?.centerX,
+    centerY: data?.centerY,
+  });
+
+  return (
+    <>
+      <BaseEdge path={edgePath} markerEnd={markerEnd} style={style} />
+    </>
+  );
+};
 
 // ── CUSTOM NODES ─────────────────────────────────────────────────────────
 
@@ -35,15 +69,15 @@ const baseNodeStyle = {
 
 const BoxNode = ({ id, data }) => {
   const isAggregator = data.aggregator
-  const bgColor = data.color === 'yellow' ? '#fef08a' : data.color === 'green' ? '#bbf7d0' : data.color === 'purple' ? '#e9d5ff' : data.color === 'teal' ? '#bbdefb' : data.color === 'darkblue' ? '#bbdefb' : 'var(--bg-card)'
+  const bgColor = data.color === 'yellow' ? '#fef08a' : data.color === 'green' ? '#bbf7d0' : data.color === 'purple' ? '#e9d5ff' : data.color === 'teal' ? '#bbdefb' : data.color === 'darkblue' ? '#bbdefb' : data.color === 'cyan' ? '#ccfbf1' : data.color === 'orange' ? '#ffedd5' : data.color === 'brown' ? '#d7ccc8' : data.color === 'gray' ? '#f1f5f9' : 'var(--bg-card)'
   const textColor = data.color ? '#334155' : 'var(--text-primary)'
-  const borderColor = data.color === 'yellow' ? '#facc15' : data.color === 'green' ? '#4ade80' : data.color === 'purple' ? '#c084fc' : data.color === 'teal' ? '#0277BD' : data.color === 'darkblue' ? '#0277BD' : 'var(--border)'
+  const borderColor = data.color === 'yellow' ? '#facc15' : data.color === 'green' ? '#4ade80' : data.color === 'purple' ? '#c084fc' : data.color === 'teal' ? '#0277BD' : data.color === 'darkblue' ? '#0277BD' : data.color === 'cyan' ? '#00838F' : data.color === 'orange' ? '#f97316' : data.color === 'brown' ? '#6d4c41' : data.color === 'gray' ? '#94a3b8' : 'var(--border)'
 
   const nodes = useNodes()
   const edges = useEdges()
   const updateNodeInternals = useUpdateNodeInternals()
   
-  const isSimultaneidade = data.label && data.label.includes('Simultaneidade')
+  const isSimultaneidade = data.label && (data.label.includes('Simultaneidade') || data.label.includes('Dados Válidos'))
   
   let topVal = 20
   let bottomVal = 100
@@ -76,7 +110,8 @@ const BoxNode = ({ id, data }) => {
   if (isSimultaneidade) {
     customTargets = [
       { id: 'target-top', position: Position.Top },
-      { id: 'target-bottom', position: Position.Bottom },
+      { id: 'target-bottom-1', position: Position.Bottom, style: { left: '33%' } },
+      { id: 'target-bottom-2', position: Position.Bottom, style: { left: '67%' } },
       { id: 'target-left-top', position: Position.Left, style: { top: `${topVal}px` } },
       { id: 'target-left-bottom', position: Position.Left, style: { top: `${bottomVal}px` } }
     ]
@@ -88,20 +123,22 @@ const BoxNode = ({ id, data }) => {
     }
   }, [topVal, bottomVal, id, isSimultaneidade, updateNodeInternals])
 
+  const isClickable = isAggregator || isSimultaneidade
+
   return (
     <div 
       style={{ 
         ...baseNodeStyle, padding: '0 8px', borderRadius: '10px', position: 'relative',
         width: data.width || '100px', height: data.height || '40px', fontSize: '14px', boxSizing: 'border-box',
         background: bgColor, color: textColor, borderColor: borderColor,
-        cursor: isAggregator ? 'pointer' : 'default',
+        cursor: isClickable ? 'pointer' : 'default',
         transition: 'transform 0.1s, box-shadow 0.1s',
-        boxShadow: isAggregator ? '0 4px 6px rgba(0,0,0,0.1)' : '0 2px 4px rgba(0,0,0,0.05)',
+        boxShadow: isClickable ? '0 4px 6px rgba(0,0,0,0.1)' : '0 2px 4px rgba(0,0,0,0.05)',
       }}
-      onMouseEnter={e => isAggregator && (e.currentTarget.style.transform = 'scale(1.05)')}
-      onMouseLeave={e => isAggregator && (e.currentTarget.style.transform = 'scale(1)')}
+      onMouseEnter={e => isClickable && (e.currentTarget.style.transform = 'scale(1.05)')}
+      onMouseLeave={e => isClickable && (e.currentTarget.style.transform = 'scale(1)')}
     >
-      {!isAggregator && (
+      {(!isAggregator || data.leftTarget) && (
         customTargets ? (
           customTargets.map(tgt => (
             <Handle
@@ -113,7 +150,7 @@ const BoxNode = ({ id, data }) => {
             />
           ))
         ) : (
-          <Handle type="target" position={Position.Left} style={{ background: '#555' }} />
+          <Handle type="target" position={Position.Left} id="target" style={{ background: '#555' }} />
         )
       )}
       <div style={{ textDecoration: data.strike ? 'line-through' : 'none', textAlign: 'center' }}>
@@ -125,7 +162,10 @@ const BoxNode = ({ id, data }) => {
           <Handle type="source" position={Position.Right} id="out-b" style={{ background: '#555', top: '75%' }} />
         </>
       ) : (
-        <Handle type="source" position={Position.Right} style={{ background: '#555' }} />
+        !data.hideRightSource && <Handle type="source" position={Position.Right} style={{ background: '#555' }} />
+      )}
+      {data.leftSource && (
+        <Handle type="source" position={Position.Left} id="left-source" style={{ background: '#555' }} />
       )}
     </div>
   )
@@ -180,8 +220,8 @@ const ChartNode = ({ data }) => {
 
 const GeffNode = ({ data }) => (
   <div style={{
-    padding: '8px', borderRadius: '10px', background: '#ffedd5',
-    border: '1px solid #f97316', color: '#334155',
+    padding: '8px', borderRadius: '10px', background: '#fef08a',
+    border: '1px solid #facc15', color: '#334155',
     width: '100px', height: '80px', boxSizing: 'border-box',
     display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
     textAlign: 'center', boxShadow: '0 6px 15px rgba(0,0,0,0.3)',
@@ -193,8 +233,8 @@ const GeffNode = ({ data }) => (
       SSF={(data.SSF * 100 || 0).toFixed(1)}%<br/>
       MLF={(data.MLF * 100 || 0).toFixed(1)}%
     </div>
-    <Handle type="target" position={Position.Left} style={{ background: '#f97316' }} />
-    <Handle type="source" position={Position.Right} style={{ background: '#f97316' }} />
+    <Handle type="target" position={Position.Left} style={{ background: '#facc15' }} />
+    <Handle type="source" position={Position.Right} style={{ background: '#facc15' }} />
   </div>
 )
 
@@ -231,6 +271,7 @@ const PVSystNode = ({ data }) => (
     transition: 'all 0.2s'
   }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
     <Handle type="target" position={Position.Left} style={{ background: '#233772' }} />
+    <Handle type="source" position={Position.Bottom} id="out-bottom" style={{ background: '#233772' }} />
     <div style={{ flex: 1, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <img 
         src="/pvsyst.png" 
@@ -254,6 +295,26 @@ const PVSystNode = ({ data }) => (
   </div>
 )
 
+const CurtailmentNode = ({ data }) => (
+  <div style={{
+    padding: '8px', borderRadius: '10px', background: '#fee2e2',
+    border: '1px solid #ef4444', color: '#334155',
+    width: '120px', height: '100px', boxSizing: 'border-box',
+    display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
+    textAlign: 'center', boxShadow: '0 6px 15px rgba(0,0,0,0.3)',
+    position: 'relative', cursor: 'pointer', transition: 'all 0.2s'
+  }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+    <div style={{ fontSize: '14px', fontWeight: 700, color: '#b91c1c' }}>Filtro de<br/>Curtailment</div>
+    <div style={{ fontSize: '9px', color: '#7f1d1d', marginTop: '4px', lineHeight: '1.2', fontWeight: 600 }}>
+      Ref: {data.curtailmentRefMin || 52.8} MW<br/>
+      Mg: {data.curtailmentRefMargin || 3}% | Tol: {data.curtailmentDiffMargin || 5}%
+    </div>
+    <Handle type="target" position={Position.Left} id="target-1" style={{ background: '#ef4444', top: '20px' }} />
+    <Handle type="target" position={Position.Left} id="target-2" style={{ background: '#ef4444', top: '80px' }} />
+    <Handle type="source" position={Position.Right} style={{ background: '#ef4444' }} />
+  </div>
+)
+
 const nodeTypes = {
   default: BoxNode,
   box: BoxNode,
@@ -262,68 +323,106 @@ const nodeTypes = {
   chart: ChartNode,
   geff: GeffNode,
   tcel: TcelNode,
+  curtailment: CurtailmentNode,
   pvsyst: PVSystNode
+}
+
+const edgeTypes = {
+  offsetSmoothStep: OffsetSmoothStepEdge
 }
 
 // ── INITIAL DATA ─────────────────────────────────────────────────────────
 
 const initialNodes = [
-  { id: 'gpoa', type: 'box', position: { x: 30, y: 20 }, data: { label: 'G<sub>poa</sub>', color: 'yellow', aggregator: true, inputs: [], operation: 'sum', hasMultipleOutputs: true } },
-  { id: 'grear', type: 'box', position: { x: 30, y: 120 }, data: { label: 'G<sub>rear</sub>', color: 'yellow', aggregator: true, inputs: [], operation: 'sum' } },
-  { id: 'tamb', type: 'box', position: { x: 30, y: 220 }, data: { label: 'T<sub>amb</sub>', color: 'yellow', aggregator: true, inputs: [], operation: 'sum' } },
-  { id: 'tmod', type: 'box', position: { x: 30, y: 320 }, data: { label: 'T<sub>mod</sub>', color: 'yellow', aggregator: true, inputs: [], operation: 'sum' } },
-  { id: 'sujidade', type: 'box', position: { x: 30, y: 420 }, data: { label: 'Sujidade', color: 'yellow', aggregator: true, inputs: [], operation: 'sum' } },
-  { id: 'tracker', type: 'box', position: { x: 30, y: 520 }, data: { label: 'Tracker', color: 'purple', aggregator: true, inputs: [], operation: 'sum' } },
-  { id: 'energia', type: 'box', position: { x: 30, y: 620 }, data: { label: 'Potência', color: 'green', aggregator: true, inputs: [], operation: 'sum' } },
-  { id: 'energia_pmi', type: 'box', position: { x: 30, y: 720 }, data: { label: 'Energia PMI', color: 'teal', aggregator: true, inputs: [], operation: 'sum' } },
-  { id: 'geff', type: 'geff', position: { x: 220, y: 30 }, data: { label: 'Geff', beta: 1.0, SSF: 0.05, MLF: 0.02 } },
-  { id: 'tcel', type: 'tcel', position: { x: 220, y: 280 }, data: { label: 'Tcel' } },
+  { id: 'gpoa', type: 'box', position: { x: 60, y: 50 }, data: { label: 'G<sub>poa</sub>', color: 'yellow', aggregator: true, inputs: [], operation: 'sum', hasMultipleOutputs: true, leftTarget: true } },
+  { id: 'grear', type: 'box', position: { x: 60, y: 130 }, data: { label: 'G<sub>rear</sub>', color: 'yellow', aggregator: true, inputs: [], operation: 'sum', leftTarget: true } },
+  { id: 'tracker', type: 'box', position: { x: 60, y: 210 }, data: { label: 'Tracker', color: 'purple', aggregator: true, inputs: [], operation: 'sum', leftSource: true, hideRightSource: true } },
+  { id: 'tamb', type: 'box', position: { x: 60, y: 290 }, data: { label: 'T<sub>amb</sub>', color: 'orange', aggregator: true, inputs: [], operation: 'sum' } },
+  { id: 'tmod', type: 'box', position: { x: 60, y: 370 }, data: { label: 'T<sub>mod</sub>', color: 'orange', aggregator: true, inputs: [], operation: 'sum' } },
+  { id: 'sujidade', type: 'box', position: { x: 60, y: 450 }, data: { label: 'Sujidade', color: 'brown', aggregator: true, inputs: [], operation: 'sum', hideRightSource: true } },
+  { id: 'energia', type: 'box', position: { x: 60, y: 530 }, data: { label: 'Potência PPC', color: 'green', aggregator: true, inputs: [], operation: 'sum', hasMultipleOutputs: false } },
+  { id: 'potencia_ppc', type: 'box', position: { x: 60, y: 590 }, data: { label: 'Referência PPC', color: 'teal', aggregator: true, inputs: [], operation: 'sum', hideRightSource: false } },
+  { id: 'energia_pmi', type: 'box', position: { x: 60, y: 670 }, data: { label: 'Energia PMI', color: 'teal', aggregator: true, inputs: [], operation: 'sum' } },
+  { id: 'geff', type: 'geff', position: { x: 280, y: 50 }, data: { label: 'Geff', beta: 1.0, SSF: 0.05, MLF: 0.02 } },
+  { id: 'tcel', type: 'tcel', position: { x: 280, y: 350 }, data: { label: 'Tcel' } },
+  { id: 'curtailment', type: 'curtailment', position: { x: 280, y: 530 }, data: { label: 'Curtailment', curtailmentRefMin: 52.8, curtailmentRefMargin: 3, curtailmentDiffMargin: 5 } },
   { 
     id: 'simultaneidade', 
     type: 'box', 
-    position: { x: 400, y: 230 }, 
+    position: { x: 500, y: 290 }, 
     data: { 
-      label: 'Filtro de<br/>Simultaneidade', 
-      color: 'purple', 
+      label: 'Dados Válidos', 
+      color: 'gray', 
+      outputName: 'Dados Válidos',
       width: '130px', 
       height: '120px',
       customTargets: [
         { id: 'target-top', position: Position.Top },
-        { id: 'target-bottom', position: Position.Bottom },
+        { id: 'target-bottom-1', position: Position.Bottom, style: { left: '33%' } },
+        { id: 'target-bottom-2', position: Position.Bottom, style: { left: '67%' } },
         { id: 'target-left-top', position: Position.Left, style: { top: '20px' } },
         { id: 'target-left-bottom', position: Position.Left, style: { top: '100px' } }
       ]
     } 
   },
-  { id: 'pvsyst', type: 'pvsyst', position: { x: 600, y: 230 }, data: { height: '120px' } }
+  { id: 'pvsyst', type: 'pvsyst', position: { x: 720, y: 290 }, data: { height: '120px' } },
+  { 
+    id: 'epi', 
+    type: 'box', 
+    position: { x: 720, y: 450 }, 
+    data: { 
+      label: 'EPI', 
+      color: 'gray', 
+      aggregator: true,
+      leftTarget: true,
+      inputs: [], 
+      operation: 'sum', 
+      width: '120px',
+      height: '80px',
+      hideRightSource: true,
+      customTargets: [
+        { id: 'target-top', position: Position.Top },
+        { id: 'target-bottom', position: Position.Bottom }
+      ]
+    } 
+  }
 ]
 
 const initialEdges = [
-  { id: 'e-gpoa-geff', source: 'gpoa', sourceHandle: 'out-a', target: 'geff', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed } },
-  { id: 'e-grear-geff', source: 'grear', target: 'geff', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed } },
+  { id: 'e-gpoa-geff', source: 'gpoa', sourceHandle: 'out-a', target: 'geff', type: 'offsetSmoothStep', data: { centerX: 200 }, markerEnd: { type: MarkerType.ArrowClosed } },
+  { id: 'e-grear-geff', source: 'grear', target: 'geff', type: 'offsetSmoothStep', data: { centerX: 200 }, markerEnd: { type: MarkerType.ArrowClosed } },
+  { id: 'e-tracker-gpoa', source: 'tracker', sourceHandle: 'left-source', target: 'gpoa', targetHandle: 'target', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed }, markerStart: { type: MarkerType.ArrowClosed, orient: 'auto-start-reverse' } },
+  { id: 'e-tracker-grear', source: 'tracker', sourceHandle: 'left-source', target: 'grear', targetHandle: 'target', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed }, markerStart: { type: MarkerType.ArrowClosed, orient: 'auto-start-reverse' } },
   { id: 'e-tmod-tcel', source: 'tmod', target: 'tcel', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed } },
   { id: 'e-gpoa-tcel', source: 'gpoa', sourceHandle: 'out-b', target: 'tcel', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed } },
   { id: 'e-geff-simult', source: 'geff', target: 'simultaneidade', targetHandle: 'target-top', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed } },
   { id: 'e-tamb-simult', source: 'tamb', target: 'simultaneidade', targetHandle: 'target-left-top', type: 'straight', markerEnd: { type: MarkerType.ArrowClosed } },
   { id: 'e-tcel-simult', source: 'tcel', target: 'simultaneidade', targetHandle: 'target-left-bottom', type: 'straight', markerEnd: { type: MarkerType.ArrowClosed } },
-  { id: 'e-energia-simult', source: 'energia', target: 'simultaneidade', targetHandle: 'target-bottom', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed } },
-  { id: 'e-simult-pvsyst', source: 'simultaneidade', target: 'pvsyst', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed } },
+  { id: 'e-energia-curtailment', source: 'energia', target: 'curtailment', targetHandle: 'target-1', type: 'straight', markerEnd: { type: MarkerType.ArrowClosed } },
+  { id: 'e-potencia-curtailment', source: 'potencia_ppc', target: 'curtailment', targetHandle: 'target-2', type: 'straight', markerEnd: { type: MarkerType.ArrowClosed } },
+  { id: 'e-curtailment-simult', source: 'curtailment', target: 'simultaneidade', targetHandle: 'target-bottom-1', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed } },
+  { id: 'e-energia_pmi-simult', source: 'energia_pmi', target: 'simultaneidade', targetHandle: 'target-bottom-2', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed } },
+  { id: 'e-simult-pvsyst', source: 'simultaneidade', target: 'pvsyst', type: 'straight', markerEnd: { type: MarkerType.ArrowClosed } },
+  { id: 'e-pvsyst-epi', source: 'pvsyst', sourceHandle: 'out-bottom', target: 'epi', targetHandle: 'target-top', type: 'straight', markerEnd: { type: MarkerType.ArrowClosed } },
+  { id: 'e-energia-epi', source: 'energia_pmi', target: 'epi', targetHandle: 'target-bottom', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed } }
 ]
 
 // ── COMPONENT ─────────────────────────────────────────────────────────
 
-export default function FluxogramaView({ elementos = [], showTitle = true, mode = 'all' }) {
+export default function FluxogramaView({ elementos = [], selectedDates = [], showTitle = true, mode = 'all', onEpiClick }) {
   const { usinaAtual } = useUsina()
   const { filterSettings } = useChartSettings()
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
   const [selectedNodeId, setSelectedNodeId] = useState(null)
   const selectedBlock = useMemo(() => nodes.find(n => n.id === selectedNodeId)?.data, [nodes, selectedNodeId])
-  const [inputsList, setInputsList] = useState([{ series: '', filter: '' }])
+  const [inputsList, setInputsList] = useState([{ series: '', filter: '', sensors: [] }])
   const [operation, setOperation] = useState('sum')
   const [outputFilter, setOutputFilter] = useState('')
   const [geffParams, setGeffParams] = useState({ beta: 1, SSF: 0, MLF: 0 })
+  const [simultParams, setSimultParams] = useState({ geff: true, tamb: true, tcel: true, energia_pmi: true, curtailment: false })
   const [trackerParams, setTrackerParams] = useState({ latitude: -23.55, longitude: -46.63, gcr: 0.3, max_angle: 60, tolerance: 10 })
+  const [curtailmentParams, setCurtailmentParams] = useState({ refMin: 52.8, refMargin: 3, diffMargin: 5 })
   const [allSeries, setAllSeries] = useState([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [toast, setToast] = useState(null)
@@ -345,6 +444,23 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
     tracker: true,
     energia_pmi: true
   })
+
+  const availableIrradianceSensors = useMemo(() => {
+    const sensorsMap = new Map();
+    nodes.forEach(n => {
+      if ((n.id === 'gpoa' || n.id === 'grear') && n.data?.inputs) {
+        n.data.inputs.forEach(inp => {
+          const sName = typeof inp === 'string' ? inp : inp.series;
+          if (sName) {
+            sensorsMap.set(sName, n.id === 'gpoa' ? 'Gpoa' : 'Grear');
+          }
+        });
+      }
+    });
+    return Array.from(sensorsMap.entries())
+      .map(([name, source]) => ({ name, source }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [nodes]);
 
   const loadIntegrals = (usina) => {
     if (!usina) return
@@ -437,6 +553,9 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
   const visibleColumns = useMemo(() => {
     if (!integralsData.columns) return []
     return integralsData.columns.filter(col => {
+      // 0. Colunas de Validação estão sempre visíveis por enquanto
+      if (col.type === 'validation') return true;
+
       // 1. Filtro de Exibir Entradas
       const isOutput = !col.label.includes('Entrada');
       if (!isOutput && !showInputs) return false;
@@ -463,13 +582,13 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
     let currentGroup = null;
     
     visibleColumns.forEach((col) => {
-      if (col.type === 'input') {
-        if (currentGroup && currentGroup.type === 'input' && currentGroup.node_id === col.node_id) {
+      if (col.type === 'input' || col.type === 'validation') {
+        if (currentGroup && currentGroup.type === col.type && currentGroup.node_id === col.node_id) {
           currentGroup.columns.push(col);
         } else {
           if (currentGroup) groups.push(currentGroup);
           currentGroup = {
-            type: 'input',
+            type: col.type,
             node_id: col.node_id,
             columns: [col]
           };
@@ -528,6 +647,16 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
       .then(config => {
         if (config && config.nodes) {
           setNodes(nds => {
+            // Descobrir a posição X do Geff para alinhar Tcel e Curtailment
+            const geffNode = config.nodes.find(n => n.id === 'geff')
+            const geffX = geffNode ? geffNode.position.x : 250
+
+            const pvsystNode = config.nodes.find(n => n.id === 'pvsyst') || nds.find(n => n.id === 'pvsyst')
+            const pvsystX = pvsystNode ? pvsystNode.position.x : 720
+
+            const curtailmentNode = config.nodes.find(n => n.id === 'curtailment') || nds.find(n => n.id === 'curtailment')
+            const curtailmentY = curtailmentNode ? curtailmentNode.position.y : 530
+
             // 1. Pegar todos os nós salvos
             const savedNodes = config.nodes.map(sn => {
               const initial = nds.find(i => i.id === sn.id)
@@ -539,6 +668,14 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
                 } else if (sn.id === 'pvsyst') {
                   if (adjustedPosition.x === 650) adjustedPosition.x = 600;
                   if (adjustedPosition.y === 140) adjustedPosition.y = 130;
+                } else if (sn.id === 'tcel') {
+                  adjustedPosition.x = geffX;
+                } else if (sn.id === 'curtailment') {
+                  adjustedPosition.x = geffX - 10;
+                  adjustedPosition.y = 380;
+                } else if (sn.id === 'epi') {
+                  adjustedPosition.x = pvsystX;
+                  adjustedPosition.y = curtailmentY;
                 }
 
                 return { 
@@ -550,17 +687,23 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
                   ...sn.data,
                   // Garantir que o label com subscritos (<sub>) do código tenha prioridade
                   label: initial?.data?.label || sn.data.label,
+                  // Garantir que a Potência tenha hasMultipleOutputs false explícito
+                  hasMultipleOutputs: sn.id === 'energia' ? false : (initial?.data?.hasMultipleOutputs ?? sn.data.hasMultipleOutputs),
                   width: initial?.data?.width || sn.data.width,
                   height: initial?.data?.height || sn.data.height,
-                  customTargets: initial?.data?.customTargets || sn.data.customTargets
+                  customTargets: sn.id === 'epi' ? initial?.data?.customTargets : (initial?.data?.customTargets || sn.data.customTargets),
+                  hideRightSource: sn.id === 'epi' ? true : (initial?.data?.hideRightSource ?? sn.data.hideRightSource)
                 }
               }
             })
             
-            // 2. Garantir que nós iniciais obrigatórios (como geff) existam
+            // 2. Garantir que nós iniciais obrigatórios existam
             const finalNodes = [...savedNodes]
             nds.forEach(initial => {
               if (!finalNodes.find(f => f.id === initial.id)) {
+                if (initial.id === 'epi') {
+                  initial = { ...initial, position: { ...initial.position, x: pvsystX, y: curtailmentY } }
+                }
                 finalNodes.push(initial)
               }
             })
@@ -568,8 +711,15 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
           })
           if (config.edges) {
             setEdges(eds => {
+               // Remover conexões diretas obsoletas para o filtro de simultaneidade
+               const filteredConfigEdges = config.edges.filter(e => {
+                  if (e.source === 'energia' && (e.target === 'simultaneidade' || e.target.includes('simultaneidade'))) return false;
+                  if (e.source === 'potencia_ppc' && (e.target === 'simultaneidade' || e.target.includes('simultaneidade'))) return false;
+                  return true;
+               })
+
               // Garantir tipos de arestas corretos ao carregar do BD
-              const finalEdges = config.edges.map(e => {
+              const finalEdges = filteredConfigEdges.map(e => {
                 const initial = initialEdges.find(ie => ie.source === e.source && ie.target === e.target)
                 let targetHandle = initial?.targetHandle || e.targetHandle
                 let type = initial?.type || e.type || 'smoothstep'
@@ -589,15 +739,33 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
                       targetHandle = 'target-left-bottom'
                       type = 'straight'
                     }
-                    else if (sourceNode.id === 'energia' || sourceNode.data?.label?.includes('Energia')) targetHandle = 'target-bottom'
+                    else if (sourceNode.id === 'energia_pmi' || sourceNode.data?.label?.includes('Energia PMI')) {
+                      targetHandle = 'target-bottom-2' 
+                    }
+                    else if (sourceNode.id === 'curtailment' || sourceNode.type === 'curtailment') {
+                      targetHandle = 'target-bottom-1'
+                    }
+                  }
+                }
+                
+                let sourceHandle = initial?.sourceHandle || e.sourceHandle
+
+                if (targetNode && (targetNode.id === 'curtailment' || targetNode.type === 'curtailment')) {
+                  if (sourceNode?.id === 'energia') {
+                    sourceHandle = undefined // Força a porta direita padrão, removendo out-a ou out-b antigo
+                    type = 'straight'
+                  }
+                  if (sourceNode?.id === 'potencia_ppc') {
+                    type = 'straight'
                   }
                 }
                 
                 return {
                   ...e,
                   type,
-                  sourceHandle: initial?.sourceHandle || e.sourceHandle,
-                  targetHandle
+                  sourceHandle,
+                  targetHandle,
+                  data: { ...(e.data || {}), ...(initial?.data || {}) }
                 }
               })
               initialEdges.forEach(ie => {
@@ -621,9 +789,20 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
 
   const handleRunFlow = async () => {
     if (!usinaAtual) return
+    if (!selectedDates || selectedDates.length === 0) {
+      setToast({
+        title: 'Nenhum dia selecionado',
+        message: 'Por favor, selecione os dias que deseja processar no menu lateral.',
+        type: 'error'
+      })
+      setTimeout(() => {
+        setToast(current => current?.title === 'Nenhum dia selecionado' ? null : current)
+      }, 5000)
+      return
+    }
     try {
       setIsProcessing(true)
-      const res = await runFlow(usinaAtual)
+      const res = await runFlow(usinaAtual, selectedDates.join(','))
       setToast({
         title: 'Processamento Concluído',
         message: `Foram processados com sucesso ${res.processed_days} dias de dados.`,
@@ -703,6 +882,15 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
       { key: 'Tmod', base: 'T', sub: 'mod' },
       { key: 'Tcel', base: 'T', sub: 'cel' }
     ];
+    if (label.startsWith('Sujidade (')) {
+      const rest = label.slice('Sujidade '.length);
+      return (
+        <div style={{ lineHeight: '1.2' }}>
+          Sujidade<br/>
+          <span style={{ fontSize: '0.9em', fontWeight: 'normal' }}>{rest}</span>
+        </div>
+      );
+    }
     for (const rep of replacements) {
       if (label.startsWith(rep.key)) {
         const rest = label.slice(rep.key.length);
@@ -729,7 +917,7 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
       case 'sujidade':
         return <span>Sujidade - Entradas</span>;
       case 'energia':
-        return <span>Potência - Entradas</span>;
+        return <span>Potência PPC - Entradas</span>;
       case 'energia_pmi':
         return <span>Energia PMI - Entradas</span>;
       case 'tracker':
@@ -752,7 +940,9 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
       case 'sujidade':
         return <>Sujidade - Fator de Sujidade</>;
       case 'energia':
-        return <>Potência - Geração de Potência</>;
+        return <>Potência PPC - Geração de Potência</>;
+      case 'potencia_ppc':
+        return <>Referência PPC</>;
       case 'energia_pmi':
         return <>Energia PMI - Geração de Energia (PMI)</>;
       case 'tracker':
@@ -785,7 +975,7 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
       {/* ── SEÇÃO DO FLUXOGRAMA ── */}
       {(mode === 'all' || mode === 'config') && (
       <div style={{ 
-        width: '100%', 
+        width: 'fit-content', 
         background: 'var(--bg-card)', 
         borderRadius: '12px', 
         border: '1px solid var(--border)', 
@@ -796,16 +986,12 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
         flexDirection: 'column',
         gap: '0px'
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-          <div>
-            <h3 style={{ margin: 0, fontSize: '18px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              🔀 Fluxograma
-            </h3>
-          </div>
+        <div style={{ width: '800px', height: `${canvasHeight}px`, position: 'relative', overflow: 'hidden', border: '1px solid var(--border)', borderRadius: '8px', transition: 'height 0.3s ease' }}>
           <button
             onClick={handleRunFlow}
             disabled={isProcessing || !usinaAtual}
             style={{
+              position: 'absolute', top: '12px', right: '12px', zIndex: 10,
               padding: '10px 20px', borderRadius: '8px', border: 'none',
               background: isProcessing ? '#94a3b8' : 'linear-gradient(135deg, #f59e0b, #f97316)',
               color: '#fff', fontSize: '13px', fontWeight: '700', cursor: isProcessing ? 'not-allowed' : 'pointer',
@@ -817,17 +1003,20 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
           >
             {isProcessing ? '⚙️ Processando...' : '🚀 Processar Fluxograma'}
           </button>
-        </div>
-
-        <div style={{ width: '100%', height: `${canvasHeight}px`, position: 'relative', overflow: 'hidden', border: '1px solid var(--border)', borderRadius: '8px', transition: 'height 0.3s ease' }}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
+            nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             proOptions={{ hideAttribution: true }}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             defaultEdgeOptions={{ type: 'smoothstep' }}
             onNodeClick={(_, node) => {
+              if (node.id === 'epi' && onEpiClick) {
+                onEpiClick()
+                return
+              }
               setSelectedNodeId(node.id)
               if (node.type === 'geff') {
                 setGeffParams({
@@ -835,11 +1024,26 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
                   SSF: node.data.SSF || 0,
                   MLF: node.data.MLF || 0
                 })
+              } else if (node.id === 'simultaneidade') {
+                setSimultParams({
+                  geff: node.data.simultParams?.geff ?? true,
+                  tamb: node.data.simultParams?.tamb ?? true,
+                  tcel: node.data.simultParams?.tcel ?? true,
+                  energia_pmi: node.data.simultParams?.energia_pmi ?? true,
+                  curtailment: node.data.simultParams?.curtailment ?? false,
+                })
+              } else if (node.id === 'curtailment') {
+                setCurtailmentParams({
+                  refMin: node.data.curtailmentRefMin ?? 52.8,
+                  refMargin: node.data.curtailmentRefMargin ?? 3,
+                  diffMargin: node.data.curtailmentDiffMargin ?? 5
+                })
               } else if (node.data?.aggregator) {
                 const rawInputs = node.data.inputs || ['']
-                const normalized = rawInputs.map(item => 
-                  typeof item === 'string' ? { series: item, filter: '' } : item
-                )
+                const normalized = rawInputs.map(item => {
+                  if (typeof item === 'string') return { series: item, filter: '', sensors: [] }
+                  return { sensors: [], ...item }
+                })
                 setInputsList(normalized)
                 setOperation(node.data.operation || 'sum')
                 setOutputFilter(node.data.outputFilter || '')
@@ -890,7 +1094,8 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
                 if (nodeId.startsWith('sujidade')) return { label: 'Sujidade', color: '#6D4C41' };
                 if (nodeId.startsWith('tracker')) return { label: 'Tracker', color: '#6A1B9A' };
                 if (nodeId.startsWith('energia_pmi')) return { label: 'Energia PMI', color: '#0277BD' };
-                if (nodeId.startsWith('energia')) return { label: 'Potência', color: '#2E7D32' };
+                if (nodeId.startsWith('potencia_ppc')) return { label: 'Referência PPC', color: '#00838F' };
+                if (nodeId.startsWith('energia')) return { label: 'Potência PPC', color: '#2E7D32' };
                 return null;
               };
               const badge = getBadgeProps(selectedNodeId);
@@ -916,6 +1121,7 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
                   if (selectedNodeId === 'tracker') return s.elemento === 'Tracker';
                   if (selectedNodeId === 'sujidade') return s.elemento === 'Sujidade';
                   if (selectedNodeId === 'energia_pmi') return s.elemento === 'Energia PMI';
+                  if (selectedNodeId === 'potencia_ppc') return s.elemento === 'Potência CA PPC';
                   if (selectedNodeId === 'energia') return s.elemento && s.elemento.startsWith('Potência');
                   return true;
                 });
@@ -998,17 +1204,32 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
                       <input type="number" step="1" className="input" value={trackerParams.tolerance} onChange={e => setTrackerParams({ ...trackerParams, tolerance: parseFloat(e.target.value) || 0 })} style={{ padding: '6px', borderColor: 'var(--red)' }} title="Diferença máxima aceitável em relação à referência." />
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: '8px' }}>
-                    <input 
-                      type="checkbox" 
-                      id="inverterSinal"
-                      checked={trackerParams.inverter_sinal || false}
-                      onChange={e => setTrackerParams({ ...trackerParams, inverter_sinal: e.target.checked })}
-                      style={{ cursor: 'pointer' }}
-                    />
-                    <label htmlFor="inverterSinal" style={{ fontSize: 12, fontWeight: 600, cursor: 'pointer', color: '#6A1B9A' }}>
-                      Inverter Sinal da Curva (-/+)
-                    </label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <input 
+                        type="checkbox" 
+                        id="inverterSinal"
+                        checked={trackerParams.inverter_sinal || false}
+                        onChange={e => setTrackerParams({ ...trackerParams, inverter_sinal: e.target.checked })}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <label htmlFor="inverterSinal" style={{ fontSize: 12, fontWeight: 600, cursor: 'pointer', color: '#6A1B9A' }}>
+                        Inverter Sinal da Curva (-/+)
+                      </label>
+                    </div>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600, color: '#6A1B9A' }}>Avanço/Atraso (min):</label>
+                      <input 
+                        type="number" 
+                        step="1" 
+                        className="input" 
+                        value={trackerParams.time_offset || 0} 
+                        onChange={e => setTrackerParams({ ...trackerParams, time_offset: parseInt(e.target.value) || 0 })} 
+                        style={{ padding: '4px 6px', width: '80px', fontSize: '12px' }} 
+                        title="Deslocamento temporal da curva teórica em minutos (positivo = curva para frente/atrasada, negativo = curva para trás/adiantada)" 
+                      />
+                    </div>
                   </div>
                 </div>
               )}
@@ -1037,7 +1258,50 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
                       />
                     </div>
                     <div style={{ flex: 2 }}>
-                      {(() => {
+                      {selectedNodeId === 'tracker' ? (
+                        <div style={{ position: 'relative' }}>
+                          <details style={{ position: 'relative' }}>
+                            <summary style={{ padding: '8px', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '12px', background: 'var(--bg-card)', cursor: 'pointer', listStyle: 'none' }}>
+                              {val.sensors && val.sensors.length > 0 ? `${val.sensors.length} sensor(es)` : 'Selecionar Sensores...'}
+                            </summary>
+                            <div style={{ position: 'absolute', top: '100%', left: 0, minWidth: '350px', background: 'var(--bg-card)', border: '1px solid var(--border)', maxHeight: '250px', overflowY: 'auto', zIndex: 100, padding: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', borderRadius: '4px', whiteSpace: 'nowrap' }}>
+                              {availableIrradianceSensors.map(sensor => {
+                                const isSelectedByMe = (val.sensors || []).includes(sensor.name);
+                                const isSelectedByOther = inputsList.some((otherVal, otherIdx) => otherIdx !== idx && (otherVal.sensors || []).includes(sensor.name));
+                                return (
+                                <label key={sensor.name} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', marginBottom: '4px', cursor: isSelectedByOther ? 'not-allowed' : 'pointer', opacity: isSelectedByOther ? 0.5 : 1 }}>
+                                  <input type="checkbox" checked={isSelectedByMe} disabled={isSelectedByOther} onChange={(e) => {
+                                    const checked = e.target.checked;
+                                    const newList = [...inputsList];
+                                    const currentSensors = newList[idx].sensors || [];
+                                    newList[idx] = { 
+                                      ...newList[idx], 
+                                      sensors: checked ? [...currentSensors, sensor.name] : currentSensors.filter(s => s !== sensor.name) 
+                                    };
+                                    setInputsList(newList);
+                                  }} />
+                                  <span style={{ 
+                                    background: sensor.source === 'Gpoa' ? '#F9CC00' : '#FF9800', 
+                                    color: '#000', 
+                                    padding: '2px 4px', 
+                                    borderRadius: '4px', 
+                                    fontSize: '9px', 
+                                    fontWeight: 'bold',
+                                    minWidth: '40px',
+                                    textAlign: 'center'
+                                  }}>
+                                    {sensor.source}
+                                  </span>
+                                  {sensor.name}
+                                  {isSelectedByOther && <span style={{ fontStyle: 'italic', color: 'var(--text-muted)', marginLeft: '4px' }}>(em uso)</span>}
+                                </label>
+                                );
+                              })}
+                              {availableIrradianceSensors.length === 0 && <span style={{fontSize:'11px', color:'var(--text-muted)'}}>Nenhum sensor em Gpoa/Grear</span>}
+                            </div>
+                          </details>
+                        </div>
+                      ) : (() => {
                         const seriesInfo = allSeries.find(s => s.coluna === val.series);
                         const element = seriesInfo?.elemento || '';
                         const applicableFilters = filterSettings.filter(f => f.element === element);
@@ -1089,7 +1353,7 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
                 ))}
               </div>
               <button 
-                onClick={() => setInputsList([...inputsList, { series: '', filter: '' }])}
+                onClick={() => setInputsList([...inputsList, { series: '', filter: '', sensors: [] }])}
                 style={{ marginTop: '12px', background: 'transparent', border: '1px dashed var(--border)', color: 'var(--text-primary)', padding: '6px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', width: '100%' }}
               >
                 + Adicionar outra entrada
@@ -1150,7 +1414,7 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
             width: '450px', maxWidth: '90vw', boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
             display: 'flex', flexDirection: 'column'
           }}>
-            <h3 style={{ marginTop: 0, color: '#f97316', borderBottom: '1px solid var(--border)', paddingBottom: '12px', paddingRight: '80px' }}>
+            <h3 style={{ marginTop: 0, color: '#eab308', borderBottom: '1px solid var(--border)', paddingBottom: '12px', paddingRight: '80px' }}>
               G<sub>eff</sub> - Irradiância Efetiva
             </h3>
             {(() => {
@@ -1180,7 +1444,7 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
             })()}
             
             <div style={{ margin: '20px 0', display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <p style={{ fontSize: '13px', color: 'var(--text-muted)', background: 'rgba(249,115,22,0.1)', padding: '10px', borderRadius: '6px', borderLeft: '4px solid #f97316' }}>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)', background: 'rgba(234,179,8,0.1)', padding: '10px', borderRadius: '6px', borderLeft: '4px solid #eab308' }}>
                 Este bloco calcula a irradiância efetiva usando as saídas de <strong>Gpoa</strong> e <strong>Grear</strong>.<br/>
                 <code style={{ display: 'block', marginTop: 8, fontSize: 12 }}>G<sub>eff</sub> = Gpoa + β * Grear * (1 - SSF) * (1 - MLF)</code>
               </p>
@@ -1269,9 +1533,34 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
             width: '450px', maxWidth: '90vw', boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
             display: 'flex', flexDirection: 'column'
           }}>
-            <h3 style={{ marginTop: 0, color: '#f97316', borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
+            <h3 style={{ marginTop: 0, color: '#f97316', borderBottom: '1px solid var(--border)', paddingBottom: '12px', paddingRight: '80px' }}>
               T<sub>cel</sub> - Temperatura da Célula
             </h3>
+            {(() => {
+              const getBadgeProps = (nodeId) => {
+                if (!nodeId) return null;
+                if (nodeId.startsWith('gpoa') || nodeId.startsWith('grear') || nodeId.startsWith('geff')) return { label: 'Irradiação', color: '#F9CC00' };
+                if (nodeId.startsWith('tmod') || nodeId.startsWith('tamb') || nodeId.startsWith('tcel')) return { label: 'Temperatura', color: '#EF6C00' };
+                if (nodeId.startsWith('sujidade')) return { label: 'Sujidade', color: '#6D4C41' };
+                if (nodeId.startsWith('tracker')) return { label: 'Tracker', color: '#6A1B9A' };
+                if (nodeId.startsWith('energia_pmi')) return { label: 'Energia PMI', color: '#0277BD' };
+                if (nodeId.startsWith('energia')) return { label: 'Potência', color: '#2E7D32' };
+                return null;
+              };
+              const badge = getBadgeProps(selectedNodeId);
+              if (!badge) return null;
+              return (
+                <div style={{
+                  position: 'absolute', top: '24px', right: '24px',
+                  background: badge.color, padding: '4px 8px', borderRadius: '4px',
+                  fontSize: '11px', fontWeight: 700, color: '#fff',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)', zIndex: 10,
+                  letterSpacing: '0.5px'
+                }}>
+                  {badge.label.toUpperCase()}
+                </div>
+              );
+            })()}
             
             <div style={{ margin: '20px 0', display: 'flex', flexDirection: 'column', gap: 16 }}>
               <p style={{ fontSize: '13px', color: 'var(--text-muted)', background: 'rgba(249,115,22,0.1)', padding: '10px', borderRadius: '6px', borderLeft: '4px solid #f97316' }}>
@@ -1311,6 +1600,207 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
           </div>
         </>
       )}
+      {/* Modal Bloco Curtailment */}
+      {selectedNodeId === 'curtailment' && (
+        <>
+          <div 
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000 }} 
+            onClick={() => setSelectedNodeId(null)} 
+          />
+          <div style={{
+            position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+            background: 'var(--bg-card)', padding: '24px', borderRadius: '8px', zIndex: 1001,
+            width: '450px', maxWidth: '90vw', boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+            display: 'flex', flexDirection: 'column'
+          }}>
+            <h3 style={{ marginTop: 0, color: '#b91c1c', borderBottom: '1px solid var(--border)', paddingBottom: '12px', paddingRight: '80px' }}>
+              Filtro de Curtailment
+            </h3>
+            
+            <div style={{
+              position: 'absolute', top: '24px', right: '24px',
+              background: '#ef4444', padding: '4px 8px', borderRadius: '4px',
+              fontSize: '11px', fontWeight: 700, color: '#fff',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)', zIndex: 10,
+              letterSpacing: '0.5px'
+            }}>
+              CURTAILMENT
+            </div>
+            
+            <div style={{ margin: '20px 0', display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)', background: 'rgba(239,68,68,0.1)', padding: '10px', borderRadius: '6px', borderLeft: '4px solid #ef4444' }}>
+                Define os parâmetros para detectar quando houve limitação de potência (curtailment) imposta pela rede que afetou de fato a usina.
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label style={{ fontSize: 13, fontWeight: 600 }}>Ref. Mínima de Potência (ex: 52.8 MW)</label>
+                  <input 
+                    type="number" step="0.1" className="input" 
+                    value={curtailmentParams.refMin} 
+                    onChange={e => setCurtailmentParams({ ...curtailmentParams, refMin: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label style={{ fontSize: 13, fontWeight: 600 }}>Margem de Segurança da Ref. (%)</label>
+                  <input 
+                    type="number" step="0.1" className="input" 
+                    value={curtailmentParams.refMargin} 
+                    onChange={e => setCurtailmentParams({ ...curtailmentParams, refMargin: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label style={{ fontSize: 13, fontWeight: 600 }}>Tolerância (Geração Real vs Ref.) (%)</label>
+                  <input 
+                    type="number" step="0.1" className="input" 
+                    value={curtailmentParams.diffMargin} 
+                    onChange={e => setCurtailmentParams({ ...curtailmentParams, diffMargin: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: 20 }}>
+              <button 
+                onClick={() => setSelectedNodeId(null)} 
+                className="btn btn-ghost btn-sm"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={() => {
+                  const updatedNodes = nodes.map(n => {
+                    if (n.id === selectedNodeId) {
+                      return { 
+                        ...n, 
+                        data: { 
+                          ...n.data, 
+                          curtailmentRefMin: curtailmentParams.refMin,
+                          curtailmentRefMargin: curtailmentParams.refMargin,
+                          curtailmentDiffMargin: curtailmentParams.diffMargin
+                        } 
+                      }
+                    }
+                    return n
+                  })
+                  setNodes(updatedNodes)
+                  if (usinaAtual) {
+                    saveFlowConfig(usinaAtual, {
+                      nodes: updatedNodes.map(n => ({ id: n.id, data: n.data, position: n.position, type: n.type })),
+                      edges: edges
+                    })
+                  }
+                  setSelectedNodeId(null)
+                }} 
+                className="btn btn-primary btn-sm"
+                style={{ background: '#ef4444', color: '#fff', border: 'none' }}
+              >
+                Salvar
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Modal Bloco Simultaneidade */}
+      {selectedNodeId === 'simultaneidade' && (
+        <>
+          <div 
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000 }} 
+            onClick={() => setSelectedNodeId(null)} 
+          />
+          <div style={{
+            position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+            background: 'var(--bg-card)', padding: '24px', borderRadius: '8px', zIndex: 1001,
+            width: '450px', maxWidth: '90vw', boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+            display: 'flex', flexDirection: 'column'
+          }}>
+            <h3 style={{ marginTop: 0, color: '#64748b', borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
+              Dados Válidos
+            </h3>
+            
+            <div style={{ margin: '20px 0', display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)', background: 'rgba(100,116,139,0.1)', padding: '10px', borderRadius: '6px', borderLeft: '4px solid #64748b' }}>
+                Este bloco verifica se existem dados válidos para <strong>todas</strong> as séries selecionadas abaixo, em cada minuto.<br/><br/>
+                Se todas existirem, gera <strong>Flag = 1</strong>. Caso falte alguma, gera <strong>Flag = 0</strong>.
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {(() => {
+                  const renderCard = (key, label, colorType) => {
+                    const isChecked = simultParams[key]
+                    let bg = '#fff', border = '#ccc'
+                    switch(colorType) {
+                      case 'yellow': bg = isChecked ? '#fef08a' : '#fef9c3'; border = isChecked ? '#facc15' : '#fef08a'; break;
+                      case 'orange': bg = isChecked ? '#ffedd5' : '#fff7ed'; border = isChecked ? '#f97316' : '#ffedd5'; break;
+                      case 'green': bg = isChecked ? '#bbf7d0' : '#dcfce7'; border = isChecked ? '#4ade80' : '#bbf7d0'; break;
+                      case 'blue': bg = isChecked ? '#bae6fd' : '#e0f2fe'; border = isChecked ? '#38bdf8' : '#bae6fd'; break;
+                    }
+                    return (
+                      <div 
+                        key={key}
+                        onClick={() => setSimultParams({...simultParams, [key]: !isChecked})}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
+                          background: bg, border: `2px solid ${border}`,
+                          borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s',
+                          opacity: isChecked ? 1 : 0.6
+                        }}
+                      >
+                        <input type="checkbox" checked={isChecked} readOnly style={{ width: 16, height: 16, cursor: 'pointer' }} />
+                        <span style={{ fontSize: 13, fontWeight: isChecked ? 600 : 400, color: '#334155' }} dangerouslySetInnerHTML={{ __html: label }} />
+                      </div>
+                    )
+                  }
+                  return (
+                    <>
+                      <h4 style={{ margin: '5px 0 5px 0', fontSize: 13, color: '#475569', fontWeight: 600 }}>Simultaneidade</h4>
+                      {renderCard('geff', 'G<sub>eff</sub> (Irradiância Efetiva)', 'yellow')}
+                      {renderCard('tamb', 'T<sub>amb</sub> (Temperatura Ambiente)', 'orange')}
+                      {renderCard('tcel', 'T<sub>cel</sub> (Temperatura da Célula)', 'orange')}
+                      {renderCard('energia_pmi', 'Energia PMI', 'blue')}
+                      
+                      <h4 style={{ margin: '10px 0 5px 0', fontSize: 13, color: '#475569', fontWeight: 600 }}>Curtailment</h4>
+                      {renderCard('curtailment', 'Filtro de Curtailment', 'orange')}
+                    </>
+                  )
+                })()}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: 20 }}>
+              <button 
+                onClick={() => setSelectedNodeId(null)} 
+                className="btn btn-ghost btn-sm"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={() => {
+                  const updatedNodes = nodes.map(n => {
+                    if (n.id === selectedNodeId) {
+                      return { ...n, data: { ...n.data, simultParams } }
+                    }
+                    return n
+                  })
+                  setNodes(updatedNodes)
+                  if (usinaAtual) {
+                    saveFlowConfig(usinaAtual, {
+                      nodes: updatedNodes.map(n => ({ id: n.id, data: n.data, position: n.position, type: n.type })),
+                      edges: edges
+                    })
+                  }
+                  setSelectedNodeId(null)
+                }} 
+                className="btn btn-primary btn-sm"
+                style={{ background: 'var(--amber)', color: '#000' }}
+              >
+                Salvar
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Modal Bloco PVSyst */}
       {selectedNodeId === 'pvsyst' && (
@@ -1341,7 +1831,9 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
               <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginTop: '10px' }}>
                 <button 
                   onClick={() => {
-                    alert("Download do arquivo de importação do PVSYST em desenvolvimento.")
+                    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+                    const url = `${baseUrl}/flow/${encodeURIComponent(usinaAtual)}/export-pvsyst`;
+                    window.open(url, '_blank');
                   }} 
                   className="btn"
                   style={{ flex: 1, background: '#233772', color: '#fff', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '16px', height: 'auto' }}
@@ -1455,7 +1947,7 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
                   <input type="checkbox" checked={visibleVars.energia} onChange={() => setVisibleVars(prev => ({ ...prev, energia: !prev.energia }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
-                  <span>Potência</span>
+                  <span>Potência PPC</span>
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
                   <input type="checkbox" checked={visibleVars.energia_pmi} onChange={() => setVisibleVars(prev => ({ ...prev, energia_pmi: !prev.energia_pmi }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
@@ -1520,10 +2012,10 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
                     const firstCol = group.columns[0];
                     const theme = getColumnTheme(firstCol);
                     
-                    if (group.type === 'input') {
+                    if (group.type === 'input' || group.type === 'validation') {
                       return (
                         <th 
-                          key={`group-input-${group.node_id}-${gIdx}`}
+                          key={`group-${group.type}-${group.node_id}-${gIdx}`}
                           colSpan={group.columns.length}
                           style={{
                             padding: '8px 12px',
@@ -1536,7 +2028,7 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
                             background: 'var(--bg-secondary)'
                           }}
                         >
-                          {formatGroupHeaderLabel(group.node_id)}
+                          {group.type === 'validation' ? `Validação de Dados - ${usinaAtual || ''}` : formatGroupHeaderLabel(group.node_id)}
                         </th>
                       );
                     } else {
@@ -1553,7 +2045,8 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
                             color: isStyled ? theme.color : 'var(--text-primary)', 
                             borderBottom: '2px solid var(--border)', 
                             textAlign: 'center',
-                            whiteSpace: 'nowrap',
+                            whiteSpace: firstCol.label.startsWith('Sujidade (') ? 'normal' : 'nowrap',
+                            minWidth: firstCol.label.startsWith('Sujidade (') ? '100px' : 'auto',
                             background: isStyled ? theme.bgHeader : 'var(--bg-secondary)',
                             verticalAlign: 'middle'
                           }}
@@ -1565,27 +2058,28 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
                   })}
                 </tr>
 
-                {/* LINHA 2 (Nível Inferior - apenas se houver inputs) */}
-                {headerGroups.some(g => g.type === 'input') && (
+                {/* LINHA 2 (Nível Inferior - apenas se houver inputs ou validação) */}
+                {headerGroups.some(g => g.type === 'input' || g.type === 'validation') && (
                   <tr style={{ background: 'var(--bg-secondary)' }}>
-                    {headerGroups.filter(g => g.type === 'input').map(group => {
+                    {headerGroups.filter(g => g.type === 'input' || g.type === 'validation').map(group => {
                       return group.columns.map((col, idx) => {
                         const theme = getColumnTheme(col);
                         // Extrair apenas o número da entrada (ex: "Gpoa - Entrada 2" -> "2")
                         const match = col.label.match(/Entrada\s+(\d+)/i);
-                        const subLabel = match ? match[1] : (idx + 1).toString();
+                        const subLabel = col.type === 'validation' ? col.label : (match ? match[1] : (idx + 1).toString());
                         
                         return (
                           <th 
-                            key={`sub-input-${col.key}`}
+                            key={`sub-${col.type}-${col.key}`}
                             style={{ 
                               padding: '6px 12px', 
                               fontWeight: '700', 
-                              fontSize: '11px', 
+                              fontSize: col.type === 'validation' ? '10px' : '11px', 
                               color: 'var(--text-secondary)', 
                               borderBottom: '2px solid var(--border)', 
                               textAlign: 'center',
-                              whiteSpace: 'nowrap',
+                              whiteSpace: col.type === 'validation' ? 'normal' : 'nowrap',
+                              minWidth: col.type === 'validation' ? '150px' : 'auto',
                               background: 'var(--bg-secondary)'
                             }}
                           >
@@ -1634,6 +2128,52 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
                       if (col.key.toLowerCase().includes('sujidade') && typeof val === 'number') {
                         formattedVal += '%';
                       }
+                      let cellBackground = isOutput ? theme.bgCell : 'transparent';
+                      let cellColor = isOutput ? 'var(--text-primary)' : 'var(--text-secondary)';
+                      
+                      if (col.type === 'validation') {
+                        let status = val;
+                        if (typeof val === 'string' && val.includes('|')) {
+                          const firstPipe = val.indexOf('|');
+                          status = val.substring(0, firstPipe);
+                          formattedVal = val.substring(firstPipe + 1);
+                        }
+                        
+                        if (status === 'OK' || status === 'Dia Válido') {
+                          cellBackground = '#84cc16'; // darker green
+                          cellColor = '#ffffff';
+                        } else if (status === 'OK_RESSALVA') {
+                          cellBackground = '#bbf7d0'; // light green
+                          cellColor = '#166534';
+                        } else if (status === 'NÃO_OK' || status === 'Dia Inválido') {
+                          cellBackground = '#ef4444'; // red
+                          cellColor = '#ffffff';
+                        } else {
+                          cellBackground = 'var(--bg-secondary)';
+                        }
+                      }
+                      
+                      let displayContent = formattedVal;
+                      if (col.type === 'validation') {
+                        if (typeof formattedVal === 'string' && formattedVal.includes('|')) {
+                          const subParts = formattedVal.split('|');
+                          if (subParts.length === 2) {
+                            const totais = subParts[0].trim();
+                            const consec = subParts[1].trim();
+                            displayContent = (
+                              <div style={{ display: 'flex', flexDirection: 'column', fontSize: '11px', lineHeight: '1.4' }}>
+                                <span>{consec}</span>
+                                <span>{totais}</span>
+                              </div>
+                            );
+                          } else {
+                            displayContent = <span style={{ fontSize: '11px' }}>{formattedVal}</span>;
+                          }
+                        } else {
+                          displayContent = <span style={{ fontSize: '11px' }}>{formattedVal}</span>;
+                        }
+                      }
+
                       return (
                         <td 
                           key={col.key} 
@@ -1642,12 +2182,12 @@ export default function FluxogramaView({ elementos = [], showTitle = true, mode 
                             borderBottom: '1px solid var(--border)', 
                             textAlign: 'center',
                             whiteSpace: 'nowrap',
-                            color: isOutput ? 'var(--text-primary)' : 'var(--text-secondary)',
-                            fontWeight: isOutput ? '600' : 'normal',
-                            background: isOutput ? theme.bgCell : 'transparent'
+                            color: cellColor,
+                            fontWeight: isOutput || col.type === 'validation' ? '600' : 'normal',
+                            background: cellBackground
                           }}
                         >
-                          {formattedVal}
+                          {displayContent}
                         </td>
                       );
                     })}

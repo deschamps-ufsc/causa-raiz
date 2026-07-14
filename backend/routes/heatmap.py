@@ -1,4 +1,4 @@
-﻿"""
+"""
 Rota de Heatmap de Yield (Energia CA / MWp instalado).
 
 Yield por par (SKID, Inversor):
@@ -213,6 +213,7 @@ def get_pivot_heatmap(
         valid_cols_day = [c for c in cols_to_read if c in parquet_cols]
         if valid_cols_day:
             df_day = pd.read_parquet(path, columns=valid_cols_day)
+            df_day["_date_str"] = date
             dfs.append(df_day)
             
     if not dfs:
@@ -236,46 +237,780 @@ def get_pivot_heatmap(
     
     records = []
     
-    for col in target_series:
-        if col not in df.columns:
-            continue
+    for date_str, df_group in df.groupby("_date_str"):
+        for col in target_series:
+            if col not in df_group.columns:
+                continue
+                
+            total_sum = df_group[col].sum()
+            avg_val = float(df_group[col].mean()) if not df_group[col].empty else 0.0
+            # Integralizamos assumindo dados minuto-a-minuto: sum / 60
+            integral = float(total_sum) / 60.0
             
-        total_sum = df[col].sum()
-        avg_val = float(df[col].mean()) if not df[col].empty else 0.0
-        # Integralizamos assumindo dados minuto-a-minuto: sum / 60
-        integral = float(total_sum) / 60.0
-        
-        kwp_val = 0.0
-        
-        meta = mapping.get(col, {})
-        m_sk = str(meta.get("skid") or "").strip()
-        m_in = str(meta.get("inversor") or "").strip()
-        m_sb = str(meta.get("stringbox") or "").strip()
-        m_st = str(meta.get("string") or "").strip()
-        
-        parts = [p for p in [m_sk, m_in, m_sb, m_st] if p]
-        # Calcula kWp se a série tem ao menos SKID + Inversor definidos.
-        # Variáveis ambientais com só SKID não devem somar toda a planta.
-        if m_sk and m_in and parts:
-            target_prefix = "|".join(parts)
-            for key_path, data_dict in info_dict.items():
-                if key_path == target_prefix or key_path.startswith(target_prefix + "|"):
-                    kwp_val += data_dict.get("kwp", 0.0)
+            kwp_val = 0.0
+            
+            meta = mapping.get(col, {})
+            m_sk = str(meta.get("skid") or "").strip()
+            m_in = str(meta.get("inversor") or "").strip()
+            m_sb = str(meta.get("stringbox") or "").strip()
+            m_st = str(meta.get("string") or "").strip()
+            
+            parts = [p for p in [m_sk, m_in, m_sb, m_st] if p]
+            # Calcula kWp se a série tem ao menos SKID + Inversor definidos.
+            # Variáveis ambientais com só SKID não devem somar toda a planta.
+            if m_sk and m_in and parts:
+                target_prefix = "|".join(parts)
+                for key_path, data_dict in info_dict.items():
+                    if key_path == target_prefix or key_path.startswith(target_prefix + "|"):
+                        kwp_val += data_dict.get("kwp", 0.0)
 
-        records.append({
-            "serie": col,
-            "skid": m_sk,
-            "inversor": m_in,
-            "stringbox": m_sb,
-            "estacao": str(meta.get("estacao") or ""),
-            "avg_val": round(avg_val, 4),
-            "integral": round(integral, 4),
-            "kwp": round(kwp_val, 4) if kwp_val > 0 else None
-        })
+            records.append({
+                "date": date_str,
+                "serie": col,
+                "skid": m_sk,
+                "inversor": m_in,
+                "stringbox": m_sb,
+                "estacao": str(meta.get("estacao") or ""),
+                "avg_val": round(avg_val, 4),
+                "integral": round(integral, 4),
+                "kwp": round(kwp_val, 4) if kwp_val > 0 else None
+            })
         
     return {
         "dates": dates,
         "elemento": elemento,
         "records": records
     }
+
+
+@router.get("/heatmap/mapa")
+def get_mapa_heatmap(
+    usina: str = Query(...),
+    dates:  str = Query(...),
+    filters: Optional[str] = Query(None, description="String de filtros separados por vírgula para qualidade"),
+):
+    """
+    Retorna integral e avg_val específicos para as séries definidas no layout do mapa.
+    Lê o mapa_layout.json para determinar as target_series.
+    """
+    date_list = [d.strip() for d in dates.split(",") if d.strip()]
+    if not date_list:
+        raise HTTPException(status_code=400, detail="Nenhuma data informada.")
+
+    from routes.upload import get_mapa_path
+    import json
+    path_mapa = get_mapa_path(usina)
+    if not os.path.exists(path_mapa):
+        raise HTTPException(status_code=404, detail="Layout de Mapa não encontrado. Faça upload do Excel na Configuração da Usina.")
+    
+    with open(path_mapa, "r", encoding="utf-8") as f:
+        layout = json.load(f)
+        
+    target_series = [cell["label"] for cell in layout if "label" in cell]
+    
+    if not target_series:
+        raise HTTPException(status_code=422, detail="Nenhuma série encontrada no layout do Mapa.")
+
+    mapping = load_mapping(usina)
+    info_dict = {}
+    try:
+        from services.usina_info_service import load_usina_info
+        info_dict = load_usina_info(usina) or {}
+    except Exception:
+        pass
+
+    active_filters = [f.strip() for f in filters.split(",")] if filters else []
+    cols_to_read = list(set(target_series)) + active_filters
+
+    synth_lookup = build_lookup(usina)
+    all_needed_cols = list(set(target_series)) + active_filters
+    synth_in_target = {col: synth_lookup[col] for col in all_needed_cols if col in synth_lookup}
+    for synth_name, synth_def in synth_in_target.items():
+        if synth_name in cols_to_read:
+            cols_to_read.remove(synth_name)
+        for src in get_source_cols(synth_def):
+            if src not in cols_to_read:
+                cols_to_read.append(src)
+
+    from services.parquet_service import DATA_DIR
+    dfs = []
+    for date in date_list:
+        path = _parquet_path(date, usina)
+        processed_path = os.path.join(DATA_DIR, usina, "processed", f"{date}.parquet")
+        
+        df_day = None
+        if os.path.exists(path):
+            schema = pq.read_schema(path)
+            parquet_cols = {f.name for f in schema}
+            valid_cols_day = [c for c in cols_to_read if c in parquet_cols]
+            
+            if valid_cols_day:
+                read_cols = valid_cols_day + (["timestamp"] if "timestamp" not in valid_cols_day else [])
+                df_day = pd.read_parquet(path, columns=list(set(read_cols)))
+                
+        if os.path.exists(processed_path):
+            schema_proc = pq.read_schema(processed_path)
+            proc_cols = {f.name for f in schema_proc}
+            valid_proc_day = [c for c in cols_to_read if c in proc_cols]
+            
+            if valid_proc_day:
+                read_proc = valid_proc_day + (["timestamp"] if "timestamp" not in valid_proc_day else [])
+                df_proc = pd.read_parquet(processed_path, columns=list(set(read_proc)))
+                
+                if df_day is not None:
+                    df_day["timestamp"] = df_day["timestamp"].dt.floor("min")
+                    df_proc["timestamp"] = df_proc["timestamp"].dt.floor("min")
+                    df_day = df_day.merge(df_proc, on="timestamp", how="outer")
+                else:
+                    df_day = df_proc
+                    
+        if df_day is not None:
+            df_day["_date_str"] = date
+            dfs.append(df_day)
+            
+    if not dfs:
+        raise HTTPException(status_code=422, detail="Nenhuma coluna válida no Parquet correspondente às séries do Mapa.")
+        
+    df = pd.concat(dfs, ignore_index=True)
+
+    for synth_name, synth_def in synth_in_target.items():
+        try:
+            df[synth_name] = compute_synthetic(df, synth_def)
+        except Exception as e:
+            df[synth_name] = 0.0
+    
+    for f_col in active_filters:
+        if f_col in df.columns:
+            df = df[df[f_col] == 1]
+    
+    records = []
+    
+    for date_str, df_group in df.groupby("_date_str"):
+        for col in target_series:
+            if col not in df_group.columns:
+                continue
+                
+            total_sum = df_group[col].sum()
+            avg_val = float(df_group[col].mean()) if not df_group[col].empty else 0.0
+            max_val = float(df_group[col].max()) if not df_group[col].empty else 0.0
+            integral = float(total_sum) / 60.0
+            
+            kwp_val = 0.0
+            meta = mapping.get(col, {})
+            m_sk = str(meta.get("skid") or "").strip()
+            m_in = str(meta.get("inversor") or "").strip()
+            m_sb = str(meta.get("stringbox") or "").strip()
+            m_st = str(meta.get("string") or "").strip()
+            
+            parts = [p for p in [m_sk, m_in, m_sb, m_st] if p]
+            if m_sk and m_in and parts:
+                target_prefix = "|".join(parts)
+                for key_path, data_dict in info_dict.items():
+                    if key_path == target_prefix or key_path.startswith(target_prefix + "|"):
+                        kwp_val += data_dict.get("kwp", 0.0)
+
+            records.append({
+                "date": date_str,
+                "serie": col,
+                "skid": m_sk,
+                "inversor": m_in,
+                "stringbox": m_sb,
+                "estacao": str(meta.get("estacao") or ""),
+                "avg_val": round(avg_val, 4),
+                "max_val": round(max_val, 4),
+                "integral": round(integral, 4),
+                "kwp": round(kwp_val, 4) if kwp_val > 0 else None
+            })
+        
+    return {
+        "dates": dates,
+        "records": records
+    }
+
+
+
+@router.get("/heatmap/trackers")
+def get_trackers_heatmap(
+    usina: str = Query(...),
+    dates:  str = Query(...),
+    filters: Optional[str] = Query(None, description="String de filtros separados por vírgula para qualidade"),
+):
+    """
+    Retorna a Média da Diferença Absoluta (em graus) entre Tracker Alvo/Atual
+    e o Tracker de Referência (PVLib), considerando APENAS períodos sem backtracking.
+    """
+    date_list = [d.strip() for d in dates.split(",") if d.strip()]
+    if not date_list:
+        raise HTTPException(status_code=400, detail="Nenhuma data informada.")
+
+    mapping = load_mapping(usina)
+    
+    # Pegar parâmetros de tracker_config
+    import json
+    tracker_params = {}
+    config_path = os.path.join(os.path.dirname(__file__), "..", "data", usina, "flow_config.json")
+    if os.path.exists(config_path):
+        with open(config_path, "r", encoding="utf-8") as f:
+            cfg = json.load(f)
+            # Find node with id 'tracker'
+            for node in cfg.get("nodes", []):
+                if node.get("id") == "tracker":
+                    tracker_params = node.get("data", {}).get("trackerParams", {})
+                    break
+
+    # Filtrar séries com base no elemento 'Tracker'
+    target_series = []
+    tracker_groups = {} # base -> {alvo: col, atual: col, skid, inversor, stringbox, estacao}
+    
+    for col, meta in mapping.items():
+        if meta.get("elemento") == "Tracker":
+            if col.endswith(".PosAngAlvo"):
+                base = col.replace(".PosAngAlvo", "")
+                typ = "alvo"
+            elif col.endswith(".PosAngAtual") or col.endswith(".PosAngMedido"):
+                base = col.replace(".PosAngAtual", "").replace(".PosAngMedido", "")
+                typ = "atual"
+            else:
+                continue
+
+            target_series.append(col)
+            if base not in tracker_groups:
+                tracker_groups[base] = {
+                    "skid": str(meta.get("skid") or ""),
+                    "inversor": str(meta.get("inversor") or ""),
+                    "stringbox": str(meta.get("stringbox") or ""),
+                    "estacao": str(meta.get("estacao") or ""),
+                    # Usa o campo 'tracker' do mapeamento; fallback para inferição pelo nome da série
+                    "tracker": str(meta.get("tracker") or "") or base.split("-")[-1],
+                    "strings": str(meta.get("string") or ""),
+                }
+            tracker_groups[base][typ] = col
+
+    if not target_series:
+        raise HTTPException(
+            status_code=422,
+            detail="Nenhuma série encontrada para o elemento 'Tracker'."
+        )
+
+    active_filters = [f.strip() for f in filters.split(",")] if filters else []
+    cols_to_read = list(set(target_series)) + active_filters
+
+    from services.parquet_service import DATA_DIR
+    dfs = []
+    for date in date_list:
+        path = _parquet_path(date, usina)
+        processed_path = os.path.join(DATA_DIR, usina, "processed", f"{date}.parquet")
+        
+        df_day = None
+        if os.path.exists(path):
+            schema = pq.read_schema(path)
+            parquet_cols = {f.name for f in schema}
+            valid_cols_day = [c for c in cols_to_read if c in parquet_cols]
+            
+            if valid_cols_day or "timestamp" in parquet_cols:
+                read_cols = valid_cols_day + (["timestamp"] if "timestamp" not in valid_cols_day else [])
+                df_day = pd.read_parquet(path, columns=list(set(read_cols)))
+                
+        if os.path.exists(processed_path):
+            schema_proc = pq.read_schema(processed_path)
+            proc_cols = {f.name for f in schema_proc}
+            valid_proc_day = [c for c in cols_to_read if c in proc_cols]
+            
+            if valid_proc_day:
+                read_proc = valid_proc_day + (["timestamp"] if "timestamp" not in valid_proc_day else [])
+                df_proc = pd.read_parquet(processed_path, columns=list(set(read_proc)))
+                
+                if df_day is not None:
+                    df_day["timestamp"] = df_day["timestamp"].dt.floor("min")
+                    df_proc["timestamp"] = df_proc["timestamp"].dt.floor("min")
+                    df_day = df_day.merge(df_proc, on="timestamp", how="outer")
+                else:
+                    df_day = df_proc
+                    
+        if df_day is not None:
+            dfs.append(df_day)
+            
+    if not dfs:
+        raise HTTPException(status_code=422, detail="Nenhuma coluna válida no Parquet.")
+        
+    df = pd.concat(dfs, ignore_index=True)
+    if "timestamp" in df.columns:
+        df.set_index("timestamp", inplace=True)
+
+    # Aplica iterativamente cada filtro presente no dataframe
+    for f_col in active_filters:
+        if f_col in df.columns:
+            df = df[df[f_col] == 1]
+            logger.info(f"[TRACKERS] Filtro [{f_col}] aplicado. Linhas restantes: {len(df)}")
+    
+    if df.empty:
+        return {"dates": dates, "records": []}
+
+    import pvlib
+    import numpy as np
+
+    lat = float(tracker_params.get("latitude", -23.55))
+    lon = float(tracker_params.get("longitude", -46.63))
+    gcr = float(tracker_params.get("gcr", 0.3))
+    max_angle = float(tracker_params.get("max_angle", 60))
+    time_offset = int(tracker_params.get("time_offset", 0))
+    tolerance = float(tracker_params.get("tolerance", 10))
+
+    times_for_pvlib = pd.DatetimeIndex(df.index.values)
+    if times_for_pvlib.tz is None:
+        times_for_pvlib = times_for_pvlib.tz_localize('America/Sao_Paulo', ambiguous='NaT', nonexistent='NaT')
+    
+    solpos = pvlib.solarposition.get_solarposition(times_for_pvlib, lat, lon)
+    
+    trk_true = pvlib.tracking.singleaxis(solpos['apparent_zenith'], solpos['azimuth'], 
+                                         max_angle=max_angle, backtrack=True, gcr=gcr)
+    
+    trk_false = pvlib.tracking.singleaxis(solpos['apparent_zenith'], solpos['azimuth'], 
+                                          max_angle=max_angle, backtrack=False, gcr=gcr)
+
+    ref_theta_vals = trk_true['tracker_theta'].values
+    trk_false_vals = trk_false['tracker_theta'].values
+    
+    if tracker_params.get("inverter_sinal", False):
+        ref_theta_vals = -ref_theta_vals
+        trk_false_vals = -trk_false_vals
+    
+    ref_theta_series = pd.Series(ref_theta_vals, index=df.index)
+    is_backtracking_series = pd.Series((np.round(ref_theta_vals, 2) != np.round(trk_false_vals, 2)).astype(int), index=df.index)
+
+    if time_offset != 0:
+        ref_theta_series = ref_theta_series.shift(time_offset).bfill().ffill()
+        is_backtracking_series = is_backtracking_series.shift(time_offset).bfill().ffill().astype(int)
+    
+    df["TrackerRef"] = ref_theta_series.values
+    df["is_backtracking"] = is_backtracking_series.values
+
+    df_no_bt = df[df["is_backtracking"] == 0].copy()
+    df_no_bt["_date_str"] = df_no_bt.index.strftime("%Y-%m-%d")
+
+    records = []
+    
+    for date_str, df_group in df_no_bt.groupby("_date_str"):
+        for base, data in tracker_groups.items():
+            diff_alvo = None
+            diff_atual = None
+            count_alvo = 0
+            count_atual = 0
+            pts_fora_alvo = 0
+            pts_fora_atual = 0
+
+            col_alvo = data.get("alvo")
+            if col_alvo and col_alvo in df_group.columns:
+                diff_series = (df_group[col_alvo] - df_group["TrackerRef"]).abs().dropna()
+                if not diff_series.empty:
+                    diff_alvo = round(float(diff_series.mean()), 4)
+                    count_alvo = len(diff_series)
+                    pts_fora_alvo = int((diff_series > tolerance).sum())
+
+            col_atual = data.get("atual")
+            if col_atual and col_atual in df_group.columns:
+                diff_series = (df_group[col_atual] - df_group["TrackerRef"]).abs().dropna()
+                if not diff_series.empty:
+                    diff_atual = round(float(diff_series.mean()), 4)
+                    count_atual = len(diff_series)
+                    pts_fora_atual = int((diff_series > tolerance).sum())
+
+            if diff_alvo is not None or diff_atual is not None:
+                records.append({
+                    "date": date_str,
+                    "tracker": data.get("tracker") or base.split("-")[-1],
+                    "base": base,
+                    "skid": data["skid"],
+                    "inversor": data["inversor"],
+                    "stringbox": data["stringbox"],
+                    "estacao": data["estacao"],
+                    "diff_alvo": diff_alvo,
+                    "diff_atual": diff_atual,
+                    "count_alvo": count_alvo,
+                    "count_atual": count_atual,
+                    "pts_fora_alvo": pts_fora_alvo,
+                    "pts_fora_atual": pts_fora_atual,
+                    "serie_alvo": col_alvo,
+                    "serie_atual": col_atual,
+                    "strings": data.get("strings", "")
+                })
+            
+    return {
+        "dates": dates,
+        "tolerance": tolerance,
+        "records": records
+    }
+
+
+@router.get("/heatmap/times")
+def get_heatmap_times(usina: str = Query(...), date: str = Query(...)):
+    """
+    Retorna a lista de horários (HH:MM) onde há dados válidos no dia.
+    """
+    from services.parquet_service import DATA_DIR
+    import pyarrow.parquet as pq
+    import pandas as pd
+    
+    path = os.path.join(DATA_DIR, usina, f"{date}.parquet")
+    if not os.path.exists(path):
+        return {"times": []}
+        
+    schema = pq.read_schema(path)
+    if "timestamp" not in {f.name for f in schema}:
+        return {"times": []}
+        
+    df = pd.read_parquet(path, columns=["timestamp"])
+    df["timestamp"] = df["timestamp"].dt.floor("min")
+    times = df["timestamp"].dt.strftime("%H:%M").dropna().unique().tolist()
+    return {"times": sorted(times)}
+
+
+_instant_cache = {}
+
+@router.get("/heatmap/mapa/instant")
+def get_mapa_heatmap_instant(
+    usina: str = Query(...),
+    date: str = Query(...),
+    time: str = Query(...), # HH:MM
+    filters: Optional[str] = Query(None, description="Filtros separados por vírgula")
+):
+    """
+    Retorna a potência instantânea (e kwp) para o Mapa no minuto exato.
+    Usa um cache em memória para não precisar reler o Parquet a cada clique.
+    """
+    from services.parquet_service import DATA_DIR
+    from services.mapping_service import load_mapping
+    from routes.upload import get_mapa_path
+    import pyarrow.parquet as pq
+    import pandas as pd
+    import json
+    
+    path_mapa = get_mapa_path(usina)
+    if not os.path.exists(path_mapa):
+        raise HTTPException(status_code=404, detail="Layout de Mapa não encontrado.")
+    
+    with open(path_mapa, "r", encoding="utf-8") as f:
+        layout = json.load(f)
+        
+    target_series = [cell["label"] for cell in layout if "label" in cell]
+    if not target_series:
+        raise HTTPException(status_code=422, detail="Nenhuma série encontrada.")
+
+    active_filters = [f.strip() for f in filters.split(",")] if filters else []
+    cols_to_read = list(set(target_series)) + active_filters
+    
+    from services.synthetic_service import build_lookup, get_source_cols, compute_synthetic
+    synth_lookup = build_lookup(usina)
+    all_needed_cols = list(set(target_series)) + active_filters
+    synth_in_target = {col: synth_lookup[col] for col in all_needed_cols if col in synth_lookup}
+    for synth_name, synth_def in synth_in_target.items():
+        if synth_name in cols_to_read:
+            cols_to_read.remove(synth_name)
+        for src in get_source_cols(synth_def):
+            if src not in cols_to_read:
+                cols_to_read.append(src)
+
+    target_ts = pd.to_datetime(f"{date} {time}")
+
+    path = os.path.join(DATA_DIR, usina, f"{date}.parquet")
+    processed_path = os.path.join(DATA_DIR, usina, "processed", f"{date}.parquet")
+    
+    cache_key = f"{usina}_{date}"
+    df_day = None
+    
+    if cache_key in _instant_cache:
+        cached_data = _instant_cache[cache_key]
+        if set(cols_to_read).issubset(cached_data["attempted_cols"]):
+            df_day = cached_data["df"]
+
+    if df_day is None:
+        if os.path.exists(path):
+            schema = pq.read_schema(path)
+            parquet_cols = {f.name for f in schema}
+            valid_cols = [c for c in cols_to_read if c in parquet_cols]
+            if valid_cols or "timestamp" in parquet_cols:
+                read_cols = list(set(valid_cols + ["timestamp"]))
+                # Carrega o dia inteiro (sem filtro) para ficar no cache
+                df_day = pd.read_parquet(path, columns=read_cols)
+                
+        if os.path.exists(processed_path):
+            schema_proc = pq.read_schema(processed_path)
+            proc_cols = {f.name for f in schema_proc}
+            valid_proc = [c for c in cols_to_read if c in proc_cols]
+            if valid_proc:
+                read_proc = list(set(valid_proc + ["timestamp"]))
+                df_proc = pd.read_parquet(processed_path, columns=read_proc)
+                if df_day is not None and not df_day.empty and not df_proc.empty:
+                    df_day["timestamp"] = df_day["timestamp"].dt.floor("min")
+                    df_proc["timestamp"] = df_proc["timestamp"].dt.floor("min")
+                    df_day = df_day.merge(df_proc, on="timestamp", how="outer")
+                elif not df_proc.empty:
+                    df_day = df_proc
+        
+        if df_day is not None and not df_day.empty and "timestamp" in df_day.columns:
+            df_day["timestamp"] = df_day["timestamp"].dt.floor("min")
+            
+            for synth_name, synth_def in synth_in_target.items():
+                try:
+                    df_day[synth_name] = compute_synthetic(df_day, synth_def)
+                except Exception:
+                    df_day[synth_name] = None
+                    
+            _instant_cache[cache_key] = {"df": df_day, "attempted_cols": set(cols_to_read)}
+            # Limitar cache a 2 dias para não estourar RAM
+            if len(_instant_cache) > 2:
+                oldest = list(_instant_cache.keys())[0]
+                del _instant_cache[oldest]
+                
+    import time as tm
+    if df_day is None or df_day.empty or "timestamp" not in df_day.columns:
+        return {"date": date, "time": time, "records": []}
+    
+    df_min = df_day[df_day["timestamp"] == target_ts].copy()
+    
+    if df_min.empty:
+        return {"date": date, "time": time, "records": []}
+            
+    for f_col in active_filters:
+        if f_col in df_min.columns:
+            df_min = df_min[df_min[f_col] == 1]
+            
+    if df_min.empty:
+        return {"date": date, "time": time, "records": []}
+        
+    # Gather kWp from Usina Info
+    info_dict = {}
+    try:
+        from services.usina_info_service import load_usina_info
+        info_dict = load_usina_info(usina) or {}
+    except Exception:
+        pass
+    
+    mapping = load_mapping(usina)
+    row = df_min.iloc[0]
+    
+    try:
+        records = []
+        for serie in target_series:
+            if serie in df_min.columns:
+                val = float(row[serie]) if pd.notnull(row[serie]) else None
+                meta = mapping.get(serie, {})
+                inversor = meta.get("inversor")
+                skid = meta.get("skid")
+                
+                kwp = None
+                if inversor and skid:
+                    kwp = info_dict.get(skid, {}).get(inversor, {}).get("kwp")
+                
+                records.append({
+                    "date": date,
+                    "time": time,
+                    "serie": serie,
+                    "val": val,
+                    "kwp": kwp,
+                    "skid": skid,
+                    "inversor": inversor
+                })
+                
+        out_dict = {"date": date, "time": time, "records": records}
+        import json
+        from fastapi.responses import Response
+        return Response(content=json.dumps(out_dict), media_type="application/json")
+    except Exception as e:
+        import traceback
+        return {"error": str(e), "traceback": traceback.format_exc()}
+
+
+@router.get("/heatmap/trackers/instant")
+def get_trackers_heatmap_instant(
+    usina: str = Query(...),
+    date: str = Query(...),
+    time: str = Query(...),
+    filters: Optional[str] = Query(None, description="Filtros separados por vírgula")
+):
+    """
+    Retorna o erro instantâneo dos trackers (diferença entre TrackerRef e PosAngAtual).
+    """
+    from services.parquet_service import DATA_DIR
+    from services.mapping_service import load_mapping
+    import pyarrow.parquet as pq
+    import pandas as pd
+    import json
+    
+    mapping = load_mapping(usina)
+    tracker_params = {}
+    config_path = os.path.join(DATA_DIR, usina, "flow_config.json")
+    if os.path.exists(config_path):
+        with open(config_path, "r", encoding="utf-8") as f:
+            cfg = json.load(f)
+            for node in cfg.get("nodes", []):
+                if node.get("id") == "tracker":
+                    tracker_params = node.get("data", {}).get("trackerParams", {})
+                    break
+
+    target_series = []
+    tracker_groups = {} 
+    
+    for col, meta in mapping.items():
+        if meta.get("elemento") == "Tracker":
+            if col.endswith(".PosAngAlvo"):
+                base = col.replace(".PosAngAlvo", "")
+                typ = "alvo"
+            elif col.endswith(".PosAngAtual") or col.endswith(".PosAngMedido"):
+                base = col.replace(".PosAngAtual", "").replace(".PosAngMedido", "")
+                typ = "atual"
+            else:
+                continue
+
+            target_series.append(col)
+            if base not in tracker_groups:
+                tracker_groups[base] = {
+                    "skid": str(meta.get("skid") or ""),
+                    "inversor": str(meta.get("inversor") or ""),
+                    "stringbox": str(meta.get("stringbox") or ""),
+                    "estacao": str(meta.get("estacao") or "")
+                }
+            tracker_groups[base][typ] = col
+
+    if not target_series:
+        raise HTTPException(status_code=422, detail="Nenhuma série encontrada para o elemento 'Tracker'.")
+
+    active_filters = [f.strip() for f in filters.split(",")] if filters else []
+    cols_to_read = list(set(target_series)) + active_filters
+
+    target_ts = pd.to_datetime(f"{date} {time}")
+
+    path = os.path.join(DATA_DIR, usina, f"{date}.parquet")
+    processed_path = os.path.join(DATA_DIR, usina, "processed", f"{date}.parquet")
+    
+    cache_key = f"{usina}_{date}"
+    df_day = None
+    
+    if cache_key in _instant_cache:
+        cached_data = _instant_cache[cache_key]
+        if set(cols_to_read).issubset(cached_data["attempted_cols"]):
+            df_day = cached_data["df"]
+
+    if df_day is None:
+        if os.path.exists(path):
+            schema = pq.read_schema(path)
+            parquet_cols = {f.name for f in schema}
+            valid_cols = [c for c in cols_to_read if c in parquet_cols]
+            if valid_cols or "timestamp" in parquet_cols:
+                read_cols = list(set(valid_cols + ["timestamp"]))
+                df_day = pd.read_parquet(path, columns=read_cols)
+                
+        if os.path.exists(processed_path):
+            schema_proc = pq.read_schema(processed_path)
+            proc_cols = {f.name for f in schema_proc}
+            valid_proc = [c for c in cols_to_read if c in proc_cols]
+            if valid_proc:
+                read_proc = list(set(valid_proc + ["timestamp"]))
+                df_proc = pd.read_parquet(processed_path, columns=read_proc)
+                if df_day is not None and not df_day.empty and not df_proc.empty:
+                    df_day["timestamp"] = df_day["timestamp"].dt.floor("min")
+                    df_proc["timestamp"] = df_proc["timestamp"].dt.floor("min")
+                    df_day = df_day.merge(df_proc, on="timestamp", how="outer")
+                elif not df_proc.empty:
+                    df_day = df_proc
+        
+        if df_day is not None and not df_day.empty and "timestamp" in df_day.columns:
+            df_day["timestamp"] = df_day["timestamp"].dt.floor("min")
+            _instant_cache[cache_key] = {"df": df_day, "attempted_cols": set(cols_to_read)}
+            if len(_instant_cache) > 2:
+                oldest = list(_instant_cache.keys())[0]
+                del _instant_cache[oldest]
+                
+    if df_day is None or df_day.empty or "timestamp" not in df_day.columns:
+        return {"date": date, "time": time, "records": []}
+        
+    df_day = df_day[df_day["timestamp"] == target_ts].copy()
+    
+    if df_day.empty:
+        return {"date": date, "time": time, "records": []}
+
+    for f_col in active_filters:
+        if f_col in df_day.columns:
+            df_day = df_day[df_day[f_col] == 1]
+            
+    if df_day.empty:
+        return {"date": date, "time": time, "records": []}
+
+    # PVLib
+    import pvlib
+    import numpy as np
+
+    lat = float(tracker_params.get("latitude", -23.55))
+    lon = float(tracker_params.get("longitude", -46.63))
+    gcr = float(tracker_params.get("gcr", 0.3))
+    max_angle = float(tracker_params.get("max_angle", 60))
+    time_offset = int(tracker_params.get("time_offset", 0))
+
+    times_for_pvlib = pd.DatetimeIndex(df_day["timestamp"])
+    if times_for_pvlib.tz is None:
+        times_for_pvlib = times_for_pvlib.tz_localize('America/Sao_Paulo', ambiguous='NaT', nonexistent='NaT')
+    
+    solpos = pvlib.solarposition.get_solarposition(times_for_pvlib, lat, lon)
+    trk_true = pvlib.tracking.singleaxis(solpos['apparent_zenith'], solpos['azimuth'], 
+                                         max_angle=max_angle, backtrack=True, gcr=gcr)
+    
+    ref_theta_vals = trk_true['tracker_theta'].values
+    if tracker_params.get("inverter_sinal", False):
+        ref_theta_vals = -ref_theta_vals
+    
+    # We only have 1 row, so shift doesn't make sense here. If time_offset is used, it needs previous data... 
+    # But for an instant view, applying shift requires loading the whole day.
+    # To keep it fast, we can't do shift properly here on just 1 row.
+    # We will compute the reference angle exactly for target_ts - time_offset periods.
+    if time_offset != 0:
+        offset_ts = pd.DatetimeIndex([target_ts - pd.Timedelta(minutes=time_offset)])
+        offset_ts = offset_ts.tz_localize('America/Sao_Paulo', ambiguous='NaT', nonexistent='NaT')
+        solpos_off = pvlib.solarposition.get_solarposition(offset_ts, lat, lon)
+        trk_true_off = pvlib.tracking.singleaxis(solpos_off['apparent_zenith'], solpos_off['azimuth'], 
+                                                 max_angle=max_angle, backtrack=True, gcr=gcr)
+        ref_theta_vals = trk_true_off['tracker_theta'].values
+        if tracker_params.get("inverter_sinal", False):
+            ref_theta_vals = -ref_theta_vals
+
+    df_day["TrackerRef"] = ref_theta_vals
+
+    row = df_day.iloc[0]
+    records = []
+    
+    for base, data in tracker_groups.items():
+        diff_alvo = None
+        diff_atual = None
+
+        col_alvo = data.get("alvo")
+        if col_alvo and col_alvo in df_day.columns and pd.notnull(row[col_alvo]):
+            diff_alvo = round(float(abs(row[col_alvo] - row["TrackerRef"])), 4)
+
+        col_atual = data.get("atual")
+        if col_atual and col_atual in df_day.columns and pd.notnull(row[col_atual]):
+            diff_atual = round(float(abs(row[col_atual] - row["TrackerRef"])), 4)
+
+        if diff_alvo is not None or diff_atual is not None:
+            records.append({
+                "date": date,
+                "time": time,
+                "tracker": base.split("-")[-1],
+                "base": base,
+                "skid": data["skid"],
+                "inversor": data["inversor"],
+                "stringbox": data["stringbox"],
+                "estacao": data["estacao"],
+                "diff_alvo": diff_alvo,
+                "diff_atual": diff_atual,
+                "serie_alvo": col_alvo,
+                "serie_atual": col_atual
+            })
+            
+    out_dict = {
+        "date": date,
+        "time": time,
+        "records": records
+    }
+    import json
+    from fastapi.responses import Response
+    return Response(content=json.dumps(out_dict), media_type="application/json")
 

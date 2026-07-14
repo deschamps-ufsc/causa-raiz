@@ -1,7 +1,9 @@
-﻿import React, { useState, useEffect, useMemo } from 'react'
-import { fetchPivotHeatmap, fetchSeries, fetchMappingData } from '../services/api'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
+import { fetchSeries, fetchMappingData, fetchPivotHeatmap } from '../services/api'
+import { exportTableToPdf, exportTableToPng } from '../utils/exportPdf'
 
 export default function RankingTab({ usina, dates, activeFilters = [] }) {
+  const tableRef = useRef(null)
   const [data, setData]           = useState(null)
   const [loading, setLoading]     = useState(false)
   const [error, setError]         = useState(null)
@@ -9,13 +11,17 @@ export default function RankingTab({ usina, dates, activeFilters = [] }) {
   const [allSeries, setAllSeries] = useState([])
   
   const [aggType, setAggType]     = useState('soma')
-  const [visCols, setVisCols]     = useState({ skid: true, inversor: true, kwp: true, valor: true, yield: true, desvio: true })
+  const [visCols, setVisCols]     = useState({ skid: true, inversor: true, kwp: true, valor: true, yield: true, desvio: true, desvioMax: true })
+
+  const [fetchedDates, setFetchedDates] = useState([])
+  const [selectedDates, setSelectedDates] = useState([])
+  const [showDatePicker, setShowDatePicker] = useState(false)
+  const [showPdfMenu, setShowPdfMenu] = useState(false)
 
   const toggleCol = (col) => setVisCols(prev => ({ ...prev, [col]: !prev[col] }))
 
   useEffect(() => {
     if (!usina || !dates) return
-    // Busca séries do Parquet e complementa com o Mapeamento de Séries para incluir sintéticas
     Promise.all([
       fetchSeries(usina, dates).catch(() => []),
       fetchMappingData(usina).catch(() => ({})),
@@ -38,8 +44,6 @@ export default function RankingTab({ usina, dates, activeFilters = [] }) {
       setAllSeries([...parquetSeries, ...extras])
     })
   }, [usina, dates])
-
-  const isValid = (val) => val != null && String(val).trim() !== '' && String(val).toLowerCase() !== 'nan'
 
   const elementosOptions = useMemo(() => {
     if (!allSeries.length) return []
@@ -68,9 +72,16 @@ export default function RankingTab({ usina, dates, activeFilters = [] }) {
     try {
       const res = await fetchPivotHeatmap(usina, dates, el ?? elemento, activeFilters)
       setData(res.records)
+      
+      const dArr = dates.split(',').map(d => d.trim()).filter(Boolean).sort()
+      setFetchedDates(dArr)
+      if (dArr.length > 0) setSelectedDates([dArr[0]])
+      else setSelectedDates([])
     } catch (e) {
       setError(e.message)
       setData(null)
+      setFetchedDates([])
+      setSelectedDates([])
     } finally {
       setLoading(false)
     }
@@ -79,9 +90,12 @@ export default function RankingTab({ usina, dates, activeFilters = [] }) {
   const rankingData = useMemo(() => {
     if (!data || data.length === 0) return null
 
+    const filteredData = selectedDates.length > 0 ? data.filter(r => selectedDates.includes(r.date)) : data
+    if (filteredData.length === 0) return null
+
     const invMap = new Map()
 
-    data.forEach(r => {
+    filteredData.forEach(r => {
       const inv = r.inversor || 'S/N'
       const skid = r.skid || 'S/N'
       const key = `${skid}|${inv}`
@@ -113,44 +127,58 @@ export default function RankingTab({ usina, dates, activeFilters = [] }) {
     })
 
     rows = rows.filter(r => r.yield != null && r.yield > 0)
-    rows.sort((a, b) => b.yield - a.yield) // from best to worst
+    rows.sort((a, b) => b.yield - a.yield)
 
     const globalMean = allYields.length > 0 ? allYields.reduce((a,b)=>a+b,0)/allYields.length : 0
+    const globalMax = allYields.length > 0 ? Math.max(...allYields) : 0
 
     const getDesvioColor = (val, mean=globalMean) => {
       if (val == null || !mean) return { bg: 'transparent', text: '#94a3b8' }
       const pct = (val / mean - 1) * 100
       
-      if (pct >= 5) {
-        return { bg: 'rgba(92, 192, 112, 0.9)', text: '#064e3b' }
-      }
-      if (pct <= -20) {
-        return { bg: 'rgba(239, 68, 68, 0.9)', text: '#ffffff' }
-      }
+      const interpolate = (c1, c2, factor) => Math.round(c1 + (c2 - c1) * Math.max(0, Math.min(1, factor)))
       
-      const interpolate = (c1, c2, factor) => Math.round(c1 + (c2 - c1) * factor)
-      
-      if (pct >= 0) {
-        const f = pct / 5.0
-        const r = interpolate(245, 92, f)
-        const g = interpolate(225, 192, f)
-        const b = interpolate(110, 112, f)
-        return { bg: `rgba(${r},${g},${b},0.8)`, text: '#1e293b' }
+      const green = [99, 190, 123]
+      const yellow = [255, 235, 132]
+      const lightRed = [248, 105, 107]
+      const pureRed = [255, 0, 0]
+
+      let r, g, b, f = 0
+
+      if (pct <= -20) { 
+          [r,g,b] = pureRed 
+      }
+      else if (pct <= -5) { 
+          [r,g,b] = lightRed 
+      }
+      else if (pct >= 5) { 
+          [r,g,b] = green 
+      }
+      else if (pct > 0) {
+          f = pct / 5
+          r = interpolate(yellow[0], green[0], f)
+          g = interpolate(yellow[1], green[1], f)
+          b = interpolate(yellow[2], green[2], f)
       } else {
-        const f = (pct + 20) / 20.0
-        const r = interpolate(250, 245, f)
-        const g = interpolate(120, 225, f)
-        const b = interpolate(120, 110, f)
-        return { bg: `rgba(${r},${g},${b},0.8)`, text: '#1e293b' }
+          f = (pct - (-5)) / 5
+          r = interpolate(lightRed[0], yellow[0], f)
+          g = interpolate(lightRed[1], yellow[1], f)
+          b = interpolate(lightRed[2], yellow[2], f)
       }
+      
+      const brightness = (r * 299 + g * 587 + b * 114) / 1000
+      const text = brightness > 125 ? '#1e293b' : '#ffffff'
+
+      return { bg: `rgb(${r},${g},${b})`, text }
     }
 
     return {
       rows,
       globalMean,
+      globalMax,
       getDesvioColor
     }
-  }, [data, aggType])
+  }, [data, selectedDates, aggType])
 
   const fmt = v => v != null ? v.toFixed(3) : '-'
   const fmtP = (v, mean) => {
@@ -169,13 +197,99 @@ export default function RankingTab({ usina, dates, activeFilters = [] }) {
     )
   }
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, height: '100%' }}>
-      {/* Controles Dinâmicos */}
-      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 12, padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, flexShrink: 0 }}>
+  const handleNextDay = () => {
+    if (selectedDates.length !== 1) return
+    const idx = fetchedDates.indexOf(selectedDates[0])
+    if (idx < fetchedDates.length - 1) {
+      setSelectedDates([fetchedDates[idx + 1]])
+    }
+  }
+
+  const handlePrevDay = () => {
+    if (selectedDates.length !== 1) return
+    const idx = fetchedDates.indexOf(selectedDates[0])
+    if (idx > 0) {
+      setSelectedDates([fetchedDates[idx - 1]])
+    }
+  }
+  
+  const toggleDateSelection = (d) => {
+    if (selectedDates.includes(d)) {
+      setSelectedDates(prev => prev.filter(x => x !== d))
+    } else {
+      setSelectedDates(prev => [...prev, d].sort())
+    }
+  }
+
+  const renderDateSelector = () => {
+    if (!fetchedDates || fetchedDates.length === 0) return null
+    const isSingle = selectedDates.length === 1
+    const idx = isSingle ? fetchedDates.indexOf(selectedDates[0]) : -1
+    const hasPrev = isSingle && idx > 0
+    const hasNext = isSingle && idx < fetchedDates.length - 1
+
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, position: 'relative' }}>
+        {isSingle && (
+          <button 
+            onClick={handlePrevDay} 
+            disabled={!hasPrev}
+            style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid var(--border)', background: hasPrev ? '#fff' : '#f1f5f9', cursor: hasPrev ? 'pointer' : 'not-allowed', color: hasPrev ? '#334155' : '#94a3b8' }}
+          >
+            ◀
+          </button>
+        )}
         
-        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Operação:</span>
-        <select className="input" style={{ width: 100, padding: '4px 8px' }} value={aggType} onChange={e => setAggType(e.target.value)}>
+        <div style={{ position: 'relative' }}>
+          <button 
+            onClick={() => setShowDatePicker(!showDatePicker)}
+            style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer', fontWeight: 600, color: '#0f172a', minWidth: 100 }}
+          >
+            {selectedDates.length === 1 ? selectedDates[0] : `${selectedDates.length} dias`}
+          </button>
+          
+          {showDatePicker && (
+            <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, padding: 8, zIndex: 50, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', display: 'flex', flexDirection: 'column', gap: 4, minWidth: 150 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', marginBottom: 4, textTransform: 'uppercase' }}>Filtrar Dias Processados</div>
+              {fetchedDates.map(d => (
+                <label key={d} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer', padding: '4px 8px', borderRadius: 4 }}>
+                  <input 
+                    type="checkbox" 
+                    checked={selectedDates.includes(d)} 
+                    onChange={() => toggleDateSelection(d)}
+                  />
+                  {d}
+                </label>
+              ))}
+              <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
+                 <button onClick={() => setSelectedDates([...fetchedDates])} style={{ flex: 1, padding: 4, fontSize: 11, cursor: 'pointer', border: '1px solid var(--border)', background: '#f1f5f9', borderRadius: 4 }}>Todos</button>
+                 <button onClick={() => setSelectedDates([])} style={{ flex: 1, padding: 4, fontSize: 11, cursor: 'pointer', border: '1px solid var(--border)', background: '#f1f5f9', borderRadius: 4 }}>Nenhum</button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {isSingle && (
+          <button 
+            onClick={handleNextDay} 
+            disabled={!hasNext}
+            style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid var(--border)', background: hasNext ? '#fff' : '#f1f5f9', cursor: hasNext ? 'pointer' : 'not-allowed', color: hasNext ? '#334155' : '#94a3b8' }}
+          >
+            ▶
+          </button>
+        )}
+        <div style={{ width: 1, height: 20, backgroundColor: 'var(--border)', margin: '0 4px' }} />
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%' }}>
+      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, flexShrink: 0 }}>
+        
+        {renderDateSelector()}
+        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Op:</span>
+        <select className="input" style={{ width: 80, padding: '4px 8px' }} value={aggType} onChange={e => setAggType(e.target.value)}>
           <option value="soma">Soma</option>
           <option value="media">Média</option>
         </select>
@@ -183,7 +297,7 @@ export default function RankingTab({ usina, dates, activeFilters = [] }) {
         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Elemento:</span>
         <select
           className="input"
-          style={{ padding: '4px 8px', flex: 1, minWidth: 200 }}
+          style={{ padding: '4px 28px 4px 8px', width: 'auto', maxWidth: 400 }}
           value={elemento}
           onChange={e => setElemento(e.target.value)}
         >
@@ -195,32 +309,20 @@ export default function RankingTab({ usina, dates, activeFilters = [] }) {
           ))}
         </select>
 
-        <details style={{ position: 'relative', cursor: 'pointer', marginLeft: 'auto', marginRight: 12 }}>
-          <summary style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600, userSelect: 'none', listStyle: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span>⚙️ Colunas Visíveis</span>
-            <span style={{ fontSize: 10 }}>▼</span>
-          </summary>
-          <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, background: 'white', border: '1px solid var(--border)', borderRadius: 6, padding: '10px 12px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 50, display: 'flex', flexDirection: 'column', gap: 10, minWidth: 140 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer', color: 'var(--text-primary)' }}>
-              <input type="checkbox" checked={visCols.skid} onChange={() => toggleCol('skid')} style={{ accentColor: '#0ea5e9', width: 14, height: 14 }} /> SKID
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer', color: 'var(--text-primary)' }}>
-              <input type="checkbox" checked={visCols.inversor} onChange={() => toggleCol('inversor')} style={{ accentColor: '#0ea5e9', width: 14, height: 14 }} /> Inversor
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer', color: 'var(--text-primary)' }}>
-              <input type="checkbox" checked={visCols.kwp} onChange={() => toggleCol('kwp')} style={{ accentColor: '#0ea5e9', width: 14, height: 14 }} /> kWp
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer', color: 'var(--text-primary)' }}>
-              <input type="checkbox" checked={visCols.valor} onChange={() => toggleCol('valor')} style={{ accentColor: '#0ea5e9', width: 14, height: 14 }} /> Valor
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer', color: 'var(--text-primary)' }}>
-              <input type="checkbox" checked={visCols.yield} onChange={() => toggleCol('yield')} style={{ accentColor: '#0ea5e9', width: 14, height: 14 }} /> Yield
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer', color: 'var(--text-primary)' }}>
-              <input type="checkbox" checked={visCols.desvio} onChange={() => toggleCol('desvio')} style={{ accentColor: '#0ea5e9', width: 14, height: 14 }} /> Desvio
-            </label>
+        <div style={{ marginLeft: 'auto' }} />
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 8 }}>
+          <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600 }}>Colunas:</span>
+          <div style={{ display: 'flex', background: '#ffffff', border: '1px solid var(--border)', borderRadius: 8, padding: 3, gap: 2 }}>
+            <button onClick={() => toggleCol('skid')} style={{ padding: '4px 8px', borderRadius: 6, fontSize: 13, fontWeight: visCols.skid ? 600 : 500, cursor: 'pointer', border: 'none', color: visCols.skid ? '#ea580c' : '#64748b', background: visCols.skid ? '#fff7ed' : 'transparent', transition: 'all 0.2s' }}>SKID</button>
+            <button onClick={() => toggleCol('inversor')} style={{ padding: '4px 8px', borderRadius: 6, fontSize: 13, fontWeight: visCols.inversor ? 600 : 500, cursor: 'pointer', border: 'none', color: visCols.inversor ? '#ea580c' : '#64748b', background: visCols.inversor ? '#fff7ed' : 'transparent', transition: 'all 0.2s' }}>Inversor</button>
+            <button onClick={() => toggleCol('kwp')} style={{ padding: '4px 8px', borderRadius: 6, fontSize: 13, fontWeight: visCols.kwp ? 600 : 500, cursor: 'pointer', border: 'none', color: visCols.kwp ? '#ea580c' : '#64748b', background: visCols.kwp ? '#fff7ed' : 'transparent', transition: 'all 0.2s' }}>kWp</button>
+            <button onClick={() => toggleCol('valor')} style={{ padding: '4px 8px', borderRadius: 6, fontSize: 13, fontWeight: visCols.valor ? 600 : 500, cursor: 'pointer', border: 'none', color: visCols.valor ? '#ea580c' : '#64748b', background: visCols.valor ? '#fff7ed' : 'transparent', transition: 'all 0.2s' }}>Valor</button>
+            <button onClick={() => toggleCol('yield')} style={{ padding: '4px 8px', borderRadius: 6, fontSize: 13, fontWeight: visCols.yield ? 600 : 500, cursor: 'pointer', border: 'none', color: visCols.yield ? '#ea580c' : '#64748b', background: visCols.yield ? '#fff7ed' : 'transparent', transition: 'all 0.2s' }}>Yield</button>
+            <button onClick={() => toggleCol('desvio')} style={{ padding: '4px 8px', borderRadius: 6, fontSize: 13, fontWeight: visCols.desvio ? 600 : 500, cursor: 'pointer', border: 'none', color: visCols.desvio ? '#ea580c' : '#64748b', background: visCols.desvio ? '#fff7ed' : 'transparent', transition: 'all 0.2s' }}>Desvio Média</button>
+            <button onClick={() => toggleCol('desvioMax')} style={{ padding: '4px 8px', borderRadius: 6, fontSize: 13, fontWeight: visCols.desvioMax ? 600 : 500, cursor: 'pointer', border: 'none', color: visCols.desvioMax ? '#ea580c' : '#64748b', background: visCols.desvioMax ? '#fff7ed' : 'transparent', transition: 'all 0.2s' }}>Desvio Máx</button>
           </div>
-        </details>
+        </div>
 
         <button
           className="btn btn-primary"
@@ -228,15 +330,57 @@ export default function RankingTab({ usina, dates, activeFilters = [] }) {
           onClick={() => load(elemento)}
           disabled={loading}
         >
-          {loading ? '⏳ Processando...' : '🏆 Exibir Ranking'}
+          {loading ? '⏳ Processando...' : '🏆 Processar'}
         </button>
+
+        {rankingData && !loading && (
+          <div style={{ position: 'relative', display: 'flex', gap: '8px' }}>
+            <button
+              className="btn btn-secondary"
+              style={{ padding: '6px 16px', flexShrink: 0, fontWeight: 600, background: '#e2e8f0', color: '#1e293b', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '6px' }}
+              onClick={() => exportTableToPng(tableRef.current, 'Ranking.png')}
+              title="Exportar ranking atual como Imagem PNG"
+            >
+              🖼️ PNG
+            </button>
+            <button
+              className="btn btn-secondary"
+              style={{ padding: '6px 16px', flexShrink: 0, fontWeight: 600, background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '6px' }}
+              onClick={() => setShowPdfMenu(!showPdfMenu)}
+              title="Exportar ranking atual para PDF"
+            >
+              📄 PDF
+            </button>
+            
+            {showPdfMenu && (
+              <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, padding: 8, zIndex: 50, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', display: 'flex', flexDirection: 'column', gap: 4, minWidth: 160 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', marginBottom: 4, textTransform: 'uppercase' }}>Orientação</div>
+                <button 
+                  onClick={() => { setShowPdfMenu(false); exportTableToPdf(tableRef.current, 'Ranking.pdf', { usinaName: usina || 'N/D', forceOrientation: 'p' }) }} 
+                  style={{ padding: '6px 12px', fontSize: 13, cursor: 'pointer', border: '1px solid var(--border)', background: '#f8fafc', borderRadius: 4, textAlign: 'left', color: '#334155', fontWeight: 500 }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
+                  onMouseLeave={e => e.currentTarget.style.background = '#f8fafc'}
+                >
+                  📄 Retrato (Vertical)
+                </button>
+                <button 
+                  onClick={() => { setShowPdfMenu(false); exportTableToPdf(tableRef.current, 'Ranking.pdf', { usinaName: usina || 'N/D', forceOrientation: 'l' }) }} 
+                  style={{ padding: '6px 12px', fontSize: 13, cursor: 'pointer', border: '1px solid var(--border)', background: '#f8fafc', borderRadius: 4, textAlign: 'left', color: '#334155', fontWeight: 500 }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
+                  onMouseLeave={e => e.currentTarget.style.background = '#f8fafc'}
+                >
+                  🗎 Paisagem (Horizontal)
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {error && <div className="alert alert-error fade-in">⚠️ {error}</div>}
 
-      {/* Tabela de Ranking */}
       {rankingData && !loading && (
-        <div style={{ overflow: 'auto', alignSelf: 'flex-start', maxWidth: '100%', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, maxHeight: 'calc(41px * 16)', position: 'relative' }}>
+        <div ref={tableRef} style={{ overflow: 'auto', alignSelf: 'flex-start', maxWidth: '100%', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, maxHeight: 'calc(41px * 16)', position: 'relative' }}>
           <table style={{ borderCollapse: 'separate', borderSpacing: 0, fontFamily: 'Inter, sans-serif', fontSize: 13, width: 'max-content' }}>
             <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
               <tr>
@@ -247,13 +391,16 @@ export default function RankingTab({ usina, dates, activeFilters = [] }) {
                 {visCols.valor && <td style={{...hdCell, textAlign: 'right', width: 'auto', minWidth: 100}}>Valor</td>}
                 {visCols.yield && <td style={{...hdCell, textAlign: 'right', width: 'auto', minWidth: 80}}>Yield</td>}
                 {visCols.desvio && <td style={{...hdCell, textAlign: 'center', width: 'auto', minWidth: 120}}>Desvio da Média</td>}
+                {visCols.desvioMax && <td style={{...hdCell, textAlign: 'center', width: 'auto', minWidth: 120}}>Desvio do Máximo</td>}
               </tr>
             </thead>
             <tbody>
               {rankingData.rows.map((row, index) => {
-                const { bg, text } = rankingData.getDesvioColor(row.yield)
+                const { bg, text } = rankingData.getDesvioColor(row.yield, rankingData.globalMean)
+                const { bg: bgMax, text: textMax } = rankingData.getDesvioColor(row.yield, rankingData.globalMax)
+
                 return (
-                  <tr key={`${row.skid}_${row.inversor}`} style={{ height: 36, background: '#ffffff', transition: 'background 0.15s' }} className="hover:bg-slate-50">
+                  <tr key={`${row.skid}_${row.inversor}`} style={{ height: 26, background: '#ffffff', transition: 'background 0.15s' }} className="hover:bg-slate-50">
                     <td style={{...cell, borderLeft: '3px solid #0f172a', borderBottom: '1px solid #e2e8f0', textAlign: 'center', fontWeight: 'bold', color: '#64748b', whiteSpace: 'nowrap'}}>
                       {index + 1}°
                     </td>
@@ -264,6 +411,9 @@ export default function RankingTab({ usina, dates, activeFilters = [] }) {
                     {visCols.yield && <td style={{...cell, borderBottom: '1px solid #e2e8f0', textAlign: 'right', color: '#475569', fontWeight: 700, whiteSpace: 'nowrap'}}>{fmt(row.yield)}</td>}
                     {visCols.desvio && <td style={{...cell, borderBottom: '1px solid #e2e8f0', background: bg, color: text, fontWeight: 700, textAlign: 'center', whiteSpace: 'nowrap'}}>
                       {fmtP(row.yield, rankingData.globalMean)}
+                    </td>}
+                    {visCols.desvioMax && <td style={{...cell, borderBottom: '1px solid #e2e8f0', background: bgMax, color: textMax, fontWeight: 700, textAlign: 'center', whiteSpace: 'nowrap'}}>
+                      {fmtP(row.yield, rankingData.globalMax)}
                     </td>}
                   </tr>
                 )
@@ -297,11 +447,13 @@ const hdCell = {
   background: '#162032',
   color: '#e2e8f0',
   fontWeight: 700,
-  padding: '10px 12px',
+  padding: '4px 8px',
+  lineHeight: 1.2,
   border: '1px solid rgba(255,255,255,0.02)',
 }
 
 const cell = {
-  padding: '8px 12px',
+  padding: '4px 12px',
+  fontSize: 11,
   borderRight: '1px solid #e2e8f0',
 }

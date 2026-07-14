@@ -1,4 +1,4 @@
-﻿"""
+"""
 Schemas Pydantic — contratos de entrada e saída da API.
 """
 from pydantic import BaseModel, Field
@@ -15,9 +15,12 @@ class SeriesInfo(BaseModel):
     skid: Optional[str] = None
     inversor: Optional[str] = None
     stringbox: Optional[str] = None
+    tracker: Optional[str] = None         # Tracker ao qual a série está associada
     estacao: Optional[str] = None         # Estação de monitoramento
     string: Optional[str] = None          # String Identifier
     mapeada: bool = False                 # True se encontrada no Mapeamento de Séries
+    processada: bool = False              # True se gerada pelo pipeline de processamento
+    sintetica: bool = False               # True se for uma série sintética calculada
 
 
 # ── Upload ────────────────────────────────────────────────────────────────────
@@ -51,12 +54,15 @@ class SeriesMapRequest(BaseModel):
 class MappingImportResponse(BaseModel):
     """Resposta da importação do Excel de Mapeamento de Séries."""
     total_mapeamentos: int
+    total_nativas: Optional[int] = None
+    total_sinteticas: Optional[int] = None
     linhas_invalidas: int
     elementos_encontrados: list[str]
     elementos_nao_cadastrados: list[str] = []
     skids_encontrados: list[str]
     inversores_encontrados: list[str] = []
     stringboxes_encontrados: list[str] = []
+    trackers_encontrados: list[str] = []
     estacoes_encontradas: list[str] = []
     strings_encontradas: list[str] = []
 

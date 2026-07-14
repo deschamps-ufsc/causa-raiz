@@ -34,6 +34,17 @@
     "element": "Potência CA PPC",
     "min_value": 0,
     "max_value": null,
-    "max_variation": null
+    "max_variation": null,
+    "median_window": null
+  },
+  {
+    "name": "Temperatura Ambiente",
+    "element": "Temperatura",
+    "min_value": null,
+    "max_value": null,
+    "max_variation": 5,
+    "min_variation": 0.01,
+    "min_time": 30,
+    "median_window": 11
   }
 ]

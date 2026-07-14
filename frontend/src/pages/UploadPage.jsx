@@ -2,10 +2,11 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useUsina } from '../hooks/UsinaContext'
 import {
-  uploadExcel,
+  uploadExcel, uploadMapa,
   importMappingExcel, getMappingTemplateUrl,
   fetchUsinaInfo, importUsinaInfo, getUsinaInfoTemplateUrl,
   fetchSynthetics, importSyntheticExcel, saveBatchConfig, deleteBatch,
+  fetchDatesSummary,
 } from '../services/api'
 import { ErrorState } from '../components/StateComponents'
 import SeriesMapImport from '../components/SeriesMapImport'
@@ -14,6 +15,7 @@ const TABS = [
   { id: 'dados',     label: '📤 Dados Diários' },
   { id: 'depara',   label: '🗂️ Mapeamento de Séries' },
   { id: 'infos',    label: '⚡ Infos Usina' },
+  { id: 'mapa',     label: '🗺️ Mapa de Strings' },
   { id: 'sintetica', label: '🧪 Séries Sintéticas' },
 ]
 
@@ -32,7 +34,15 @@ export default function UploadPage() {
   const [result, setResult] = useState(null)
   const [uploadError, setUploadError] = useState(null)
   const [dragging, setDragging] = useState(false)
+  const [datesSummary, setDatesSummary] = useState([])
   const inputRef = useRef()
+
+  // Carrega o resumo de dias ao entrar na aba
+  useEffect(() => {
+    if (usinaAtual && activeTab === 'dados') {
+      fetchDatesSummary(usinaAtual).then(setDatesSummary).catch(() => {})
+    }
+  }, [usinaAtual, activeTab])
 
   const handleFile = (f) => {
     if (!f) return
@@ -45,6 +55,8 @@ export default function UploadPage() {
     try {
       const res = await uploadExcel(usinaAtual, file, setProgress)
       setResult(res)
+      // Recarrega o summary de dias após upload
+      fetchDatesSummary(usinaAtual).then(setDatesSummary).catch(() => {})
     } catch (e) { setUploadError(e.message) }
     finally { setUploading(false) }
   }
@@ -130,6 +142,24 @@ export default function UploadPage() {
       await deleteBatch(usinaAtual, batchId)
       await reloadSynths(usinaAtual)
     } catch (e) { setSynthError(e.message) }
+  }
+
+  // ── Tab 5: Mapa de Strings ──────────────────────────────────────────
+  const [mapaFile, setMapaFile] = useState(null)
+  const [mapaLoading, setMapaLoading] = useState(false)
+  const [mapaResult, setMapaResult] = useState(null)
+  const [mapaError, setMapaError] = useState(null)
+  const [mapaDragging, setMapaDragging] = useState(false)
+  const mapaInputRef = useRef()
+
+  const handleMapaUpload = async () => {
+    if (!mapaFile || !usinaAtual) return
+    setMapaLoading(true); setMapaError(null); setMapaResult(null)
+    try {
+      const res = await uploadMapa(usinaAtual, mapaFile, null) // no progress for now
+      setMapaResult(res)
+    } catch (e) { setMapaError(e.message) }
+    finally { setMapaLoading(false) }
   }
 
   // Guard
@@ -233,6 +263,39 @@ export default function UploadPage() {
                 <button className="btn btn-primary btn-full" onClick={() => navigate('/dashboard', { state: { date: result.date } })}>
                   📊 Ver Dashboard
                 </button>
+              </div>
+            )}
+
+            {/* Cards de resumo de todos os dias importados */}
+            {datesSummary.length > 0 && (
+              <div className="card fade-in" style={{ marginTop: 16 }}>
+                <div className="card-title" style={{ marginBottom: 12 }}>
+                  📅 Dias Importados
+                  <span style={{ marginLeft: 8, fontSize: 12, fontWeight: 400, color: 'var(--text-muted)' }}>
+                    {datesSummary.length} {datesSummary.length === 1 ? 'dia' : 'dias'}
+                  </span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
+                  {datesSummary.map(d => (
+                    <div
+                      key={d.date}
+                      className="stat-card"
+                      style={{
+                        cursor: 'pointer',
+                        border: result?.date === d.date ? '1.5px solid var(--amber)' : undefined,
+                        transition: 'all 0.15s'
+                      }}
+                      onClick={() => navigate('/dashboard', { state: { date: d.date } })}
+                      title="Ir para o dashboard deste dia"
+                    >
+                      <div className="stat-label" style={{ fontSize: 10 }}>{d.date}</div>
+                      <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-primary)', margin: '4px 0 2px' }}>
+                        {d.series_count.toLocaleString('pt-BR')}
+                      </div>
+                      <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>séries</div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -374,7 +437,51 @@ export default function UploadPage() {
           </div>
         )}
 
-        {/* ── TAB 4: Séries Sintéticas ──────────────────────────────────────── */}
+        {/* ── TAB 4: Mapa de Strings ─────────────────────────────────────────── */}
+        {activeTab === 'mapa' && (
+          <div>
+            <div className="card" style={{ marginBottom: 16 }}>
+              <div className="card-title">🗺️ Importar Layout do Mapa de Strings</div>
+              <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 14 }}>
+                Faça upload do Excel que representa fisicamente o grid da usina. As células com valores devem conter as Strings que serão coloridas com base nas métricas de desempenho.
+              </p>
+
+              <div
+                onDragOver={e => { e.preventDefault(); setMapaDragging(true) }}
+                onDragLeave={() => setMapaDragging(false)}
+                onDrop={e => { e.preventDefault(); setMapaDragging(false); setMapaFile(e.dataTransfer.files[0]) }}
+                onClick={() => mapaInputRef.current?.click()}
+                style={{
+                  border: `2px dashed ${mapaDragging ? 'var(--amber)' : mapaFile ? 'var(--green)' : 'var(--border)'}`,
+                  background: mapaDragging ? 'var(--amber-glow)' : 'transparent',
+                  cursor: 'pointer', textAlign: 'center', padding: '28px 20px',
+                  borderRadius: 8, transition: 'all 0.2s', marginBottom: 12,
+                }}
+              >
+                <input ref={mapaInputRef} type="file" accept=".xlsx,.xls" style={{ display: 'none' }} onChange={e => setMapaFile(e.target.files[0])} />
+                <div style={{ fontSize: 36, marginBottom: 8 }}>🗺️</div>
+                <div style={{ fontWeight: 600, fontSize: 14 }}>{mapaFile ? mapaFile.name : 'Arraste o Excel aqui'}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Excel de layout espacial</div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleMapaUpload} disabled={!mapaFile || mapaLoading}>
+                  {mapaLoading ? '⏳ Importando...' : '📥 Importar Mapa'}
+                </button>
+              </div>
+
+              {mapaError && <ErrorState message={mapaError} style={{ marginTop: 12 }} />}
+
+              {mapaResult && (
+                <div className="alert alert-success fade-in" style={{ marginTop: 12 }}>
+                  ✅ Mapa importado com sucesso! <strong>{mapaResult.count}</strong> células mapeadas.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── TAB 5: Séries Sintéticas ──────────────────────────────────────── */}
         {activeTab === 'sintetica' && (
           <div>
             {/* Upload card */}

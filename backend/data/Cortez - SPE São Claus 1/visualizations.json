@@ -118,247 +118,8 @@
     }
   },
   {
-    "id": "cc8de7b2-d604-4be2-be20-a3cbade33aab",
-    "created_at": "2026-05-12T13:03:07.502645",
-    "name": "Grafico do Dé S2",
-    "user": "deschamps.ufsc@gmail.com",
-    "selectedDates": [
-      "2025-11-24",
-      "2025-11-25"
-    ],
-    "selectedSeries": [
-      "CLS01.1-INV01.PotAt",
-      "CLS01.1.MET-B.POA-Irrd",
-      "CLS01.1.MET-B.POA-Irrd_REAR",
-      "CLS01.1.MET-B.T_MOD",
-      "CLS01.1-INV01-SB13-TR051.PosAngAlvo",
-      "CLS01.1-INV01-SB13-TR051.PosAngAtual"
-    ],
-    "activeFilters": [],
-    "visibleFilters": [],
-    "filterColors": {
-      "Flag 5 minutos": "#ef4444"
-    },
-    "chartConfig": {
-      "gridX": true,
-      "gridY1": true,
-      "gridY2": false,
-      "gridY3": false,
-      "xGridSpacing": "2",
-      "xLimits": {
-        "min": "",
-        "max": ""
-      },
-      "y1Limits": {
-        "min": "",
-        "max": ""
-      },
-      "y2Limits": {
-        "min": -69,
-        "max": 1502
-      },
-      "y3Limits": {
-        "min": "",
-        "max": ""
-      },
-      "appliedRanges": {},
-      "seriesAxisMap": {
-        "CLS01.3-INV06-SB26.CorrenteCC_14": "y2",
-        "CLS01.4-INV02-SB06-TR024.PosAngAlvo": "y3",
-        "CLS01.1-INV05-SB20.CorrenteCC_01": "y2",
-        "CLS01.2-INV06-SB28-TR111.PosAngAlvo": "y3",
-        "CLS01.3-INV02-SB05.CorrenteCC_16": "y2",
-        "CLS01.1-INV01.PotAt": "y2",
-        "CLS01.1.MET-B.POA-Irrd": "y1",
-        "CLS01.1.MET-B.POA-Irrd_REAR": "y1",
-        "CLS01.1.MET-B.T_MOD": "y3",
-        "CLS01.1-INV01-SB13-TR051.PosAngAlvo": "y3",
-        "CLS01.1-INV01-SB13-TR051.PosAngAtual": "y3"
-      },
-      "seriesColors": {
-        "CLS01.3-INV06-SB26.CorrenteCC_14": "#E8769F",
-        "CLS01.4-INV02-SB06-TR024.PosAngAlvo": "#6A1B9A",
-        "CLS01.1-INV05-SB20.CorrenteCC_01": "#F7D1DE",
-        "CLS01.2-INV06-SB28-TR111.PosAngAlvo": "#A576C3",
-        "CLS01.3-INV02-SB05.CorrenteCC_16": "#E8769F",
-        "CLS01.1-INV01.PotAt": "#2E7D32",
-        "CLS01.1.MET-B.POA-Irrd": "#F9CC00",
-        "CLS01.1.MET-B.POA-Irrd_REAR": "#EB87FF",
-        "CLS01.1.MET-B.T_MOD": "#EF6C00",
-        "CLS01.1-INV01-SB13-TR051.PosAngAlvo": "#6A1B9A",
-        "CLS01.1-INV01-SB13-TR051.PosAngAtual": "#A576C3"
-      },
-      "seriesWidths": {
-        "CLS01.3-INV06-SB26.CorrenteCC_14": 1,
-        "CLS01.4-INV02-SB06-TR024.PosAngAlvo": 1,
-        "CLS01.1-INV05-SB20.CorrenteCC_01": 1,
-        "CLS01.2-INV06-SB28-TR111.PosAngAlvo": 1,
-        "CLS01.3-INV02-SB05.CorrenteCC_16": 1,
-        "CLS01.1-INV01.PotAt": 1,
-        "CLS01.1.MET-B.POA-Irrd": 1,
-        "CLS01.1.MET-B.POA-Irrd_REAR": 1,
-        "CLS01.1.MET-B.T_MOD": 1,
-        "CLS01.1-INV01-SB13-TR051.PosAngAlvo": 1,
-        "CLS01.1-INV01-SB13-TR051.PosAngAtual": 1
-      },
-      "seriesDashes": {
-        "CLS01.3-INV06-SB26.CorrenteCC_14": "solid",
-        "CLS01.4-INV02-SB06-TR024.PosAngAlvo": "solid",
-        "CLS01.1-INV05-SB20.CorrenteCC_01": "solid",
-        "CLS01.2-INV06-SB28-TR111.PosAngAlvo": "solid",
-        "CLS01.3-INV02-SB05.CorrenteCC_16": "solid",
-        "CLS01.1-INV01.PotAt": "solid",
-        "CLS01.1.MET-B.POA-Irrd": "solid",
-        "CLS01.1.MET-B.POA-Irrd_REAR": "solid",
-        "CLS01.1.MET-B.T_MOD": "solid",
-        "CLS01.1-INV01-SB13-TR051.PosAngAlvo": "solid",
-        "CLS01.1-INV01-SB13-TR051.PosAngAtual": "solid"
-      },
-      "seriesFills": {
-        "CLS01.1.MET-B.POA-Irrd": 11,
-        "CLS01.1.MET-B.POA-Irrd_REAR": 20
-      }
-    }
-  },
-  {
-    "id": "5c103c76-7a99-4e38-b501-4d7728aadd60",
-    "created_at": "2026-05-12T13:05:24.295483",
-    "name": "Skid 1.1 - INV 01 - Irrad, Temp. Mód e Tracker - Dé S2",
-    "user": "deschamps.ufsc@gmail.com",
-    "selectedDates": [
-      "2025-11-24",
-      "2025-11-25"
-    ],
-    "selectedSeries": [
-      "CLS01.1-INV01.PotAt",
-      "CLS01.1.MET-B.POA-Irrd_REAR",
-      "CLS01.1.MET-B.POA-Irrd",
-      "CLS01.1.MET-B.T_MOD",
-      "CLS01.1-INV01-SB13-TR051.PosAngAtual",
-      "CLS01.1-INV01-SB13-TR051.PosAngAlvo",
-      "CLS01.3-INV06-SB26.CorrenteCC_14",
-      "CLS01.4-INV02-SB06-TR024.PosAngAlvo",
-      "CLS01.1-INV05-SB20.CorrenteCC_01",
-      "CLS01.2-INV06-SB28-TR111.PosAngAlvo",
-      "CLS01.3-INV02-SB05.CorrenteCC_16"
-    ],
-    "activeFilters": [],
-    "visibleFilters": [],
-    "filterColors": {
-      "Flag 5 minutos": "#ef4444"
-    },
-    "chartConfig": {
-      "gridX": true,
-      "gridY1": true,
-      "gridY2": false,
-      "gridY3": false,
-      "xGridSpacing": "",
-      "xLimits": {
-        "min": "",
-        "max": ""
-      },
-      "y1Limits": {
-        "min": "",
-        "max": ""
-      },
-      "y2Limits": {
-        "min": "",
-        "max": ""
-      },
-      "y3Limits": {
-        "min": "",
-        "max": ""
-      },
-      "appliedRanges": {},
-      "seriesAxisMap": {
-        "CLS01.1.MET-B.POA-Irrd": "y1",
-        "CLS01.1.MET-B.POA-Irrd_REAR": "y1",
-        "CLS01.1-INV01.PotAt": "y2",
-        "CLS01.1-INV05.PotAt": "y2",
-        "CLS01.1-INV08.PotAt": "y2",
-        "CLS01.1-INV07.PotAt": "y2",
-        "CLS01.1-INV06.PotAt": "y2",
-        "CLS01.1-INV02.PotAt": "y2",
-        "CLS01.1-INV03.PotAt": "y2",
-        "CLS01.1-INV04.PotAt": "y2",
-        "CLS01.1.MET-B.T_MOD": "y3",
-        "CLS01.1-INV01-SB13-TR051.PosAngAtual": "y2",
-        "CLS01.1-INV01-SB13-TR051.PosAngAlvo": "y2",
-        "CLS01.3-INV06-SB26.CorrenteCC_14": "y3",
-        "CLS01.4-INV02-SB06-TR024.PosAngAlvo": "y2",
-        "CLS01.1-INV05-SB20.CorrenteCC_01": "y3",
-        "CLS01.2-INV06-SB28-TR111.PosAngAlvo": "y2",
-        "CLS01.3-INV02-SB05.CorrenteCC_16": "y3"
-      },
-      "seriesColors": {
-        "CLS01.1.MET-B.POA-Irrd": "#F9CC00",
-        "CLS01.1.MET-B.POA-Irrd_REAR": "#F9A825",
-        "CLS01.1-INV01.PotAt": "#2E7D32",
-        "CLS01.1-INV05.PotAt": "#2E7D32",
-        "CLS01.1-INV08.PotAt": "#2E7D32",
-        "CLS01.1-INV07.PotAt": "#2E7D32",
-        "CLS01.1-INV06.PotAt": "#2E7D32",
-        "CLS01.1-INV02.PotAt": "#2E7D32",
-        "CLS01.1-INV03.PotAt": "#2E7D32",
-        "CLS01.1-INV04.PotAt": "#2E7D32",
-        "CLS01.1.MET-B.T_MOD": "#EF6C00",
-        "CLS01.1-INV01-SB13-TR051.PosAngAtual": "#6A1B9A",
-        "CLS01.1-INV01-SB13-TR051.PosAngAlvo": "#6A1B9A",
-        "CLS01.3-INV06-SB26.CorrenteCC_14": "#E8769F",
-        "CLS01.4-INV02-SB06-TR024.PosAngAlvo": "#6A1B9A",
-        "CLS01.1-INV05-SB20.CorrenteCC_01": "#F7D1DE",
-        "CLS01.2-INV06-SB28-TR111.PosAngAlvo": "#A576C3",
-        "CLS01.3-INV02-SB05.CorrenteCC_16": "#E8769F"
-      },
-      "seriesWidths": {
-        "CLS01.1.MET-B.POA-Irrd": 1,
-        "CLS01.1.MET-B.POA-Irrd_REAR": 1,
-        "CLS01.1-INV01.PotAt": 1,
-        "CLS01.1-INV05.PotAt": 1.5,
-        "CLS01.1-INV08.PotAt": 1.5,
-        "CLS01.1-INV07.PotAt": 1.5,
-        "CLS01.1-INV06.PotAt": 1.5,
-        "CLS01.1-INV02.PotAt": 1.5,
-        "CLS01.1-INV03.PotAt": 1.5,
-        "CLS01.1-INV04.PotAt": 1.5,
-        "CLS01.1.MET-B.T_MOD": 1,
-        "CLS01.1-INV01-SB13-TR051.PosAngAtual": 1,
-        "CLS01.1-INV01-SB13-TR051.PosAngAlvo": 1,
-        "CLS01.3-INV06-SB26.CorrenteCC_14": 1,
-        "CLS01.4-INV02-SB06-TR024.PosAngAlvo": 1,
-        "CLS01.1-INV05-SB20.CorrenteCC_01": 1,
-        "CLS01.2-INV06-SB28-TR111.PosAngAlvo": 1,
-        "CLS01.3-INV02-SB05.CorrenteCC_16": 1
-      },
-      "seriesDashes": {
-        "CLS01.1.MET-B.POA-Irrd": "solid",
-        "CLS01.1.MET-B.POA-Irrd_REAR": "solid",
-        "CLS01.1-INV01.PotAt": "solid",
-        "CLS01.1-INV05.PotAt": "solid",
-        "CLS01.1-INV08.PotAt": "solid",
-        "CLS01.1-INV07.PotAt": "solid",
-        "CLS01.1-INV06.PotAt": "solid",
-        "CLS01.1-INV02.PotAt": "solid",
-        "CLS01.1-INV03.PotAt": "solid",
-        "CLS01.1-INV04.PotAt": "solid",
-        "CLS01.1.MET-B.T_MOD": "solid",
-        "CLS01.1-INV01-SB13-TR051.PosAngAtual": "solid",
-        "CLS01.1-INV01-SB13-TR051.PosAngAlvo": "solid",
-        "CLS01.3-INV06-SB26.CorrenteCC_14": "solid",
-        "CLS01.4-INV02-SB06-TR024.PosAngAlvo": "solid",
-        "CLS01.1-INV05-SB20.CorrenteCC_01": "solid",
-        "CLS01.2-INV06-SB28-TR111.PosAngAlvo": "solid",
-        "CLS01.3-INV02-SB05.CorrenteCC_16": "solid"
-      },
-      "seriesFills": {
-        "CLS01.1.MET-B.POA-Irrd": 15,
-        "CLS01.1.MET-B.POA-Irrd_REAR": 20
-      }
-    }
-  },
-  {
     "id": "c3137da9-ef01-45c2-90bc-5ae372c2b959",
-    "created_at": "2026-06-05T14:57:50.682023",
+    "created_at": "2026-06-08T02:16:51.112023",
     "name": "EPI",
     "user": "deschamps.ufsc@gmail.com",
     "selectedDates": [
@@ -369,19 +130,24 @@
       "2025-12-04"
     ],
     "selectedSeries": [
-      "gpoa",
-      "grear",
       "tamb",
       "tmod",
       "tcel",
       "sujidade",
       "energia",
-      "geff"
+      "grear_semTR",
+      "gpoa_semTR",
+      "geff_semTR"
     ],
-    "activeFilters": [],
-    "visibleFilters": [],
+    "activeFilters": [
+      "Simultaneidade"
+    ],
+    "visibleFilters": [
+      "Simultaneidade"
+    ],
     "filterColors": {
-      "Flag 5 minutos": "#ef4444"
+      "Flag 5 minutos": "#ef4444",
+      "Simultaneidade": "#ef4444"
     },
     "chartConfig": {
       "gridX": true,
@@ -419,7 +185,10 @@
         "tcel": "y2",
         "sujidade": "y4",
         "energia": "y3",
-        "geff": "y1"
+        "geff": "y1",
+        "grear_semTR": "y1",
+        "gpoa_semTR": "y1",
+        "geff_semTR": "y1"
       },
       "seriesColors": {
         "gpoa": "#F9CC00",
@@ -429,7 +198,10 @@
         "tcel": "#283593",
         "sujidade": "#D81B60",
         "energia": "#2E7D32",
-        "geff": "#EF6C00"
+        "geff": "#EF6C00",
+        "grear_semTR": "#F6A866",
+        "gpoa_semTR": "#F9CC00",
+        "geff_semTR": "#EB8702"
       },
       "seriesWidths": {
         "gpoa": 1,
@@ -439,21 +211,36 @@
         "tcel": 1,
         "energia": 1,
         "sujidade": 1,
-        "geff": 1
+        "geff": 1,
+        "grear_semTR": 1,
+        "gpoa_semTR": 1,
+        "geff_semTR": 1
       },
       "seriesDashes": {
-        "sujidade": "dot"
+        "sujidade": "dot",
+        "gpoa": "solid",
+        "grear": "solid",
+        "tamb": "solid",
+        "tmod": "solid",
+        "tcel": "solid",
+        "energia": "solid",
+        "geff": "solid",
+        "grear_semTR": "solid",
+        "gpoa_semTR": "solid",
+        "geff_semTR": "solid"
       },
       "seriesFills": {
         "gpoa": 15,
-        "grear": 20
+        "grear": 20,
+        "gpoa_semTR": 11,
+        "grear_semTR": 10
       },
       "legendPosition": "none"
     }
   },
   {
     "id": "3c1e3255-3951-44e6-812e-2dd0a1ff2ed1",
-    "created_at": "2026-06-06T02:16:11.351270",
+    "created_at": "2026-06-06T16:11:23.285050",
     "name": "Tracker",
     "user": "deschamps.ufsc@gmail.com",
     "selectedDates": [
@@ -469,7 +256,7 @@
       "gpoa",
       "Tracker Ref.",
       "flag_tracker_erro_CLS01.1-INV04-SB12-TR046.PosAngAtual",
-      "CLS01.1-INV04-SB12-TR046.PosAngAlvo"
+      "CLS01.1-INV04-SB12-TR046.PosAngAtual"
     ],
     "activeFilters": [],
     "visibleFilters": [],
@@ -484,24 +271,24 @@
       "gridY4": false,
       "xGridSpacing": "",
       "xLimits": {
-        "min": "00:00",
-        "max": "23:59"
+        "min": "",
+        "max": ""
       },
       "y1Limits": {
-        "min": 0,
-        "max": 1395
+        "min": "",
+        "max": ""
       },
       "y2Limits": {
         "min": "",
         "max": ""
       },
       "y3Limits": {
-        "min": 0,
-        "max": 1
+        "min": "",
+        "max": ""
       },
       "y4Limits": {
-        "min": -67,
-        "max": 67
+        "min": "",
+        "max": ""
       },
       "appliedRanges": {},
       "seriesAxisMap": {
@@ -516,7 +303,8 @@
         "Tracker_is_backtracking": "y3",
         "Tracker Ref.": "y4",
         "flag_tracker_erro_CLS01.1-INV04-SB12-TR046.PosAngAtual": "y3",
-        "CLS01.1-INV04-SB12-TR046.PosAngAlvo": "y4"
+        "CLS01.1-INV04-SB12-TR046.PosAngAlvo": "y4",
+        "CLS01.1-INV04-SB12-TR046.PosAngAtual": "y4"
       },
       "seriesColors": {
         "gpoa": "#F9CC00",
@@ -530,7 +318,8 @@
         "Tracker_is_backtracking": "#C62828",
         "Tracker Ref.": "#329BD2",
         "flag_tracker_erro_CLS01.1-INV04-SB12-TR046.PosAngAtual": "#666666",
-        "CLS01.1-INV04-SB12-TR046.PosAngAlvo": "#6A1B9A"
+        "CLS01.1-INV04-SB12-TR046.PosAngAlvo": "#6A1B9A",
+        "CLS01.1-INV04-SB12-TR046.PosAngAtual": "#6A1B9A"
       },
       "seriesWidths": {
         "gpoa": 1,
@@ -544,7 +333,8 @@
         "Tracker_is_backtracking": 1,
         "Tracker Ref.": 1.5,
         "flag_tracker_erro_CLS01.1-INV04-SB12-TR046.PosAngAtual": 1,
-        "CLS01.1-INV04-SB12-TR046.PosAngAlvo": 1.5
+        "CLS01.1-INV04-SB12-TR046.PosAngAlvo": 1.5,
+        "CLS01.1-INV04-SB12-TR046.PosAngAtual": 1
       },
       "seriesDashes": {
         "sujidade": "dot",
@@ -558,7 +348,8 @@
         "Tracker_is_backtracking": "solid",
         "Tracker Ref.": "solid",
         "flag_tracker_erro_CLS01.1-INV04-SB12-TR046.PosAngAtual": "solid",
-        "CLS01.1-INV04-SB12-TR046.PosAngAlvo": "solid"
+        "CLS01.1-INV04-SB12-TR046.PosAngAlvo": "solid",
+        "CLS01.1-INV04-SB12-TR046.PosAngAtual": "solid"
       },
       "seriesFills": {
         "gpoa": 15,
@@ -567,6 +358,136 @@
         "Tracker_is_backtracking": 10
       },
       "legendPosition": "top"
+    }
+  },
+  {
+    "id": "f49aba22-a84c-47fa-aac6-88e7202cb2d8",
+    "created_at": "2026-07-13T02:09:21.762592",
+    "name": "EPI - Campanha 1",
+    "user": "deschamps.ufsc@gmail.com",
+    "selectedDates": [
+      "2025-11-24",
+      "2025-11-25",
+      "2025-11-28",
+      "2025-12-01",
+      "2025-12-04",
+      "2026-06-09",
+      "2026-06-10",
+      "2026-06-11",
+      "2026-06-12"
+    ],
+    "selectedSeries": [
+      "tamb",
+      "tmod",
+      "tcel",
+      "sujidade",
+      "energia",
+      "grear_semTR",
+      "gpoa_semTR",
+      "geff_semTR",
+      "CLS01.PPC.RefPotAt"
+    ],
+    "activeFilters": [
+      "Simultaneidade"
+    ],
+    "visibleFilters": [
+      "Simultaneidade"
+    ],
+    "filterColors": {
+      "Flag 5 minutos": "#ef4444",
+      "Simultaneidade": "#ef4444"
+    },
+    "chartConfig": {
+      "gridX": true,
+      "gridY1": true,
+      "gridY2": false,
+      "gridY3": false,
+      "gridY4": false,
+      "xGridSpacing": "",
+      "xLimits": {
+        "min": "00:00",
+        "max": "23:59"
+      },
+      "y1Limits": {
+        "min": 0,
+        "max": 1493
+      },
+      "y2Limits": {
+        "min": 0,
+        "max": 59
+      },
+      "y3Limits": {
+        "min": 0,
+        "max": 55
+      },
+      "y4Limits": {
+        "min": 0,
+        "max": 105
+      },
+      "appliedRanges": {},
+      "seriesAxisMap": {
+        "gpoa": "y1",
+        "grear": "y1",
+        "tamb": "y2",
+        "tmod": "y2",
+        "tcel": "y2",
+        "sujidade": "y4",
+        "energia": "y3",
+        "geff": "y1",
+        "grear_semTR": "y1",
+        "gpoa_semTR": "y1",
+        "geff_semTR": "y1",
+        "CLS01.PPC.RefPotAt": "y3"
+      },
+      "seriesColors": {
+        "gpoa": "#F9CC00",
+        "grear": "#F9A825",
+        "tamb": "#7F87BE",
+        "tmod": "#535DA8",
+        "tcel": "#283593",
+        "sujidade": "#D81B60",
+        "energia": "#2E7D32",
+        "geff": "#EF6C00",
+        "grear_semTR": "#F6A866",
+        "gpoa_semTR": "#F9CC00",
+        "geff_semTR": "#EB8702",
+        "CLS01.PPC.RefPotAt": "#00838F"
+      },
+      "seriesWidths": {
+        "gpoa": 1,
+        "grear": 1,
+        "tamb": 1,
+        "tmod": 1,
+        "tcel": 1,
+        "energia": 1,
+        "sujidade": 1,
+        "geff": 1,
+        "grear_semTR": 1,
+        "gpoa_semTR": 1,
+        "geff_semTR": 1,
+        "CLS01.PPC.RefPotAt": 2.5
+      },
+      "seriesDashes": {
+        "sujidade": "dot",
+        "gpoa": "solid",
+        "grear": "solid",
+        "tamb": "solid",
+        "tmod": "solid",
+        "tcel": "solid",
+        "energia": "solid",
+        "geff": "solid",
+        "grear_semTR": "solid",
+        "gpoa_semTR": "solid",
+        "geff_semTR": "solid",
+        "CLS01.PPC.RefPotAt": "solid"
+      },
+      "seriesFills": {
+        "gpoa": 15,
+        "grear": 20,
+        "gpoa_semTR": 11,
+        "grear_semTR": 10
+      },
+      "legendPosition": "none"
     }
   }
 ]

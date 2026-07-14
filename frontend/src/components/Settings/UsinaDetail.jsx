@@ -1,17 +1,22 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  uploadExcel,
+  uploadExcel, uploadMapa,
   fetchUsinaInfo, importUsinaInfo, getUsinaInfoTemplateUrl,
   fetchSynthetics, importSyntheticExcel, saveBatchConfig, deleteBatch,
+  fetchDatesSummary, fetchDateDetails, fetchMappingSummary
 } from '../../services/api'
 import { ErrorState } from '../StateComponents'
 import SeriesMapImport from '../SeriesMapImport'
+import DriveImportModal from './DriveImportModal'
+import DeleteSeriesModal from './DeleteSeriesModal'
+import Toast from '../Toast'
 
 const TABS = [
   { id: 'dados',     label: '📤 Dados Diários' },
   { id: 'depara',   label: '🗂️ Mapeamento de Séries' },
   { id: 'infos',    label: '⚡ Infos Usina' },
+  { id: 'mapa',     label: '🗺️ Mapa de Strings' },
   { id: 'sintetica', label: '🧪 Séries Sintéticas' },
 ]
 
@@ -21,10 +26,12 @@ const tdStyle = {
   color: 'var(--text-primary)',
 }
 
-export default function UsinaDetail({ usina }) {
+export default function UsinaDetail({ usina, usinaObj }) {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('dados')
-
+  const [driveModalOpen, setDriveModalOpen] = useState(false)
+  const [toast, setToast] = useState(null)
+  
   // Reset states when the selected usina switches
   useEffect(() => {
     setFile(null)
@@ -35,6 +42,9 @@ export default function UsinaDetail({ usina }) {
     setInfoFile(null)
     setInfoResult(null)
     setInfoError(null)
+    setMapaFile(null)
+    setMapaResult(null)
+    setMapaError(null)
     setSynthFile(null)
     setSynthNomeGrupo('')
     setSynthResult(null)
@@ -48,7 +58,41 @@ export default function UsinaDetail({ usina }) {
   const [result, setResult] = useState(null)
   const [uploadError, setUploadError] = useState(null)
   const [dragging, setDragging] = useState(false)
+  const [datesSummary, setDatesSummary] = useState([])
+  const [mappingSummary, setMappingSummary] = useState(null)
+  const [selectedDateForSummary, setSelectedDateForSummary] = useState(null)
+  const [dateSummaryData, setDateSummaryData] = useState(null)
+  const [dateSummaryLoading, setDateSummaryLoading] = useState(false)
+  const [skipUnmapped, setSkipUnmapped] = useState(false)
+  const [deleteSeriesModalOpen, setDeleteSeriesModalOpen] = useState(false)
   const inputRef = useRef()
+
+  const handleDayCardClick = async (date) => {
+    if (selectedDateForSummary === date) {
+      setSelectedDateForSummary(null)
+      setDateSummaryData(null)
+      return
+    }
+    setSelectedDateForSummary(date)
+    setDateSummaryLoading(true)
+    try {
+      const data = await fetchDateDetails(usina, date)
+      setDateSummaryData(data)
+    } catch (e) {
+      setToast({ type: 'error', title: 'Erro', message: 'Falha ao carregar detalhes da data.' })
+      setSelectedDateForSummary(null)
+    } finally {
+      setDateSummaryLoading(false)
+    }
+  }
+
+  // Carrega o resumo de dias ao entrar na aba
+  useEffect(() => {
+    if (usina && activeTab === 'dados') {
+      fetchDatesSummary(usina).then(setDatesSummary).catch(() => {})
+      fetchMappingSummary(usina).then(setMappingSummary).catch(() => {})
+    }
+  }, [usina, activeTab])
 
   const handleFile = (f) => {
     if (!f) return
@@ -59,8 +103,10 @@ export default function UsinaDetail({ usina }) {
     if (!file || !usina) return
     setUploading(true); setProgress(0); setUploadError(null)
     try {
-      const res = await uploadExcel(usina, file, setProgress)
+      const res = await uploadExcel(usina, file, setProgress, skipUnmapped)
       setResult(res)
+      // Recarrega o summary de dias após upload
+      fetchDatesSummary(usina).then(setDatesSummary).catch(() => {})
     } catch (e) { setUploadError(e.message) }
     finally { setUploading(false) }
   }
@@ -148,6 +194,24 @@ export default function UsinaDetail({ usina }) {
     } catch (e) { setSynthError(e.message) }
   }
 
+  // ── Tab 5: Mapa de Strings ──────────────────────────────────────────
+  const [mapaFile, setMapaFile] = useState(null)
+  const [mapaLoading, setMapaLoading] = useState(false)
+  const [mapaResult, setMapaResult] = useState(null)
+  const [mapaError, setMapaError] = useState(null)
+  const [mapaDragging, setMapaDragging] = useState(false)
+  const mapaInputRef = useRef()
+
+  const handleMapaUpload = async () => {
+    if (!mapaFile || !usina) return
+    setMapaLoading(true); setMapaError(null); setMapaResult(null)
+    try {
+      const res = await uploadMapa(usina, mapaFile, null) // no progress for now
+      setMapaResult(res)
+    } catch (e) { setMapaError(e.message) }
+    finally { setMapaLoading(false) }
+  }
+
   return (
     <div style={{ background: 'var(--bg-primary)', padding: '4px 0 24px' }}>
       <div style={{ maxWidth: '100%', margin: '0 auto' }}>
@@ -163,21 +227,42 @@ export default function UsinaDetail({ usina }) {
         {/* ── TAB 1: Dados Diários ────────────────────────────────────────────── */}
         {activeTab === 'dados' && (
           <div className="card">
-            <div className="card-title">📤 Upload de Excel Diário</div>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
-              Envie o Excel diário da usina. Resolução de 1 minuto · até 10.000 séries.
-            </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+              <div>
+                <div className="card-title" style={{ marginBottom: 4 }}>📤 Upload de Excel Diário</div>
+                <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                  Envie o Excel diário da usina ou importe diretamente de uma pasta pública do Google Drive.
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-primary)', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={skipUnmapped} onChange={(e) => setSkipUnmapped(e.target.checked)} style={{ accentColor: 'var(--amber)' }} />
+                  Pular séries não mapeadas
+                </label>
+                <button 
+                  className="btn btn-primary" 
+                  style={{ whiteSpace: 'nowrap' }} 
+                  onClick={handleUpload} 
+                  disabled={!file || uploading}
+                >
+                  {uploading ? `⏳ ${progress}%` : '🚀 Processar e Converter para Parquet'}
+                </button>
+              </div>
+            </div>
 
-            <div
-              onDragOver={e => { e.preventDefault(); setDragging(true) }}
+            <div style={{ display: 'flex', gap: '16px', marginBottom: 14 }}>
+              {/* Box Upload de Excel */}
+              <div
+                onDragOver={e => { e.preventDefault(); setDragging(true) }}
               onDragLeave={() => setDragging(false)}
               onDrop={e => { e.preventDefault(); setDragging(false); handleFile(e.dataTransfer.files[0]) }}
               onClick={() => !uploading && inputRef.current?.click()}
               style={{
+                flex: 1,
                 border: `2px dashed ${dragging ? 'var(--amber)' : file ? 'var(--green)' : 'var(--border)'}`,
                 background: dragging ? 'var(--amber-glow)' : file ? 'rgba(16,185,129,0.05)' : 'var(--gradient-card)',
                 cursor: uploading ? 'default' : 'pointer',
-                textAlign: 'center', padding: '36px 24px', borderRadius: 8, transition: 'all 0.3s', marginBottom: 14,
+                textAlign: 'center', padding: '36px 24px', borderRadius: 8, transition: 'all 0.3s',
               }}
             >
               <input ref={inputRef} type="file" accept=".xlsx,.xls" style={{ display: 'none' }} onChange={e => handleFile(e.target.files[0])} />
@@ -195,6 +280,24 @@ export default function UsinaDetail({ usina }) {
                   <span className="badge badge-gray">.xlsx · .xls</span>
                 </>
               )}
+              </div>
+
+              {/* Box Importar do Google Drive */}
+              <div
+                onClick={() => setDriveModalOpen(true)}
+                style={{
+                  flex: 1,
+                  border: `2px dashed var(--blue)`,
+                  background: 'rgba(59, 130, 246, 0.05)',
+                  cursor: 'pointer',
+                  textAlign: 'center', padding: '36px 24px', borderRadius: 8, transition: 'all 0.3s',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
+                }}
+              >
+                <div style={{ fontSize: 48, opacity: 0.5, marginBottom: 12 }}>☁️</div>
+                <div style={{ fontWeight: 600, marginBottom: 6, color: 'var(--blue)' }}>Importar do Google Drive</div>
+                <span className="badge badge-gray">Arquivos .csv</span>
+              </div>
             </div>
 
             {uploading && (
@@ -207,10 +310,6 @@ export default function UsinaDetail({ usina }) {
                 </div>
               </div>
             )}
-
-            <button className="btn btn-primary btn-full" onClick={handleUpload} disabled={!file || uploading}>
-              {uploading ? `⏳ ${progress}%` : '🚀 Processar e Converter para Parquet'}
-            </button>
 
             {uploadError && <div className="alert alert-error fade-in" style={{ marginTop: 12 }}>⚠️ {uploadError}</div>}
 
@@ -231,6 +330,158 @@ export default function UsinaDetail({ usina }) {
                   📊 Ver Dashboard
                 </button>
               </div>
+            )}
+
+            {/* Cards de resumo de todos os dias importados */}
+            {datesSummary.length > 0 && (
+              <div className="card fade-in" style={{ marginTop: 16 }}>
+                <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <div>
+                    📅 Dias Importados
+                    <span style={{ marginLeft: 8, fontSize: 12, fontWeight: 400, color: 'var(--text-muted)' }}>
+                      {datesSummary.length} {datesSummary.length === 1 ? 'dia' : 'dias'}
+                    </span>
+                  </div>
+                  <button 
+                    className="btn btn-sm btn-ghost" 
+                    style={{ color: 'var(--red)', border: '1px solid rgba(239, 68, 68, 0.2)' }}
+                    onClick={() => setDeleteSeriesModalOpen(true)}
+                  >
+                    🗑️ Gerenciar/Excluir Séries
+                  </button>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
+                  {datesSummary.map(d => (
+                    <div
+                      key={d.date}
+                      className="stat-card"
+                      style={{
+                        cursor: 'pointer',
+                        border: selectedDateForSummary === d.date ? '1.5px solid var(--amber)' : (result?.date === d.date ? '1.5px solid var(--green)' : undefined),
+                        background: selectedDateForSummary === d.date ? 'rgba(245, 158, 11, 0.05)' : undefined,
+                        transition: 'all 0.15s'
+                      }}
+                      onClick={() => handleDayCardClick(d.date)}
+                      title="Ir para o dashboard deste dia"
+                    >
+                      <div className="stat-label" style={{ fontSize: 10 }}>{d.date}</div>
+                      <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                        <div style={{ flex: 1, borderRight: '1px solid var(--border)', paddingRight: 4 }}>
+                          <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: 0.5 }}>NATIVAS</div>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginTop: 2, display: 'flex', alignItems: 'baseline', flexWrap: 'wrap' }}>
+                            {d.nativas_count?.toLocaleString('pt-BR') || 0}
+                            <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontWeight: 400, marginLeft: 2 }}>
+                              / {mappingSummary?.total_nativas?.toLocaleString('pt-BR') || '-'}
+                            </span>
+                          </div>
+                        </div>
+                        <div style={{ flex: 1, paddingLeft: 4 }}>
+                          <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: 0.5 }}>SINTÉTICAS</div>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginTop: 2, display: 'flex', alignItems: 'baseline', flexWrap: 'wrap' }}>
+                            {d.sinteticas_count?.toLocaleString('pt-BR') || 0}
+                            <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontWeight: 400, marginLeft: 2 }}>
+                              / {mappingSummary?.total_sinteticas?.toLocaleString('pt-BR') || '-'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                {selectedDateForSummary && (
+                  <div className="card fade-in" style={{ marginTop: 16, border: '1px solid var(--amber)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                      <div className="card-title" style={{ margin: 0 }}>
+                        📈 Resumo de {selectedDateForSummary}
+                      </div>
+                      <button className="btn btn-primary btn-sm" onClick={() => navigate('/dashboard', { state: { date: selectedDateForSummary } })}>
+                        📊 Ver no Dashboard
+                      </button>
+                    </div>
+                    
+                    {dateSummaryLoading ? (
+                      <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>⏳ Carregando detalhes...</div>
+                    ) : dateSummaryData ? (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 12 }}>
+                        {[
+                          { key: 'elementos', label: 'ELEMENTOS', totalKey: 'elementos_encontrados' },
+                          { key: 'skids', label: 'SKIDS', totalKey: 'skids_encontrados' },
+                          { key: 'estacoes', label: 'ESTAÇÕES', totalKey: 'estacoes_encontradas' },
+                          { key: 'inversores', label: 'INVERSORES', totalKey: 'inversores_encontrados' },
+                          { key: 'stringboxes', label: 'STRINGBOXES', totalKey: 'stringboxes_encontrados' },
+                          { key: 'trackers', label: 'TRACKERS', totalKey: 'trackers_encontrados' },
+                          { key: 'strings', label: 'STRINGS', totalKey: 'strings_encontradas' },
+                          { key: 'outros', label: 'OUTROS' },
+                          { key: 'nao_mapeadas', label: 'SÉRIES NÃO MAPEADAS' },
+                          { key: 'processadas', label: 'SÉRIES PROCESSADAS' }
+                        ].map(item => {
+                          const info = dateSummaryData[item.key]
+                          if (!info || info.count === 0) return null;
+                          
+                          let totalCountStr = '';
+                          if (item.totalKey && mappingSummary?.[item.totalKey]) {
+                            totalCountStr = ` / ${mappingSummary[item.totalKey].length}`;
+                          }
+
+                          return (
+                            <div key={item.key} style={{ border: item.key === 'nao_mapeadas' ? '1px solid var(--danger)' : item.key === 'processadas' ? '1px solid var(--blue)' : '1px solid var(--border)', borderRadius: 8, padding: 12, background: 'var(--bg-primary)' }}>
+                              <div style={{ fontSize: 10, fontWeight: 700, color: item.key === 'nao_mapeadas' ? 'var(--danger)' : item.key === 'processadas' ? 'var(--blue)' : 'var(--text-muted)', letterSpacing: 0.5, marginBottom: 4 }}>{item.label}</div>
+                              <div style={{ fontSize: 18, fontWeight: 800, color: item.key === 'nao_mapeadas' ? 'var(--danger)' : item.key === 'processadas' ? 'var(--blue)' : 'var(--amber)', marginBottom: 6 }}>
+                                {info.count}{totalCountStr}
+                              </div>
+                              <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                                {info.values.map((v, i) => {
+                                  const isUnregistered = item.key === 'elementos' && mappingSummary?.elementos_nao_cadastrados?.includes(v);
+                                  return (
+                                    <span key={v}>
+                                      {isUnregistered ? (
+                                        <span style={{ fontWeight: 800, color: 'var(--danger)' }} title="Elemento não cadastrado nas Configurações da plataforma">
+                                          {v} ⚠️
+                                        </span>
+                                      ) : v}
+                                      {i < info.values.length - 1 ? ', ' : ''}
+                                    </span>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Drive Import Modal */}
+            {driveModalOpen && (
+              <DriveImportModal
+                usina={usina}
+                usinaObj={usinaObj}
+                onClose={() => setDriveModalOpen(false)}
+                onSuccess={(msg) => {
+                  setDriveModalOpen(false)
+                  setToast({ type: 'success', title: 'Importação Concluída', message: msg })
+                  setTimeout(() => setToast(null), 5000)
+                  fetchDatesSummary(usina).then(setDatesSummary).catch(() => {})
+                }}
+              />
+            )}
+
+            {deleteSeriesModalOpen && (
+              <DeleteSeriesModal
+                usina={usina}
+                datesList={datesSummary}
+                onClose={() => setDeleteSeriesModalOpen(false)}
+                onSuccess={(msg) => {
+                  setToast({ type: 'success', title: 'Sucesso', message: msg })
+                  setDeleteSeriesModalOpen(false)
+                  fetchDatesSummary(usina).then(setDatesSummary).catch(() => {})
+                  fetchMappingSummary(usina).then(setMappingSummary).catch(() => {})
+                }}
+              />
             )}
           </div>
         )}
@@ -331,7 +582,51 @@ export default function UsinaDetail({ usina }) {
           </div>
         )}
 
-        {/* ── TAB 4: Séries Sintéticas ──────────────────────────────────────── */}
+        {/* ── TAB 4: Mapa de Strings ─────────────────────────────────────────── */}
+        {activeTab === 'mapa' && (
+          <div>
+            <div className="card" style={{ marginBottom: 16 }}>
+              <div className="card-title">🗺️ Importar Layout do Mapa de Strings</div>
+              <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 14 }}>
+                Faça upload do Excel que representa fisicamente o grid da usina. As células com valores devem conter as Strings que serão coloridas com base nas métricas de desempenho.
+              </p>
+
+              <div
+                onDragOver={e => { e.preventDefault(); setMapaDragging(true) }}
+                onDragLeave={() => setMapaDragging(false)}
+                onDrop={e => { e.preventDefault(); setMapaDragging(false); setMapaFile(e.dataTransfer.files[0]) }}
+                onClick={() => mapaInputRef.current?.click()}
+                style={{
+                  border: `2px dashed ${mapaDragging ? 'var(--amber)' : mapaFile ? 'var(--green)' : 'var(--border)'}`,
+                  background: mapaDragging ? 'var(--amber-glow)' : 'transparent',
+                  cursor: 'pointer', textAlign: 'center', padding: '28px 20px',
+                  borderRadius: 8, transition: 'all 0.2s', marginBottom: 12,
+                }}
+              >
+                <input ref={mapaInputRef} type="file" accept=".xlsx,.xls" style={{ display: 'none' }} onChange={e => setMapaFile(e.target.files[0])} />
+                <div style={{ fontSize: 36, marginBottom: 8 }}>🗺️</div>
+                <div style={{ fontWeight: 600, fontSize: 14 }}>{mapaFile ? mapaFile.name : 'Arraste o Excel aqui'}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Excel de layout espacial</div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleMapaUpload} disabled={!mapaFile || mapaLoading}>
+                  {mapaLoading ? '⏳ Importando...' : '📥 Importar Mapa'}
+                </button>
+              </div>
+
+              {mapaError && <ErrorState message={mapaError} style={{ marginTop: 12 }} />}
+
+              {mapaResult && (
+                <div className="alert alert-success fade-in" style={{ marginTop: 12 }}>
+                  ✅ Mapa importado com sucesso! <strong>{mapaResult.count}</strong> células mapeadas.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── TAB 5: Séries Sintéticas ──────────────────────────────────────── */}
         {activeTab === 'sintetica' && (
           <div>
             <div className="card" style={{ marginBottom: 16 }}>
@@ -423,6 +718,7 @@ export default function UsinaDetail({ usina }) {
           </div>
         )}
       </div>
+      <Toast toast={toast} onClose={() => setToast(null)} />
     </div>
   )
 }

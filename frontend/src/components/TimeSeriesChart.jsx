@@ -24,11 +24,13 @@ export function formatSeriesName(name) {
   if (nameLower === 'tmod') return 'Tmod';
   if (nameLower === 'tcel') return 'Tcel';
   if (nameLower === 'sujidade') return 'Sujidade';
-  if (nameLower === 'energia') return 'Potência';
+  if (nameLower === 'energia') return 'Potência PPC';
+  if (nameLower === 'simultaneidade') return 'Simultaneidade';
+  if (nameLower === 'curtailment') return 'Curtailment';
   return name;
 }
 
-export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, filterColors = {}, chartConfig, setChartConfig, showEixosMenu, showSeriesMenu, visibleFilters = [] }) {
+export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, chartConfig, setChartConfig, showEixosMenu, showSeriesMenu, filterColors = {}, visibleFilters = [] }) {
   const {
     gridX, gridY1, gridY2, gridY3, gridY4,
     xGridSpacing, xLimits, y1Limits, y2Limits, y3Limits, y4Limits, appliedRanges,
@@ -89,6 +91,8 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
   const [windowDays, setWindowDays] = useState(null)   // null = Max (sem filtro)
   const [windowStartIdx, setWindowStartIdx] = useState(0)
 
+
+
   // Dias únicos — declarado antes de qualquer useEffect que o referencia (evita TDZ)
   const uniqueDays = useMemo(() => {
     if (!data?.timestamps?.length) return []
@@ -99,7 +103,7 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
       if (!seen.has(d)) { seen.add(d); days.push(d) }
     }
     return days
-  }, [data])
+  }, [data?.timestamps])
 
   const handlePlotHover = (eventData) => {
     if (!eventData || !eventData.points || eventData.points.length === 0) return
@@ -272,6 +276,11 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
     return () => ro.disconnect()
   }, [])
 
+
+  const lastBaseDateRef = useRef(data?.date || '')
+  useEffect(() => {
+    lastBaseDateRef.current = data?.date || ''
+  }, [data?.date])
 
   const { elementSettings } = useChartSettings()
 
@@ -553,15 +562,40 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
       return [fillTrace, lineTrace]
     })
 
-    // ── Faixas de Filtro (Topo) ───────────────────────────────────────
-    const filterTraces = visibleFilters.map((name, i) => {
+    // ── Faixas de Filtro (Topo) ──────────────────────────────────────
+    const sortedVisibleFilters = [...visibleFilters].sort((a, b) => {
+      const getOrder = (col) => {
+        const c = col.toLowerCase()
+        if (c.startsWith('simultaneidade')) return 1
+        if (c === 'curtailment') return 2
+        if (c === 'dados válidos') return 3
+        return 99
+      }
+      return getOrder(a) - getOrder(b)
+    })
+
+    const filterTraces = sortedVisibleFilters.map((name, i) => {
       const yAxisRef = `y${i + 5}`
       const fillColor = filterColors?.[name] || getColor(name) || '#ef4444'
       
-      // 0 onde flag=0 cria uma onda quadrada: fill só aparece onde y=1, não onde y=0.
-      // Usar null causaria preenchimento contínuo pelo Plotly (preenche entre segmentos).
       const rawVals = data?.filterData?.[name] || data?.series?.[name] || []
-      const yVals = rawVals.map(v => (v === 1 || v === 1.0 || v === "1" || v === true) ? 1 : 0)
+      
+      // Para manter a "sensação de continuidade", usamos scatter com shape: 'hv'.
+      // Porém, o 'hv' estica o bloco até o PRÓXIMO timestamp. Se o próximo for 0, ele invadiria
+      // a área do minuto sem dados. A solução é forçar o último '1' do bloco a virar '0'.
+      // Isso faz o 'hv' cair para 0 exatamente em cima do último minuto válido, "parando antes".
+      const yVals = rawVals.map((v, idx) => {
+        const isOne = (v === 1 || v === 1.0 || v === "1" || v === true)
+        if (isOne) {
+          const next = rawVals[idx + 1]
+          const nextIsOne = next !== undefined && (next === 1 || next === 1.0 || next === "1" || next === true)
+          if (!nextIsOne && idx < rawVals.length - 1) {
+            return 0 // cai para 0 no timestamp atual
+          }
+          return 1
+        }
+        return 0
+      })
       
       return {
         x: data.timestamps,
@@ -592,7 +626,6 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
         yaxis: 'y',
         type: 'scatter',
         mode: 'lines',
-        line: { color: 'transparent', width: 0 },
         showlegend: false,
         hoverinfo: 'none'
       }]
@@ -604,7 +637,23 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
 
   // ── Layout ────────────────────────────────────────────────────────
   const layout = useMemo(() => {
-    // visibleFilters vem da prop — não de data (para evitar redraw desnecessario)
+
+    const getPreservedRange = (axisKey, applied) => {
+      if (applied !== undefined) return applied;
+      // Se a data mudou, não preservamos o range antigo (deixamos autorange atuar)
+      if (lastBaseDateRef.current !== baseDate) return undefined;
+      // Lê o range atual direto da engine do Plotly para preservar zoom manual
+      if (plotDivRef.current?.layout?.[axisKey]?.range) {
+        return [...plotDivRef.current.layout[axisKey].range];
+      }
+      return undefined;
+    }
+
+    const currentXRange = getPreservedRange('xaxis', appliedRanges.x)
+    const currentY1Range = getPreservedRange('yaxis', appliedRanges.y1)
+    const currentY2Range = getPreservedRange('yaxis2', appliedRanges.y2)
+    const currentY3Range = getPreservedRange('yaxis3', appliedRanges.y3)
+    const currentY4Range = getPreservedRange('yaxis4', appliedRanges.y4)
 
     // Margens e Domínios otimizados com base em pixels fixos
     const AXIS_SPACE_PX = 35 // Espaço fixo em pixels para cada eixo Y extra
@@ -629,7 +678,7 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
     // Margem direita mínima — legenda é painel HTML externo ao canvas do Plotly
     const rightMargin = 15
 
-    // Calcula altura das faixas de filtro para esmagar os eixos Y normais (REDUZIDO PELA METADE)
+    // Calcula altura das faixas de filtro para esmagar os eixos Y normais
     const filterHeight = Math.max(0.02, Math.min(0.04, 0.15 / (visibleFilters.length || 1)))
     const totalFiltersHeight = visibleFilters.length * filterHeight
     const mainYTop = visibleFilters.length > 0 ? (1 - totalFiltersHeight - 0.02) : 1
@@ -778,7 +827,7 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
         tickmode:   xGridSpacing ? 'array' : 'auto',
         tickvals:   xGridSpacing ? generateXTicks() : undefined,
         rangebreaks: rangebreaks.length > 0 ? rangebreaks : undefined,
-        range:      appliedRanges.x,
+        ...(currentXRange !== undefined ? { range: currentXRange } : {}),
       },
       yaxis: {
         domain:        yDomain,
@@ -787,7 +836,7 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
         tickfont:      { size: 11 },
         zeroline:      gridY1,
         zerolinecolor: '#cbd5e1',
-        range:         appliedRanges.y1,
+        ...(currentY1Range !== undefined ? { range: currentY1Range } : {}),
         rangemode:     'tozero',
         title:         { text: '', font: { size: 11 } },
       },
@@ -802,7 +851,7 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
         side:       'right',
         anchor:     'free',
         position:   y2Pos,
-        range:      appliedRanges.y2,
+        ...(currentY2Range !== undefined ? { range: currentY2Range } : {}),
         rangemode:  'tozero',
         title:      { text: '', font: { size: 11 } },
       },
@@ -817,7 +866,7 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
         side:       'right',
         anchor:     'free',
         position:   y3Pos,
-        range:      appliedRanges.y3,
+        ...(currentY3Range !== undefined ? { range: currentY3Range } : {}),
         rangemode:  'tozero',
         title:      { text: '', font: { size: 11 } },
       },
@@ -832,7 +881,7 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
         side:       'right',
         anchor:     'free',
         position:   y4Pos,
-        range:      appliedRanges.y4,
+        ...(currentY4Range !== undefined ? { range: currentY4Range } : {}),
         rangemode:  'tozero',
         title:      { text: '', font: { size: 11 } },
       },
@@ -841,8 +890,20 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
     }
 
     // Injeta os mini-eixos Y para cada Filtro visível
-    visibleFilters.forEach((name, i) => {
-      const bottom = mainYTop + 0.01 + (i * filterHeight)
+    const sortedVisibleFilters = [...visibleFilters].sort((a, b) => {
+      const getOrder = (col) => {
+        const c = col.toLowerCase()
+        if (c.startsWith('simultaneidade')) return 1
+        if (c === 'curtailment') return 2
+        if (c === 'dados válidos') return 3
+        return 99
+      }
+      return getOrder(a) - getOrder(b)
+    })
+
+    sortedVisibleFilters.forEach((name, i) => {
+      const revIndex = sortedVisibleFilters.length - 1 - i
+      const bottom = mainYTop + 0.01 + (revIndex * filterHeight)
       const top = Math.min(0.995, bottom + filterHeight * 0.85)
       baseLayout[`yaxis${i + 5}`] = {
         domain: [bottom, top],
@@ -891,11 +952,13 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
   }
 
   const makeApplyY = (key, limits) => () => {
-    setAppliedRanges(p => {
-      const minVal = limits.min !== '' ? +limits.min : null
-      const maxVal = limits.max !== '' ? +limits.max : null
-      return { ...p, [key]: (minVal !== null || maxVal !== null) ? [minVal, maxVal] : undefined }
-    })
+    const minVal = limits.min !== '' ? +limits.min : null
+    const maxVal = limits.max !== '' ? +limits.max : null
+    setAppliedRanges(p => ({ ...p, [key]: (minVal !== null || maxVal !== null) ? [minVal, maxVal] : undefined }))
+    if (minVal === null && maxVal === null && plotDivRef.current) {
+      const axisName = key === 'y1' ? 'yaxis' : key === 'y2' ? 'yaxis2' : key === 'y3' ? 'yaxis3' : 'yaxis4'
+      Plotly.relayout(plotDivRef.current, { [`${axisName}.autorange`]: true })
+    }
     bumpRevision()
   }
 
@@ -907,6 +970,9 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, fil
       setAppliedRanges(p => ({ ...p, x: [minVal, maxVal] }))
     } else {
       setAppliedRanges(p => ({ ...p, x: undefined }))
+      if (plotDivRef.current) {
+        Plotly.relayout(plotDivRef.current, { 'xaxis.autorange': true })
+      }
     }
     bumpRevision()
   }

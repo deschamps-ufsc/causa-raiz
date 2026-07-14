@@ -16,6 +16,7 @@ from routes.auth import router as auth_router
 from routes.settings import router as settings_router
 from routes.visualizacoes import router as visualizacoes_router
 from routes.flow import router as flow_router
+from routes.drive import router as drive_router
 from services.auth_service import seed_default_admin
 from utils.logger import logger
 from utils.config import DATA_DIR
@@ -63,8 +64,9 @@ app.include_router(synthetic_router)
 app.include_router(settings_router)
 app.include_router(visualizacoes_router, prefix="/visualizacoes", tags=["Visualizações"])
 app.include_router(flow_router)
+app.include_router(drive_router)
 
-# ── Criar pastas necessárias na inicialização ─────────────────────────────────
+# ── Seed admin account ────────────────────────────────────────────────────────
 
 os.makedirs(DATA_DIR, exist_ok=True)
 

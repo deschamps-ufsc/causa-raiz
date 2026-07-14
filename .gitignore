@@ -4,3 +4,5 @@ __pycache__/
 node_modules/
 .env
 backend/users.json
+backend/client_secret.json
+backend/token.json

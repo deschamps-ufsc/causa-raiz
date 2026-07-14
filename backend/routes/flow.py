@@ -25,10 +25,11 @@ def get_integrals(usina: str = Path(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/{usina}/run")
-def run_flow(usina: str = Path(...)):
-    """Executa o processamento do fluxograma para a usina."""
+def run_flow(usina: str = Path(...), dates: str = None):
+    """Executa o processamento do fluxograma para a usina. Se dates for informado (YYYY-MM-DD,YYYY-MM-DD) processa apenas estes dias."""
     try:
-        result = run_flow_processing(usina)
+        from services.flow_service import run_flow_processing
+        result = run_flow_processing(usina, dates)
         if result.get("status") == "error":
             raise HTTPException(status_code=400, detail=result.get("message"))
         return result
@@ -60,3 +61,21 @@ def save_flow_config(usina: str = Path(...), config: Any = Body(...)):
     except Exception as e:
         logger.error(f"Erro ao salvar flow_config de {usina}: {e}")
         raise HTTPException(status_code=500, detail="Erro ao salvar configuração do fluxograma.")
+
+@router.get("/{usina}/export-pvsyst")
+def export_pvsyst_route(usina: str = Path(...)):
+    """Exporta as séries filtradas em formato XLSX para o PVSyst."""
+    from fastapi.responses import StreamingResponse
+    from services.flow_service import export_pvsyst_xlsx
+    import io
+
+    excel_data = export_pvsyst_xlsx(usina)
+    if not excel_data:
+        raise HTTPException(status_code=404, detail="Dados não encontrados ou não processados.")
+
+    return StreamingResponse(
+        io.BytesIO(excel_data),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename=export_pvsyst_{usina}.xlsx"}
+    )
+
