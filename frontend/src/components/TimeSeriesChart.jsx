@@ -24,7 +24,8 @@ export function formatSeriesName(name) {
   if (nameLower === 'tmod') return 'Tmod';
   if (nameLower === 'tcel') return 'Tcel';
   if (nameLower === 'sujidade') return 'Sujidade';
-  if (nameLower === 'energia') return 'Potência PPC';
+  if (nameLower === 'potencia_ppc') return 'Potência PPC';
+  if (nameLower === 'referencia_ppc') return 'Referência PPC';
   if (nameLower === 'simultaneidade') return 'Simultaneidade';
   if (nameLower === 'curtailment') return 'Curtailment';
   return name;
@@ -566,6 +567,7 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, cha
     const sortedVisibleFilters = [...visibleFilters].sort((a, b) => {
       const getOrder = (col) => {
         const c = col.toLowerCase()
+        if (c === 'tracker piranômetro') return 0
         if (c.startsWith('simultaneidade')) return 1
         if (c === 'curtailment') return 2
         if (c === 'dados válidos') return 3
@@ -893,6 +895,7 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, cha
     const sortedVisibleFilters = [...visibleFilters].sort((a, b) => {
       const getOrder = (col) => {
         const c = col.toLowerCase()
+        if (c === 'tracker piranômetro') return 0
         if (c.startsWith('simultaneidade')) return 1
         if (c === 'curtailment') return 2
         if (c === 'dados válidos') return 3

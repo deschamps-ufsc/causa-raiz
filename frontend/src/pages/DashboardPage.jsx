@@ -31,7 +31,8 @@ export function formatSeriesName(name) {
   if (nameLower === 'tmod') return 'Tmod';
   if (nameLower === 'tcel') return 'Tcel';
   if (nameLower === 'sujidade') return 'Sujidade';
-  if (nameLower === 'energia') return 'Potência PPC';
+  if (nameLower === 'potencia_ppc') return 'Potência PPC';
+  if (nameLower === 'referencia_ppc') return 'Referência PPC';
   if (nameLower === 'simultaneidade') return 'Simultaneidade';
   if (nameLower === 'curtailment') return 'Curtailment';
   return name;
@@ -173,7 +174,7 @@ export default function DashboardPage() {
   // independentemente do Elemento 'Filtro' estar ou não cadastrado
   const isFilterSerie = (s) => {
     const col = s.coluna?.toLowerCase() || '';
-    return col.startsWith('simultaneidade') || col === 'curtailment' || col === 'dados válidos';
+    return col.startsWith('simultaneidade') || col === 'curtailment' || col === 'dados válidos' || col === 'tracker piranômetro';
   }
 
   const normalSeries = useMemo(() => {
@@ -185,6 +186,7 @@ export default function DashboardPage() {
     return filters.sort((a, b) => {
       const getOrder = (col) => {
         const c = col.toLowerCase()
+        if (c === 'tracker piranômetro') return 0
         if (c.startsWith('simultaneidade')) return 1
         if (c === 'curtailment') return 2
         if (c === 'dados válidos') return 3
@@ -258,6 +260,8 @@ export default function DashboardPage() {
             newColors[s.coluna] = '#059669' // Green
           } else if (col === 'dados válidos') {
             newColors[s.coluna] = '#7c3aed' // Purple
+          } else if (col === 'tracker piranômetro') {
+            newColors[s.coluna] = '#f97316' // Orange
           } else if (col.startsWith('simultaneidade')) {
             newColors[s.coluna] = '#ef4444' // Red
           } else {
@@ -415,8 +419,9 @@ export default function DashboardPage() {
                       key={d}
                       onClick={() => {
                         const checked = !isSelected
-                        if (checked && data) {
-                          // Adicionar dia a visualização existente: preserva séries e config
+                        const nextDatesLength = checked ? selectedDates.length + 1 : selectedDates.length - 1;
+                        if (data && nextDatesLength > 0) {
+                          // Atualiza a visualização existente (adiciona ou remove dia): preserva séries e config
                           skipCleanup.current = true
                           pendingVisualize.current = true
                         }
@@ -463,7 +468,7 @@ export default function DashboardPage() {
                 </div>
                 
                 {isFiltersOpen && (
-                  <div style={{ padding: '0 4px', display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', maxHeight: '150px' }}>
+                  <div style={{ padding: '0 4px', display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', maxHeight: '240px' }}>
                     {filterSeries.map((s, idx) => {
                       const isActive = activeFilters.includes(s.coluna)
                       const isVisible = visibleFilters.includes(s.coluna)

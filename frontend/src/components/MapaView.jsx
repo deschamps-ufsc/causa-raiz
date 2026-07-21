@@ -1104,6 +1104,13 @@ export default function MapaView({ usina, dates, activeFilters = [] }) {
                  const left = (mapData.grid[cell.row] || {})[cell.col - 1];
                  const right = (mapData.grid[cell.row] || {})[cell.col + 1];
 
+                 if (baseBorder !== 'none') {
+                     if (top && top.label === cell.label) bTop = 'none';
+                     if (bottom && bottom.label === cell.label) bBottom = 'none';
+                     if (left && left.label === cell.label) bLeft = 'none';
+                     if (right && right.label === cell.label) bRight = 'none';
+                 }
+
                  if (highlights.stringbox && !cell.isSpacer && cell.stringbox) {
                      const borderStyle = '1px solid #9333ea';
                      if (!top || top.isSpacer || top.stringbox !== cell.stringbox) bTop = borderStyle;

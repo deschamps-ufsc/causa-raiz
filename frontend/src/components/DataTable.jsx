@@ -16,7 +16,8 @@ export function formatSeriesName(name) {
   if (nameLower === 'tmod') return 'Tmod';
   if (nameLower === 'tcel') return 'Tcel';
   if (nameLower === 'sujidade') return 'Sujidade';
-  if (nameLower === 'energia') return 'Potência PPC';
+  if (nameLower === 'potencia_ppc') return 'Potência PPC';
+  if (nameLower === 'referencia_ppc') return 'Referência PPC';
   if (nameLower === 'simultaneidade') return 'Simultaneidade';
   if (nameLower === 'curtailment') return 'Curtailment';
   return name;
@@ -139,7 +140,12 @@ export default memo(function DataTable({ data, seriesDict = {} }) {
                       borderBottom: '1px solid var(--border)', whiteSpace: 'normal',
                       userSelect: 'none', color: 'var(--text-secondary)',
                       minWidth: header.id === '_ts' ? '160px' : '100px', maxWidth: header.id === '_ts' ? '180px' : '160px',
-                      verticalAlign: 'top'
+                      verticalAlign: 'top',
+                      position: header.id === '_ts' ? 'sticky' : 'static',
+                      left: header.id === '_ts' ? 0 : 'auto',
+                      zIndex: header.id === '_ts' ? 10 : 1,
+                      background: header.id === '_ts' ? 'var(--bg-secondary)' : 'transparent',
+                      boxShadow: header.id === '_ts' ? '2px 0 5px -2px rgba(0,0,0,0.2)' : 'none'
                     }}
                   >
                     {flexRender(header.column.columnDef.header, header.getContext())}
@@ -158,7 +164,15 @@ export default memo(function DataTable({ data, seriesDict = {} }) {
                 {row.getVisibleCells().map((cell) => (
                   <td
                     key={cell.id}
-                    style={{ padding: '4px 8px', borderBottom: '1px solid rgba(31,41,55,0.6)', whiteSpace: 'nowrap', maxWidth: cell.column.id === '_ts' ? '180px' : '160px', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                    style={{ 
+                      padding: '4px 8px', borderBottom: '1px solid rgba(31,41,55,0.6)', whiteSpace: 'nowrap', 
+                      maxWidth: cell.column.id === '_ts' ? '180px' : '160px', overflow: 'hidden', textOverflow: 'ellipsis',
+                      position: cell.column.id === '_ts' ? 'sticky' : 'static',
+                      left: cell.column.id === '_ts' ? 0 : 'auto',
+                      zIndex: cell.column.id === '_ts' ? 5 : 1,
+                      backgroundColor: cell.column.id === '_ts' ? (ri % 2 === 0 ? 'var(--bg-primary)' : 'var(--bg-secondary)') : 'transparent',
+                      boxShadow: cell.column.id === '_ts' ? '2px 0 5px -2px rgba(0,0,0,0.2)' : 'none'
+                    }}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>

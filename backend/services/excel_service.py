@@ -11,6 +11,7 @@ import json
 import os
 
 import pandas as pd
+import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 
@@ -62,9 +63,11 @@ def preview_file_date(content: bytes, filename: str) -> str | None:
     try:
         if filename.lower().endswith('.csv'):
             try:
-                df = pd.read_csv(io.BytesIO(content), nrows=5)
+                df = pd.read_csv(io.BytesIO(content), nrows=5, on_bad_lines='skip')
+                if len(df.columns) <= 1:
+                    raise ValueError("Possivelmente separador é ;")
             except Exception:
-                df = pd.read_csv(io.BytesIO(content), sep=';', nrows=5)
+                df = pd.read_csv(io.BytesIO(content), sep=';', nrows=5, on_bad_lines='skip')
         else:
             df = pd.read_excel(io.BytesIO(content), engine="openpyxl", parse_dates=False, nrows=5)
 
@@ -139,6 +142,22 @@ def process_excel(content: bytes, original_filename: str, usina: str, skip_unmap
     df = df.dropna(subset=["timestamp"])
     df = df.sort_values("timestamp").reset_index(drop=True)
 
+    # Converter colunas de métricas para tipo numérico usando regex robusto
+    for col in df.columns:
+        if col != "timestamp":
+            if not pd.api.types.is_numeric_dtype(df[col]):
+                s = df[col].astype(str)
+                # Se contém vírgula, tratamos como PT-BR (vírgula=decimal). Extraímos apenas dígitos, vírgula e sinal.
+                if s.str.contains(',').any():
+                    s = s.str.replace(r'[^\d\-,]', '', regex=True).str.replace(',', '.', regex=False)
+                else:
+                    s = s.str.replace(r'[^\d\-.]', '', regex=True)
+                
+                s = s.replace('', np.nan)
+                df[col] = pd.to_numeric(s, errors='coerce')
+            else:
+                df[col] = pd.to_numeric(df[col], errors='coerce')
+
     # Preenchimento de buracos (Forward Fill) para lidar com economia de dados do SCADA
     df = df.ffill()
 
@@ -197,10 +216,12 @@ def process_raw_file(content: bytes, filename: str, usina: str, skip_unmapped: b
     if filename.lower().endswith('.csv'):
         # Tenta ler com separador vírgula
         try:
-            df = pd.read_csv(io.BytesIO(content))
+            df = pd.read_csv(io.BytesIO(content), on_bad_lines='skip')
+            if len(df.columns) <= 1:
+                raise ValueError("Possivelmente separador é ;")
         except Exception:
             # Fallback para ponto-e-vírgula se der erro
-            df = pd.read_csv(io.BytesIO(content), sep=';')
+            df = pd.read_csv(io.BytesIO(content), sep=';', on_bad_lines='skip')
     else:
         df = pd.read_excel(io.BytesIO(content), engine="openpyxl", parse_dates=False)
         
@@ -242,10 +263,38 @@ def process_raw_file(content: bytes, filename: str, usina: str, skip_unmapped: b
         )
         df = df.rename(columns={ts_col: "timestamp"})
         
+    # Garante que as colunas não tenham espaços extras (comum em CSVs do SCADA)
+    df.columns = [str(c).strip() for c in df.columns]
+
     # Limpeza
     df = df.dropna(subset=["timestamp"])
     df = df.sort_values("timestamp").reset_index(drop=True)
     
+    # Converter colunas de métricas para tipo numérico usando regex robusto
+    for col in df.columns:
+        if col != "timestamp":
+            if not pd.api.types.is_numeric_dtype(df[col]):
+                s = df[col].astype(str)
+                # Se contém vírgula, tratamos como PT-BR (vírgula=decimal). Extraímos apenas dígitos, vírgula e sinal.
+                if s.str.contains(',').any():
+                    s = s.str.replace(r'[^\d\-,]', '', regex=True).str.replace(',', '.', regex=False)
+                else:
+                    s = s.str.replace(r'[^\d\-.]', '', regex=True)
+                
+                s = s.replace('', np.nan)
+                
+                converted = pd.to_numeric(s, errors='coerce')
+                
+                # DEBUG LOGGING: Identify values that became NaN after conversion
+                nan_mask = converted.isna() & df[col].notna() & (df[col].astype(str).str.strip() != '')
+                if nan_mask.any():
+                    bad_vals = df[col][nan_mask].unique()
+                    logger.warning(f"[DEBUG] Coluna {col} teve conversões falhas para numérico. Valores originais: {bad_vals[:10]}")
+                
+                df[col] = converted
+            else:
+                df[col] = pd.to_numeric(df[col], errors='coerce')
+
     # Preenchimento de buracos (Forward Fill) para lidar com economia de dados do SCADA
     df = df.ffill()
     

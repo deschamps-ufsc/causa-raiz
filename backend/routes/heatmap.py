@@ -306,7 +306,7 @@ def get_mapa_heatmap(
     with open(path_mapa, "r", encoding="utf-8") as f:
         layout = json.load(f)
         
-    target_series = [cell["label"] for cell in layout if "label" in cell]
+    target_series = list(set([cell["label"] for cell in layout if "label" in cell]))
     
     if not target_series:
         raise HTTPException(status_code=422, detail="Nenhuma série encontrada no layout do Mapa.")
@@ -559,6 +559,9 @@ def get_trackers_heatmap(
     times_for_pvlib = pd.DatetimeIndex(df.index.values)
     if times_for_pvlib.tz is None:
         times_for_pvlib = times_for_pvlib.tz_localize('America/Sao_Paulo', ambiguous='NaT', nonexistent='NaT')
+        
+    if time_offset != 0:
+        times_for_pvlib = times_for_pvlib - pd.Timedelta(minutes=time_offset)
     
     solpos = pvlib.solarposition.get_solarposition(times_for_pvlib, lat, lon)
     
@@ -577,10 +580,6 @@ def get_trackers_heatmap(
     
     ref_theta_series = pd.Series(ref_theta_vals, index=df.index)
     is_backtracking_series = pd.Series((np.round(ref_theta_vals, 2) != np.round(trk_false_vals, 2)).astype(int), index=df.index)
-
-    if time_offset != 0:
-        ref_theta_series = ref_theta_series.shift(time_offset).bfill().ffill()
-        is_backtracking_series = is_backtracking_series.shift(time_offset).bfill().ffill().astype(int)
     
     df["TrackerRef"] = ref_theta_series.values
     df["is_backtracking"] = is_backtracking_series.values

@@ -476,3 +476,17 @@ select.input {
   right: auto !important;
   left: 60px !important;
 }
+
+/* ── Info Badge Tooltips ─────────────────────────────────────── */
+.info-badge-wrap:hover .info-tooltip {
+  display: block !important;
+}
+.info-badge-wrap .info-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #1e293b;
+}

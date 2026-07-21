@@ -125,6 +125,10 @@ def import_info_from_excel(content: bytes, usina: str) -> dict:
         kwp = round((qtde * wp) / 1000.0, 4)
 
         records[key] = {
+            "skid": skid,
+            "inversor": inv,
+            "stringbox": sb,
+            "string": st,
             "qtde_modulos": qtde,
             "wp": wp,
             "kwp": kwp,

@@ -4,7 +4,7 @@ import {
   uploadExcel, uploadMapa,
   fetchUsinaInfo, importUsinaInfo, getUsinaInfoTemplateUrl,
   fetchSynthetics, importSyntheticExcel, saveBatchConfig, deleteBatch,
-  fetchDatesSummary, fetchDateDetails, fetchMappingSummary
+  fetchDatesSummary, fetchDateDetails, fetchMappingSummary, deleteSeries
 } from '../../services/api'
 import { ErrorState } from '../StateComponents'
 import SeriesMapImport from '../SeriesMapImport'
@@ -65,6 +65,7 @@ export default function UsinaDetail({ usina, usinaObj }) {
   const [dateSummaryLoading, setDateSummaryLoading] = useState(false)
   const [skipUnmapped, setSkipUnmapped] = useState(false)
   const [deleteSeriesModalOpen, setDeleteSeriesModalOpen] = useState(false)
+  const [dayToDelete, setDayToDelete] = useState(null)
   const inputRef = useRef()
 
   const handleDayCardClick = async (date) => {
@@ -110,6 +111,22 @@ export default function UsinaDetail({ usina, usinaObj }) {
     } catch (e) { setUploadError(e.message) }
     finally { setUploading(false) }
   }
+
+  const confirmDeleteDay = async () => {
+    if (!dayToDelete) return;
+    const dateStr = dayToDelete;
+    try {
+      await deleteSeries(usina, ["__ALL__"], [dateStr]);
+      setToast({ type: 'success', title: 'Sucesso', message: `Dia ${dateStr} excluído com sucesso.` });
+      fetchDatesSummary(usina).then(setDatesSummary).catch(() => {});
+      if (selectedDateForSummary === dateStr) setSelectedDateForSummary(null);
+    } catch (err) {
+      setToast({ type: 'error', title: 'Erro', message: `Erro ao excluir dia: ${err.message}` });
+    } finally {
+      setDayToDelete(null);
+    }
+  }
+
   const formatBytes = (b) => b < 1024*1024 ? `${(b/1024).toFixed(0)} KB` : `${(b/1024/1024).toFixed(1)} MB`
 
   // ── Tab 3: Infos Usina ───────────────────────────────────────────────────
@@ -364,7 +381,18 @@ export default function UsinaDetail({ usina, usinaObj }) {
                       onClick={() => handleDayCardClick(d.date)}
                       title="Ir para o dashboard deste dia"
                     >
-                      <div className="stat-label" style={{ fontSize: 10 }}>{d.date}</div>
+                      <div className="stat-label" style={{ fontSize: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <span>{d.date}</span>
+                        <button 
+                           onClick={(e) => { e.stopPropagation(); setDayToDelete(d.date); }}
+                           style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--red)', padding: 0, marginTop: '-2px', marginRight: '-2px', fontSize: 13, opacity: 0.5 }}
+                           title="Excluir dia inteiro"
+                           onMouseEnter={(e) => e.target.style.opacity = 1}
+                           onMouseLeave={(e) => e.target.style.opacity = 0.5}
+                        >
+                           🗑️
+                        </button>
+                      </div>
                       <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
                         <div style={{ flex: 1, borderRight: '1px solid var(--border)', paddingRight: 4 }}>
                           <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: 0.5 }}>NATIVAS</div>
@@ -431,7 +459,7 @@ export default function UsinaDetail({ usina, usinaObj }) {
                                 {info.count}{totalCountStr}
                               </div>
                               <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.4 }}>
-                                {info.values.map((v, i) => {
+                                {[...info.values].sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' })).map((v, i, arr) => {
                                   const isUnregistered = item.key === 'elementos' && mappingSummary?.elementos_nao_cadastrados?.includes(v);
                                   return (
                                     <span key={v}>
@@ -440,7 +468,7 @@ export default function UsinaDetail({ usina, usinaObj }) {
                                           {v} ⚠️
                                         </span>
                                       ) : v}
-                                      {i < info.values.length - 1 ? ', ' : ''}
+                                      {i < arr.length - 1 ? ', ' : ''}
                                     </span>
                                   )
                                 })}
@@ -557,10 +585,10 @@ export default function UsinaDetail({ usina, usinaObj }) {
                         const parts = serie.split('|');
                         return (
                           <tr key={i} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)' }}>
-                            <td style={tdStyle}>{parts[0] || '—'}</td>
-                            <td style={tdStyle}>{parts[1] || '—'}</td>
-                            <td style={tdStyle}>{parts[2] || '—'}</td>
-                            <td style={tdStyle}>{parts[3] || '—'}</td>
+                            <td style={tdStyle}>{(row.skid ?? parts[0]) || '—'}</td>
+                            <td style={tdStyle}>{(row.inversor ?? parts[1]) || '—'}</td>
+                            <td style={tdStyle}>{(row.stringbox !== undefined) ? (row.stringbox || '—') : (parts.length > 3 ? parts[2] : '—')}</td>
+                            <td style={tdStyle}>{(row.string !== undefined) ? (row.string || '—') : (parts.length > 3 ? parts[3] : parts[2] || '—')}</td>
                             <td style={tdStyle}>{row.qtde_modulos ?? '—'}</td>
                             <td style={tdStyle}>{row.wp != null ? `${row.wp} Wp` : '—'}</td>
                             <td style={{ ...tdStyle, fontWeight: 700, color: 'var(--amber)' }}>{row.kwp != null ? `${row.kwp.toFixed(3)} kWp` : '—'}</td>
@@ -718,6 +746,26 @@ export default function UsinaDetail({ usina, usinaObj }) {
           </div>
         )}
       </div>
+      {dayToDelete && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999
+        }}>
+          <div className="card fade-in" style={{ position: 'relative', width: '90%', maxWidth: 450, background: 'var(--bg-card)', padding: '24px', borderRadius: '12px' }}>
+            <h3 style={{ margin: 0, fontSize: 18, color: 'var(--red)', marginBottom: 16 }}>🗑️ Excluir Dia Importado</h3>
+            <p style={{ fontSize: 14, color: 'var(--text-primary)', marginBottom: 12 }}>
+              Você está prestes a excluir permanentemente todos os dados importados para o dia <strong>{dayToDelete}</strong>.
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 24 }}>
+              Esta ação removerá o arquivo deste dia da base de dados. Você precisará fazer o upload do CSV/Excel novamente caso queira visualizar este dia no futuro.
+            </p>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+              <button className="btn btn-ghost" onClick={() => setDayToDelete(null)}>Cancelar</button>
+              <button className="btn" style={{ background: 'var(--red)', color: '#fff' }} onClick={confirmDeleteDay}>Excluir Definitivamente</button>
+            </div>
+          </div>
+        </div>
+      )}
       <Toast toast={toast} onClose={() => setToast(null)} />
     </div>
   )

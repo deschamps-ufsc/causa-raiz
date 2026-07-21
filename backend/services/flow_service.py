@@ -77,10 +77,16 @@ def run_flow_processing(usina: str, dates_str: str = None):
                 max_angle = float(tracker_params.get("max_angle", 60))
                 tol = float(tracker_params.get("tolerance", 10))
                 
-                times = raw_df.index
-                times_for_pvlib = pd.DatetimeIndex(times.values)
+                times_for_pvlib = pd.DatetimeIndex(raw_df.index.values)
                 if times_for_pvlib.tz is None:
                     times_for_pvlib = times_for_pvlib.tz_localize('America/Sao_Paulo', ambiguous='NaT', nonexistent='NaT')
+                
+                # Se houver defasagem (em minutos), subtraímos do timestamp antes de calcular o sol,
+                # assim o ângulo calculado no minuto "t" reflete onde o sol estava em "t - offset".
+                # Isso evita ter que usar .shift().bfill().ffill() e criar linhas retas.
+                time_offset = int(tracker_params.get("time_offset", 0))
+                if time_offset != 0:
+                    times_for_pvlib = times_for_pvlib - pd.Timedelta(minutes=time_offset)
                 
                 solpos = pvlib.solarposition.get_solarposition(times_for_pvlib, lat, lon)
                 
@@ -102,11 +108,6 @@ def run_flow_processing(usina: str, dates_str: str = None):
                 ref_theta = pd.Series(ref_theta_vals, index=raw_df.index)
                 is_backtracking = pd.Series(is_backtracking_vals, index=raw_df.index).fillna(0).astype(int)
                 
-                time_offset = int(tracker_params.get("time_offset", 0))
-                if time_offset != 0:
-                    ref_theta = ref_theta.shift(time_offset).bfill().ffill()
-                    is_backtracking = is_backtracking.shift(time_offset).bfill().ffill().astype(int)
-                
                 processed_df["Tracker Ref."] = ref_theta
                 processed_df["Tracker_is_backtracking"] = is_backtracking
 
@@ -122,11 +123,29 @@ def run_flow_processing(usina: str, dates_str: str = None):
                         s_data_tracker = raw_df[s_name]
                         diff_tracker = (s_data_tracker - ref_theta).abs()
                         flag_col_name = f"flag_tracker_erro_{s_name}"
-                        flag = ((diff_tracker > tol) & (is_backtracking == 0) & ref_theta.notna()).astype(int)
+                        # Se a diferença > tolerância, OU se o sensor estiver sem dados (NaN), é Erro (1).
+                        # Só avaliamos se existe Referência do Sol (ref_theta).
+                        is_error = (diff_tracker > tol) | s_data_tracker.isna()
+                        flag = (is_error & ref_theta.notna()).astype(int)
                         processed_df[flag_col_name] = flag
                         
                         for sensor in sensors:
                             invalidated_sensors_map[sensor] = flag_col_name
+
+                # --- Gera 'Tracker Piranômetro' ---
+                # Flag = 1 quando AO MENOS 1 sensor está OK (flag_tracker_erro = 0)
+                # Flag = 0 somente quando TODOS os sensores têm erro (todas flags = 1)
+                # Lógica: 1 - min(flags). Se min=0 → algum válido → Piranômetro=1. Se min=1 → todos com erro → Piranômetro=0.
+                tracker_erro_cols = [c for c in processed_df.columns if c.startswith("flag_tracker_erro")]
+                if tracker_erro_cols:
+                    processed_df["Tracker Piranômetro"] = (
+                        1 - processed_df[tracker_erro_cols].min(axis=1).fillna(1).astype(int)
+                    )
+                    # Força a ser 0 nos minutos em que a Referência do Tracker não existe (ex: à noite)
+                    processed_df.loc[ref_theta.isna(), "Tracker Piranômetro"] = 0
+                else:
+                    processed_df["Tracker Piranômetro"] = 0
+
             except Exception as e:
                 logger.error(f"[TRACKER] Erro ao calcular PVLib para {date}: {e}")
 
@@ -280,7 +299,7 @@ def run_flow_processing(usina: str, dates_str: str = None):
                 # Filtro de PPC removido e migrado para bloco próprio de Curtailment
 
                 processed_df[agg_id] = agg_result
-                if agg_id in ["gpoa", "grear", "potencia_ppc"] or agg_id.startswith("potencia_ppc"):
+                if agg_id in ["gpoa", "grear", "referencia_ppc"] or agg_id.startswith("referencia_ppc"):
                     processed_df[f"{agg_id}_semTR"] = agg_result_semTR
             
 
@@ -337,19 +356,23 @@ def run_flow_processing(usina: str, dates_str: str = None):
             ref_margin = data.get("curtailmentRefMargin", 3.0)
             diff_margin = data.get("curtailmentDiffMargin", 5.0)
             
-            energia = processed_df.get("energia")
+            potencia_ppc = processed_df.get("potencia_ppc")
             
-            # Buscar a série do PPC
-            ppc_cols = [c for c in processed_df.columns if c.startswith("potencia_ppc") and not c.endswith("_semTR") and not c.endswith("_válida")]
-            if energia is not None and ppc_cols:
+            # Pega as colunas de Referência PPC para comparação
+            ppc_cols = [c for c in processed_df.columns if c.startswith("referencia_ppc") and not c.endswith("_semTR") and not c.endswith("_válida")]
+            if potencia_ppc is not None and ppc_cols:
                 ppc_data = processed_df[ppc_cols[0]]
                 try:
                     threshold_min = float(ref_min) * (1 - (float(ref_margin) / 100.0))
                     cond_1 = ppc_data < threshold_min
-                    
-                    threshold_diff = ppc_data * (1 - (float(diff_margin) / 100.0))
-                    cond_2 = energia >= threshold_diff
-                    
+
+                    # Gatilho 2: potência real está dentro da banda de tolerância da referência
+                    # |real - ref| <= ref * (diff_margin / 100)
+                    # Quando ref=0 e real=50 → diff=50 > 0 → cond_2=False (sem curtailment) ✓
+                    # Quando ref=40 e real=41 → diff=1 <= 2 → cond_2=True (curtailment) ✓
+                    tolerance_band = (ppc_data * (float(diff_margin) / 100.0)).abs()
+                    cond_2 = (potencia_ppc - ppc_data).abs() <= tolerance_band
+
                     # Curtailment efetivo (0) se cond_1 e cond_2 forem verdadeiras. Caso contrário, válido (1)
                     curtailment_flag = ~(cond_1 & cond_2)
                     processed_df[curtailment_id] = curtailment_flag.astype(int)
@@ -357,7 +380,7 @@ def run_flow_processing(usina: str, dates_str: str = None):
                     logger.error(f"[FLOW] Erro ao calcular curtailment: {e}")
                     processed_df[curtailment_id] = 1
             else:
-                logger.warning(f"[CURTAILMENT] energia ou potencia_ppc ausentes para {curtailment_id} em {date}")
+                logger.warning(f"[CURTAILMENT] potencia_ppc ou referencia_ppc ausentes para {curtailment_id} em {date}")
                 processed_df[curtailment_id] = 1
 
         # --- Depois processa o Bloco Simultaneidade/Dados Válidos ---
@@ -370,7 +393,7 @@ def run_flow_processing(usina: str, dates_str: str = None):
             check_geff = params.get("geff", True)
             check_tamb = params.get("tamb", True)
             check_tcel = params.get("tcel", True)
-            check_energia = params.get("energia", False) # Desativado conforme pedido
+            check_potencia_ppc = params.get("potencia_ppc", False) # Desativado conforme pedido
             check_energia_pmi = params.get("energia_pmi", True)
             check_curtailment = params.get("curtailment", False)
             
@@ -397,7 +420,7 @@ def run_flow_processing(usina: str, dates_str: str = None):
                 else:
                     valid_mask = False
                     
-            # check_energia removido da lógica de simultaneidade conforme pedido
+            # check_potencia_ppc removido da lógica de simultaneidade conforme pedido
                     
             if check_energia_pmi:
                 energia_pmi_data = processed_df.get("energia_pmi")
@@ -428,7 +451,7 @@ def run_flow_processing(usina: str, dates_str: str = None):
             # --- Cria as séries "_válida" multiplicando pela flag de Dados Válidos ---
             simult_flag = processed_df[out_name]
             for col in list(processed_df.columns):
-                if col != out_name and col != "Simultaneidade" and not col.endswith("_válida") and not col.startswith("curtailment"):
+                if col != out_name and col != "Simultaneidade" and not col.endswith("_válida") and not col.startswith("curtailment") and not col.startswith("flag_tracker_erro") and col != "Tracker Piranômetro":
                     # Multiplica as séries originais pela flag (0 ou 1)
                     processed_df[f"{col}_válida"] = processed_df[col] * simult_flag
 
@@ -514,14 +537,15 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
         "tmod": "Tmod",
         "sujidade": "Sujidade",
         "tracker": "Tracker",
-        "energia": "Potência",
+        "potencia_ppc": "Potência PPC",
+        "referencia_ppc": "Referência PPC",
         "energia_pmi": "Energia PMI"
     }
 
     column_definitions = []
     
     # Ordem desejada para as colunas
-    group_order = ["gpoa", "grear", "geff", "tamb", "tmod", "tcel", "sujidade", "tracker", "energia", "energia_pmi"]
+    group_order = ["gpoa", "grear", "geff", "tamb", "tmod", "tcel", "sujidade", "tracker", "potencia_ppc", "referencia_ppc", "energia_pmi"]
 
     for group in group_order:
         # Achar o nó correspondente
@@ -568,6 +592,14 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                 "node_id": group
             })
             
+            if group not in ["sujidade", "tracker", "energia_pmi"]:
+                column_definitions.append({
+                    "key": f"{group}_válida",
+                    "label": f"{agg_label} (Válido)",
+                    "type": "output",
+                    "node_id": group
+                })
+            
             if is_sujidade_restricted:
                 column_definitions.append({
                     "key": f"{group}_restricted",
@@ -603,6 +635,13 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                 "type": "special",
                 "node_id": group
             })
+            if group not in ["sujidade", "tracker", "energia_pmi"]:
+                column_definitions.append({
+                    "key": f"{group}_válida",
+                    "label": f"{node_label} (Válido)",
+                    "type": "special",
+                    "node_id": group
+                })
 
     # Adicionar grupo de validação (sempre no final)
     validation_cols = [
@@ -750,13 +789,14 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                     elif col["node_id"] == "tracker":
                         if processed_df is not None and f"flag_tracker_erro_{series_name}" in processed_df.columns:
                             flag_series = processed_df[f"flag_tracker_erro_{series_name}"]
-                            is_bt_series = processed_df.get("Tracker_is_backtracking")
+                            
+                            # Considera apenas os minutos em que existe a Referência do Tracker
+                            if "Tracker Ref." in processed_df.columns:
+                                valid_mask = processed_df["Tracker Ref."].notna()
+                                flag_series = flag_series[valid_mask]
                             
                             total_errors = flag_series.sum(skipna=True)
-                            if is_bt_series is not None:
-                                total_valid_points = (is_bt_series == 0).sum()
-                            else:
-                                total_valid_points = len(flag_series.dropna())
+                            total_valid_points = len(flag_series.dropna())
                             
                             tracker_errors_for_day.append(total_errors)
                             tracker_valid_points_for_day = total_valid_points
@@ -772,7 +812,7 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                         # Calcular integral (soma) e converter de 1-min para base horária / kW
                         raw_sum = s_data.sum(min_count=1)
                         if raw_sum is not None and not pd.isna(raw_sum):
-                            val = raw_sum / 0.06 if col["node_id"] == "energia" else raw_sum / 60000.0
+                            val = raw_sum / 0.06 if col["node_id"] == "potencia_ppc" else raw_sum / 60000.0
                         else:
                             val = None
             else:
@@ -787,10 +827,23 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                     base_key = base_key.replace("_trimmed", "")
                 
                 if col["node_id"] == "tracker":
-                    if tracker_errors_for_day and tracker_valid_points_for_day > 0:
-                        avg_errors = sum(tracker_errors_for_day) / len(tracker_errors_for_day)
-                        perc = (avg_errors / tracker_valid_points_for_day) * 100
-                        val = f"{int(round(avg_errors))} ({perc:.1f}%)"
+                    if processed_df is not None and "Tracker Piranômetro" in processed_df.columns:
+                        tracker_flag = processed_df["Tracker Piranômetro"]
+                        
+                        # Considera apenas os minutos em que existe a Referência do Tracker
+                        if "Tracker Ref." in processed_df.columns:
+                            valid_mask = processed_df["Tracker Ref."].notna()
+                            tracker_flag = tracker_flag[valid_mask]
+                            
+                        # Invalidados são os pontos em que a flag final é 0
+                        total_invalidos = (tracker_flag == 0).sum()
+                        total_pontos = tracker_flag.notna().sum()
+                        
+                        if total_pontos > 0:
+                            perc = (total_invalidos / total_pontos) * 100
+                            val = f"{int(total_invalidos)} ({perc:.1f}%)"
+                        else:
+                            val = "-"
                     else:
                         val = "-"
                 elif processed_df is not None and base_key in processed_df.columns:
@@ -839,7 +892,7 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                         # Calcular integral (soma) e converter de 1-min para base horária / kW
                         raw_sum = s_data.sum(min_count=1)
                         if raw_sum is not None and not pd.isna(raw_sum):
-                            val = raw_sum / 0.06 if col["node_id"] == "energia" else raw_sum / 60000.0
+                            val = raw_sum / 0.06 if col["node_id"] == "potencia_ppc" else raw_sum / 60000.0
                         else:
                             val = None
             

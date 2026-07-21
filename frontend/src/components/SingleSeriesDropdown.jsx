@@ -5,7 +5,7 @@ const naturalSort = (a, b) => a.localeCompare(b, undefined, { numeric: true, sen
 export function getSerieType(s) {
   if (s.sintetica) return 'Sintético';
   const col = s.coluna.toLowerCase();
-  const flowOps = ['gpoa', 'grear', 'geff', 'tamb', 'tmod', 'tcel', 'sujidade', 'tracker', 'energia', 'energia_pmi', 'simultaneidade'];
+  const flowOps = ['gpoa', 'grear', 'geff', 'tamb', 'tmod', 'tcel', 'sujidade', 'tracker', 'potencia_ppc', 'referencia_ppc', 'energia_pmi', 'simultaneidade'];
   if (col.startsWith('agg_') || flowOps.includes(col) || col === 'tracker ref.' || col === 'tracker_is_backtracking' || col.startsWith('flag_tracker_erro')) {
     return 'Processado';
   }
@@ -22,7 +22,8 @@ export function formatSeriesName(name) {
   if (nameLower === 'tmod') return 'Tmod';
   if (nameLower === 'tcel') return 'Tcel';
   if (nameLower === 'sujidade') return 'Sujidade';
-  if (nameLower === 'energia') return 'Potência PPC';
+  if (nameLower === 'potencia_ppc') return 'Potência PPC';
+  if (nameLower === 'referencia_ppc') return 'Referência PPC';
   if (nameLower === 'simultaneidade') return 'Simultaneidade';
   if (nameLower === 'curtailment') return 'Curtailment';
   return name;
@@ -88,7 +89,7 @@ export default function SingleSeriesDropdown({ value, onChange, series = [], ele
       if (filterStr && s.string !== filterStr) return false
       if (search && !s.coluna.toLowerCase().includes(search.toLowerCase())) return false
       return true
-    })
+    }).sort((a, b) => naturalSort(a.coluna, b.coluna))
   }, [series, filterTipo, filterEl, filterEstacao, filterSkid, filterInv, filterSb, filterStr, search])
 
   const uniqueEstacoes = useMemo(() => [...new Set(series.filter(s => !filterEl || s.elemento === filterEl).map(s => s.estacao).filter(Boolean))].sort(naturalSort), [series, filterEl])

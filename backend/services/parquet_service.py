@@ -102,8 +102,10 @@ def list_series_for_dates(dates_str: str, usina: str) -> list[dict]:
                 elemento = "Sujidade"
             elif col_lower.startswith("tracker") or col_lower == "tracker ref." or col_lower.startswith("flag_tracker"):
                 elemento = "Tracker"
-            elif col_lower.startswith("energia") and not col_lower.startswith("energia_pmi"):
+            elif col_lower.startswith("potencia_ppc") and not col_lower.startswith("potencia_ppc_"):
                 elemento = "Potência CA PPC"
+            elif col_lower.startswith("referencia_ppc"):
+                elemento = "Referência PPC"
             elif col_lower.startswith("energia_pmi"):
                 elemento = "Energia PMI"
             elif col_lower.startswith("simultaneidade"):
@@ -353,6 +355,12 @@ def delete_series_from_parquet(usina: str, dates: list[str], series_to_delete: l
             continue
 
         try:
+            if "__ALL__" in series_to_delete:
+                os.remove(path)
+                total_files_deleted += 1
+                logger.info(f"[DELETE] Arquivo '{fname}' deletado completamente a pedido do usuário.")
+                continue
+
             # Ler apenas o schema para ver se a série existe no arquivo
             schema = pq.read_schema(path)
             cols_in_file = schema.names
@@ -383,6 +391,14 @@ def delete_series_from_parquet(usina: str, dates: list[str], series_to_delete: l
 
     # Limpar cache do MD5 (como modificamos os arquivos, o cache do excel original já não serve muito, 
     # mas o importante é que os arquivos parquet mudaram. As próximas consultas os lerão do disco)
+    from services.excel_service import MD5_CACHE_FILE, _load_cache, _save_cache
+    cache = _load_cache()
+    keys_to_delete = [k for k in cache.keys() if k.endswith(f"_{usina}")]
+    if keys_to_delete:
+        for k in keys_to_delete:
+            del cache[k]
+        _save_cache(cache)
+        logger.info(f"[DELETE] Limpos {len(keys_to_delete)} registros do cache MD5 da usina '{usina}'.")
     
     return {
         "columns_dropped": total_cols_dropped,

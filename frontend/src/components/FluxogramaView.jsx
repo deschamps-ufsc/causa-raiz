@@ -340,8 +340,8 @@ const initialNodes = [
   { id: 'tamb', type: 'box', position: { x: 60, y: 290 }, data: { label: 'T<sub>amb</sub>', color: 'orange', aggregator: true, inputs: [], operation: 'sum' } },
   { id: 'tmod', type: 'box', position: { x: 60, y: 370 }, data: { label: 'T<sub>mod</sub>', color: 'orange', aggregator: true, inputs: [], operation: 'sum' } },
   { id: 'sujidade', type: 'box', position: { x: 60, y: 450 }, data: { label: 'Sujidade', color: 'brown', aggregator: true, inputs: [], operation: 'sum', hideRightSource: true } },
-  { id: 'energia', type: 'box', position: { x: 60, y: 530 }, data: { label: 'Potência PPC', color: 'green', aggregator: true, inputs: [], operation: 'sum', hasMultipleOutputs: false } },
-  { id: 'potencia_ppc', type: 'box', position: { x: 60, y: 590 }, data: { label: 'Referência PPC', color: 'teal', aggregator: true, inputs: [], operation: 'sum', hideRightSource: false } },
+  { id: 'potencia_ppc', type: 'box', position: { x: 60, y: 530 }, data: { label: 'Potência PPC', color: 'green', aggregator: true, inputs: [], operation: 'sum', hasMultipleOutputs: false } },
+  { id: 'referencia_ppc', type: 'box', position: { x: 60, y: 590 }, data: { label: 'Referência PPC', color: 'teal', aggregator: true, inputs: [], operation: 'sum', hideRightSource: false } },
   { id: 'energia_pmi', type: 'box', position: { x: 60, y: 670 }, data: { label: 'Energia PMI', color: 'teal', aggregator: true, inputs: [], operation: 'sum' } },
   { id: 'geff', type: 'geff', position: { x: 280, y: 50 }, data: { label: 'Geff', beta: 1.0, SSF: 0.05, MLF: 0.02 } },
   { id: 'tcel', type: 'tcel', position: { x: 280, y: 350 }, data: { label: 'Tcel' } },
@@ -398,8 +398,8 @@ const initialEdges = [
   { id: 'e-geff-simult', source: 'geff', target: 'simultaneidade', targetHandle: 'target-top', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed } },
   { id: 'e-tamb-simult', source: 'tamb', target: 'simultaneidade', targetHandle: 'target-left-top', type: 'straight', markerEnd: { type: MarkerType.ArrowClosed } },
   { id: 'e-tcel-simult', source: 'tcel', target: 'simultaneidade', targetHandle: 'target-left-bottom', type: 'straight', markerEnd: { type: MarkerType.ArrowClosed } },
-  { id: 'e-energia-curtailment', source: 'energia', target: 'curtailment', targetHandle: 'target-1', type: 'straight', markerEnd: { type: MarkerType.ArrowClosed } },
-  { id: 'e-potencia-curtailment', source: 'potencia_ppc', target: 'curtailment', targetHandle: 'target-2', type: 'straight', markerEnd: { type: MarkerType.ArrowClosed } },
+  { id: 'e-potencia_ppc-curtailment', source: 'potencia_ppc', target: 'curtailment', targetHandle: 'target-1', type: 'straight', markerEnd: { type: MarkerType.ArrowClosed } },
+  { id: 'e-referencia_ppc-curtailment', source: 'referencia_ppc', target: 'curtailment', targetHandle: 'target-2', type: 'straight', markerEnd: { type: MarkerType.ArrowClosed } },
   { id: 'e-curtailment-simult', source: 'curtailment', target: 'simultaneidade', targetHandle: 'target-bottom-1', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed } },
   { id: 'e-energia_pmi-simult', source: 'energia_pmi', target: 'simultaneidade', targetHandle: 'target-bottom-2', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed } },
   { id: 'e-simult-pvsyst', source: 'simultaneidade', target: 'pvsyst', type: 'straight', markerEnd: { type: MarkerType.ArrowClosed } },
@@ -423,6 +423,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
   const [simultParams, setSimultParams] = useState({ geff: true, tamb: true, tcel: true, energia_pmi: true, curtailment: false })
   const [trackerParams, setTrackerParams] = useState({ latitude: -23.55, longitude: -46.63, gcr: 0.3, max_angle: 60, tolerance: 10 })
   const [curtailmentParams, setCurtailmentParams] = useState({ refMin: 52.8, refMargin: 3, diffMargin: 5 })
+  const [soilParams, setSoilParams] = useState({ startTime: '', endTime: '', trimPercent: '' })
   const [allSeries, setAllSeries] = useState([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [toast, setToast] = useState(null)
@@ -432,6 +433,8 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
   const [isLoadingIntegrals, setIsLoadingIntegrals] = useState(false)
   const [integralsError, setIntegralsError] = useState(null)
   const [showInputs, setShowInputs] = useState(true)
+  const [showMeasured, setShowMeasured] = useState(true)
+  const [showValid, setShowValid] = useState(true)
   const [visibleVars, setVisibleVars] = useState({
     gpoa: true,
     grear: true,
@@ -442,7 +445,9 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
     sujidade: true,
     energia: true,
     tracker: true,
-    energia_pmi: true
+    energia_pmi: true,
+    potencia_ppc: true,
+    referencia_ppc: true
   })
 
   const availableIrradianceSensors = useMemo(() => {
@@ -560,6 +565,13 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
       const isOutput = !col.label.includes('Entrada');
       if (!isOutput && !showInputs) return false;
 
+      // 1.5. Filtro de Exibir Dados Medidos e Exibir Dados Válidos
+      if (col.type === 'output' || col.type === 'special') {
+        const isValidCol = col.key.endsWith('_válida');
+        if (isValidCol && !showValid) return false;
+        if (!isValidCol && !showMeasured) return false;
+      }
+
       // 2. Filtro de Variáveis Habilitadas
       const colKey = col.key.toLowerCase();
       if (colKey.startsWith('gpoa') && !visibleVars.gpoa) return false;
@@ -571,11 +583,13 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
       if (colKey.startsWith('sujidade') && !visibleVars.sujidade) return false;
       if (colKey.startsWith('tracker') && !visibleVars.tracker) return false;
       if (colKey.startsWith('energia_pmi')) return visibleVars.energia_pmi;
+      if (colKey.startsWith('referencia_ppc')) return visibleVars.referencia_ppc;
+      if (colKey.startsWith('potencia_ppc')) return visibleVars.potencia_ppc;
       if (colKey.startsWith('energia')) return visibleVars.energia;
 
       return true;
     });
-  }, [integralsData.columns, showInputs, visibleVars]);
+  }, [integralsData.columns, showInputs, showMeasured, showValid, visibleVars]);
 
   const headerGroups = useMemo(() => {
     const groups = [];
@@ -688,7 +702,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                   // Garantir que o label com subscritos (<sub>) do código tenha prioridade
                   label: initial?.data?.label || sn.data.label,
                   // Garantir que a Potência tenha hasMultipleOutputs false explícito
-                  hasMultipleOutputs: sn.id === 'energia' ? false : (initial?.data?.hasMultipleOutputs ?? sn.data.hasMultipleOutputs),
+                  hasMultipleOutputs: sn.id === 'potencia_ppc' ? false : (initial?.data?.hasMultipleOutputs ?? sn.data.hasMultipleOutputs),
                   width: initial?.data?.width || sn.data.width,
                   height: initial?.data?.height || sn.data.height,
                   customTargets: sn.id === 'epi' ? initial?.data?.customTargets : (initial?.data?.customTargets || sn.data.customTargets),
@@ -713,8 +727,8 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
             setEdges(eds => {
                // Remover conexões diretas obsoletas para o filtro de simultaneidade
                const filteredConfigEdges = config.edges.filter(e => {
-                  if (e.source === 'energia' && (e.target === 'simultaneidade' || e.target.includes('simultaneidade'))) return false;
                   if (e.source === 'potencia_ppc' && (e.target === 'simultaneidade' || e.target.includes('simultaneidade'))) return false;
+                  if (e.source === 'referencia_ppc' && (e.target === 'simultaneidade' || e.target.includes('simultaneidade'))) return false;
                   return true;
                })
 
@@ -751,12 +765,13 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                 let sourceHandle = initial?.sourceHandle || e.sourceHandle
 
                 if (targetNode && (targetNode.id === 'curtailment' || targetNode.type === 'curtailment')) {
-                  if (sourceNode?.id === 'energia') {
+                  let foundConn2 = false;
+                  if (sourceNode?.id === 'potencia_ppc') {
                     sourceHandle = undefined // Força a porta direita padrão, removendo out-a ou out-b antigo
                     type = 'straight'
                   }
-                  if (sourceNode?.id === 'potencia_ppc') {
-                    type = 'straight'
+                  if (sourceNode?.id === 'referencia_ppc') {
+                    foundConn2 = true
                   }
                 }
                 
@@ -835,19 +850,33 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
         bgCell: 'rgba(234, 179, 8, 0.02)',
         bgTotal: 'rgba(234, 179, 8, 0.08)'
       };
-    } else if (key === 'geff' || key === 'tcel') {
+    } else if (key.startsWith('geff') || key.startsWith('tcel')) {
       return {
         color: '#f97316', // Laranja
         bgHeader: 'rgba(249, 115, 22, 0.05)',
         bgCell: 'rgba(249, 115, 22, 0.02)',
         bgTotal: 'rgba(249, 115, 22, 0.08)'
       };
-    } else if (key === 'tracker') {
+    } else if (key.startsWith('tracker')) {
       return {
         color: '#6A1B9A', // Roxo escuro (cor do Elemento Tracker)
         bgHeader: 'rgba(106, 27, 154, 0.05)',
         bgCell: 'rgba(106, 27, 154, 0.02)',
         bgTotal: 'rgba(106, 27, 154, 0.08)'
+      };
+    } else if (key.startsWith('potencia_ppc')) {
+      return {
+        color: '#22c55e', // Verde claro
+        bgHeader: 'rgba(34, 197, 94, 0.05)',
+        bgCell: 'rgba(34, 197, 94, 0.02)',
+        bgTotal: 'rgba(34, 197, 94, 0.08)'
+      };
+    } else if (key.startsWith('referencia_ppc')) {
+      return {
+        color: '#00838F', // Azul esverdeado
+        bgHeader: 'rgba(0, 131, 143, 0.05)',
+        bgCell: 'rgba(0, 131, 143, 0.02)',
+        bgTotal: 'rgba(0, 131, 143, 0.08)'
       };
     } else if (key === 'energia') {
       return {
@@ -891,13 +920,31 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
         </div>
       );
     }
+    
+    const hasValido = label.includes(' (Válido)');
+    const textToMatch = hasValido ? label.replace(' (Válido)', '') : label;
+    let mainComponent = null;
+
     for (const rep of replacements) {
-      if (label.startsWith(rep.key)) {
-        const rest = label.slice(rep.key.length);
-        return <>{rep.base}<sub>{rep.sub}</sub>{rest}</>;
+      if (textToMatch.startsWith(rep.key)) {
+        const rest = textToMatch.slice(rep.key.length);
+        mainComponent = <>{rep.base}<sub>{rep.sub}</sub>{rest}</>;
+        break;
       }
     }
-    return label;
+    
+    if (!mainComponent) mainComponent = textToMatch;
+    
+    if (hasValido) {
+      return (
+        <div style={{ lineHeight: '1.2' }}>
+          {mainComponent}<br/>
+          <span style={{ fontSize: '0.9em', fontWeight: 'normal' }}>(Válido)</span>
+        </div>
+      );
+    }
+    
+    return mainComponent;
   };
 
   const formatGroupHeaderLabel = (nodeId) => {
@@ -916,8 +963,10 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
         return <span>T<sub>cel</sub> - Entradas</span>;
       case 'sujidade':
         return <span>Sujidade - Entradas</span>;
-      case 'energia':
+      case 'potencia_ppc':
         return <span>Potência PPC - Entradas</span>;
+      case 'referencia_ppc':
+        return <span>Referência PPC - Entradas</span>;
       case 'energia_pmi':
         return <span>Energia PMI - Entradas</span>;
       case 'tracker':
@@ -939,9 +988,9 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
         return <>T<sub>mod</sub> - Temperatura dos Módulos</>;
       case 'sujidade':
         return <>Sujidade - Fator de Sujidade</>;
-      case 'energia':
-        return <>Potência PPC - Geração de Potência</>;
       case 'potencia_ppc':
+        return <>Potência PPC - Geração de Potência</>;
+      case 'referencia_ppc':
         return <>Referência PPC</>;
       case 'energia_pmi':
         return <>Energia PMI - Geração de Energia (PMI)</>;
@@ -1031,6 +1080,8 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                   tcel: node.data.simultParams?.tcel ?? true,
                   energia_pmi: node.data.simultParams?.energia_pmi ?? true,
                   curtailment: node.data.simultParams?.curtailment ?? false,
+                  potencia_ppc: node.data.simultParams?.potencia_ppc ?? true,
+                  referencia_ppc: node.data.simultParams?.referencia_ppc ?? true
                 })
               } else if (node.id === 'curtailment') {
                 setCurtailmentParams({
@@ -1049,6 +1100,13 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                 setOutputFilter(node.data.outputFilter || '')
                 if (node.id === 'tracker') {
                   setTrackerParams(node.data.trackerParams || { latitude: -23.55, longitude: -46.63, gcr: 0.3, max_angle: 60, tolerance: 10 })
+                }
+                if (node.id === 'sujidade') {
+                  setSoilParams({
+                    startTime: node.data.startTime || '',
+                    endTime: node.data.endTime || '',
+                    trimPercent: node.data.trimPercent || ''
+                  })
                 }
               }
             }}
@@ -1121,8 +1179,8 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                   if (selectedNodeId === 'tracker') return s.elemento === 'Tracker';
                   if (selectedNodeId === 'sujidade') return s.elemento === 'Sujidade';
                   if (selectedNodeId === 'energia_pmi') return s.elemento === 'Energia PMI';
-                  if (selectedNodeId === 'potencia_ppc') return s.elemento === 'Potência CA PPC';
-                  if (selectedNodeId === 'energia') return s.elemento && s.elemento.startsWith('Potência');
+                  if (selectedNodeId === 'referencia_ppc') return s.elemento === 'Referência PPC';
+                  if (selectedNodeId === 'potencia_ppc') return s.elemento && s.elemento.startsWith('Potência');
                   return true;
                 });
                 return (
@@ -1230,6 +1288,52 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                         title="Deslocamento temporal da curva teórica em minutos (positivo = curva para frente/atrasada, negativo = curva para trás/adiantada)" 
                       />
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Parâmetros da Sujidade */}
+              {selectedNodeId === 'sujidade' && (
+                <div style={{ marginBottom: 20, padding: '16px', background: 'rgba(109, 76, 65, 0.06)', borderRadius: '8px', borderLeft: '4px solid #6D4C41', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <h4 style={{ margin: 0, fontSize: '13px', color: '#6D4C41' }}>⏱️ Hora Restrita (opcional)</h4>
+                  <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)' }}>Calcula a média apenas dentro do intervalo horário abaixo. Deixe em branco para desativar.</p>
+                  <div style={{ display: 'flex', gap: 16 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600 }}>Início (HH:MM):</label>
+                      <input
+                        type="time"
+                        className="input"
+                        value={soilParams.startTime}
+                        onChange={e => setSoilParams({ ...soilParams, startTime: e.target.value })}
+                        style={{ padding: '6px' }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600 }}>Fim (HH:MM):</label>
+                      <input
+                        type="time"
+                        className="input"
+                        value={soilParams.endTime}
+                        onChange={e => setSoilParams({ ...soilParams, endTime: e.target.value })}
+                        style={{ padding: '6px' }}
+                      />
+                    </div>
+                  </div>
+                  <h4 style={{ margin: '4px 0 0', fontSize: '13px', color: '#6D4C41' }}>✂️ Média Interna — Trim (opcional)</h4>
+                  <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)' }}>Descarta os X/2% menores e X/2% maiores antes de calcular a média. Deixe em branco para desativar.</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <label style={{ fontSize: 12, fontWeight: 600 }}>Trim % (ex: 25 para cortar 12,5% de cada lado):</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="1"
+                      className="input"
+                      value={soilParams.trimPercent}
+                      onChange={e => setSoilParams({ ...soilParams, trimPercent: e.target.value })}
+                      style={{ padding: '6px', maxWidth: '160px' }}
+                      placeholder="ex: 25"
+                    />
                   </div>
                 </div>
               )}
@@ -1377,6 +1481,11 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                       const newData = { ...n.data, inputs: inputsList, operation: operation, outputFilter: outputFilter }
                       if (n.id === 'tracker') {
                         newData.trackerParams = trackerParams;
+                      }
+                      if (n.id === 'sujidade') {
+                        newData.startTime = soilParams.startTime || '';
+                        newData.endTime = soilParams.endTime || '';
+                        newData.trimPercent = soilParams.trimPercent || '';
                       }
                       return { ...n, data: newData }
                     }
@@ -1632,31 +1741,106 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                 Define os parâmetros para detectar quando houve limitação de potência (curtailment) imposta pela rede que afetou de fato a usina.
               </p>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <label style={{ fontSize: 13, fontWeight: 600 }}>Ref. Mínima de Potência (ex: 52.8 MW)</label>
-                  <input 
-                    type="number" step="0.1" className="input" 
-                    value={curtailmentParams.refMin} 
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+                {/* Campo 1: Ref. Mínima */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <label style={{ fontSize: 13, fontWeight: 600 }}>Ref. Mínima de Potência (MW)</label>
+                    <div style={{ position: 'relative', display: 'inline-flex' }} className="info-badge-wrap">
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        width: 18, height: 18, borderRadius: '50%', fontSize: 11, fontWeight: 700,
+                        background: '#3b82f6', color: '#fff', cursor: 'help', flexShrink: 0, userSelect: 'none'
+                      }}>ⓘ</span>
+                      <div style={{
+                        display: 'none', position: 'absolute', bottom: '125%', left: '50%', transform: 'translateX(-50%)',
+                        background: '#1e293b', color: '#e2e8f0', padding: '10px 14px', borderRadius: 8,
+                        fontSize: 12, lineHeight: 1.6, width: 280, zIndex: 999,
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.4)', pointerEvents: 'none',
+                        whiteSpace: 'normal'
+                      }} className="info-tooltip">
+                        <strong style={{ color: '#93c5fd' }}>🎯 Gatilho 1 — Limite de Referência PPC</strong><br/>
+                        Valor em MW abaixo do qual a Referência PPC enviada pela rede é considerada um sinal de limitação de potência.<br/><br/>
+                        <strong style={{ color: '#fbbf24' }}>Impacto:</strong> Se a Ref. PPC estiver abaixo desse limiar (descontada a margem de segurança), o gatilho 1 é ativado.
+                        <br/><br/><em style={{ color: '#94a3b8' }}>Ex: 52,8 MW = potência nominal da usina.</em>
+                      </div>
+                    </div>
+                  </div>
+                  <input
+                    type="number" step="0.1" className="input"
+                    value={curtailmentParams.refMin}
                     onChange={e => setCurtailmentParams({ ...curtailmentParams, refMin: parseFloat(e.target.value) || 0 })}
+                    placeholder="ex: 52.8"
                   />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <label style={{ fontSize: 13, fontWeight: 600 }}>Margem de Segurança da Ref. (%)</label>
-                  <input 
-                    type="number" step="0.1" className="input" 
-                    value={curtailmentParams.refMargin} 
+
+                {/* Campo 2: Margem de Segurança */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <label style={{ fontSize: 13, fontWeight: 600 }}>Margem de Segurança da Ref. (%)</label>
+                    <div style={{ position: 'relative', display: 'inline-flex' }} className="info-badge-wrap">
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        width: 18, height: 18, borderRadius: '50%', fontSize: 11, fontWeight: 700,
+                        background: '#3b82f6', color: '#fff', cursor: 'help', flexShrink: 0, userSelect: 'none'
+                      }}>ⓘ</span>
+                      <div style={{
+                        display: 'none', position: 'absolute', bottom: '125%', left: '50%', transform: 'translateX(-50%)',
+                        background: '#1e293b', color: '#e2e8f0', padding: '10px 14px', borderRadius: 8,
+                        fontSize: 12, lineHeight: 1.6, width: 290, zIndex: 999,
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.4)', pointerEvents: 'none',
+                        whiteSpace: 'normal'
+                      }} className="info-tooltip">
+                        <strong style={{ color: '#93c5fd' }}>🛡️ Margem de Tolerância do Gatilho 1</strong><br/>
+                        Percentual subtraído da Ref. Mínima para criar uma faixa de segurança. O limiar efetivo do gatilho 1 será:<br/>
+                        <code style={{ background: '#0f172a', padding: '2px 6px', borderRadius: 4, color: '#86efac' }}>Limiar = Ref.Mín × (1 − Margem%)</code><br/><br/>
+                        <strong style={{ color: '#fbbf24' }}>Impacto:</strong> Evita falsos positivos quando a Ref. PPC oscila levemente abaixo do nominal.<br/><br/>
+                        <em style={{ color: '#94a3b8' }}>Ex: Ref.Mín=52,8 e Margem=2% → Limiar=51,74 MW.</em>
+                      </div>
+                    </div>
+                  </div>
+                  <input
+                    type="number" step="0.1" className="input"
+                    value={curtailmentParams.refMargin}
                     onChange={e => setCurtailmentParams({ ...curtailmentParams, refMargin: parseFloat(e.target.value) || 0 })}
+                    placeholder="ex: 2"
                   />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <label style={{ fontSize: 13, fontWeight: 600 }}>Tolerância (Geração Real vs Ref.) (%)</label>
-                  <input 
-                    type="number" step="0.1" className="input" 
-                    value={curtailmentParams.diffMargin} 
+
+                {/* Campo 3: Tolerância de Geração */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <label style={{ fontSize: 13, fontWeight: 600 }}>Tolerância (Geração Real vs Ref.) (%)</label>
+                    <div style={{ position: 'relative', display: 'inline-flex' }} className="info-badge-wrap">
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        width: 18, height: 18, borderRadius: '50%', fontSize: 11, fontWeight: 700,
+                        background: '#3b82f6', color: '#fff', cursor: 'help', flexShrink: 0, userSelect: 'none'
+                      }}>ⓘ</span>
+                      <div style={{
+                        display: 'none', position: 'absolute', bottom: '125%', right: 0,
+                        background: '#1e293b', color: '#e2e8f0', padding: '10px 14px', borderRadius: 8,
+                        fontSize: 12, lineHeight: 1.6, width: 300, zIndex: 999,
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.4)', pointerEvents: 'none',
+                        whiteSpace: 'normal'
+                      }} className="info-tooltip">
+                        <strong style={{ color: '#93c5fd' }}>⚖️ Gatilho 2 — Aderência à Referência</strong><br/>
+                        Define a banda de tolerância em torno da Ref. PPC dentro da qual a geração real deve estar para confirmar que a usina está de fato seguindo o sinal de curtailment:<br/>
+                        <code style={{ background: '#0f172a', padding: '2px 6px', borderRadius: 4, color: '#86efac' }}>|Real − Ref| ≤ Ref × Tol%</code><br/><br/>
+                        <strong style={{ color: '#fbbf24' }}>Impacto:</strong> Se a geração real estiver fora dessa banda (muito acima ou muito abaixo da referência), o curtailment <em>não</em> é confirmado, pois a usina não está seguindo o sinal.<br/><br/>
+                        <em style={{ color: '#94a3b8' }}>Ex: Ref=40 MW e Tol=5% → banda de ±2 MW (38–42 MW). Real=50 MW → sem curtailment.</em>
+                      </div>
+                    </div>
+                  </div>
+                  <input
+                    type="number" step="0.1" className="input"
+                    value={curtailmentParams.diffMargin}
                     onChange={e => setCurtailmentParams({ ...curtailmentParams, diffMargin: parseFloat(e.target.value) || 0 })}
+                    placeholder="ex: 5"
                   />
                 </div>
+
               </div>
             </div>
 
@@ -1895,6 +2079,40 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                 }} 
               />
               Exibir Entradas
+            </label>
+
+            <label style={{ 
+              display: 'flex', alignItems: 'center', gap: '8px', 
+              fontSize: '13px', cursor: 'pointer', userSelect: 'none', 
+              color: 'var(--text-primary)', fontWeight: '600'
+            }}>
+              <input 
+                type="checkbox" 
+                checked={showMeasured} 
+                onChange={(e) => setShowMeasured(e.target.checked)} 
+                style={{ 
+                  width: '16px', height: '16px', 
+                  accentColor: 'var(--amber)', cursor: 'pointer'
+                }} 
+              />
+              Exibir Dados Medidos
+            </label>
+
+            <label style={{ 
+              display: 'flex', alignItems: 'center', gap: '8px', 
+              fontSize: '13px', cursor: 'pointer', userSelect: 'none', 
+              color: 'var(--text-primary)', fontWeight: '600'
+            }}>
+              <input 
+                type="checkbox" 
+                checked={showValid} 
+                onChange={(e) => setShowValid(e.target.checked)} 
+                style={{ 
+                  width: '16px', height: '16px', 
+                  accentColor: 'var(--amber)', cursor: 'pointer'
+                }} 
+              />
+              Exibir Dados Válidos
             </label>
 
             <div style={{ width: '1px', height: '16px', backgroundColor: 'var(--border)' }} />
