@@ -1,0 +1,2553 @@
+{
+  "batch_0634d541": {
+    "nome": "Potência CC String",
+    "formula": "S1*S2",
+    "criado_em": "2026-07-20T10:05:11.360526",
+    "series": [
+      {
+        "nome_sintetico": "PA[1].Inverter[1].IRR_String01_Power",
+        "serie_1": "PA[1].Inverter[1].IRR_String01_Current",
+        "serie_2": "PA[1].Inverter[1].IRR_String01_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[1].IRR_String02_Power",
+        "serie_1": "PA[1].Inverter[1].IRR_String02_Current",
+        "serie_2": "PA[1].Inverter[1].IRR_String02_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[1].IRR_String03_Power",
+        "serie_1": "PA[1].Inverter[1].IRR_String03_Current",
+        "serie_2": "PA[1].Inverter[1].IRR_String03_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[1].IRR_String04_Power",
+        "serie_1": "PA[1].Inverter[1].IRR_String04_Current",
+        "serie_2": "PA[1].Inverter[1].IRR_String04_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[1].IRR_String05_Power",
+        "serie_1": "PA[1].Inverter[1].IRR_String05_Current",
+        "serie_2": "PA[1].Inverter[1].IRR_String05_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[1].IRR_String06_Power",
+        "serie_1": "PA[1].Inverter[1].IRR_String06_Current",
+        "serie_2": "PA[1].Inverter[1].IRR_String06_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[1].IRR_String07_Power",
+        "serie_1": "PA[1].Inverter[1].IRR_String07_Current",
+        "serie_2": "PA[1].Inverter[1].IRR_String07_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[1].IRR_String08_Power",
+        "serie_1": "PA[1].Inverter[1].IRR_String08_Current",
+        "serie_2": "PA[1].Inverter[1].IRR_String08_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[1].IRR_String09_Power",
+        "serie_1": "PA[1].Inverter[1].IRR_String09_Current",
+        "serie_2": "PA[1].Inverter[1].IRR_String09_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[1].IRR_String10_Power",
+        "serie_1": "PA[1].Inverter[1].IRR_String10_Current",
+        "serie_2": "PA[1].Inverter[1].IRR_String10_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[1].IRR_String11_Power",
+        "serie_1": "PA[1].Inverter[1].IRR_String11_Current",
+        "serie_2": "PA[1].Inverter[1].IRR_String11_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[1].IRR_String12_Power",
+        "serie_1": "PA[1].Inverter[1].IRR_String12_Current",
+        "serie_2": "PA[1].Inverter[1].IRR_String12_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[1].IRR_String13_Power",
+        "serie_1": "PA[1].Inverter[1].IRR_String13_Current",
+        "serie_2": "PA[1].Inverter[1].IRR_String13_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[1].IRR_String14_Power",
+        "serie_1": "PA[1].Inverter[1].IRR_String14_Current",
+        "serie_2": "PA[1].Inverter[1].IRR_String14_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[1].IRR_String15_Power",
+        "serie_1": "PA[1].Inverter[1].IRR_String15_Current",
+        "serie_2": "PA[1].Inverter[1].IRR_String15_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[1].IRR_String16_Power",
+        "serie_1": "PA[1].Inverter[1].IRR_String16_Current",
+        "serie_2": "PA[1].Inverter[1].IRR_String16_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[1].IRR_String17_Power",
+        "serie_1": "PA[1].Inverter[1].IRR_String17_Current",
+        "serie_2": "PA[1].Inverter[1].IRR_String17_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[1].IRR_String18_Power",
+        "serie_1": "PA[1].Inverter[1].IRR_String18_Current",
+        "serie_2": "PA[1].Inverter[1].IRR_String18_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[1].IRR_String19_Power",
+        "serie_1": "PA[1].Inverter[1].IRR_String19_Current",
+        "serie_2": "PA[1].Inverter[1].IRR_String19_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[1].IRR_String20_Power",
+        "serie_1": "PA[1].Inverter[1].IRR_String20_Current",
+        "serie_2": "PA[1].Inverter[1].IRR_String20_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[2].IRR_String01_Power",
+        "serie_1": "PA[1].Inverter[2].IRR_String01_Current",
+        "serie_2": "PA[1].Inverter[2].IRR_String01_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[2].IRR_String02_Power",
+        "serie_1": "PA[1].Inverter[2].IRR_String02_Current",
+        "serie_2": "PA[1].Inverter[2].IRR_String02_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[2].IRR_String03_Power",
+        "serie_1": "PA[1].Inverter[2].IRR_String03_Current",
+        "serie_2": "PA[1].Inverter[2].IRR_String03_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[2].IRR_String04_Power",
+        "serie_1": "PA[1].Inverter[2].IRR_String04_Current",
+        "serie_2": "PA[1].Inverter[2].IRR_String04_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[2].IRR_String05_Power",
+        "serie_1": "PA[1].Inverter[2].IRR_String05_Current",
+        "serie_2": "PA[1].Inverter[2].IRR_String05_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[2].IRR_String06_Power",
+        "serie_1": "PA[1].Inverter[2].IRR_String06_Current",
+        "serie_2": "PA[1].Inverter[2].IRR_String06_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[2].IRR_String07_Power",
+        "serie_1": "PA[1].Inverter[2].IRR_String07_Current",
+        "serie_2": "PA[1].Inverter[2].IRR_String07_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[2].IRR_String08_Power",
+        "serie_1": "PA[1].Inverter[2].IRR_String08_Current",
+        "serie_2": "PA[1].Inverter[2].IRR_String08_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[2].IRR_String09_Power",
+        "serie_1": "PA[1].Inverter[2].IRR_String09_Current",
+        "serie_2": "PA[1].Inverter[2].IRR_String09_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[2].IRR_String10_Power",
+        "serie_1": "PA[1].Inverter[2].IRR_String10_Current",
+        "serie_2": "PA[1].Inverter[2].IRR_String10_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[2].IRR_String11_Power",
+        "serie_1": "PA[1].Inverter[2].IRR_String11_Current",
+        "serie_2": "PA[1].Inverter[2].IRR_String11_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[2].IRR_String12_Power",
+        "serie_1": "PA[1].Inverter[2].IRR_String12_Current",
+        "serie_2": "PA[1].Inverter[2].IRR_String12_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[2].IRR_String13_Power",
+        "serie_1": "PA[1].Inverter[2].IRR_String13_Current",
+        "serie_2": "PA[1].Inverter[2].IRR_String13_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[2].IRR_String14_Power",
+        "serie_1": "PA[1].Inverter[2].IRR_String14_Current",
+        "serie_2": "PA[1].Inverter[2].IRR_String14_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[2].IRR_String15_Power",
+        "serie_1": "PA[1].Inverter[2].IRR_String15_Current",
+        "serie_2": "PA[1].Inverter[2].IRR_String15_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[2].IRR_String16_Power",
+        "serie_1": "PA[1].Inverter[2].IRR_String16_Current",
+        "serie_2": "PA[1].Inverter[2].IRR_String16_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[2].IRR_String17_Power",
+        "serie_1": "PA[1].Inverter[2].IRR_String17_Current",
+        "serie_2": "PA[1].Inverter[2].IRR_String17_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[2].IRR_String18_Power",
+        "serie_1": "PA[1].Inverter[2].IRR_String18_Current",
+        "serie_2": "PA[1].Inverter[2].IRR_String18_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[2].IRR_String19_Power",
+        "serie_1": "PA[1].Inverter[2].IRR_String19_Current",
+        "serie_2": "PA[1].Inverter[2].IRR_String19_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[2].IRR_String20_Power",
+        "serie_1": "PA[1].Inverter[2].IRR_String20_Current",
+        "serie_2": "PA[1].Inverter[2].IRR_String20_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[3].IRR_String01_Power",
+        "serie_1": "PA[1].Inverter[3].IRR_String01_Current",
+        "serie_2": "PA[1].Inverter[3].IRR_String01_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[3].IRR_String02_Power",
+        "serie_1": "PA[1].Inverter[3].IRR_String02_Current",
+        "serie_2": "PA[1].Inverter[3].IRR_String02_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[3].IRR_String03_Power",
+        "serie_1": "PA[1].Inverter[3].IRR_String03_Current",
+        "serie_2": "PA[1].Inverter[3].IRR_String03_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[3].IRR_String04_Power",
+        "serie_1": "PA[1].Inverter[3].IRR_String04_Current",
+        "serie_2": "PA[1].Inverter[3].IRR_String04_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[3].IRR_String05_Power",
+        "serie_1": "PA[1].Inverter[3].IRR_String05_Current",
+        "serie_2": "PA[1].Inverter[3].IRR_String05_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[3].IRR_String06_Power",
+        "serie_1": "PA[1].Inverter[3].IRR_String06_Current",
+        "serie_2": "PA[1].Inverter[3].IRR_String06_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[3].IRR_String07_Power",
+        "serie_1": "PA[1].Inverter[3].IRR_String07_Current",
+        "serie_2": "PA[1].Inverter[3].IRR_String07_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[3].IRR_String08_Power",
+        "serie_1": "PA[1].Inverter[3].IRR_String08_Current",
+        "serie_2": "PA[1].Inverter[3].IRR_String08_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[3].IRR_String09_Power",
+        "serie_1": "PA[1].Inverter[3].IRR_String09_Current",
+        "serie_2": "PA[1].Inverter[3].IRR_String09_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[3].IRR_String10_Power",
+        "serie_1": "PA[1].Inverter[3].IRR_String10_Current",
+        "serie_2": "PA[1].Inverter[3].IRR_String10_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[3].IRR_String11_Power",
+        "serie_1": "PA[1].Inverter[3].IRR_String11_Current",
+        "serie_2": "PA[1].Inverter[3].IRR_String11_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[3].IRR_String12_Power",
+        "serie_1": "PA[1].Inverter[3].IRR_String12_Current",
+        "serie_2": "PA[1].Inverter[3].IRR_String12_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[3].IRR_String13_Power",
+        "serie_1": "PA[1].Inverter[3].IRR_String13_Current",
+        "serie_2": "PA[1].Inverter[3].IRR_String13_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[3].IRR_String14_Power",
+        "serie_1": "PA[1].Inverter[3].IRR_String14_Current",
+        "serie_2": "PA[1].Inverter[3].IRR_String14_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[3].IRR_String15_Power",
+        "serie_1": "PA[1].Inverter[3].IRR_String15_Current",
+        "serie_2": "PA[1].Inverter[3].IRR_String15_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[3].IRR_String16_Power",
+        "serie_1": "PA[1].Inverter[3].IRR_String16_Current",
+        "serie_2": "PA[1].Inverter[3].IRR_String16_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[3].IRR_String17_Power",
+        "serie_1": "PA[1].Inverter[3].IRR_String17_Current",
+        "serie_2": "PA[1].Inverter[3].IRR_String17_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[3].IRR_String18_Power",
+        "serie_1": "PA[1].Inverter[3].IRR_String18_Current",
+        "serie_2": "PA[1].Inverter[3].IRR_String18_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[3].IRR_String19_Power",
+        "serie_1": "PA[1].Inverter[3].IRR_String19_Current",
+        "serie_2": "PA[1].Inverter[3].IRR_String19_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[3].IRR_String20_Power",
+        "serie_1": "PA[1].Inverter[3].IRR_String20_Current",
+        "serie_2": "PA[1].Inverter[3].IRR_String20_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[4].IRR_String01_Power",
+        "serie_1": "PA[1].Inverter[4].IRR_String01_Current",
+        "serie_2": "PA[1].Inverter[4].IRR_String01_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[4].IRR_String02_Power",
+        "serie_1": "PA[1].Inverter[4].IRR_String02_Current",
+        "serie_2": "PA[1].Inverter[4].IRR_String02_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[4].IRR_String03_Power",
+        "serie_1": "PA[1].Inverter[4].IRR_String03_Current",
+        "serie_2": "PA[1].Inverter[4].IRR_String03_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[4].IRR_String04_Power",
+        "serie_1": "PA[1].Inverter[4].IRR_String04_Current",
+        "serie_2": "PA[1].Inverter[4].IRR_String04_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[4].IRR_String05_Power",
+        "serie_1": "PA[1].Inverter[4].IRR_String05_Current",
+        "serie_2": "PA[1].Inverter[4].IRR_String05_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[4].IRR_String06_Power",
+        "serie_1": "PA[1].Inverter[4].IRR_String06_Current",
+        "serie_2": "PA[1].Inverter[4].IRR_String06_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[4].IRR_String07_Power",
+        "serie_1": "PA[1].Inverter[4].IRR_String07_Current",
+        "serie_2": "PA[1].Inverter[4].IRR_String07_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[4].IRR_String08_Power",
+        "serie_1": "PA[1].Inverter[4].IRR_String08_Current",
+        "serie_2": "PA[1].Inverter[4].IRR_String08_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[4].IRR_String09_Power",
+        "serie_1": "PA[1].Inverter[4].IRR_String09_Current",
+        "serie_2": "PA[1].Inverter[4].IRR_String09_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[4].IRR_String10_Power",
+        "serie_1": "PA[1].Inverter[4].IRR_String10_Current",
+        "serie_2": "PA[1].Inverter[4].IRR_String10_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[4].IRR_String11_Power",
+        "serie_1": "PA[1].Inverter[4].IRR_String11_Current",
+        "serie_2": "PA[1].Inverter[4].IRR_String11_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[4].IRR_String12_Power",
+        "serie_1": "PA[1].Inverter[4].IRR_String12_Current",
+        "serie_2": "PA[1].Inverter[4].IRR_String12_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[4].IRR_String13_Power",
+        "serie_1": "PA[1].Inverter[4].IRR_String13_Current",
+        "serie_2": "PA[1].Inverter[4].IRR_String13_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[4].IRR_String14_Power",
+        "serie_1": "PA[1].Inverter[4].IRR_String14_Current",
+        "serie_2": "PA[1].Inverter[4].IRR_String14_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[4].IRR_String15_Power",
+        "serie_1": "PA[1].Inverter[4].IRR_String15_Current",
+        "serie_2": "PA[1].Inverter[4].IRR_String15_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[4].IRR_String16_Power",
+        "serie_1": "PA[1].Inverter[4].IRR_String16_Current",
+        "serie_2": "PA[1].Inverter[4].IRR_String16_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[4].IRR_String17_Power",
+        "serie_1": "PA[1].Inverter[4].IRR_String17_Current",
+        "serie_2": "PA[1].Inverter[4].IRR_String17_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[4].IRR_String18_Power",
+        "serie_1": "PA[1].Inverter[4].IRR_String18_Current",
+        "serie_2": "PA[1].Inverter[4].IRR_String18_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[4].IRR_String19_Power",
+        "serie_1": "PA[1].Inverter[4].IRR_String19_Current",
+        "serie_2": "PA[1].Inverter[4].IRR_String19_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[4].IRR_String20_Power",
+        "serie_1": "PA[1].Inverter[4].IRR_String20_Current",
+        "serie_2": "PA[1].Inverter[4].IRR_String20_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[5].IRR_String01_Power",
+        "serie_1": "PA[1].Inverter[5].IRR_String01_Current",
+        "serie_2": "PA[1].Inverter[5].IRR_String01_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[5].IRR_String02_Power",
+        "serie_1": "PA[1].Inverter[5].IRR_String02_Current",
+        "serie_2": "PA[1].Inverter[5].IRR_String02_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[5].IRR_String03_Power",
+        "serie_1": "PA[1].Inverter[5].IRR_String03_Current",
+        "serie_2": "PA[1].Inverter[5].IRR_String03_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[5].IRR_String04_Power",
+        "serie_1": "PA[1].Inverter[5].IRR_String04_Current",
+        "serie_2": "PA[1].Inverter[5].IRR_String04_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[5].IRR_String05_Power",
+        "serie_1": "PA[1].Inverter[5].IRR_String05_Current",
+        "serie_2": "PA[1].Inverter[5].IRR_String05_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[5].IRR_String06_Power",
+        "serie_1": "PA[1].Inverter[5].IRR_String06_Current",
+        "serie_2": "PA[1].Inverter[5].IRR_String06_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[5].IRR_String07_Power",
+        "serie_1": "PA[1].Inverter[5].IRR_String07_Current",
+        "serie_2": "PA[1].Inverter[5].IRR_String07_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[5].IRR_String08_Power",
+        "serie_1": "PA[1].Inverter[5].IRR_String08_Current",
+        "serie_2": "PA[1].Inverter[5].IRR_String08_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[5].IRR_String09_Power",
+        "serie_1": "PA[1].Inverter[5].IRR_String09_Current",
+        "serie_2": "PA[1].Inverter[5].IRR_String09_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[5].IRR_String10_Power",
+        "serie_1": "PA[1].Inverter[5].IRR_String10_Current",
+        "serie_2": "PA[1].Inverter[5].IRR_String10_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[5].IRR_String11_Power",
+        "serie_1": "PA[1].Inverter[5].IRR_String11_Current",
+        "serie_2": "PA[1].Inverter[5].IRR_String11_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[5].IRR_String12_Power",
+        "serie_1": "PA[1].Inverter[5].IRR_String12_Current",
+        "serie_2": "PA[1].Inverter[5].IRR_String12_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[5].IRR_String13_Power",
+        "serie_1": "PA[1].Inverter[5].IRR_String13_Current",
+        "serie_2": "PA[1].Inverter[5].IRR_String13_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[5].IRR_String14_Power",
+        "serie_1": "PA[1].Inverter[5].IRR_String14_Current",
+        "serie_2": "PA[1].Inverter[5].IRR_String14_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[5].IRR_String15_Power",
+        "serie_1": "PA[1].Inverter[5].IRR_String15_Current",
+        "serie_2": "PA[1].Inverter[5].IRR_String15_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[5].IRR_String16_Power",
+        "serie_1": "PA[1].Inverter[5].IRR_String16_Current",
+        "serie_2": "PA[1].Inverter[5].IRR_String16_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[5].IRR_String17_Power",
+        "serie_1": "PA[1].Inverter[5].IRR_String17_Current",
+        "serie_2": "PA[1].Inverter[5].IRR_String17_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[5].IRR_String18_Power",
+        "serie_1": "PA[1].Inverter[5].IRR_String18_Current",
+        "serie_2": "PA[1].Inverter[5].IRR_String18_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[5].IRR_String19_Power",
+        "serie_1": "PA[1].Inverter[5].IRR_String19_Current",
+        "serie_2": "PA[1].Inverter[5].IRR_String19_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[5].IRR_String20_Power",
+        "serie_1": "PA[1].Inverter[5].IRR_String20_Current",
+        "serie_2": "PA[1].Inverter[5].IRR_String20_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[6].IRR_String01_Power",
+        "serie_1": "PA[1].Inverter[6].IRR_String01_Current",
+        "serie_2": "PA[1].Inverter[6].IRR_String01_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[6].IRR_String02_Power",
+        "serie_1": "PA[1].Inverter[6].IRR_String02_Current",
+        "serie_2": "PA[1].Inverter[6].IRR_String02_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[6].IRR_String03_Power",
+        "serie_1": "PA[1].Inverter[6].IRR_String03_Current",
+        "serie_2": "PA[1].Inverter[6].IRR_String03_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[6].IRR_String04_Power",
+        "serie_1": "PA[1].Inverter[6].IRR_String04_Current",
+        "serie_2": "PA[1].Inverter[6].IRR_String04_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[6].IRR_String05_Power",
+        "serie_1": "PA[1].Inverter[6].IRR_String05_Current",
+        "serie_2": "PA[1].Inverter[6].IRR_String05_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[6].IRR_String06_Power",
+        "serie_1": "PA[1].Inverter[6].IRR_String06_Current",
+        "serie_2": "PA[1].Inverter[6].IRR_String06_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[6].IRR_String07_Power",
+        "serie_1": "PA[1].Inverter[6].IRR_String07_Current",
+        "serie_2": "PA[1].Inverter[6].IRR_String07_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[6].IRR_String08_Power",
+        "serie_1": "PA[1].Inverter[6].IRR_String08_Current",
+        "serie_2": "PA[1].Inverter[6].IRR_String08_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[6].IRR_String09_Power",
+        "serie_1": "PA[1].Inverter[6].IRR_String09_Current",
+        "serie_2": "PA[1].Inverter[6].IRR_String09_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[6].IRR_String10_Power",
+        "serie_1": "PA[1].Inverter[6].IRR_String10_Current",
+        "serie_2": "PA[1].Inverter[6].IRR_String10_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[6].IRR_String11_Power",
+        "serie_1": "PA[1].Inverter[6].IRR_String11_Current",
+        "serie_2": "PA[1].Inverter[6].IRR_String11_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[6].IRR_String12_Power",
+        "serie_1": "PA[1].Inverter[6].IRR_String12_Current",
+        "serie_2": "PA[1].Inverter[6].IRR_String12_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[6].IRR_String13_Power",
+        "serie_1": "PA[1].Inverter[6].IRR_String13_Current",
+        "serie_2": "PA[1].Inverter[6].IRR_String13_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[6].IRR_String14_Power",
+        "serie_1": "PA[1].Inverter[6].IRR_String14_Current",
+        "serie_2": "PA[1].Inverter[6].IRR_String14_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[6].IRR_String15_Power",
+        "serie_1": "PA[1].Inverter[6].IRR_String15_Current",
+        "serie_2": "PA[1].Inverter[6].IRR_String15_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[6].IRR_String16_Power",
+        "serie_1": "PA[1].Inverter[6].IRR_String16_Current",
+        "serie_2": "PA[1].Inverter[6].IRR_String16_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[6].IRR_String17_Power",
+        "serie_1": "PA[1].Inverter[6].IRR_String17_Current",
+        "serie_2": "PA[1].Inverter[6].IRR_String17_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[6].IRR_String18_Power",
+        "serie_1": "PA[1].Inverter[6].IRR_String18_Current",
+        "serie_2": "PA[1].Inverter[6].IRR_String18_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[6].IRR_String19_Power",
+        "serie_1": "PA[1].Inverter[6].IRR_String19_Current",
+        "serie_2": "PA[1].Inverter[6].IRR_String19_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[6].IRR_String20_Power",
+        "serie_1": "PA[1].Inverter[6].IRR_String20_Current",
+        "serie_2": "PA[1].Inverter[6].IRR_String20_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[7].IRR_String01_Power",
+        "serie_1": "PA[1].Inverter[7].IRR_String01_Current",
+        "serie_2": "PA[1].Inverter[7].IRR_String01_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[7].IRR_String02_Power",
+        "serie_1": "PA[1].Inverter[7].IRR_String02_Current",
+        "serie_2": "PA[1].Inverter[7].IRR_String02_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[7].IRR_String03_Power",
+        "serie_1": "PA[1].Inverter[7].IRR_String03_Current",
+        "serie_2": "PA[1].Inverter[7].IRR_String03_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[7].IRR_String04_Power",
+        "serie_1": "PA[1].Inverter[7].IRR_String04_Current",
+        "serie_2": "PA[1].Inverter[7].IRR_String04_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[7].IRR_String05_Power",
+        "serie_1": "PA[1].Inverter[7].IRR_String05_Current",
+        "serie_2": "PA[1].Inverter[7].IRR_String05_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[7].IRR_String06_Power",
+        "serie_1": "PA[1].Inverter[7].IRR_String06_Current",
+        "serie_2": "PA[1].Inverter[7].IRR_String06_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[7].IRR_String07_Power",
+        "serie_1": "PA[1].Inverter[7].IRR_String07_Current",
+        "serie_2": "PA[1].Inverter[7].IRR_String07_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[7].IRR_String08_Power",
+        "serie_1": "PA[1].Inverter[7].IRR_String08_Current",
+        "serie_2": "PA[1].Inverter[7].IRR_String08_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[7].IRR_String09_Power",
+        "serie_1": "PA[1].Inverter[7].IRR_String09_Current",
+        "serie_2": "PA[1].Inverter[7].IRR_String09_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[7].IRR_String10_Power",
+        "serie_1": "PA[1].Inverter[7].IRR_String10_Current",
+        "serie_2": "PA[1].Inverter[7].IRR_String10_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[7].IRR_String11_Power",
+        "serie_1": "PA[1].Inverter[7].IRR_String11_Current",
+        "serie_2": "PA[1].Inverter[7].IRR_String11_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[7].IRR_String12_Power",
+        "serie_1": "PA[1].Inverter[7].IRR_String12_Current",
+        "serie_2": "PA[1].Inverter[7].IRR_String12_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[7].IRR_String13_Power",
+        "serie_1": "PA[1].Inverter[7].IRR_String13_Current",
+        "serie_2": "PA[1].Inverter[7].IRR_String13_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[7].IRR_String14_Power",
+        "serie_1": "PA[1].Inverter[7].IRR_String14_Current",
+        "serie_2": "PA[1].Inverter[7].IRR_String14_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[7].IRR_String15_Power",
+        "serie_1": "PA[1].Inverter[7].IRR_String15_Current",
+        "serie_2": "PA[1].Inverter[7].IRR_String15_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[7].IRR_String16_Power",
+        "serie_1": "PA[1].Inverter[7].IRR_String16_Current",
+        "serie_2": "PA[1].Inverter[7].IRR_String16_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[7].IRR_String17_Power",
+        "serie_1": "PA[1].Inverter[7].IRR_String17_Current",
+        "serie_2": "PA[1].Inverter[7].IRR_String17_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[7].IRR_String18_Power",
+        "serie_1": "PA[1].Inverter[7].IRR_String18_Current",
+        "serie_2": "PA[1].Inverter[7].IRR_String18_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[7].IRR_String19_Power",
+        "serie_1": "PA[1].Inverter[7].IRR_String19_Current",
+        "serie_2": "PA[1].Inverter[7].IRR_String19_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[7].IRR_String20_Power",
+        "serie_1": "PA[1].Inverter[7].IRR_String20_Current",
+        "serie_2": "PA[1].Inverter[7].IRR_String20_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[8].IRR_String01_Power",
+        "serie_1": "PA[1].Inverter[8].IRR_String01_Current",
+        "serie_2": "PA[1].Inverter[8].IRR_String01_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[8].IRR_String02_Power",
+        "serie_1": "PA[1].Inverter[8].IRR_String02_Current",
+        "serie_2": "PA[1].Inverter[8].IRR_String02_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[8].IRR_String03_Power",
+        "serie_1": "PA[1].Inverter[8].IRR_String03_Current",
+        "serie_2": "PA[1].Inverter[8].IRR_String03_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[8].IRR_String04_Power",
+        "serie_1": "PA[1].Inverter[8].IRR_String04_Current",
+        "serie_2": "PA[1].Inverter[8].IRR_String04_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[8].IRR_String05_Power",
+        "serie_1": "PA[1].Inverter[8].IRR_String05_Current",
+        "serie_2": "PA[1].Inverter[8].IRR_String05_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[8].IRR_String06_Power",
+        "serie_1": "PA[1].Inverter[8].IRR_String06_Current",
+        "serie_2": "PA[1].Inverter[8].IRR_String06_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[8].IRR_String07_Power",
+        "serie_1": "PA[1].Inverter[8].IRR_String07_Current",
+        "serie_2": "PA[1].Inverter[8].IRR_String07_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[8].IRR_String08_Power",
+        "serie_1": "PA[1].Inverter[8].IRR_String08_Current",
+        "serie_2": "PA[1].Inverter[8].IRR_String08_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[8].IRR_String09_Power",
+        "serie_1": "PA[1].Inverter[8].IRR_String09_Current",
+        "serie_2": "PA[1].Inverter[8].IRR_String09_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[8].IRR_String10_Power",
+        "serie_1": "PA[1].Inverter[8].IRR_String10_Current",
+        "serie_2": "PA[1].Inverter[8].IRR_String10_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[8].IRR_String11_Power",
+        "serie_1": "PA[1].Inverter[8].IRR_String11_Current",
+        "serie_2": "PA[1].Inverter[8].IRR_String11_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[8].IRR_String12_Power",
+        "serie_1": "PA[1].Inverter[8].IRR_String12_Current",
+        "serie_2": "PA[1].Inverter[8].IRR_String12_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[8].IRR_String13_Power",
+        "serie_1": "PA[1].Inverter[8].IRR_String13_Current",
+        "serie_2": "PA[1].Inverter[8].IRR_String13_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[8].IRR_String14_Power",
+        "serie_1": "PA[1].Inverter[8].IRR_String14_Current",
+        "serie_2": "PA[1].Inverter[8].IRR_String14_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[8].IRR_String15_Power",
+        "serie_1": "PA[1].Inverter[8].IRR_String15_Current",
+        "serie_2": "PA[1].Inverter[8].IRR_String15_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[8].IRR_String16_Power",
+        "serie_1": "PA[1].Inverter[8].IRR_String16_Current",
+        "serie_2": "PA[1].Inverter[8].IRR_String16_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[8].IRR_String17_Power",
+        "serie_1": "PA[1].Inverter[8].IRR_String17_Current",
+        "serie_2": "PA[1].Inverter[8].IRR_String17_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[8].IRR_String18_Power",
+        "serie_1": "PA[1].Inverter[8].IRR_String18_Current",
+        "serie_2": "PA[1].Inverter[8].IRR_String18_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[8].IRR_String19_Power",
+        "serie_1": "PA[1].Inverter[8].IRR_String19_Current",
+        "serie_2": "PA[1].Inverter[8].IRR_String19_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[8].IRR_String20_Power",
+        "serie_1": "PA[1].Inverter[8].IRR_String20_Current",
+        "serie_2": "PA[1].Inverter[8].IRR_String20_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[9].IRR_String01_Power",
+        "serie_1": "PA[1].Inverter[9].IRR_String01_Current",
+        "serie_2": "PA[1].Inverter[9].IRR_String01_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[9].IRR_String02_Power",
+        "serie_1": "PA[1].Inverter[9].IRR_String02_Current",
+        "serie_2": "PA[1].Inverter[9].IRR_String02_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[9].IRR_String03_Power",
+        "serie_1": "PA[1].Inverter[9].IRR_String03_Current",
+        "serie_2": "PA[1].Inverter[9].IRR_String03_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[9].IRR_String04_Power",
+        "serie_1": "PA[1].Inverter[9].IRR_String04_Current",
+        "serie_2": "PA[1].Inverter[9].IRR_String04_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[9].IRR_String05_Power",
+        "serie_1": "PA[1].Inverter[9].IRR_String05_Current",
+        "serie_2": "PA[1].Inverter[9].IRR_String05_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[9].IRR_String06_Power",
+        "serie_1": "PA[1].Inverter[9].IRR_String06_Current",
+        "serie_2": "PA[1].Inverter[9].IRR_String06_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[9].IRR_String07_Power",
+        "serie_1": "PA[1].Inverter[9].IRR_String07_Current",
+        "serie_2": "PA[1].Inverter[9].IRR_String07_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[9].IRR_String08_Power",
+        "serie_1": "PA[1].Inverter[9].IRR_String08_Current",
+        "serie_2": "PA[1].Inverter[9].IRR_String08_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[9].IRR_String09_Power",
+        "serie_1": "PA[1].Inverter[9].IRR_String09_Current",
+        "serie_2": "PA[1].Inverter[9].IRR_String09_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[9].IRR_String10_Power",
+        "serie_1": "PA[1].Inverter[9].IRR_String10_Current",
+        "serie_2": "PA[1].Inverter[9].IRR_String10_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[9].IRR_String11_Power",
+        "serie_1": "PA[1].Inverter[9].IRR_String11_Current",
+        "serie_2": "PA[1].Inverter[9].IRR_String11_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[9].IRR_String12_Power",
+        "serie_1": "PA[1].Inverter[9].IRR_String12_Current",
+        "serie_2": "PA[1].Inverter[9].IRR_String12_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[9].IRR_String13_Power",
+        "serie_1": "PA[1].Inverter[9].IRR_String13_Current",
+        "serie_2": "PA[1].Inverter[9].IRR_String13_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[9].IRR_String14_Power",
+        "serie_1": "PA[1].Inverter[9].IRR_String14_Current",
+        "serie_2": "PA[1].Inverter[9].IRR_String14_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[9].IRR_String15_Power",
+        "serie_1": "PA[1].Inverter[9].IRR_String15_Current",
+        "serie_2": "PA[1].Inverter[9].IRR_String15_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[9].IRR_String16_Power",
+        "serie_1": "PA[1].Inverter[9].IRR_String16_Current",
+        "serie_2": "PA[1].Inverter[9].IRR_String16_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[9].IRR_String17_Power",
+        "serie_1": "PA[1].Inverter[9].IRR_String17_Current",
+        "serie_2": "PA[1].Inverter[9].IRR_String17_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[9].IRR_String18_Power",
+        "serie_1": "PA[1].Inverter[9].IRR_String18_Current",
+        "serie_2": "PA[1].Inverter[9].IRR_String18_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[9].IRR_String19_Power",
+        "serie_1": "PA[1].Inverter[9].IRR_String19_Current",
+        "serie_2": "PA[1].Inverter[9].IRR_String19_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[9].IRR_String20_Power",
+        "serie_1": "PA[1].Inverter[9].IRR_String20_Current",
+        "serie_2": "PA[1].Inverter[9].IRR_String20_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[10].IRR_String01_Power",
+        "serie_1": "PA[1].Inverter[10].IRR_String01_Current",
+        "serie_2": "PA[1].Inverter[10].IRR_String01_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[10].IRR_String02_Power",
+        "serie_1": "PA[1].Inverter[10].IRR_String02_Current",
+        "serie_2": "PA[1].Inverter[10].IRR_String02_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[10].IRR_String03_Power",
+        "serie_1": "PA[1].Inverter[10].IRR_String03_Current",
+        "serie_2": "PA[1].Inverter[10].IRR_String03_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[10].IRR_String04_Power",
+        "serie_1": "PA[1].Inverter[10].IRR_String04_Current",
+        "serie_2": "PA[1].Inverter[10].IRR_String04_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[10].IRR_String05_Power",
+        "serie_1": "PA[1].Inverter[10].IRR_String05_Current",
+        "serie_2": "PA[1].Inverter[10].IRR_String05_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[10].IRR_String06_Power",
+        "serie_1": "PA[1].Inverter[10].IRR_String06_Current",
+        "serie_2": "PA[1].Inverter[10].IRR_String06_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[10].IRR_String07_Power",
+        "serie_1": "PA[1].Inverter[10].IRR_String07_Current",
+        "serie_2": "PA[1].Inverter[10].IRR_String07_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[10].IRR_String08_Power",
+        "serie_1": "PA[1].Inverter[10].IRR_String08_Current",
+        "serie_2": "PA[1].Inverter[10].IRR_String08_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[10].IRR_String09_Power",
+        "serie_1": "PA[1].Inverter[10].IRR_String09_Current",
+        "serie_2": "PA[1].Inverter[10].IRR_String09_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[10].IRR_String10_Power",
+        "serie_1": "PA[1].Inverter[10].IRR_String10_Current",
+        "serie_2": "PA[1].Inverter[10].IRR_String10_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[10].IRR_String11_Power",
+        "serie_1": "PA[1].Inverter[10].IRR_String11_Current",
+        "serie_2": "PA[1].Inverter[10].IRR_String11_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[10].IRR_String12_Power",
+        "serie_1": "PA[1].Inverter[10].IRR_String12_Current",
+        "serie_2": "PA[1].Inverter[10].IRR_String12_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[10].IRR_String13_Power",
+        "serie_1": "PA[1].Inverter[10].IRR_String13_Current",
+        "serie_2": "PA[1].Inverter[10].IRR_String13_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[10].IRR_String14_Power",
+        "serie_1": "PA[1].Inverter[10].IRR_String14_Current",
+        "serie_2": "PA[1].Inverter[10].IRR_String14_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[10].IRR_String15_Power",
+        "serie_1": "PA[1].Inverter[10].IRR_String15_Current",
+        "serie_2": "PA[1].Inverter[10].IRR_String15_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[10].IRR_String16_Power",
+        "serie_1": "PA[1].Inverter[10].IRR_String16_Current",
+        "serie_2": "PA[1].Inverter[10].IRR_String16_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[10].IRR_String17_Power",
+        "serie_1": "PA[1].Inverter[10].IRR_String17_Current",
+        "serie_2": "PA[1].Inverter[10].IRR_String17_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[10].IRR_String18_Power",
+        "serie_1": "PA[1].Inverter[10].IRR_String18_Current",
+        "serie_2": "PA[1].Inverter[10].IRR_String18_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[10].IRR_String19_Power",
+        "serie_1": "PA[1].Inverter[10].IRR_String19_Current",
+        "serie_2": "PA[1].Inverter[10].IRR_String19_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[10].IRR_String20_Power",
+        "serie_1": "PA[1].Inverter[10].IRR_String20_Current",
+        "serie_2": "PA[1].Inverter[10].IRR_String20_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[11].IRR_String01_Power",
+        "serie_1": "PA[1].Inverter[11].IRR_String01_Current",
+        "serie_2": "PA[1].Inverter[11].IRR_String01_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[11].IRR_String02_Power",
+        "serie_1": "PA[1].Inverter[11].IRR_String02_Current",
+        "serie_2": "PA[1].Inverter[11].IRR_String02_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[11].IRR_String03_Power",
+        "serie_1": "PA[1].Inverter[11].IRR_String03_Current",
+        "serie_2": "PA[1].Inverter[11].IRR_String03_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[11].IRR_String04_Power",
+        "serie_1": "PA[1].Inverter[11].IRR_String04_Current",
+        "serie_2": "PA[1].Inverter[11].IRR_String04_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[11].IRR_String05_Power",
+        "serie_1": "PA[1].Inverter[11].IRR_String05_Current",
+        "serie_2": "PA[1].Inverter[11].IRR_String05_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[11].IRR_String06_Power",
+        "serie_1": "PA[1].Inverter[11].IRR_String06_Current",
+        "serie_2": "PA[1].Inverter[11].IRR_String06_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[11].IRR_String07_Power",
+        "serie_1": "PA[1].Inverter[11].IRR_String07_Current",
+        "serie_2": "PA[1].Inverter[11].IRR_String07_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[11].IRR_String08_Power",
+        "serie_1": "PA[1].Inverter[11].IRR_String08_Current",
+        "serie_2": "PA[1].Inverter[11].IRR_String08_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[11].IRR_String09_Power",
+        "serie_1": "PA[1].Inverter[11].IRR_String09_Current",
+        "serie_2": "PA[1].Inverter[11].IRR_String09_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[11].IRR_String10_Power",
+        "serie_1": "PA[1].Inverter[11].IRR_String10_Current",
+        "serie_2": "PA[1].Inverter[11].IRR_String10_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[11].IRR_String11_Power",
+        "serie_1": "PA[1].Inverter[11].IRR_String11_Current",
+        "serie_2": "PA[1].Inverter[11].IRR_String11_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[11].IRR_String12_Power",
+        "serie_1": "PA[1].Inverter[11].IRR_String12_Current",
+        "serie_2": "PA[1].Inverter[11].IRR_String12_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[11].IRR_String13_Power",
+        "serie_1": "PA[1].Inverter[11].IRR_String13_Current",
+        "serie_2": "PA[1].Inverter[11].IRR_String13_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[11].IRR_String14_Power",
+        "serie_1": "PA[1].Inverter[11].IRR_String14_Current",
+        "serie_2": "PA[1].Inverter[11].IRR_String14_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[11].IRR_String15_Power",
+        "serie_1": "PA[1].Inverter[11].IRR_String15_Current",
+        "serie_2": "PA[1].Inverter[11].IRR_String15_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[11].IRR_String16_Power",
+        "serie_1": "PA[1].Inverter[11].IRR_String16_Current",
+        "serie_2": "PA[1].Inverter[11].IRR_String16_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[11].IRR_String17_Power",
+        "serie_1": "PA[1].Inverter[11].IRR_String17_Current",
+        "serie_2": "PA[1].Inverter[11].IRR_String17_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[11].IRR_String18_Power",
+        "serie_1": "PA[1].Inverter[11].IRR_String18_Current",
+        "serie_2": "PA[1].Inverter[11].IRR_String18_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[11].IRR_String19_Power",
+        "serie_1": "PA[1].Inverter[11].IRR_String19_Current",
+        "serie_2": "PA[1].Inverter[11].IRR_String19_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[11].IRR_String20_Power",
+        "serie_1": "PA[1].Inverter[11].IRR_String20_Current",
+        "serie_2": "PA[1].Inverter[11].IRR_String20_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[12].IRR_String01_Power",
+        "serie_1": "PA[1].Inverter[12].IRR_String01_Current",
+        "serie_2": "PA[1].Inverter[12].IRR_String01_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[12].IRR_String02_Power",
+        "serie_1": "PA[1].Inverter[12].IRR_String02_Current",
+        "serie_2": "PA[1].Inverter[12].IRR_String02_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[12].IRR_String03_Power",
+        "serie_1": "PA[1].Inverter[12].IRR_String03_Current",
+        "serie_2": "PA[1].Inverter[12].IRR_String03_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[12].IRR_String04_Power",
+        "serie_1": "PA[1].Inverter[12].IRR_String04_Current",
+        "serie_2": "PA[1].Inverter[12].IRR_String04_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[12].IRR_String05_Power",
+        "serie_1": "PA[1].Inverter[12].IRR_String05_Current",
+        "serie_2": "PA[1].Inverter[12].IRR_String05_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[12].IRR_String06_Power",
+        "serie_1": "PA[1].Inverter[12].IRR_String06_Current",
+        "serie_2": "PA[1].Inverter[12].IRR_String06_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[12].IRR_String07_Power",
+        "serie_1": "PA[1].Inverter[12].IRR_String07_Current",
+        "serie_2": "PA[1].Inverter[12].IRR_String07_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[12].IRR_String08_Power",
+        "serie_1": "PA[1].Inverter[12].IRR_String08_Current",
+        "serie_2": "PA[1].Inverter[12].IRR_String08_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[12].IRR_String09_Power",
+        "serie_1": "PA[1].Inverter[12].IRR_String09_Current",
+        "serie_2": "PA[1].Inverter[12].IRR_String09_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[12].IRR_String10_Power",
+        "serie_1": "PA[1].Inverter[12].IRR_String10_Current",
+        "serie_2": "PA[1].Inverter[12].IRR_String10_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[12].IRR_String11_Power",
+        "serie_1": "PA[1].Inverter[12].IRR_String11_Current",
+        "serie_2": "PA[1].Inverter[12].IRR_String11_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[12].IRR_String12_Power",
+        "serie_1": "PA[1].Inverter[12].IRR_String12_Current",
+        "serie_2": "PA[1].Inverter[12].IRR_String12_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[12].IRR_String13_Power",
+        "serie_1": "PA[1].Inverter[12].IRR_String13_Current",
+        "serie_2": "PA[1].Inverter[12].IRR_String13_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[12].IRR_String14_Power",
+        "serie_1": "PA[1].Inverter[12].IRR_String14_Current",
+        "serie_2": "PA[1].Inverter[12].IRR_String14_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[12].IRR_String15_Power",
+        "serie_1": "PA[1].Inverter[12].IRR_String15_Current",
+        "serie_2": "PA[1].Inverter[12].IRR_String15_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[12].IRR_String16_Power",
+        "serie_1": "PA[1].Inverter[12].IRR_String16_Current",
+        "serie_2": "PA[1].Inverter[12].IRR_String16_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[12].IRR_String17_Power",
+        "serie_1": "PA[1].Inverter[12].IRR_String17_Current",
+        "serie_2": "PA[1].Inverter[12].IRR_String17_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[12].IRR_String18_Power",
+        "serie_1": "PA[1].Inverter[12].IRR_String18_Current",
+        "serie_2": "PA[1].Inverter[12].IRR_String18_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[13].IRR_String01_Power",
+        "serie_1": "PA[1].Inverter[13].IRR_String01_Current",
+        "serie_2": "PA[1].Inverter[13].IRR_String01_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[13].IRR_String02_Power",
+        "serie_1": "PA[1].Inverter[13].IRR_String02_Current",
+        "serie_2": "PA[1].Inverter[13].IRR_String02_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[13].IRR_String03_Power",
+        "serie_1": "PA[1].Inverter[13].IRR_String03_Current",
+        "serie_2": "PA[1].Inverter[13].IRR_String03_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[13].IRR_String04_Power",
+        "serie_1": "PA[1].Inverter[13].IRR_String04_Current",
+        "serie_2": "PA[1].Inverter[13].IRR_String04_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[13].IRR_String05_Power",
+        "serie_1": "PA[1].Inverter[13].IRR_String05_Current",
+        "serie_2": "PA[1].Inverter[13].IRR_String05_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[13].IRR_String06_Power",
+        "serie_1": "PA[1].Inverter[13].IRR_String06_Current",
+        "serie_2": "PA[1].Inverter[13].IRR_String06_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[13].IRR_String07_Power",
+        "serie_1": "PA[1].Inverter[13].IRR_String07_Current",
+        "serie_2": "PA[1].Inverter[13].IRR_String07_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[13].IRR_String08_Power",
+        "serie_1": "PA[1].Inverter[13].IRR_String08_Current",
+        "serie_2": "PA[1].Inverter[13].IRR_String08_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[13].IRR_String09_Power",
+        "serie_1": "PA[1].Inverter[13].IRR_String09_Current",
+        "serie_2": "PA[1].Inverter[13].IRR_String09_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[13].IRR_String10_Power",
+        "serie_1": "PA[1].Inverter[13].IRR_String10_Current",
+        "serie_2": "PA[1].Inverter[13].IRR_String10_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[13].IRR_String11_Power",
+        "serie_1": "PA[1].Inverter[13].IRR_String11_Current",
+        "serie_2": "PA[1].Inverter[13].IRR_String11_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[13].IRR_String12_Power",
+        "serie_1": "PA[1].Inverter[13].IRR_String12_Current",
+        "serie_2": "PA[1].Inverter[13].IRR_String12_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[13].IRR_String13_Power",
+        "serie_1": "PA[1].Inverter[13].IRR_String13_Current",
+        "serie_2": "PA[1].Inverter[13].IRR_String13_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[13].IRR_String14_Power",
+        "serie_1": "PA[1].Inverter[13].IRR_String14_Current",
+        "serie_2": "PA[1].Inverter[13].IRR_String14_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[13].IRR_String15_Power",
+        "serie_1": "PA[1].Inverter[13].IRR_String15_Current",
+        "serie_2": "PA[1].Inverter[13].IRR_String15_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[13].IRR_String16_Power",
+        "serie_1": "PA[1].Inverter[13].IRR_String16_Current",
+        "serie_2": "PA[1].Inverter[13].IRR_String16_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[13].IRR_String17_Power",
+        "serie_1": "PA[1].Inverter[13].IRR_String17_Current",
+        "serie_2": "PA[1].Inverter[13].IRR_String17_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[13].IRR_String18_Power",
+        "serie_1": "PA[1].Inverter[13].IRR_String18_Current",
+        "serie_2": "PA[1].Inverter[13].IRR_String18_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[14].IRR_String01_Power",
+        "serie_1": "PA[1].Inverter[14].IRR_String01_Current",
+        "serie_2": "PA[1].Inverter[14].IRR_String01_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[14].IRR_String02_Power",
+        "serie_1": "PA[1].Inverter[14].IRR_String02_Current",
+        "serie_2": "PA[1].Inverter[14].IRR_String02_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[14].IRR_String03_Power",
+        "serie_1": "PA[1].Inverter[14].IRR_String03_Current",
+        "serie_2": "PA[1].Inverter[14].IRR_String03_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[14].IRR_String04_Power",
+        "serie_1": "PA[1].Inverter[14].IRR_String04_Current",
+        "serie_2": "PA[1].Inverter[14].IRR_String04_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[14].IRR_String05_Power",
+        "serie_1": "PA[1].Inverter[14].IRR_String05_Current",
+        "serie_2": "PA[1].Inverter[14].IRR_String05_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[14].IRR_String06_Power",
+        "serie_1": "PA[1].Inverter[14].IRR_String06_Current",
+        "serie_2": "PA[1].Inverter[14].IRR_String06_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[14].IRR_String07_Power",
+        "serie_1": "PA[1].Inverter[14].IRR_String07_Current",
+        "serie_2": "PA[1].Inverter[14].IRR_String07_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[14].IRR_String08_Power",
+        "serie_1": "PA[1].Inverter[14].IRR_String08_Current",
+        "serie_2": "PA[1].Inverter[14].IRR_String08_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[14].IRR_String09_Power",
+        "serie_1": "PA[1].Inverter[14].IRR_String09_Current",
+        "serie_2": "PA[1].Inverter[14].IRR_String09_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[14].IRR_String10_Power",
+        "serie_1": "PA[1].Inverter[14].IRR_String10_Current",
+        "serie_2": "PA[1].Inverter[14].IRR_String10_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[14].IRR_String11_Power",
+        "serie_1": "PA[1].Inverter[14].IRR_String11_Current",
+        "serie_2": "PA[1].Inverter[14].IRR_String11_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[14].IRR_String12_Power",
+        "serie_1": "PA[1].Inverter[14].IRR_String12_Current",
+        "serie_2": "PA[1].Inverter[14].IRR_String12_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[14].IRR_String13_Power",
+        "serie_1": "PA[1].Inverter[14].IRR_String13_Current",
+        "serie_2": "PA[1].Inverter[14].IRR_String13_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[14].IRR_String14_Power",
+        "serie_1": "PA[1].Inverter[14].IRR_String14_Current",
+        "serie_2": "PA[1].Inverter[14].IRR_String14_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[14].IRR_String15_Power",
+        "serie_1": "PA[1].Inverter[14].IRR_String15_Current",
+        "serie_2": "PA[1].Inverter[14].IRR_String15_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[14].IRR_String16_Power",
+        "serie_1": "PA[1].Inverter[14].IRR_String16_Current",
+        "serie_2": "PA[1].Inverter[14].IRR_String16_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[14].IRR_String17_Power",
+        "serie_1": "PA[1].Inverter[14].IRR_String17_Current",
+        "serie_2": "PA[1].Inverter[14].IRR_String17_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[14].IRR_String18_Power",
+        "serie_1": "PA[1].Inverter[14].IRR_String18_Current",
+        "serie_2": "PA[1].Inverter[14].IRR_String18_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[14].IRR_String19_Power",
+        "serie_1": "PA[1].Inverter[14].IRR_String19_Current",
+        "serie_2": "PA[1].Inverter[14].IRR_String19_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[14].IRR_String20_Power",
+        "serie_1": "PA[1].Inverter[14].IRR_String20_Current",
+        "serie_2": "PA[1].Inverter[14].IRR_String20_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[15].IRR_String01_Power",
+        "serie_1": "PA[1].Inverter[15].IRR_String01_Current",
+        "serie_2": "PA[1].Inverter[15].IRR_String01_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[15].IRR_String02_Power",
+        "serie_1": "PA[1].Inverter[15].IRR_String02_Current",
+        "serie_2": "PA[1].Inverter[15].IRR_String02_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[15].IRR_String03_Power",
+        "serie_1": "PA[1].Inverter[15].IRR_String03_Current",
+        "serie_2": "PA[1].Inverter[15].IRR_String03_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[15].IRR_String04_Power",
+        "serie_1": "PA[1].Inverter[15].IRR_String04_Current",
+        "serie_2": "PA[1].Inverter[15].IRR_String04_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[15].IRR_String05_Power",
+        "serie_1": "PA[1].Inverter[15].IRR_String05_Current",
+        "serie_2": "PA[1].Inverter[15].IRR_String05_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[15].IRR_String06_Power",
+        "serie_1": "PA[1].Inverter[15].IRR_String06_Current",
+        "serie_2": "PA[1].Inverter[15].IRR_String06_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[15].IRR_String07_Power",
+        "serie_1": "PA[1].Inverter[15].IRR_String07_Current",
+        "serie_2": "PA[1].Inverter[15].IRR_String07_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[15].IRR_String08_Power",
+        "serie_1": "PA[1].Inverter[15].IRR_String08_Current",
+        "serie_2": "PA[1].Inverter[15].IRR_String08_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[15].IRR_String09_Power",
+        "serie_1": "PA[1].Inverter[15].IRR_String09_Current",
+        "serie_2": "PA[1].Inverter[15].IRR_String09_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[15].IRR_String10_Power",
+        "serie_1": "PA[1].Inverter[15].IRR_String10_Current",
+        "serie_2": "PA[1].Inverter[15].IRR_String10_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[15].IRR_String11_Power",
+        "serie_1": "PA[1].Inverter[15].IRR_String11_Current",
+        "serie_2": "PA[1].Inverter[15].IRR_String11_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[15].IRR_String12_Power",
+        "serie_1": "PA[1].Inverter[15].IRR_String12_Current",
+        "serie_2": "PA[1].Inverter[15].IRR_String12_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[15].IRR_String13_Power",
+        "serie_1": "PA[1].Inverter[15].IRR_String13_Current",
+        "serie_2": "PA[1].Inverter[15].IRR_String13_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[15].IRR_String14_Power",
+        "serie_1": "PA[1].Inverter[15].IRR_String14_Current",
+        "serie_2": "PA[1].Inverter[15].IRR_String14_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[15].IRR_String15_Power",
+        "serie_1": "PA[1].Inverter[15].IRR_String15_Current",
+        "serie_2": "PA[1].Inverter[15].IRR_String15_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[15].IRR_String16_Power",
+        "serie_1": "PA[1].Inverter[15].IRR_String16_Current",
+        "serie_2": "PA[1].Inverter[15].IRR_String16_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[15].IRR_String17_Power",
+        "serie_1": "PA[1].Inverter[15].IRR_String17_Current",
+        "serie_2": "PA[1].Inverter[15].IRR_String17_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[15].IRR_String18_Power",
+        "serie_1": "PA[1].Inverter[15].IRR_String18_Current",
+        "serie_2": "PA[1].Inverter[15].IRR_String18_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[15].IRR_String19_Power",
+        "serie_1": "PA[1].Inverter[15].IRR_String19_Current",
+        "serie_2": "PA[1].Inverter[15].IRR_String19_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[15].IRR_String20_Power",
+        "serie_1": "PA[1].Inverter[15].IRR_String20_Current",
+        "serie_2": "PA[1].Inverter[15].IRR_String20_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[16].IRR_String01_Power",
+        "serie_1": "PA[1].Inverter[16].IRR_String01_Current",
+        "serie_2": "PA[1].Inverter[16].IRR_String01_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[16].IRR_String02_Power",
+        "serie_1": "PA[1].Inverter[16].IRR_String02_Current",
+        "serie_2": "PA[1].Inverter[16].IRR_String02_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[16].IRR_String03_Power",
+        "serie_1": "PA[1].Inverter[16].IRR_String03_Current",
+        "serie_2": "PA[1].Inverter[16].IRR_String03_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[16].IRR_String04_Power",
+        "serie_1": "PA[1].Inverter[16].IRR_String04_Current",
+        "serie_2": "PA[1].Inverter[16].IRR_String04_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[16].IRR_String05_Power",
+        "serie_1": "PA[1].Inverter[16].IRR_String05_Current",
+        "serie_2": "PA[1].Inverter[16].IRR_String05_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[16].IRR_String06_Power",
+        "serie_1": "PA[1].Inverter[16].IRR_String06_Current",
+        "serie_2": "PA[1].Inverter[16].IRR_String06_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[16].IRR_String07_Power",
+        "serie_1": "PA[1].Inverter[16].IRR_String07_Current",
+        "serie_2": "PA[1].Inverter[16].IRR_String07_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[16].IRR_String08_Power",
+        "serie_1": "PA[1].Inverter[16].IRR_String08_Current",
+        "serie_2": "PA[1].Inverter[16].IRR_String08_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[16].IRR_String09_Power",
+        "serie_1": "PA[1].Inverter[16].IRR_String09_Current",
+        "serie_2": "PA[1].Inverter[16].IRR_String09_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[16].IRR_String10_Power",
+        "serie_1": "PA[1].Inverter[16].IRR_String10_Current",
+        "serie_2": "PA[1].Inverter[16].IRR_String10_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[16].IRR_String11_Power",
+        "serie_1": "PA[1].Inverter[16].IRR_String11_Current",
+        "serie_2": "PA[1].Inverter[16].IRR_String11_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[16].IRR_String12_Power",
+        "serie_1": "PA[1].Inverter[16].IRR_String12_Current",
+        "serie_2": "PA[1].Inverter[16].IRR_String12_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[16].IRR_String13_Power",
+        "serie_1": "PA[1].Inverter[16].IRR_String13_Current",
+        "serie_2": "PA[1].Inverter[16].IRR_String13_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[16].IRR_String14_Power",
+        "serie_1": "PA[1].Inverter[16].IRR_String14_Current",
+        "serie_2": "PA[1].Inverter[16].IRR_String14_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[16].IRR_String15_Power",
+        "serie_1": "PA[1].Inverter[16].IRR_String15_Current",
+        "serie_2": "PA[1].Inverter[16].IRR_String15_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[16].IRR_String16_Power",
+        "serie_1": "PA[1].Inverter[16].IRR_String16_Current",
+        "serie_2": "PA[1].Inverter[16].IRR_String16_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[16].IRR_String17_Power",
+        "serie_1": "PA[1].Inverter[16].IRR_String17_Current",
+        "serie_2": "PA[1].Inverter[16].IRR_String17_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[16].IRR_String18_Power",
+        "serie_1": "PA[1].Inverter[16].IRR_String18_Current",
+        "serie_2": "PA[1].Inverter[16].IRR_String18_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[16].IRR_String19_Power",
+        "serie_1": "PA[1].Inverter[16].IRR_String19_Current",
+        "serie_2": "PA[1].Inverter[16].IRR_String19_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[16].IRR_String20_Power",
+        "serie_1": "PA[1].Inverter[16].IRR_String20_Current",
+        "serie_2": "PA[1].Inverter[16].IRR_String20_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[17].IRR_String01_Power",
+        "serie_1": "PA[1].Inverter[17].IRR_String01_Current",
+        "serie_2": "PA[1].Inverter[17].IRR_String01_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[17].IRR_String02_Power",
+        "serie_1": "PA[1].Inverter[17].IRR_String02_Current",
+        "serie_2": "PA[1].Inverter[17].IRR_String02_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[17].IRR_String03_Power",
+        "serie_1": "PA[1].Inverter[17].IRR_String03_Current",
+        "serie_2": "PA[1].Inverter[17].IRR_String03_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[17].IRR_String04_Power",
+        "serie_1": "PA[1].Inverter[17].IRR_String04_Current",
+        "serie_2": "PA[1].Inverter[17].IRR_String04_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[17].IRR_String05_Power",
+        "serie_1": "PA[1].Inverter[17].IRR_String05_Current",
+        "serie_2": "PA[1].Inverter[17].IRR_String05_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[17].IRR_String06_Power",
+        "serie_1": "PA[1].Inverter[17].IRR_String06_Current",
+        "serie_2": "PA[1].Inverter[17].IRR_String06_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[17].IRR_String07_Power",
+        "serie_1": "PA[1].Inverter[17].IRR_String07_Current",
+        "serie_2": "PA[1].Inverter[17].IRR_String07_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[17].IRR_String08_Power",
+        "serie_1": "PA[1].Inverter[17].IRR_String08_Current",
+        "serie_2": "PA[1].Inverter[17].IRR_String08_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[17].IRR_String09_Power",
+        "serie_1": "PA[1].Inverter[17].IRR_String09_Current",
+        "serie_2": "PA[1].Inverter[17].IRR_String09_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[17].IRR_String10_Power",
+        "serie_1": "PA[1].Inverter[17].IRR_String10_Current",
+        "serie_2": "PA[1].Inverter[17].IRR_String10_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[17].IRR_String11_Power",
+        "serie_1": "PA[1].Inverter[17].IRR_String11_Current",
+        "serie_2": "PA[1].Inverter[17].IRR_String11_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[17].IRR_String12_Power",
+        "serie_1": "PA[1].Inverter[17].IRR_String12_Current",
+        "serie_2": "PA[1].Inverter[17].IRR_String12_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[17].IRR_String13_Power",
+        "serie_1": "PA[1].Inverter[17].IRR_String13_Current",
+        "serie_2": "PA[1].Inverter[17].IRR_String13_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[17].IRR_String14_Power",
+        "serie_1": "PA[1].Inverter[17].IRR_String14_Current",
+        "serie_2": "PA[1].Inverter[17].IRR_String14_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[17].IRR_String15_Power",
+        "serie_1": "PA[1].Inverter[17].IRR_String15_Current",
+        "serie_2": "PA[1].Inverter[17].IRR_String15_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[17].IRR_String16_Power",
+        "serie_1": "PA[1].Inverter[17].IRR_String16_Current",
+        "serie_2": "PA[1].Inverter[17].IRR_String16_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[17].IRR_String17_Power",
+        "serie_1": "PA[1].Inverter[17].IRR_String17_Current",
+        "serie_2": "PA[1].Inverter[17].IRR_String17_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[17].IRR_String18_Power",
+        "serie_1": "PA[1].Inverter[17].IRR_String18_Current",
+        "serie_2": "PA[1].Inverter[17].IRR_String18_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[18].IRR_String01_Power",
+        "serie_1": "PA[1].Inverter[18].IRR_String01_Current",
+        "serie_2": "PA[1].Inverter[18].IRR_String01_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[18].IRR_String02_Power",
+        "serie_1": "PA[1].Inverter[18].IRR_String02_Current",
+        "serie_2": "PA[1].Inverter[18].IRR_String02_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[18].IRR_String03_Power",
+        "serie_1": "PA[1].Inverter[18].IRR_String03_Current",
+        "serie_2": "PA[1].Inverter[18].IRR_String03_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[18].IRR_String04_Power",
+        "serie_1": "PA[1].Inverter[18].IRR_String04_Current",
+        "serie_2": "PA[1].Inverter[18].IRR_String04_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[18].IRR_String05_Power",
+        "serie_1": "PA[1].Inverter[18].IRR_String05_Current",
+        "serie_2": "PA[1].Inverter[18].IRR_String05_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[18].IRR_String06_Power",
+        "serie_1": "PA[1].Inverter[18].IRR_String06_Current",
+        "serie_2": "PA[1].Inverter[18].IRR_String06_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[18].IRR_String07_Power",
+        "serie_1": "PA[1].Inverter[18].IRR_String07_Current",
+        "serie_2": "PA[1].Inverter[18].IRR_String07_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[18].IRR_String08_Power",
+        "serie_1": "PA[1].Inverter[18].IRR_String08_Current",
+        "serie_2": "PA[1].Inverter[18].IRR_String08_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[18].IRR_String09_Power",
+        "serie_1": "PA[1].Inverter[18].IRR_String09_Current",
+        "serie_2": "PA[1].Inverter[18].IRR_String09_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[18].IRR_String10_Power",
+        "serie_1": "PA[1].Inverter[18].IRR_String10_Current",
+        "serie_2": "PA[1].Inverter[18].IRR_String10_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[18].IRR_String11_Power",
+        "serie_1": "PA[1].Inverter[18].IRR_String11_Current",
+        "serie_2": "PA[1].Inverter[18].IRR_String11_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[18].IRR_String12_Power",
+        "serie_1": "PA[1].Inverter[18].IRR_String12_Current",
+        "serie_2": "PA[1].Inverter[18].IRR_String12_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[18].IRR_String13_Power",
+        "serie_1": "PA[1].Inverter[18].IRR_String13_Current",
+        "serie_2": "PA[1].Inverter[18].IRR_String13_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[18].IRR_String14_Power",
+        "serie_1": "PA[1].Inverter[18].IRR_String14_Current",
+        "serie_2": "PA[1].Inverter[18].IRR_String14_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[18].IRR_String15_Power",
+        "serie_1": "PA[1].Inverter[18].IRR_String15_Current",
+        "serie_2": "PA[1].Inverter[18].IRR_String15_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[18].IRR_String16_Power",
+        "serie_1": "PA[1].Inverter[18].IRR_String16_Current",
+        "serie_2": "PA[1].Inverter[18].IRR_String16_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[18].IRR_String17_Power",
+        "serie_1": "PA[1].Inverter[18].IRR_String17_Current",
+        "serie_2": "PA[1].Inverter[18].IRR_String17_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[18].IRR_String18_Power",
+        "serie_1": "PA[1].Inverter[18].IRR_String18_Current",
+        "serie_2": "PA[1].Inverter[18].IRR_String18_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[19].IRR_String01_Power",
+        "serie_1": "PA[1].Inverter[19].IRR_String01_Current",
+        "serie_2": "PA[1].Inverter[19].IRR_String01_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[19].IRR_String02_Power",
+        "serie_1": "PA[1].Inverter[19].IRR_String02_Current",
+        "serie_2": "PA[1].Inverter[19].IRR_String02_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[19].IRR_String03_Power",
+        "serie_1": "PA[1].Inverter[19].IRR_String03_Current",
+        "serie_2": "PA[1].Inverter[19].IRR_String03_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[19].IRR_String04_Power",
+        "serie_1": "PA[1].Inverter[19].IRR_String04_Current",
+        "serie_2": "PA[1].Inverter[19].IRR_String04_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[19].IRR_String05_Power",
+        "serie_1": "PA[1].Inverter[19].IRR_String05_Current",
+        "serie_2": "PA[1].Inverter[19].IRR_String05_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[19].IRR_String06_Power",
+        "serie_1": "PA[1].Inverter[19].IRR_String06_Current",
+        "serie_2": "PA[1].Inverter[19].IRR_String06_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[19].IRR_String07_Power",
+        "serie_1": "PA[1].Inverter[19].IRR_String07_Current",
+        "serie_2": "PA[1].Inverter[19].IRR_String07_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[19].IRR_String08_Power",
+        "serie_1": "PA[1].Inverter[19].IRR_String08_Current",
+        "serie_2": "PA[1].Inverter[19].IRR_String08_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[19].IRR_String09_Power",
+        "serie_1": "PA[1].Inverter[19].IRR_String09_Current",
+        "serie_2": "PA[1].Inverter[19].IRR_String09_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[19].IRR_String10_Power",
+        "serie_1": "PA[1].Inverter[19].IRR_String10_Current",
+        "serie_2": "PA[1].Inverter[19].IRR_String10_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[19].IRR_String11_Power",
+        "serie_1": "PA[1].Inverter[19].IRR_String11_Current",
+        "serie_2": "PA[1].Inverter[19].IRR_String11_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[19].IRR_String12_Power",
+        "serie_1": "PA[1].Inverter[19].IRR_String12_Current",
+        "serie_2": "PA[1].Inverter[19].IRR_String12_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[19].IRR_String13_Power",
+        "serie_1": "PA[1].Inverter[19].IRR_String13_Current",
+        "serie_2": "PA[1].Inverter[19].IRR_String13_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[19].IRR_String14_Power",
+        "serie_1": "PA[1].Inverter[19].IRR_String14_Current",
+        "serie_2": "PA[1].Inverter[19].IRR_String14_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[19].IRR_String15_Power",
+        "serie_1": "PA[1].Inverter[19].IRR_String15_Current",
+        "serie_2": "PA[1].Inverter[19].IRR_String15_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[19].IRR_String16_Power",
+        "serie_1": "PA[1].Inverter[19].IRR_String16_Current",
+        "serie_2": "PA[1].Inverter[19].IRR_String16_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[19].IRR_String17_Power",
+        "serie_1": "PA[1].Inverter[19].IRR_String17_Current",
+        "serie_2": "PA[1].Inverter[19].IRR_String17_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[19].IRR_String18_Power",
+        "serie_1": "PA[1].Inverter[19].IRR_String18_Current",
+        "serie_2": "PA[1].Inverter[19].IRR_String18_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[20].IRR_String01_Power",
+        "serie_1": "PA[1].Inverter[20].IRR_String01_Current",
+        "serie_2": "PA[1].Inverter[20].IRR_String01_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[20].IRR_String02_Power",
+        "serie_1": "PA[1].Inverter[20].IRR_String02_Current",
+        "serie_2": "PA[1].Inverter[20].IRR_String02_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[20].IRR_String03_Power",
+        "serie_1": "PA[1].Inverter[20].IRR_String03_Current",
+        "serie_2": "PA[1].Inverter[20].IRR_String03_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[20].IRR_String04_Power",
+        "serie_1": "PA[1].Inverter[20].IRR_String04_Current",
+        "serie_2": "PA[1].Inverter[20].IRR_String04_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[20].IRR_String05_Power",
+        "serie_1": "PA[1].Inverter[20].IRR_String05_Current",
+        "serie_2": "PA[1].Inverter[20].IRR_String05_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[20].IRR_String06_Power",
+        "serie_1": "PA[1].Inverter[20].IRR_String06_Current",
+        "serie_2": "PA[1].Inverter[20].IRR_String06_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[20].IRR_String07_Power",
+        "serie_1": "PA[1].Inverter[20].IRR_String07_Current",
+        "serie_2": "PA[1].Inverter[20].IRR_String07_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[20].IRR_String08_Power",
+        "serie_1": "PA[1].Inverter[20].IRR_String08_Current",
+        "serie_2": "PA[1].Inverter[20].IRR_String08_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[20].IRR_String09_Power",
+        "serie_1": "PA[1].Inverter[20].IRR_String09_Current",
+        "serie_2": "PA[1].Inverter[20].IRR_String09_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[20].IRR_String10_Power",
+        "serie_1": "PA[1].Inverter[20].IRR_String10_Current",
+        "serie_2": "PA[1].Inverter[20].IRR_String10_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[20].IRR_String11_Power",
+        "serie_1": "PA[1].Inverter[20].IRR_String11_Current",
+        "serie_2": "PA[1].Inverter[20].IRR_String11_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[20].IRR_String12_Power",
+        "serie_1": "PA[1].Inverter[20].IRR_String12_Current",
+        "serie_2": "PA[1].Inverter[20].IRR_String12_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[20].IRR_String13_Power",
+        "serie_1": "PA[1].Inverter[20].IRR_String13_Current",
+        "serie_2": "PA[1].Inverter[20].IRR_String13_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[20].IRR_String14_Power",
+        "serie_1": "PA[1].Inverter[20].IRR_String14_Current",
+        "serie_2": "PA[1].Inverter[20].IRR_String14_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[20].IRR_String15_Power",
+        "serie_1": "PA[1].Inverter[20].IRR_String15_Current",
+        "serie_2": "PA[1].Inverter[20].IRR_String15_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[20].IRR_String16_Power",
+        "serie_1": "PA[1].Inverter[20].IRR_String16_Current",
+        "serie_2": "PA[1].Inverter[20].IRR_String16_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[20].IRR_String17_Power",
+        "serie_1": "PA[1].Inverter[20].IRR_String17_Current",
+        "serie_2": "PA[1].Inverter[20].IRR_String17_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[20].IRR_String18_Power",
+        "serie_1": "PA[1].Inverter[20].IRR_String18_Current",
+        "serie_2": "PA[1].Inverter[20].IRR_String18_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[21].IRR_String01_Power",
+        "serie_1": "PA[1].Inverter[21].IRR_String01_Current",
+        "serie_2": "PA[1].Inverter[21].IRR_String01_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[21].IRR_String02_Power",
+        "serie_1": "PA[1].Inverter[21].IRR_String02_Current",
+        "serie_2": "PA[1].Inverter[21].IRR_String02_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[21].IRR_String03_Power",
+        "serie_1": "PA[1].Inverter[21].IRR_String03_Current",
+        "serie_2": "PA[1].Inverter[21].IRR_String03_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[21].IRR_String04_Power",
+        "serie_1": "PA[1].Inverter[21].IRR_String04_Current",
+        "serie_2": "PA[1].Inverter[21].IRR_String04_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[21].IRR_String05_Power",
+        "serie_1": "PA[1].Inverter[21].IRR_String05_Current",
+        "serie_2": "PA[1].Inverter[21].IRR_String05_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[21].IRR_String06_Power",
+        "serie_1": "PA[1].Inverter[21].IRR_String06_Current",
+        "serie_2": "PA[1].Inverter[21].IRR_String06_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[21].IRR_String07_Power",
+        "serie_1": "PA[1].Inverter[21].IRR_String07_Current",
+        "serie_2": "PA[1].Inverter[21].IRR_String07_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[21].IRR_String08_Power",
+        "serie_1": "PA[1].Inverter[21].IRR_String08_Current",
+        "serie_2": "PA[1].Inverter[21].IRR_String08_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[21].IRR_String09_Power",
+        "serie_1": "PA[1].Inverter[21].IRR_String09_Current",
+        "serie_2": "PA[1].Inverter[21].IRR_String09_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[21].IRR_String10_Power",
+        "serie_1": "PA[1].Inverter[21].IRR_String10_Current",
+        "serie_2": "PA[1].Inverter[21].IRR_String10_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[21].IRR_String11_Power",
+        "serie_1": "PA[1].Inverter[21].IRR_String11_Current",
+        "serie_2": "PA[1].Inverter[21].IRR_String11_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[21].IRR_String12_Power",
+        "serie_1": "PA[1].Inverter[21].IRR_String12_Current",
+        "serie_2": "PA[1].Inverter[21].IRR_String12_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[21].IRR_String13_Power",
+        "serie_1": "PA[1].Inverter[21].IRR_String13_Current",
+        "serie_2": "PA[1].Inverter[21].IRR_String13_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[21].IRR_String14_Power",
+        "serie_1": "PA[1].Inverter[21].IRR_String14_Current",
+        "serie_2": "PA[1].Inverter[21].IRR_String14_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[21].IRR_String15_Power",
+        "serie_1": "PA[1].Inverter[21].IRR_String15_Current",
+        "serie_2": "PA[1].Inverter[21].IRR_String15_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[21].IRR_String16_Power",
+        "serie_1": "PA[1].Inverter[21].IRR_String16_Current",
+        "serie_2": "PA[1].Inverter[21].IRR_String16_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[21].IRR_String17_Power",
+        "serie_1": "PA[1].Inverter[21].IRR_String17_Current",
+        "serie_2": "PA[1].Inverter[21].IRR_String17_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[21].IRR_String18_Power",
+        "serie_1": "PA[1].Inverter[21].IRR_String18_Current",
+        "serie_2": "PA[1].Inverter[21].IRR_String18_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[22].IRR_String01_Power",
+        "serie_1": "PA[1].Inverter[22].IRR_String01_Current",
+        "serie_2": "PA[1].Inverter[22].IRR_String01_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[22].IRR_String02_Power",
+        "serie_1": "PA[1].Inverter[22].IRR_String02_Current",
+        "serie_2": "PA[1].Inverter[22].IRR_String02_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[22].IRR_String03_Power",
+        "serie_1": "PA[1].Inverter[22].IRR_String03_Current",
+        "serie_2": "PA[1].Inverter[22].IRR_String03_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[22].IRR_String04_Power",
+        "serie_1": "PA[1].Inverter[22].IRR_String04_Current",
+        "serie_2": "PA[1].Inverter[22].IRR_String04_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[22].IRR_String05_Power",
+        "serie_1": "PA[1].Inverter[22].IRR_String05_Current",
+        "serie_2": "PA[1].Inverter[22].IRR_String05_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[22].IRR_String06_Power",
+        "serie_1": "PA[1].Inverter[22].IRR_String06_Current",
+        "serie_2": "PA[1].Inverter[22].IRR_String06_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[22].IRR_String07_Power",
+        "serie_1": "PA[1].Inverter[22].IRR_String07_Current",
+        "serie_2": "PA[1].Inverter[22].IRR_String07_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[22].IRR_String08_Power",
+        "serie_1": "PA[1].Inverter[22].IRR_String08_Current",
+        "serie_2": "PA[1].Inverter[22].IRR_String08_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[22].IRR_String09_Power",
+        "serie_1": "PA[1].Inverter[22].IRR_String09_Current",
+        "serie_2": "PA[1].Inverter[22].IRR_String09_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[22].IRR_String10_Power",
+        "serie_1": "PA[1].Inverter[22].IRR_String10_Current",
+        "serie_2": "PA[1].Inverter[22].IRR_String10_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[22].IRR_String11_Power",
+        "serie_1": "PA[1].Inverter[22].IRR_String11_Current",
+        "serie_2": "PA[1].Inverter[22].IRR_String11_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[22].IRR_String12_Power",
+        "serie_1": "PA[1].Inverter[22].IRR_String12_Current",
+        "serie_2": "PA[1].Inverter[22].IRR_String12_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[22].IRR_String13_Power",
+        "serie_1": "PA[1].Inverter[22].IRR_String13_Current",
+        "serie_2": "PA[1].Inverter[22].IRR_String13_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[22].IRR_String14_Power",
+        "serie_1": "PA[1].Inverter[22].IRR_String14_Current",
+        "serie_2": "PA[1].Inverter[22].IRR_String14_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[22].IRR_String15_Power",
+        "serie_1": "PA[1].Inverter[22].IRR_String15_Current",
+        "serie_2": "PA[1].Inverter[22].IRR_String15_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[22].IRR_String16_Power",
+        "serie_1": "PA[1].Inverter[22].IRR_String16_Current",
+        "serie_2": "PA[1].Inverter[22].IRR_String16_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[22].IRR_String17_Power",
+        "serie_1": "PA[1].Inverter[22].IRR_String17_Current",
+        "serie_2": "PA[1].Inverter[22].IRR_String17_Voltage",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "PA[1].Inverter[22].IRR_String18_Power",
+        "serie_1": "PA[1].Inverter[22].IRR_String18_Current",
+        "serie_2": "PA[1].Inverter[22].IRR_String18_Voltage",
+        "serie_3": null
+      }
+    ]
+  }
+}

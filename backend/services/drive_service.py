@@ -22,11 +22,20 @@ def get_drive_service():
     if os.path.exists('token.json'):
         creds = Credentials.from_authorized_user_file('token.json', SCOPES)
         
+    from google.auth.exceptions import RefreshError
+
     # Se não houver credenciais (ou estiverem expiradas), o usuário faz login
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
+            try:
+                creds.refresh(Request())
+            except RefreshError:
+                # Token expirado ou revogado (ex: invalid_grant)
+                creds = None
+                if os.path.exists('token.json'):
+                    os.remove('token.json')
+
+        if not creds or not creds.valid:
             if not os.path.exists('client_secret.json'):
                 raise ValueError("O arquivo 'client_secret.json' não foi encontrado na raiz do backend.")
             flow = InstalledAppFlow.from_client_secrets_file(

@@ -127,20 +127,65 @@ def process_excel(content: bytes, original_filename: str, usina: str, skip_unmap
 
     logger.info(f"[EXCEL] Lido: {df.shape[0]} linhas × {df.shape[1]} colunas")
 
-    # ── Parsear timestamp (sempre primeira coluna) ────────────────────────────
-    ts_col = df.columns[TIMESTAMP_COL_INDEX]
-    logger.info(f"[EXCEL] Coluna de timestamp detectada: '{ts_col}'")
+    # ── Identificar formato longo / híbrido / largo ──
+    cols_lower = [str(c).lower().strip() for c in df.columns]
+    is_long_format = all(c in cols_lower for c in ['timestamp', 'tag', 'value'])
+    is_hybrid_pmi_format = all(c in cols_lower for c in ['time', 'meter_name', 'kwh_del_int', 'kwh_rec_int'])
 
-    df[ts_col] = pd.to_datetime(
-        df[ts_col].astype(str).str.strip(),
-        dayfirst=TIMESTAMP_DAYFIRST,
-        errors="coerce",
-    )
+    if is_long_format:
+        logger.info(f"[EXCEL] Formato longo detectado no process_excel. Realizando pivot...")
+        ts_col = df.columns[cols_lower.index('timestamp')]
+        tag_col = df.columns[cols_lower.index('tag')]
+        val_col = df.columns[cols_lower.index('value')]
+        
+        df[ts_col] = pd.to_datetime(
+            df[ts_col].astype(str).str.strip(), 
+            dayfirst=TIMESTAMP_DAYFIRST,
+            errors='coerce'
+        )
+        df = df.pivot(index=ts_col, columns=tag_col, values=val_col).reset_index()
+        df = df.rename(columns={ts_col: "timestamp"})
+        df = df.dropna(subset=["timestamp"])
+        df = df.sort_values("timestamp").reset_index(drop=True)
 
-    # Renomear para nome padronizado
-    df = df.rename(columns={ts_col: "timestamp"})
-    df = df.dropna(subset=["timestamp"])
-    df = df.sort_values("timestamp").reset_index(drop=True)
+    elif is_hybrid_pmi_format:
+        logger.info(f"[EXCEL] Formato híbrido PMI detectado. Realizando melt e pivot...")
+        ts_col = df.columns[cols_lower.index('time')]
+        tag_col = df.columns[cols_lower.index('meter_name')]
+        
+        df[ts_col] = pd.to_datetime(
+            df[ts_col].astype(str).str.strip(), 
+            dayfirst=TIMESTAMP_DAYFIRST,
+            errors='coerce'
+        )
+        
+        id_vars = [ts_col, tag_col]
+        value_vars = [c for c in df.columns if c not in id_vars]
+        
+        melted = pd.melt(df, id_vars=id_vars, value_vars=value_vars, var_name='var_type', value_name='value')
+        melted['tag'] = melted[tag_col].astype(str) + '_' + melted['var_type'].astype(str)
+        
+        df = melted.pivot(index=ts_col, columns='tag', values='value').reset_index()
+        df = df.rename(columns={ts_col: "timestamp"})
+        df.columns.name = None
+        df = df.dropna(subset=["timestamp"])
+        df = df.sort_values("timestamp").reset_index(drop=True)
+
+    else:
+        # ── Parsear timestamp padrão (sempre primeira coluna) ─────────────────
+        ts_col = df.columns[TIMESTAMP_COL_INDEX]
+        logger.info(f"[EXCEL] Coluna de timestamp detectada: '{ts_col}'")
+
+        df[ts_col] = pd.to_datetime(
+            df[ts_col].astype(str).str.strip(),
+            dayfirst=TIMESTAMP_DAYFIRST,
+            errors="coerce",
+        )
+
+        # Renomear para nome padronizado
+        df = df.rename(columns={ts_col: "timestamp"})
+        df = df.dropna(subset=["timestamp"])
+        df = df.sort_values("timestamp").reset_index(drop=True)
 
     # Converter colunas de métricas para tipo numérico usando regex robusto
     for col in df.columns:
@@ -232,6 +277,7 @@ def process_raw_file(content: bytes, filename: str, usina: str, skip_unmapped: b
     
     # ── Identificar formato longo (timestamp, tag, value) ──
     is_long_format = all(c in cols_lower for c in ['timestamp', 'tag', 'value'])
+    is_hybrid_pmi_format = all(c in cols_lower for c in ['time', 'meter_name', 'kwh_del_int', 'kwh_rec_int'])
     
     if is_long_format:
         logger.info(f"[PROCESS] Formato longo detectado. Realizando pivot...")
@@ -251,6 +297,34 @@ def process_raw_file(content: bytes, filename: str, usina: str, skip_unmapped: b
         df = df.pivot(index=ts_col, columns=tag_col, values=val_col).reset_index()
         # O nome da coluna do índice agora é o nome da coluna original do ts
         df = df.rename(columns={ts_col: "timestamp"})
+        
+    elif is_hybrid_pmi_format:
+        logger.info(f"[PROCESS] Formato híbrido PMI detectado. Realizando melt e pivot...")
+        ts_col = df.columns[cols_lower.index('time')]
+        tag_col = df.columns[cols_lower.index('meter_name')]
+        
+        # Parse timestamp
+        df[ts_col] = pd.to_datetime(
+            df[ts_col].astype(str).str.strip(), 
+            dayfirst=TIMESTAMP_DAYFIRST,
+            errors='coerce'
+        )
+        
+        # Melt das colunas de valores (tudo que não é time nem meter_name)
+        id_vars = [ts_col, tag_col]
+        value_vars = [c for c in df.columns if c not in id_vars]
+        
+        melted = pd.melt(df, id_vars=id_vars, value_vars=value_vars, var_name='var_type', value_name='value')
+        
+        # Cria a nova tag combinando o nome do meter e o nome da variável (ex: CLS01_Pri_kWh_del_int)
+        melted['tag'] = melted[tag_col].astype(str) + '_' + melted['var_type'].astype(str)
+        
+        # Pivot para voltar ao formato Largo (Wide) padrão da plataforma
+        df = melted.pivot(index=ts_col, columns='tag', values='value').reset_index()
+        df = df.rename(columns={ts_col: "timestamp"})
+        
+        # Limpa o nome do eixo das colunas criado pelo pivot
+        df.columns.name = None
         
     else:
         logger.info(f"[PROCESS] Formato largo detectado.")

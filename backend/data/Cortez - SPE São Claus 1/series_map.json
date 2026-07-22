@@ -43703,6 +43703,24 @@
     "estacao": null,
     "string": null
   },
+  "CLS01_Pri_kWh_del_int": {
+    "elemento": "Energia PMI",
+    "skid": "CLS01.P",
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "CLS01_Pri_kWh_rec_int": {
+    "elemento": "Energia PMI",
+    "skid": "CLS01.P",
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
   "CLS01.PPC.PotAt": {
     "elemento": "Potência CA PPC",
     "skid": "CLS01.P",
@@ -47247,15 +47265,6 @@
     "stringbox": null,
     "tracker": null,
     "estacao": "MET-EPE",
-    "string": null
-  },
-  "Flag 5 minutos": {
-    "elemento": "Filtro",
-    "skid": null,
-    "inversor": null,
-    "stringbox": null,
-    "tracker": null,
-    "estacao": null,
     "string": null
   },
   "CLS01.1-INV01-SB13.PotenciaCC_01": {

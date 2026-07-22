@@ -247,6 +247,12 @@ def run_flow_processing(usina: str, dates_str: str = None):
                     agg_result = combined.sum(axis=1, min_count=1)
                     agg_result_semTR = combined_semTR.sum(axis=1, min_count=1)
                 
+                # Aplica o fator de conversão/multiplicador se for o bloco energia_pmi
+                if agg_id == "energia_pmi":
+                    multiplier = agg.get("data", {}).get("energiaPmiParams", {}).get("multiplier", 1.0)
+                    agg_result = agg_result * multiplier
+                    agg_result_semTR = agg_result_semTR * multiplier
+                
                 # Filtro final de saída
                 out_filter_name = agg.get("data", {}).get("outputFilter")
                 if out_filter_name and out_filter_name in filter_map:
@@ -298,9 +304,10 @@ def run_flow_processing(usina: str, dates_str: str = None):
 
                 # Filtro de PPC removido e migrado para bloco próprio de Curtailment
 
-                processed_df[agg_id] = agg_result
+                out_col = "Energia PMI" if agg_id == "energia_pmi" else agg_id
+                processed_df[out_col] = agg_result
                 if agg_id in ["gpoa", "grear", "referencia_ppc"] or agg_id.startswith("referencia_ppc"):
-                    processed_df[f"{agg_id}_semTR"] = agg_result_semTR
+                    processed_df[f"{out_col}_semTR"] = agg_result_semTR
             
 
 
@@ -355,23 +362,36 @@ def run_flow_processing(usina: str, dates_str: str = None):
             ref_min = data.get("curtailmentRefMin", 52.8)
             ref_margin = data.get("curtailmentRefMargin", 3.0)
             diff_margin = data.get("curtailmentDiffMargin", 5.0)
+            resolution_mode = data.get("resolutionMode", "1min")
             
             potencia_ppc = processed_df.get("potencia_ppc")
             
             # Pega as colunas de Referência PPC para comparação
             ppc_cols = [c for c in processed_df.columns if c.startswith("referencia_ppc") and not c.endswith("_semTR") and not c.endswith("_válida")]
+            
             if potencia_ppc is not None and ppc_cols:
                 ppc_data = processed_df[ppc_cols[0]]
+                
                 try:
+                    # Gera as séries de 15 minutos sempre, para visualização
+                    processed_df["Potência PPC_15min"] = processed_df.groupby(pd.Grouper(freq="15min"))["potencia_ppc"].transform("mean")
+                    processed_df["Referência PPC_15min"] = processed_df.groupby(pd.Grouper(freq="15min"))[ppc_cols[0]].transform("mean")
+                    
+                    # Avalia de acordo com a resolução
+                    if resolution_mode == "15min":
+                        eval_potencia = processed_df["Potência PPC_15min"]
+                        eval_referencia = processed_df["Referência PPC_15min"]
+                    else:
+                        eval_potencia = potencia_ppc
+                        eval_referencia = ppc_data
+                        
                     threshold_min = float(ref_min) * (1 - (float(ref_margin) / 100.0))
-                    cond_1 = ppc_data < threshold_min
+                    cond_1 = eval_referencia < threshold_min
 
                     # Gatilho 2: potência real está dentro da banda de tolerância da referência
                     # |real - ref| <= ref * (diff_margin / 100)
-                    # Quando ref=0 e real=50 → diff=50 > 0 → cond_2=False (sem curtailment) ✓
-                    # Quando ref=40 e real=41 → diff=1 <= 2 → cond_2=True (curtailment) ✓
-                    tolerance_band = (ppc_data * (float(diff_margin) / 100.0)).abs()
-                    cond_2 = (potencia_ppc - ppc_data).abs() <= tolerance_band
+                    tolerance_band = (eval_referencia * (float(diff_margin) / 100.0)).abs()
+                    cond_2 = (eval_potencia - eval_referencia).abs() <= tolerance_band
 
                     # Curtailment efetivo (0) se cond_1 e cond_2 forem verdadeiras. Caso contrário, válido (1)
                     curtailment_flag = ~(cond_1 & cond_2)
@@ -382,6 +402,48 @@ def run_flow_processing(usina: str, dates_str: str = None):
             else:
                 logger.warning(f"[CURTAILMENT] potencia_ppc ou referencia_ppc ausentes para {curtailment_id} em {date}")
                 processed_df[curtailment_id] = 1
+
+        # --- Pré-processa EPI (Variáveis do PVSyst) ---
+        epi_node = next((n for n in nodes if n.get("id") == "epi"), None)
+        if epi_node:
+            epi_params = epi_node.get("data", {}).get("epiParams", {})
+            energia_var = epi_params.get("energiaVar")
+            irrad_var = epi_params.get("irradianciaVar")
+            
+            vars_to_load = [v for v in [energia_var, irrad_var] if v]
+            if vars_to_load:
+                pvsyst_path = os.path.join(DATA_DIR, usina, "pvsyst_data.parquet")
+                if os.path.exists(pvsyst_path):
+                    try:
+                        day_start = pd.to_datetime(date)
+                        if day_start.tz is not None:
+                            day_start = day_start.tz_localize(None)
+                        day_end = day_start + pd.Timedelta(days=1)
+                        
+                        df_pvsyst = pd.read_parquet(
+                            pvsyst_path,
+                            columns=["timestamp"] + [v for v in vars_to_load if v not in ["timestamp"]]
+                        )
+                        if df_pvsyst["timestamp"].dt.tz is not None:
+                            df_pvsyst["timestamp"] = df_pvsyst["timestamp"].dt.tz_localize(None)
+                            
+                        mask = (df_pvsyst["timestamp"] >= day_start) & (df_pvsyst["timestamp"] < day_end)
+                        df_pvsyst_day = df_pvsyst[mask].copy()
+                        
+                        if not df_pvsyst_day.empty:
+                            df_pvsyst_day.set_index("timestamp", inplace=True)
+                            
+                            # Alinha o fuso horário
+                            if processed_df.index.tz is not None and df_pvsyst_day.index.tz is None:
+                                df_pvsyst_day.index = df_pvsyst_day.index.tz_localize(processed_df.index.tz)
+                            elif processed_df.index.tz is None and df_pvsyst_day.index.tz is not None:
+                                df_pvsyst_day.index = df_pvsyst_day.index.tz_localize(None)
+                                
+                            for v in vars_to_load:
+                                if v in df_pvsyst_day.columns:
+                                    processed_df[v] = df_pvsyst_day[v]
+                    except Exception as e:
+                        logger.warning(f"[EPI] Erro ao carregar PVSyst para {date}: {e}")
 
         # --- Depois processa o Bloco Simultaneidade/Dados Válidos ---
         simult_nodes = [n for n in nodes if n.get("id") == "simultaneidade" or n.get("data", {}).get("label", "").find("Simultaneidade") != -1 or n.get("data", {}).get("label", "").find("Dados Válidos") != -1]
@@ -423,11 +485,18 @@ def run_flow_processing(usina: str, dates_str: str = None):
             # check_potencia_ppc removido da lógica de simultaneidade conforme pedido
                     
             if check_energia_pmi:
-                energia_pmi_data = processed_df.get("energia_pmi")
+                energia_pmi_data = processed_df.get("Energia PMI")
                 if energia_pmi_data is not None:
                     valid_mask = valid_mask & energia_pmi_data.notna()
                 else:
                     valid_mask = False
+                
+                # O usuário pediu que se a energia_pmi estiver ativa,
+                # qualquer dado faltando (de 1 min) invalide todo o bloco de 5 min.
+                # Agrupamos a máscara de validade a cada 5 minutos
+                # e se houver qualquer False, todo o bloco vira False.
+                if isinstance(valid_mask, pd.Series):
+                    valid_mask = valid_mask.groupby(pd.Grouper(freq='5min')).transform('min').astype(bool)
                     
             # A flag Simultaneidade observa apenas as séries dela
             if isinstance(valid_mask, bool):
@@ -442,6 +511,11 @@ def run_flow_processing(usina: str, dates_str: str = None):
                     valid_mask = valid_mask & (curtailment_data == 1)
                 else:
                     valid_mask = False
+                    
+                # Se a energia_pmi estiver ativa, garantimos que qualquer
+                # ponto invalidado pelo Curtailment também derrube o bloco inteiro de 5 min
+                if check_energia_pmi and isinstance(valid_mask, pd.Series):
+                    valid_mask = valid_mask.groupby(pd.Grouper(freq='5min')).transform('min').astype(bool)
             
             if isinstance(valid_mask, bool):
                 processed_df[out_name] = int(valid_mask)
@@ -451,9 +525,9 @@ def run_flow_processing(usina: str, dates_str: str = None):
             # --- Cria as séries "_válida" multiplicando pela flag de Dados Válidos ---
             simult_flag = processed_df[out_name]
             for col in list(processed_df.columns):
-                if col != out_name and col != "Simultaneidade" and not col.endswith("_válida") and not col.startswith("curtailment") and not col.startswith("flag_tracker_erro") and col != "Tracker Piranômetro":
-                    # Multiplica as séries originais pela flag (0 ou 1)
-                    processed_df[f"{col}_válida"] = processed_df[col] * simult_flag
+                if col != out_name and col != "Simultaneidade" and not col.endswith("_válida") and not col.lower().startswith("curtailment") and not col.startswith("flag_tracker_erro") and col != "Tracker Piranômetro":
+                    # Substitui os dados inválidos por NaN (vazio)
+                    processed_df[f"{col}_válida"] = processed_df[col].where(simult_flag == 1, np.nan)
 
             # --- Cria as séries de 15min para gpoa ---
             if "gpoa" in processed_df.columns:
@@ -461,6 +535,10 @@ def run_flow_processing(usina: str, dates_str: str = None):
             
             if "gpoa_válida" in processed_df.columns:
                 processed_df["gpoa_válida_15min"] = processed_df.groupby(pd.Grouper(freq="15min"))["gpoa_válida"].transform("mean")
+
+            # --- Cria série E_Grid_Ajustada_válida ---
+            if "E_Grid_válida" in processed_df.columns and "GlobInc_válida" in processed_df.columns and "geff_válida" in processed_df.columns:
+                processed_df["E_Grid_Ajustada_válida"] = processed_df["E_Grid_válida"] * (processed_df["geff_válida"] / processed_df["GlobInc_válida"].replace(0, np.nan))
 
 
         # Salvar o dia processado
@@ -536,7 +614,7 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
         "tamb": "Tamb",
         "tmod": "Tmod",
         "sujidade": "Sujidade",
-        "tracker": "Tracker",
+        "tracker": "Tracker Piranômetro",
         "potencia_ppc": "Potência PPC",
         "referencia_ppc": "Referência PPC",
         "energia_pmi": "Energia PMI"
@@ -545,7 +623,7 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
     column_definitions = []
     
     # Ordem desejada para as colunas
-    group_order = ["gpoa", "grear", "geff", "tamb", "tmod", "tcel", "sujidade", "tracker", "potencia_ppc", "referencia_ppc", "energia_pmi"]
+    group_order = ["gpoa", "grear", "geff", "tamb", "tmod", "tcel", "sujidade", "tracker", "potencia_ppc", "curtailment", "energia_pmi", "pvsyst", "epi"]
 
     for group in group_order:
         # Achar o nó correspondente
@@ -586,15 +664,15 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
             is_sujidade_trimmed = (group == "sujidade" and node.get("data", {}).get("trimPercent"))
             
             column_definitions.append({
-                "key": group,
+                "key": "Energia PMI" if group == "energia_pmi" else group,
                 "label": f"{agg_label} (Dia completo)" if (is_sujidade_restricted or is_sujidade_trimmed) else agg_label,
                 "type": "output",
                 "node_id": group
             })
-            
-            if group not in ["sujidade", "tracker", "energia_pmi"]:
+            if group.lower() not in ["sujidade", "tracker", "curtailment", "epi", "pvsyst"]:
+                val_key = "Energia PMI_válida" if group == "energia_pmi" else f"{group}_válida"
                 column_definitions.append({
-                    "key": f"{group}_válida",
+                    "key": val_key,
                     "label": f"{agg_label} (Válido)",
                     "type": "output",
                     "node_id": group
@@ -626,22 +704,61 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                 except ValueError:
                     pass
         else:
-            # Geff e Tcel
+            # Geff e Tcel e outros
             node_type = node.get("type", "")
-            node_label = "Geff" if node_type == "geff" else "Tcel" if node_type == "tcel" else node.get("data", {}).get("label", group)
-            column_definitions.append({
-                "key": group,
-                "label": node_label,
-                "type": "special",
-                "node_id": group
-            })
-            if group not in ["sujidade", "tracker", "energia_pmi"]:
+            
+            if group == "pvsyst":
+                # Adiciona GlobInc (Válido) logo antes da Energia Prevista, que ficará logo após Energia PMI
                 column_definitions.append({
-                    "key": f"{group}_válida",
-                    "label": f"{node_label} (Válido)",
+                    "key": "GlobInc_válida",
+                    "label": "GlobInc (Válido)",
+                    "type": "special",
+                    "node_id": "pvsyst_irrad"
+                })
+                # Adiciona Fator de Ajuste
+                column_definitions.append({
+                    "key": "fator_ajuste",
+                    "label": "Fator de Ajuste",
+                    "type": "special",
+                    "node_id": "pvsyst_fator"
+                })
+                column_definitions.append({
+                    "key": "E_Grid_válida",
+                    "label": "Energia Prevista (Válido)",
+                    "type": "special",
+                    "node_id": "pvsyst"
+                })
+                # Adiciona Energia Prevista Ajustada (Válido)
+                column_definitions.append({
+                    "key": "E_Grid_Ajustada_válida",
+                    "label": "Energia Prevista Ajustada (Válido)",
+                    "type": "special",
+                    "node_id": "pvsyst_ajustada"
+                })
+            elif group == "epi":
+                column_definitions.append({
+                    "key": "epi",
+                    "label": "EPI",
                     "type": "special",
                     "node_id": group
                 })
+            else:
+                node_label = "Geff" if node_type == "geff" else "Tcel" if node_type == "tcel" else node.get("data", {}).get("label", group)
+                
+                column_definitions.append({
+                    "key": "Energia PMI" if group == "energia_pmi" else group,
+                    "label": node_label,
+                    "type": "special",
+                    "node_id": group
+                })
+                if group.lower() not in ["sujidade", "tracker", "curtailment"]:
+                    val_key = "Energia PMI_válida" if group == "energia_pmi" else f"{group}_válida"
+                    column_definitions.append({
+                        "key": val_key,
+                        "label": f"{node_label} (Válido)",
+                        "type": "special",
+                        "node_id": group
+                    })
 
     # Adicionar grupo de validação (sempre no final)
     validation_cols = [
@@ -812,7 +929,12 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                         # Calcular integral (soma) e converter de 1-min para base horária / kW
                         raw_sum = s_data.sum(min_count=1)
                         if raw_sum is not None and not pd.isna(raw_sum):
-                            val = raw_sum / 0.06 if col["node_id"] == "potencia_ppc" else raw_sum / 60000.0
+                            if col["node_id"] in ["potencia_ppc", "referencia_ppc"]:
+                                val = raw_sum / 0.06
+                            elif col["node_id"] == "energia_pmi":
+                                val = raw_sum / 5.0
+                            else:
+                                val = raw_sum / 60000.0
                         else:
                             val = None
             else:
@@ -838,6 +960,20 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                         # Invalidados são os pontos em que a flag final é 0
                         total_invalidos = (tracker_flag == 0).sum()
                         total_pontos = tracker_flag.notna().sum()
+                        
+                        if total_pontos > 0:
+                            perc = (total_invalidos / total_pontos) * 100
+                            val = f"{int(total_invalidos)} ({perc:.1f}%)"
+                        else:
+                            val = "-"
+                    else:
+                        val = "-"
+                elif col["node_id"] == "curtailment":
+                    if processed_df is not None and "curtailment" in processed_df.columns:
+                        curt_flag = processed_df["curtailment"]
+                        
+                        total_invalidos = (curt_flag == 0).sum()
+                        total_pontos = curt_flag.notna().sum()
                         
                         if total_pontos > 0:
                             perc = (total_invalidos / total_pontos) * 100
@@ -892,7 +1028,12 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                         # Calcular integral (soma) e converter de 1-min para base horária / kW
                         raw_sum = s_data.sum(min_count=1)
                         if raw_sum is not None and not pd.isna(raw_sum):
-                            val = raw_sum / 0.06 if col["node_id"] == "potencia_ppc" else raw_sum / 60000.0
+                            if col["node_id"] in ["potencia_ppc", "referencia_ppc", "energia_pmi"]:
+                                val = raw_sum / 0.06
+                            elif col["node_id"] in ["pvsyst", "pvsyst_ajustada"]:
+                                val = raw_sum / 60.0
+                            else:
+                                val = raw_sum / 60000.0
                         else:
                             val = None
             
@@ -903,6 +1044,20 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                 row_data[col_key] = val
             else:
                 row_data[col_key] = float(val)
+                
+        # Calcula o EPI (Energia PMI (Válido) / Energia Prevista Ajustada (Válido))
+        if "Energia PMI_válida" in row_data and "E_Grid_Ajustada_válida" in row_data:
+            val_pmi = row_data["Energia PMI_válida"]
+            val_pvsyst = row_data["E_Grid_Ajustada_válida"]
+            if val_pmi != "-" and val_pvsyst != "-" and val_pvsyst != 0:
+                row_data["epi"] = val_pmi / val_pvsyst
+
+        # Calcula o Fator de Ajuste (geff_válida / GlobInc_válida)
+        if "GlobInc_válida" in row_data and "geff_válida" in row_data:
+            val_glob = row_data["GlobInc_válida"]
+            val_geff = row_data["geff_válida"]
+            if val_glob != "-" and val_geff != "-" and val_glob != 0:
+                row_data["fator_ajuste"] = val_geff / val_glob
                 
         rows.append(row_data)
 

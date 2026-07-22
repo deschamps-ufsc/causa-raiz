@@ -17,6 +17,7 @@ from routes.settings import router as settings_router
 from routes.visualizacoes import router as visualizacoes_router
 from routes.flow import router as flow_router
 from routes.drive import router as drive_router
+from routes.campanhas import router as campanhas_router
 from services.auth_service import seed_default_admin
 from utils.logger import logger
 from utils.config import DATA_DIR
@@ -65,6 +66,7 @@ app.include_router(settings_router)
 app.include_router(visualizacoes_router, prefix="/visualizacoes", tags=["Visualizações"])
 app.include_router(flow_router)
 app.include_router(drive_router)
+app.include_router(campanhas_router)
 
 # ── Seed admin account ────────────────────────────────────────────────────────
 

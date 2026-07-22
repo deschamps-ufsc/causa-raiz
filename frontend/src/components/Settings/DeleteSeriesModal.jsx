@@ -28,7 +28,7 @@ export default function DeleteSeriesModal({ usina, datesList, onClose, onSuccess
   const uniqueElements = Array.from(new Set(
     Object.values(mappingData).map(m => m.elemento).filter(e => {
       if (!e || e === 'nan') return false;
-      return elementSettings?.some(es => es.element.toLowerCase() === e.toLowerCase());
+      return e.toLowerCase() === 'pvsyst' || elementSettings?.some(es => es.element.toLowerCase() === e.toLowerCase());
     })
   )).sort()
 
@@ -123,7 +123,7 @@ export default function DeleteSeriesModal({ usina, datesList, onClose, onSuccess
       const mapping = mappingData[s.coluna]
       let el = mapping?.elemento;
       if (el && el !== 'nan') {
-        const isRegistered = elementSettings?.some(es => es.element.toLowerCase() === el.toLowerCase());
+        const isRegistered = el.toLowerCase() === 'pvsyst' || elementSettings?.some(es => es.element.toLowerCase() === el.toLowerCase());
         if (!isRegistered) el = 'Outros';
       } else {
         el = mapping ? 'Outros' : 'NAO_MAPEADA';

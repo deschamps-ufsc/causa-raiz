@@ -26,7 +26,7 @@ def list_available_dates(usina: str) -> list[str]:
         return []
     dates = []
     for fname in os.listdir(usina_dir):
-        if fname.endswith(".parquet"):
+        if fname.endswith(".parquet") and fname != "pvsyst_data.parquet":
             dates.append(fname.replace(".parquet", ""))
     return sorted(dates)
 
@@ -67,7 +67,14 @@ def list_series_for_dates(dates_str: str, usina: str) -> list[dict]:
     synth_lookup = build_lookup(usina)
     
     synth_cols = set()
-    all_parquet_cols = raw_cols.union(proc_cols)
+    pvsyst_cols = set()
+    
+    pvsyst_path = os.path.join(DATA_DIR, usina, "pvsyst_data.parquet")
+    if os.path.exists(pvsyst_path):
+        schema_pvsyst = pq.read_schema(pvsyst_path)
+        pvsyst_cols.update(f.name for f in schema_pvsyst if f.name != "timestamp")
+        
+    all_parquet_cols = raw_cols.union(proc_cols).union(pvsyst_cols)
     for s_name, s_def in synth_lookup.items():
         s1 = s_def.get("serie_1")
         s2 = s_def.get("serie_2")
@@ -91,6 +98,12 @@ def list_series_for_dates(dates_str: str, usina: str) -> list[dict]:
         info = mapping.get(col, {})
         
         elemento = info.get("elemento")
+        # Forçar PVSyst para colunas que vieram do arquivo PVSyst ou derivadas
+        base_col = col.replace("_válida", "")
+        if base_col in pvsyst_cols or base_col == "E_Grid_Ajustada":
+            elemento = "PVSyst"
+            info["mapeada"] = True
+            
         # Preencher elemento para séries sintéticas
         if not elemento:
             col_lower = col.lower()
@@ -102,11 +115,11 @@ def list_series_for_dates(dates_str: str, usina: str) -> list[dict]:
                 elemento = "Sujidade"
             elif col_lower.startswith("tracker") or col_lower == "tracker ref." or col_lower.startswith("flag_tracker"):
                 elemento = "Tracker"
-            elif col_lower.startswith("potencia_ppc") and not col_lower.startswith("potencia_ppc_"):
+            elif col_lower.startswith("potencia_ppc") or col_lower.startswith("potência ppc"):
                 elemento = "Potência CA PPC"
-            elif col_lower.startswith("referencia_ppc"):
-                elemento = "Referência PPC"
-            elif col_lower.startswith("energia_pmi"):
+            elif col_lower.startswith("referencia_ppc") or col_lower.startswith("referência ppc"):
+                elemento = "Potência CA PPC"
+            elif col_lower.startswith("energia_pmi") or col_lower.startswith("energia pmi"):
                 elemento = "Energia PMI"
             elif col_lower.startswith("simultaneidade"):
                 elemento = "Filtro"
@@ -194,7 +207,8 @@ def query_data(
         if os.path.exists(processed_path):
             schema_proc = pq.read_schema(processed_path)
             proc_cols = [f.name for f in schema_proc if f.name != "timestamp"]
-            read_proc = [c for c in final_cols if c in proc_cols]
+            already_loaded = list(df_day.columns) if df_day is not None else []
+            read_proc = [c for c in final_cols if c in proc_cols and c not in already_loaded]
             
             if read_proc:
                 df_proc = pd.read_parquet(processed_path, columns=["timestamp"] + read_proc)
@@ -205,6 +219,39 @@ def query_data(
                     df_day = df_day.merge(df_proc, on="timestamp", how="outer")
                 else:
                     df_day = df_proc
+                    
+        # 3. Tentar ler dados do PVSyst
+        pvsyst_path = os.path.join(DATA_DIR, usina, "pvsyst_data.parquet")
+        if os.path.exists(pvsyst_path):
+            schema_pvsyst = pq.read_schema(pvsyst_path)
+            pvsyst_cols = [f.name for f in schema_pvsyst if f.name != "timestamp"]
+            already_loaded = list(df_day.columns) if df_day is not None else []
+            read_pvsyst = [c for c in final_cols if c in pvsyst_cols and c not in already_loaded]
+            
+            if read_pvsyst:
+                import pyarrow.compute as pc
+                day_start = pd.to_datetime(date)
+                day_end = day_start + pd.Timedelta(days=1)
+                
+                try:
+                    df_pvsyst = pd.read_parquet(
+                        pvsyst_path, 
+                        columns=["timestamp"] + read_pvsyst,
+                        filters=[
+                            ("timestamp", ">=", day_start),
+                            ("timestamp", "<", day_end)
+                        ]
+                    )
+                    
+                    if not df_pvsyst.empty:
+                        df_pvsyst["timestamp"] = df_pvsyst["timestamp"].dt.floor("min")
+                        if df_day is not None:
+                            df_day["timestamp"] = df_day["timestamp"].dt.floor("min")
+                            df_day = df_day.merge(df_pvsyst, on="timestamp", how="outer")
+                        else:
+                            df_day = df_pvsyst
+                except Exception as e:
+                    logger.warning(f"Erro ao ler pvsyst_data.parquet para data {date}: {e}")
         
         if df_day is None:
             logger.warning(f"Nenhum dado (bruto ou processado) para data {date}")
@@ -270,11 +317,23 @@ def _resolve_columns(
     if elemento or skid:
         schema = pq.read_schema(path)
         all_cols = [f.name for f in schema if f.name != "timestamp"]
+        
+        pvsyst_path = os.path.join(DATA_DIR, usina, "pvsyst_data.parquet")
+        pvsyst_cols = []
+        if os.path.exists(pvsyst_path):
+            schema_pvsyst = pq.read_schema(pvsyst_path)
+            pvsyst_cols = [f.name for f in schema_pvsyst if f.name != "timestamp"]
+            all_cols.extend(pvsyst_cols)
+            
         mapping = load_mapping(usina)
 
         filtered = []
         for col in all_cols:
             info = mapping.get(col, {})
+            if col in pvsyst_cols:
+                info["elemento"] = "PVSyst"
+                info["mapeada"] = True
+            
             if elemento and info.get("elemento") != elemento:
                 continue
             if skid and info.get("skid") != skid:

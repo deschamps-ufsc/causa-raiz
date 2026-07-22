@@ -31,8 +31,8 @@ export function formatSeriesName(name) {
 export function getSerieType(s) {
   if (s.sintetica) return 'Sintético';
   const col = s.coluna.toLowerCase();
-  const flowOps = ['gpoa', 'grear', 'geff', 'tamb', 'tmod', 'tcel', 'sujidade', 'tracker', 'potencia_ppc', 'referencia_ppc', 'energia_pmi', 'simultaneidade'];
-  if (col.startsWith('agg_') || flowOps.includes(col) || col.endsWith('_semtr') || col === 'tracker ref.' || col === 'tracker_is_backtracking' || col.startsWith('flag_tracker_erro')) {
+  const flowOps = ['gpoa', 'grear', 'geff', 'tamb', 'tmod', 'tcel', 'sujidade', 'tracker', 'potencia_ppc', 'referencia_ppc', 'energia_pmi', 'energia pmi', 'simultaneidade'];
+  if (col.startsWith('agg_') || flowOps.includes(col) || col.endsWith('_semtr') || col.endsWith('_válida') || col.endsWith('_valida') || col === 'tracker ref.' || col === 'tracker_is_backtracking' || col.startsWith('flag_tracker_erro')) {
     return 'Processado';
   }
   return 'Original';
@@ -144,7 +144,7 @@ export default function SeriesSelector({ series, selected, onChange, elementos, 
     filteredSeries.forEach(s => {
       let el = s.elemento;
       if (el) {
-        const isRegistered = elementSettings?.some(es => es.element.toLowerCase() === el.toLowerCase());
+        const isRegistered = el.toLowerCase() === 'pvsyst' || elementSettings?.some(es => es.element.toLowerCase() === el.toLowerCase());
         if (!isRegistered) {
           el = 'Outros';
         }

@@ -582,26 +582,37 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, cha
       
       const rawVals = data?.filterData?.[name] || data?.series?.[name] || []
       
-      // Para manter a "sensação de continuidade", usamos scatter com shape: 'hv'.
-      // Porém, o 'hv' estica o bloco até o PRÓXIMO timestamp. Se o próximo for 0, ele invadiria
-      // a área do minuto sem dados. A solução é forçar o último '1' do bloco a virar '0'.
-      // Isso faz o 'hv' cair para 0 exatamente em cima do último minuto válido, "parando antes".
-      const yVals = rawVals.map((v, idx) => {
+      // Cria arrays customizados de X e Y para permitir desenhar um "tocozinho" (stub)
+      // após o último ponto de um bloco contínuo de 1s (ou ponto isolado).
+      const newX = []
+      const newY = []
+
+      for (let idx = 0; idx < rawVals.length; idx++) {
+        const ts = data.timestamps[idx]
+        const v = rawVals[idx]
         const isOne = (v === 1 || v === 1.0 || v === "1" || v === true)
+
+        newX.push(ts)
+        newY.push(isOne ? 1 : 0)
+
         if (isOne) {
           const next = rawVals[idx + 1]
           const nextIsOne = next !== undefined && (next === 1 || next === 1.0 || next === "1" || next === true)
-          if (!nextIsOne && idx < rawVals.length - 1) {
-            return 0 // cai para 0 no timestamp atual
+          // Se for o último 1 do bloco, insere um stub de +20 segundos
+          if (!nextIsOne) {
+            const d = new Date(ts)
+            d.setSeconds(d.getSeconds() + 20)
+            const pad = (n) => String(n).padStart(2, '0')
+            const stubTs = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+            newX.push(stubTs)
+            newY.push(0)
           }
-          return 1
         }
-        return 0
-      })
+      }
       
       return {
-        x: data.timestamps,
-        y: yVals,
+        x: newX,
+        y: newY,
         type: 'scatter',
         mode: 'lines',
         fill: 'tozeroy',

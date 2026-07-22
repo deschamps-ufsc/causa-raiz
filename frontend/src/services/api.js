@@ -276,4 +276,16 @@ export const runFlow = (usina, dates) =>
 export const fetchFlowIntegrals = (usina) =>
   api.get(`/flow/${encodeURIComponent(usina)}/integrals`).then((r) => r.data)
 
+// ============================================================================
+// ── CAMPANHAS (PERFORMANCE CAMPAIGNS)
+// ============================================================================
+export const fetchCampanhas = (usina) =>
+  api.get('/campanhas', { params: { usina } }).then((r) => r.data)
+
+export const saveCampanha = (usina, payload) =>
+  api.post('/campanhas', payload, { params: { usina } }).then((r) => r.data)
+
+export const deleteCampanha = (usina, nome) =>
+  api.delete('/campanhas', { params: { usina, nome } }).then((r) => r.data)
+
 export default api

@@ -141,5 +141,14 @@
     ],
     "width": 1,
     "dash": "solid"
+  },
+  {
+    "element": "Outros",
+    "axis": "y3",
+    "colors": [
+      "#000000"
+    ],
+    "width": 1.5,
+    "dash": "solid"
   }
 ]

@@ -130,10 +130,12 @@
         "aggregator": true,
         "inputs": [
           {
+            "sensors": [],
             "series": "CLS01.5.MET-A.TxaSuj_1",
             "filter": "Sujidade"
           },
           {
+            "sensors": [],
             "series": "CLS01.5.MET-A.TxaSuj_2",
             "filter": "Sujidade"
           }
@@ -152,7 +154,7 @@
       "type": "box"
     },
     {
-      "id": "energia",
+      "id": "potencia_ppc",
       "data": {
         "label": "Potência PPC",
         "color": "green",
@@ -248,8 +250,10 @@
           "geff": true,
           "tamb": true,
           "tcel": true,
-          "energia_pmi": false,
-          "curtailment": true
+          "energia_pmi": true,
+          "curtailment": true,
+          "potencia_ppc": true,
+          "referencia_ppc": true
         }
       },
       "position": {
@@ -330,8 +334,18 @@
         "label": "Energia PMI",
         "color": "darkblue",
         "aggregator": true,
-        "inputs": [],
-        "operation": "sum"
+        "inputs": [
+          {
+            "sensors": [],
+            "series": "CLS01_Pri_kWh_rec_int",
+            "filter": ""
+          }
+        ],
+        "operation": "sum",
+        "outputFilter": "",
+        "energiaPmiParams": {
+          "multiplier": 0.012
+        }
       },
       "position": {
         "x": 60,
@@ -340,7 +354,7 @@
       "type": "box"
     },
     {
-      "id": "potencia_ppc",
+      "id": "referencia_ppc",
       "data": {
         "label": "Referência PPC",
         "color": "cyan",
@@ -372,14 +386,48 @@
       "data": {
         "label": "Curtailment",
         "curtailmentRefMin": 52.8,
-        "curtailmentRefMargin": 3,
-        "curtailmentDiffMargin": 5
+        "curtailmentRefMargin": 2,
+        "curtailmentDiffMargin": 80,
+        "resolutionMode": "15min"
       },
       "position": {
         "x": 260,
         "y": 380
       },
       "type": "curtailment"
+    },
+    {
+      "id": "epi",
+      "data": {
+        "label": "EPI",
+        "color": "gray",
+        "aggregator": true,
+        "leftTarget": true,
+        "inputs": [],
+        "operation": "sum",
+        "width": "120px",
+        "height": "80px",
+        "hideRightSource": true,
+        "customTargets": [
+          {
+            "id": "target-top",
+            "position": "top"
+          },
+          {
+            "id": "target-bottom",
+            "position": "bottom"
+          }
+        ],
+        "epiParams": {
+          "energiaVar": "E_Grid",
+          "irradianciaVar": "GlobInc"
+        }
+      },
+      "position": {
+        "x": 630,
+        "y": 380
+      },
+      "type": "box"
     }
   ],
   "edges": [
@@ -466,7 +514,7 @@
       "id": "e-simult-pvsyst",
       "source": "simultaneidade",
       "target": "pvsyst",
-      "type": "smoothstep",
+      "type": "straight",
       "markerEnd": {
         "type": "arrowclosed"
       },
@@ -517,7 +565,7 @@
     },
     {
       "id": "e-energia-curtailment",
-      "source": "energia",
+      "source": "potencia_ppc",
       "target": "curtailment",
       "targetHandle": "target-1",
       "type": "straight",
@@ -528,7 +576,7 @@
     },
     {
       "id": "e-ppc-curtailment",
-      "source": "potencia_ppc",
+      "source": "referencia_ppc",
       "target": "curtailment",
       "targetHandle": "target-2",
       "type": "straight",
@@ -542,6 +590,62 @@
       "source": "curtailment",
       "target": "simultaneidade",
       "targetHandle": "target-bottom-1",
+      "type": "smoothstep",
+      "markerEnd": {
+        "type": "arrowclosed"
+      },
+      "data": {}
+    },
+    {
+      "id": "e-potencia_ppc-curtailment",
+      "source": "potencia_ppc",
+      "target": "curtailment",
+      "targetHandle": "target-1",
+      "type": "straight",
+      "markerEnd": {
+        "type": "arrowclosed"
+      },
+      "data": {}
+    },
+    {
+      "id": "e-referencia_ppc-curtailment",
+      "source": "referencia_ppc",
+      "target": "curtailment",
+      "targetHandle": "target-2",
+      "type": "straight",
+      "markerEnd": {
+        "type": "arrowclosed"
+      },
+      "data": {}
+    },
+    {
+      "id": "e-energia_pmi-simult",
+      "source": "energia_pmi",
+      "target": "simultaneidade",
+      "targetHandle": "target-bottom-2",
+      "type": "smoothstep",
+      "markerEnd": {
+        "type": "arrowclosed"
+      },
+      "data": {}
+    },
+    {
+      "id": "e-pvsyst-epi",
+      "source": "pvsyst",
+      "sourceHandle": "out-bottom",
+      "target": "epi",
+      "targetHandle": "target-top",
+      "type": "straight",
+      "markerEnd": {
+        "type": "arrowclosed"
+      },
+      "data": {}
+    },
+    {
+      "id": "e-energia-epi",
+      "source": "energia_pmi",
+      "target": "epi",
+      "targetHandle": "target-bottom",
       "type": "smoothstep",
       "markerEnd": {
         "type": "arrowclosed"

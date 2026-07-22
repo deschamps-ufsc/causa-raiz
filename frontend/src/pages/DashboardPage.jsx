@@ -16,7 +16,7 @@ import DiagramTab from '../pages/DiagramPage'
 import { SkeletonChart, SkeletonList, ErrorState, EmptyState } from '../components/StateComponents'
 import SharedColorPicker from '../components/SharedColorPicker'
 import { useAuth } from '../hooks/AuthContext'
-import { fetchVisualizations, createVisualization, updateVisualization, deleteVisualization } from '../services/api'
+import { fetchVisualizations, createVisualization, updateVisualization, deleteVisualization, fetchCampanhas, saveCampanha, deleteCampanha } from '../services/api'
 import { SaveVisualizationModal, LoadVisualizationModal } from '../components/VisualizationModals'
 import FluxogramaView from '../components/FluxogramaView'
 import MapaView from '../components/MapaView'
@@ -57,6 +57,15 @@ export default function DashboardPage() {
   const [selectedSeries, setSelectedSeries] = useState([])
   const [activeFilters, setActiveFilters] = useState([])
   const [visibleFilters, setVisibleFilters] = useState([])
+  
+  // Campanhas state
+  const [campanhas, setCampanhas] = useState([])
+  const [campanhaAtual, setCampanhaAtual] = useState(null)
+  const [isCampanhaModalOpen, setIsCampanhaModalOpen] = useState(false)
+  const [newCampanhaName, setNewCampanhaName] = useState('')
+  const [addCampanhaModalOpen, setAddCampanhaModalOpen] = useState(false)
+  const [selectedCampanhaToAdd, setSelectedCampanhaToAdd] = useState('')
+
   const [filterColors, setFilterColors] = useState({})
   const [colorPickerFilter, setColorPickerFilter] = useState(null)
   
@@ -111,6 +120,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (usinaAtual) {
       fetchVisualizations(usinaAtual).then(setSavedVisualizations).catch(() => {})
+      fetchCampanhas(usinaAtual).then(setCampanhas).catch(() => {})
       setLoadedVisualization(null)
     }
   }, [usinaAtual])
@@ -146,7 +156,11 @@ export default function DashboardPage() {
   const handleLoadVisualization = (vis) => {
     skipCleanup.current = true
     setLoadedVisualization(vis)
-    setSelectedDates(vis.selectedDates || [])
+    let datesToLoad = vis.selectedDates || [];
+    if (campanhaAtual) {
+      datesToLoad = datesToLoad.filter(d => filteredDates.includes(d));
+    }
+    setSelectedDates(datesToLoad)
     setPendingLoadVis(vis)
     setShowEixosMenu(true)
     setShowSeriesMenu(true)
@@ -211,9 +225,14 @@ export default function DashboardPage() {
       const allQuerySeries = Array.from(new Set([...(vis.selectedSeries || []), ...availableFilters]))
       
       if (vis.selectedDates?.length && allQuerySeries.length && usinaAtual) {
+        let datesToLoad = vis.selectedDates || [];
+        if (campanhaAtual) {
+          datesToLoad = datesToLoad.filter(d => filteredDates.includes(d));
+        }
+        
         query({
           usina: usinaAtual,
-          dates: vis.selectedDates,
+          dates: datesToLoad,
           series: allQuerySeries,
         })
       }
@@ -350,6 +369,83 @@ export default function DashboardPage() {
     }
   }, [data, activeFilters, filterSeries])
 
+  const filteredDates = useMemo(() => {
+    if (!campanhaAtual) return dates;
+    const c = campanhas.find(x => x.nome === campanhaAtual);
+    return c ? dates.filter(d => c.dias.includes(d)) : dates;
+  }, [dates, campanhas, campanhaAtual]);
+
+  // Deselect dates not in campaign when campaign changes
+  useEffect(() => {
+    if (campanhaAtual && selectedDates.length > 0) {
+      const validDates = selectedDates.filter(d => filteredDates.includes(d));
+      if (validDates.length !== selectedDates.length) {
+        if (data) {
+          skipCleanup.current = true;
+          pendingVisualize.current = true;
+        }
+        setSelectedDates(validDates);
+      }
+    }
+  }, [campanhaAtual, filteredDates, selectedDates, data]);
+
+  const handleCreateCampanha = () => {
+    if (!newCampanhaName) return;
+    saveCampanha(usinaAtual, { nome: newCampanhaName, dias: selectedDates })
+      .then(res => {
+        setCampanhas(prev => [...prev.filter(c => c.nome !== res.campanha.nome), res.campanha]);
+        setCampanhaAtual(res.campanha.nome);
+        setIsCampanhaModalOpen(false);
+        setNewCampanhaName('');
+        if (data) {
+          skipCleanup.current = true;
+          pendingVisualize.current = true;
+        }
+      })
+      .catch(err => console.error("Erro ao criar campanha:", err));
+  };
+
+  const handleAddToCampanha = () => {
+    if (!selectedCampanhaToAdd) return;
+    const c = campanhas.find(x => x.nome === selectedCampanhaToAdd);
+    if (!c) return;
+    const newDias = [...new Set([...c.dias, ...selectedDates])];
+    saveCampanha(usinaAtual, { nome: selectedCampanhaToAdd, dias: newDias })
+      .then(res => {
+        setCampanhas(prev => prev.map(x => x.nome === res.campanha.nome ? res.campanha : x));
+        setAddCampanhaModalOpen(false);
+        setSelectedCampanhaToAdd('');
+        if (data) {
+          skipCleanup.current = true;
+          pendingVisualize.current = true;
+        }
+      });
+  };
+
+  const handleRemoveFromCampanha = () => {
+    if (!campanhaAtual) return;
+    const c = campanhas.find(x => x.nome === campanhaAtual);
+    if (!c) return;
+    const newDias = c.dias.filter(d => !selectedDates.includes(d));
+    saveCampanha(usinaAtual, { nome: campanhaAtual, dias: newDias })
+      .then(res => {
+        setCampanhas(prev => prev.map(x => x.nome === res.campanha.nome ? res.campanha : x));
+        if (data) {
+          skipCleanup.current = true;
+          pendingVisualize.current = true;
+        }
+        setSelectedDates([]); // Clear selection after remove
+      });
+  };
+
+  const handleDeleteCampanha = (nome) => {
+    if(!window.confirm(`Tem certeza que deseja excluir a campanha ${nome}?`)) return;
+    deleteCampanha(usinaAtual, nome).then(() => {
+        setCampanhas(prev => prev.filter(c => c.nome !== nome));
+        if (campanhaAtual === nome) setCampanhaAtual(null);
+    })
+  }
+
   // Guard: usina não selecionada — mostrar mensagem inline na barra lateral, não bloqueia a página
 
   return (
@@ -382,37 +478,72 @@ export default function DashboardPage() {
                 onClick={() => setIsDataOpen(!isDataOpen)}
                 title="Clique para expandir/recolher"
               >
-                <span>📅 Data {dates.length > 0 && <span className="badge badge-amber" style={{marginLeft: 8}}>{dates.length} TOTAL</span>}</span>
+                <span>📅 Data {filteredDates.length > 0 && <span className="badge badge-amber" style={{marginLeft: 8}}>{filteredDates.length} TOTAL</span>}</span>
                 <span style={{ fontSize: '10px' }}>{isDataOpen ? '▼' : '▶'}</span>
               </div>
               {isDataOpen && (
                 <>
-                  {dates.length > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, padding: '0 4px' }}>
-                      <div style={{ color: '#d97706', fontSize: 11, fontWeight: 600, lineHeight: 1.2 }}>
-                        {selectedDates.length}/{dates.length} selecionadas
+                  {filteredDates.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12, padding: '0 4px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ color: '#d97706', fontSize: 11, fontWeight: 600, lineHeight: 1.2 }}>
+                          {selectedDates.length}/{filteredDates.length} selecionadas
+                        </div>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button 
+                            className="btn btn-ghost btn-sm"
+                            style={{ fontSize: 10, padding: '2px 6px' }}
+                            onClick={() => setSelectedDates([...filteredDates].sort((a,b) => a.localeCompare(b)))}
+                          >
+                            Sel. todos
+                          </button>
+                          <button 
+                            className="btn btn-ghost btn-sm"
+                            style={{ fontSize: 10, padding: '2px 6px' }}
+                            onClick={() => setSelectedDates([])}
+                          >
+                            Limpar
+                          </button>
+                        </div>
                       </div>
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        <button 
-                          className="btn btn-ghost btn-sm"
-                          style={{ fontSize: 10, padding: '2px 6px' }}
-                          onClick={() => setSelectedDates([...dates].sort((a,b) => a.localeCompare(b)))}
-                        >
-                          Sel. todos
-                        </button>
-                        <button 
-                          className="btn btn-ghost btn-sm"
-                          style={{ fontSize: 10, padding: '2px 6px' }}
-                          onClick={() => setSelectedDates([])}
-                        >
-                          Limpar
-                        </button>
-                      </div>
+
+                      {selectedDates.length > 0 && (
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+                          {!campanhaAtual ? (
+                            <>
+                              <button 
+                                className="btn btn-outline btn-sm"
+                                style={{ fontSize: 10, flex: 1, padding: '4px' }}
+                                onClick={() => setIsCampanhaModalOpen(true)}
+                              >
+                                ➕ Nova Campanha
+                              </button>
+                              <button 
+                                className="btn btn-outline btn-sm"
+                                style={{ fontSize: 10, flex: 1, padding: '4px' }}
+                                disabled={campanhas.length === 0}
+                                onClick={() => setAddCampanhaModalOpen(true)}
+                                title={campanhas.length === 0 ? "Nenhuma campanha existe ainda" : "Adicionar dias a uma campanha"}
+                              >
+                                📥 Adicionar
+                              </button>
+                            </>
+                          ) : (
+                            <button 
+                              className="btn btn-sm"
+                              style={{ fontSize: 10, width: '100%', background: '#fee2e2', color: '#b91c1c', border: 'none' }}
+                              onClick={handleRemoveFromCampanha}
+                            >
+                              ❌ Remover Selecionados da Campanha
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, maxHeight: 200, overflowY: 'auto', padding: '0 4px' }}>
-                    {dates.length === 0 && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Nenhuma data</span>}
-                  {dates.map((d) => {
+                    {filteredDates.length === 0 && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Nenhuma data</span>}
+                  {filteredDates.map((d) => {
                     const isSelected = selectedDates.includes(d)
                     return (
                     <button 
@@ -643,7 +774,10 @@ export default function DashboardPage() {
                 <span style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>🏭 Usina:</span>
                 <select
                   value={usinaAtual || ''}
-                  onChange={e => setUsinaAtual(e.target.value)}
+                  onChange={e => {
+                    setUsinaAtual(e.target.value);
+                    setCampanhaAtual(null); // Reset campaign when usina changes
+                  }}
                   style={{
                     background: 'transparent', border: 'none', color: 'var(--text-primary)',
                     fontSize: 13, fontWeight: 600, outline: 'none', cursor: 'pointer',
@@ -654,6 +788,34 @@ export default function DashboardPage() {
                   {usinas.map(u => <option key={u} value={u}>{u}</option>)}
                 </select>
               </div>
+              
+              {/* Seletor de Campanha */}
+              {usinaAtual && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-secondary)', padding: '4px 10px', borderRadius: 8, border: '1px solid var(--border)' }}>
+                  <span style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>🎯 Campanha:</span>
+                  <select
+                    value={campanhaAtual || ''}
+                    onChange={e => setCampanhaAtual(e.target.value || null)}
+                    style={{
+                      background: 'transparent', border: 'none', color: 'var(--text-primary)',
+                      fontSize: 13, fontWeight: 600, outline: 'none', cursor: 'pointer',
+                      fontFamily: 'inherit', maxWidth: 180,
+                    }}
+                  >
+                    <option value="">Todos os dias</option>
+                    {campanhas.map(c => <option key={c.nome} value={c.nome}>{c.nome} ({c.dias.length} d)</option>)}
+                  </select>
+                  {campanhaAtual && (
+                    <button 
+                      onClick={() => handleDeleteCampanha(campanhaAtual)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: '#ef4444', marginLeft: 4 }}
+                      title="Excluir campanha"
+                    >
+                      🗑️
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -826,8 +988,7 @@ export default function DashboardPage() {
           <div style={{ display: 'flex', gap: 2, marginBottom: 8, borderBottom: '2px solid #e2e8f0', flexShrink: 0 }}>
             {[
               { id: 'config', icon: '🔀', label: 'Fluxograma' },
-              { id: 'validacao', icon: '✅', label: 'Validação de Dados' },
-              { id: 'epi', icon: '📈', label: 'EPI' },
+              { id: 'validacao', icon: '✅', label: 'Resultados' },
             ].map(tab => {
               const isActive = desempenhoTab === tab.id
               return (
@@ -848,13 +1009,10 @@ export default function DashboardPage() {
           {/* Sub-abas de Desempenho — sempre montadas, cada uma com scroll independente */}
           <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' }}>
             <div style={{ display: desempenhoTab === 'config' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'auto' }}>
-              <FluxogramaView elementos={elementos} selectedDates={selectedDates} showTitle={false} mode="config" onEpiClick={() => setDesempenhoTab('epi')} />
+              <FluxogramaView elementos={elementos} selectedDates={selectedDates} showTitle={false} mode="config" />
             </div>
             <div style={{ display: desempenhoTab === 'validacao' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'auto' }}>
-              <FluxogramaView elementos={elementos} selectedDates={selectedDates} showTitle={false} mode="validacao" onEpiClick={() => setDesempenhoTab('epi')} />
-            </div>
-            <div style={{ display: desempenhoTab === 'epi' ? 'flex' : 'none', flex: 1, overflow: 'auto', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-              Aba EPI - Em construção
+              <FluxogramaView elementos={elementos} selectedDates={selectedDates} showTitle={false} mode="validacao" />
             </div>
           </div>
         </div>
@@ -982,6 +1140,55 @@ export default function DashboardPage() {
             onChange={c => setFilterColors(prev => ({ ...prev, [colorPickerFilter.name]: c }))}
             onClose={() => setColorPickerFilter(null)}
           />
+        </div>
+      )}
+
+      {/* Modals para Campanhas */}
+      {isCampanhaModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: 'var(--bg-primary)', padding: '24px', borderRadius: '12px', width: '400px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', border: '1px solid var(--border)' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px', color: 'var(--text-primary)' }}>Nova Campanha</h3>
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '8px', color: 'var(--text-secondary)' }}>Nome da Campanha</label>
+              <input
+                type="text"
+                style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }}
+                placeholder="Ex: Teste Desempenho 1"
+                value={newCampanhaName}
+                onChange={(e) => setNewCampanhaName(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '24px' }}>Esta campanha será criada com {selectedDates.length} dias selecionados.</p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button className="btn btn-ghost" onClick={() => setIsCampanhaModalOpen(false)}>Cancelar</button>
+              <button className="btn btn-primary" onClick={handleCreateCampanha} disabled={!newCampanhaName}>Criar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {addCampanhaModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: 'var(--bg-primary)', padding: '24px', borderRadius: '12px', width: '400px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', border: '1px solid var(--border)' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px', color: 'var(--text-primary)' }}>Adicionar à Campanha</h3>
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '8px', color: 'var(--text-secondary)' }}>Selecione a Campanha</label>
+              <select
+                style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }}
+                value={selectedCampanhaToAdd}
+                onChange={(e) => setSelectedCampanhaToAdd(e.target.value)}
+              >
+                <option value="" disabled>-- Selecione --</option>
+                {campanhas.map(c => <option key={c.nome} value={c.nome}>{c.nome}</option>)}
+              </select>
+            </div>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '24px' }}>Os {selectedDates.length} dias selecionados serão mesclados à campanha escolhida.</p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button className="btn btn-ghost" onClick={() => setAddCampanhaModalOpen(false)}>Cancelar</button>
+              <button className="btn btn-primary" onClick={handleAddToCampanha} disabled={!selectedCampanhaToAdd}>Adicionar</button>
+            </div>
+          </div>
         </div>
       )}
 
