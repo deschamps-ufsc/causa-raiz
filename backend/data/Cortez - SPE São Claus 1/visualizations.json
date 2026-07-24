@@ -1223,7 +1223,7 @@
   },
   {
     "id": "e4fb18a5-4141-478b-8fa3-f565c6f503b6",
-    "created_at": "2026-07-22T17:14:02.727278",
+    "created_at": "2026-07-22T19:20:57.941543",
     "name": "PPC",
     "user": "deschamps.ufsc@gmail.com",
     "selectedDates": [
@@ -1242,7 +1242,7 @@
     ],
     "activeFilters": [],
     "visibleFilters": [
-      "Dados Válidos"
+      "curtailment"
     ],
     "filterColors": {
       "Tracker Piranômetro": "#f97316",

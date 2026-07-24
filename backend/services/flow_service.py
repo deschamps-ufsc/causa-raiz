@@ -28,12 +28,23 @@ def run_flow_processing(usina: str, dates_str: str = None):
     with open(flow_path, "r", encoding="utf-8") as f:
         flow_config = json.load(f)
     
-    # Suporte a formato antigo (lista direta) e novo (dict com nodes/edges)
-    if isinstance(flow_config, list):
+    # Novo formato: { nodeConfigs: { node_id: { campo: valor, ... } } }
+    # Reconstrói a lista de nodes esperada pelo resto do código
+    if isinstance(flow_config, dict) and "nodeConfigs" in flow_config:
+        node_configs = flow_config["nodeConfigs"]
+        nodes = []
+        for node_id, cfg in node_configs.items():
+            # Detecta o tipo do nó para marcar aggregator corretamente
+            NON_AGGREGATOR_TYPES = {"geff", "tcel", "curtailment", "pvsyst"}
+            node_type = node_id if node_id in NON_AGGREGATOR_TYPES else "box"
+            is_aggregator = node_type not in NON_AGGREGATOR_TYPES
+            node_data = dict(cfg)  # copia todos os campos de config
+            node_data["aggregator"] = is_aggregator
+            nodes.append({"id": node_id, "type": node_type, "data": node_data})
+    elif isinstance(flow_config, list):
         nodes = flow_config
     else:
         nodes = flow_config.get("nodes", [])
-    # edges = flow_config.get("edges", []) # Futuramente usado para ordem automática
     
     filters = load_filter_settings()
     filter_map = {f['name']: f for f in filters}
@@ -595,7 +606,17 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
     with open(flow_path, "r", encoding="utf-8") as f:
         flow_config = json.load(f)
     
-    if isinstance(flow_config, list):
+    # Novo formato: { nodeConfigs: { node_id: { campo: valor, ... } } }
+    if isinstance(flow_config, dict) and "nodeConfigs" in flow_config:
+        node_configs = flow_config["nodeConfigs"]
+        nodes = []
+        NON_AGGREGATOR_TYPES = {"geff", "tcel", "curtailment", "pvsyst"}
+        for node_id, cfg in node_configs.items():
+            node_type = node_id if node_id in NON_AGGREGATOR_TYPES else "box"
+            node_data = dict(cfg)
+            node_data["aggregator"] = node_type not in NON_AGGREGATOR_TYPES
+            nodes.append({"id": node_id, "type": node_type, "data": node_data})
+    elif isinstance(flow_config, list):
         nodes = flow_config
     else:
         nodes = flow_config.get("nodes", [])

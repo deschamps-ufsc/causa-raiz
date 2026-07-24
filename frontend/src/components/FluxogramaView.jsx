@@ -18,7 +18,7 @@ import {
 import '@xyflow/react/dist/style.css'
 import SingleSeriesDropdown, { formatSeriesName } from './SingleSeriesDropdown'
 import { useUsina } from '../hooks/UsinaContext'
-import { fetchMappingData, fetchFlowConfig, saveFlowConfig, runFlow, fetchFlowIntegrals } from '../services/api'
+import api, { fetchMappingData, fetchFlowConfig, saveFlowConfig, runFlow, fetchFlowIntegrals } from '../services/api'
 import { useChartSettings } from '../hooks/ChartSettingsContext'
 
 // ── CUSTOM EDGES ─────────────────────────────────────────────────────────
@@ -334,22 +334,22 @@ const edgeTypes = {
 // ── INITIAL DATA ─────────────────────────────────────────────────────────
 
 const initialNodes = [
-  { id: 'gpoa', type: 'box', position: { x: 60, y: 50 }, data: { label: 'G<sub>poa</sub>', color: 'yellow', aggregator: true, inputs: [], operation: 'sum', hasMultipleOutputs: true, leftTarget: true } },
-  { id: 'grear', type: 'box', position: { x: 60, y: 130 }, data: { label: 'G<sub>rear</sub>', color: 'yellow', aggregator: true, inputs: [], operation: 'sum', leftTarget: true } },
-  { id: 'tracker', type: 'box', position: { x: 60, y: 210 }, data: { label: 'Tracker', color: 'purple', aggregator: true, inputs: [], operation: 'sum', leftSource: true, hideRightSource: true } },
-  { id: 'tamb', type: 'box', position: { x: 60, y: 290 }, data: { label: 'T<sub>amb</sub>', color: 'orange', aggregator: true, inputs: [], operation: 'sum' } },
-  { id: 'tmod', type: 'box', position: { x: 60, y: 370 }, data: { label: 'T<sub>mod</sub>', color: 'orange', aggregator: true, inputs: [], operation: 'sum' } },
-  { id: 'sujidade', type: 'box', position: { x: 60, y: 450 }, data: { label: 'Sujidade', color: 'brown', aggregator: true, inputs: [], operation: 'sum', hideRightSource: true } },
-  { id: 'potencia_ppc', type: 'box', position: { x: 60, y: 530 }, data: { label: 'Potência PPC', color: 'green', aggregator: true, inputs: [], operation: 'sum', hasMultipleOutputs: false } },
-  { id: 'referencia_ppc', type: 'box', position: { x: 60, y: 590 }, data: { label: 'Referência PPC', color: 'teal', aggregator: true, inputs: [], operation: 'sum', hideRightSource: false } },
-  { id: 'energia_pmi', type: 'box', position: { x: 60, y: 670 }, data: { label: 'Energia PMI', color: 'teal', aggregator: true, inputs: [], operation: 'sum' } },
-  { id: 'geff', type: 'geff', position: { x: 280, y: 50 }, data: { label: 'Geff', beta: 1.0, SSF: 0.05, MLF: 0.02 } },
-  { id: 'tcel', type: 'tcel', position: { x: 280, y: 350 }, data: { label: 'Tcel' } },
-  { id: 'curtailment', type: 'curtailment', position: { x: 280, y: 530 }, data: { label: 'Curtailment', curtailmentRefMin: 52.8, curtailmentRefMargin: 3, curtailmentDiffMargin: 5 } },
+  { id: 'gpoa',          type: 'box',         position: { x: 60,  y: 20  }, data: { label: 'G<sub>poa</sub>', color: 'yellow', aggregator: true, inputs: [], operation: 'sum', hasMultipleOutputs: true, leftTarget: true } },
+  { id: 'grear',         type: 'box',         position: { x: 60,  y: 80  }, data: { label: 'G<sub>rear</sub>', color: 'yellow', aggregator: true, inputs: [], operation: 'sum', leftTarget: true } },
+  { id: 'tracker',       type: 'box',         position: { x: 60,  y: 140 }, data: { label: 'Tracker', color: 'purple', aggregator: true, inputs: [], operation: 'sum', leftSource: true, hideRightSource: true } },
+  { id: 'tamb',          type: 'box',         position: { x: 60,  y: 200 }, data: { label: 'T<sub>amb</sub>', color: 'orange', aggregator: true, inputs: [], operation: 'sum' } },
+  { id: 'tmod',          type: 'box',         position: { x: 60,  y: 260 }, data: { label: 'T<sub>mod</sub>', color: 'orange', aggregator: true, inputs: [], operation: 'sum' } },
+  { id: 'sujidade',      type: 'box',         position: { x: 60,  y: 320 }, data: { label: 'Sujidade', color: 'brown', aggregator: true, inputs: [], operation: 'sum', hideRightSource: true } },
+  { id: 'potencia_ppc',  type: 'box',         position: { x: 60,  y: 380 }, data: { label: 'Potência PPC', color: 'green', aggregator: true, inputs: [], operation: 'sum', hasMultipleOutputs: false } },
+  { id: 'referencia_ppc',type: 'box',         position: { x: 60,  y: 440 }, data: { label: 'Referência PPC', color: 'teal', aggregator: true, inputs: [], operation: 'sum', hideRightSource: false } },
+  { id: 'energia_pmi',   type: 'box',         position: { x: 60,  y: 500 }, data: { label: 'Energia PMI', color: 'teal', aggregator: true, inputs: [], operation: 'sum' } },
+  { id: 'geff',          type: 'geff',        position: { x: 270, y: 30  }, data: { label: 'Geff', beta: 1.0, SSF: 0.05, MLF: 0.02 } },
+  { id: 'tcel',          type: 'tcel',        position: { x: 270, y: 240 }, data: { label: 'Tcel' } },
+  { id: 'curtailment',   type: 'curtailment', position: { x: 260, y: 380 }, data: { label: 'Curtailment', curtailmentRefMin: 52.8, curtailmentRefMargin: 3, curtailmentDiffMargin: 5 } },
   { 
     id: 'simultaneidade', 
     type: 'box', 
-    position: { x: 500, y: 290 }, 
+    position: { x: 430, y: 190 }, 
     data: { 
       label: 'Dados Válidos', 
       color: 'gray', 
@@ -365,11 +365,11 @@ const initialNodes = [
       ]
     } 
   },
-  { id: 'pvsyst', type: 'pvsyst', position: { x: 720, y: 290 }, data: { height: '120px' } },
+  { id: 'pvsyst', type: 'pvsyst', position: { x: 630, y: 190 }, data: { height: '120px' } },
   { 
     id: 'epi', 
     type: 'box', 
-    position: { x: 720, y: 450 }, 
+    position: { x: 630, y: 380 }, 
     data: { 
       label: 'EPI', 
       color: 'gray', 
@@ -387,6 +387,7 @@ const initialNodes = [
     } 
   }
 ]
+
 
 const initialEdges = [
   { id: 'e-gpoa-geff', source: 'gpoa', sourceHandle: 'out-a', target: 'geff', type: 'offsetSmoothStep', data: { centerX: 200 }, markerEnd: { type: MarkerType.ArrowClosed } },
@@ -421,7 +422,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
   const [outputFilter, setOutputFilter] = useState('')
   const [geffParams, setGeffParams] = useState({ beta: 1, SSF: 0, MLF: 0 })
   const [simultParams, setSimultParams] = useState({ geff: true, tamb: true, tcel: true, energia_pmi: true, curtailment: false })
-  const [trackerParams, setTrackerParams] = useState({ latitude: -23.55, longitude: -46.63, gcr: 0.3, max_angle: 60, tolerance: 10 })
+  const [trackerParams, setTrackerParams] = useState({ latitude: -23.55, longitude: -46.63, gcr: 0.3, max_angle: 60, tolerance: 10, tol_pontos_vento: 0, tol_pontos_travado: 0 })
   const [curtailmentParams, setCurtailmentParams] = useState({ refMin: 52.8, refMargin: 3, diffMargin: 5, resolutionMode: '1min' })
   const [soilParams, setSoilParams] = useState({ startTime: '', endTime: '', trimPercent: '' })
   const [energiaPmiParams, setEnergiaPmiParams] = useState({ multiplier: 0.012 })
@@ -441,6 +442,8 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
   const [showInputs, setShowInputs] = useState(true)
   const [showMeasured, setShowMeasured] = useState(true)
   const [showValid, setShowValid] = useState(true)
+  const [showResults, setShowResults] = useState(true)
+  const [showValidation, setShowValidation] = useState(true)
   const [visibleVars, setVisibleVars] = useState({
     gpoa: true,
     grear: true,
@@ -482,12 +485,9 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
       }
       
       setIsLoadingPvsystColumns(true);
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-      fetch(`${baseUrl}/upload/pvsyst/columns?usina=${encodeURIComponent(usinaAtual)}`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('cr_auth_token')}` }
-      })
-      .then(res => res.ok ? res.json() : [])
-      .then(data => {
+      api.get(`/upload/pvsyst/columns?usina=${encodeURIComponent(usinaAtual)}`)
+      .then(res => {
+        const data = res.data;
         setPvsystColumns(Array.isArray(data) ? data : []);
         setIsLoadingPvsystColumns(false);
       })
@@ -513,16 +513,10 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
     
     setToast({ message: 'Enviando arquivo PVSyst...', type: 'info' });
     try {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-      const res = await fetch(`${baseUrl}/upload/pvsyst`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('cr_auth_token')}`
-        },
-        body: formData
+      const res = await api.post(`/upload/pvsyst`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Erro ao enviar arquivo');
+      const data = res.data;
       
       setToast({ message: 'Upload do PVSyst concluído!', type: 'success' });
       setPvsystColumns(data.columns || []);
@@ -642,18 +636,27 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
   const visibleColumns = useMemo(() => {
     if (!integralsData.columns) return []
     return integralsData.columns.filter(col => {
-      // 0. Colunas de Validação estão sempre visíveis por enquanto
-      if (col.type === 'validation') return true;
+      // 0. Colunas de Validação
+      if (col.type === 'validation') {
+         if (!showValidation) return false;
+         return true;
+      }
 
       // 1. Filtro de Exibir Entradas
       const isOutput = !col.label.includes('Entrada');
       if (!isOutput && !showInputs) return false;
 
-      // 1.5. Filtro de Exibir Dados Medidos e Exibir Dados Válidos
+      // 1.5. Filtro de Exibir Dados Medidos, Válidos e Resultados
       if (col.type === 'output' || col.type === 'special') {
-        const isValidCol = col.key.endsWith('_válida');
-        if (isValidCol && !showValid) return false;
-        if (!isValidCol && !showMeasured) return false;
+        const isResultColumn = ['fator_ajuste', 'epi', 'globinc', 'energia_prevista', 'energia_prevista_ajustada', 'energia_pmi', 'e_grid'].some(k => col.key.toLowerCase().includes(k)) || col.key.toLowerCase().startsWith('pvsyst');
+        
+        if (isResultColumn) {
+          if (!showResults) return false;
+        } else {
+          const isValidCol = col.key.endsWith('_válida');
+          if (isValidCol && !showValid) return false;
+          if (!isValidCol && !showMeasured) return false;
+        }
       }
 
       // 2. Filtro de Variáveis Habilitadas
@@ -669,13 +672,14 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
       if (colKey.startsWith('energia_pmi')) return visibleVars.energia_pmi;
       if (colKey.startsWith('referencia_ppc')) return visibleVars.referencia_ppc;
       if (colKey.startsWith('potencia_ppc')) return visibleVars.potencia_ppc;
+      if (colKey.startsWith('energia pmi')) return visibleVars.energia_pmi;
       if (colKey.startsWith('energia')) return visibleVars.energia;
-      if (colKey.startsWith('pvsyst')) return visibleVars.pvsyst;
+      if (colKey.startsWith('e_grid') || colKey.startsWith('pvsyst')) return visibleVars.pvsyst;
       if (colKey.startsWith('epi')) return visibleVars.epi;
 
       return true;
     });
-  }, [integralsData.columns, showInputs, showMeasured, showValid, visibleVars]);
+  }, [integralsData.columns, showInputs, showMeasured, showValid, showResults, showValidation, visibleVars]);
 
   const headerGroups = useMemo(() => {
     const groups = [];
@@ -737,154 +741,54 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
       .catch(console.error)
   }, [usinaAtual, nodes])
 
+  // Campos que são configurados por usina (tudo o mais vem do initialNodes = layout)
+  const PER_USINA_FIELDS = [
+    'inputs', 'outputFilter', 'operation', 'startTime', 'endTime', 'trimPercent',
+    'trackerParams', 'beta', 'SSF', 'MLF', 'ppcRefValue', 'ppcMargin',
+    'energiaPmiParams', 'simultParams', 'curtailmentRefMin', 'curtailmentRefMargin',
+    'curtailmentDiffMargin', 'resolutionMode', 'epiParams'
+  ]
+
+  // Persiste apenas os campos per-usina no flow_config.json
+  const saveNodeConfig = (nodesArr) => {
+    if (!usinaAtual) return
+    const nodeConfigs = {}
+    nodesArr.forEach(n => {
+      const cfg = {}
+      PER_USINA_FIELDS.forEach(f => { if (n.data[f] !== undefined) cfg[f] = n.data[f] })
+      
+      // Sempre salvar os nós especiais (que não são box) para garantir que eles não desapareçam 
+      // do fluxo no backend, mesmo que não tenham configuração específica.
+      if (n.type !== 'box') {
+        cfg['type'] = n.type
+      }
+
+      if (Object.keys(cfg).length > 0) nodeConfigs[n.id] = cfg
+    })
+    saveFlowConfig(usinaAtual, { nodeConfigs })
+  }
+
   useEffect(() => {
-    if (!usinaAtual) {
-      setNodes(initialNodes)
-      setEdges(initialEdges)
-      return
-    }
+    // Sempre começa do layout padrão — garante que qualquer usina (com ou sem config) veja o mesmo canvas
+    setNodes(initialNodes)
+    setEdges(initialEdges)
+
+    if (!usinaAtual) return
+
     fetchFlowConfig(usinaAtual)
       .then(config => {
-        if (config && config.nodes) {
-          setNodes(nds => {
-            // Descobrir a posição X do Geff para alinhar Tcel e Curtailment
-            const geffNode = config.nodes.find(n => n.id === 'geff')
-            const geffX = geffNode ? geffNode.position.x : 250
+        const nodeConfigs = config?.nodeConfigs
+        if (!nodeConfigs) return // Sem config salva → mantém initialNodes limpos
 
-            const pvsystNode = config.nodes.find(n => n.id === 'pvsyst') || nds.find(n => n.id === 'pvsyst')
-            const pvsystX = pvsystNode ? pvsystNode.position.x : 720
-
-            const curtailmentNode = config.nodes.find(n => n.id === 'curtailment') || nds.find(n => n.id === 'curtailment')
-            const curtailmentY = curtailmentNode ? curtailmentNode.position.y : 530
-
-            // 1. Pegar todos os nós salvos
-            const savedNodes = config.nodes.map(sn => {
-              const initial = nds.find(i => i.id === sn.id)
-                // Desloca blocos se ainda estiverem nas posições antigas
-                let adjustedPosition = { ...sn.position };
-                if (sn.id === 'simultaneidade') {
-                  if (adjustedPosition.x === 450) adjustedPosition.x = 400;
-                  if (adjustedPosition.y === 140) adjustedPosition.y = 130;
-                } else if (sn.id === 'pvsyst') {
-                  if (adjustedPosition.x === 650) adjustedPosition.x = 600;
-                  if (adjustedPosition.y === 140) adjustedPosition.y = 130;
-                } else if (sn.id === 'tcel') {
-                  adjustedPosition.x = geffX;
-                } else if (sn.id === 'curtailment') {
-                  adjustedPosition.x = geffX - 10;
-                  adjustedPosition.y = 380;
-                } else if (sn.id === 'epi') {
-                  adjustedPosition.x = pvsystX;
-                  adjustedPosition.y = curtailmentY;
-                }
-
-                return { 
-                  ...sn, 
-                  position: adjustedPosition,
-                type: sn.type || (initial?.type || 'box'),
-                data: { 
-                  ...(initial?.data || {}), 
-                  ...sn.data,
-                  // Garantir que o label com subscritos (<sub>) do código tenha prioridade
-                  label: initial?.data?.label || sn.data.label,
-                  // Garantir que a Potência tenha hasMultipleOutputs false explícito
-                  hasMultipleOutputs: sn.id === 'potencia_ppc' ? false : (initial?.data?.hasMultipleOutputs ?? sn.data.hasMultipleOutputs),
-                  width: initial?.data?.width || sn.data.width,
-                  height: initial?.data?.height || sn.data.height,
-                  customTargets: sn.id === 'epi' ? initial?.data?.customTargets : (initial?.data?.customTargets || sn.data.customTargets),
-                  hideRightSource: sn.id === 'epi' ? true : (initial?.data?.hideRightSource ?? sn.data.hideRightSource)
-                }
-              }
-            })
-            
-            // 2. Garantir que nós iniciais obrigatórios existam
-            const finalNodes = [...savedNodes]
-            nds.forEach(initial => {
-              if (!finalNodes.find(f => f.id === initial.id)) {
-                if (initial.id === 'epi') {
-                  initial = { ...initial, position: { ...initial.position, x: pvsystX, y: curtailmentY } }
-                }
-                finalNodes.push(initial)
-              }
-            })
-            return finalNodes
-          })
-          if (config.edges) {
-            setEdges(eds => {
-               // Remover conexões diretas obsoletas para o filtro de simultaneidade
-               const filteredConfigEdges = config.edges.filter(e => {
-                  if (e.source === 'potencia_ppc' && (e.target === 'simultaneidade' || e.target.includes('simultaneidade'))) return false;
-                  if (e.source === 'referencia_ppc' && (e.target === 'simultaneidade' || e.target.includes('simultaneidade'))) return false;
-                  return true;
-               })
-
-              // Garantir tipos de arestas corretos ao carregar do BD
-              const finalEdges = filteredConfigEdges.map(e => {
-                const initial = initialEdges.find(ie => ie.source === e.source && ie.target === e.target)
-                let targetHandle = initial?.targetHandle || e.targetHandle
-                let type = initial?.type || e.type || 'smoothstep'
-                
-                // Encontrar nó de origem e de destino para regras dinâmicas robustas (ignora mudanças de UUID)
-                const sourceNode = config.nodes.find(n => n.id === e.source) || initialNodes.find(n => n.id === e.source)
-                const targetNode = config.nodes.find(n => n.id === e.target) || initialNodes.find(n => n.id === e.target)
-                
-                if (targetNode && (targetNode.id === 'simultaneidade' || targetNode.data?.label?.includes('Simultaneidade'))) {
-                  if (sourceNode) {
-                    if (sourceNode.id === 'geff' || sourceNode.type === 'geff') targetHandle = 'target-top'
-                    else if (sourceNode.id === 'tamb' || sourceNode.data?.label?.includes('amb')) {
-                      targetHandle = 'target-left-top'
-                      type = 'straight'
-                    }
-                    else if (sourceNode.id === 'tcel' || sourceNode.type === 'tcel') {
-                      targetHandle = 'target-left-bottom'
-                      type = 'straight'
-                    }
-                    else if (sourceNode.id === 'energia_pmi' || sourceNode.data?.label?.includes('Energia PMI')) {
-                      targetHandle = 'target-bottom-2' 
-                    }
-                    else if (sourceNode.id === 'curtailment' || sourceNode.type === 'curtailment') {
-                      targetHandle = 'target-bottom-1'
-                    }
-                  }
-                }
-                
-                let sourceHandle = initial?.sourceHandle || e.sourceHandle
-
-                if (targetNode && (targetNode.id === 'curtailment' || targetNode.type === 'curtailment')) {
-                  let foundConn2 = false;
-                  if (sourceNode?.id === 'potencia_ppc') {
-                    sourceHandle = undefined // Força a porta direita padrão, removendo out-a ou out-b antigo
-                    type = 'straight'
-                  }
-                  if (sourceNode?.id === 'referencia_ppc') {
-                    foundConn2 = true
-                  }
-                }
-                
-                return {
-                  ...e,
-                  type,
-                  sourceHandle,
-                  targetHandle,
-                  data: { ...(e.data || {}), ...(initial?.data || {}) }
-                }
-              })
-              initialEdges.forEach(ie => {
-                if (!finalEdges.find(f => f.id === ie.id)) {
-                  finalEdges.push(ie)
-                }
-              })
-              return finalEdges
-            })
-          }
-        } else {
-          setNodes(initialNodes)
-          setEdges(initialEdges)
-        }
+        // Aplica apenas os campos per-usina por cima do layout padrão
+        setNodes(initialNodes.map(node => {
+          const cfg = nodeConfigs[node.id]
+          if (!cfg) return node
+          return { ...node, data: { ...node.data, ...cfg } }
+        }))
       })
       .catch(() => {
-        setNodes(initialNodes)
-        setEdges(initialEdges)
+        // Em caso de erro, mantém o initialNodes já definido acima
       })
   }, [usinaAtual, setNodes, setEdges])
 
@@ -936,7 +840,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
         bgCell: 'rgba(234, 179, 8, 0.02)',
         bgTotal: 'rgba(234, 179, 8, 0.08)'
       };
-    } else if (key.startsWith('geff') || key.startsWith('tcel') || key.startsWith('curtailment')) {
+    } else if (key.startsWith('geff') || key.startsWith('tcel') || key.startsWith('globinc')) {
       return {
         color: '#f97316', // Laranja
         bgHeader: 'rgba(249, 115, 22, 0.05)',
@@ -950,7 +854,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
         bgCell: 'rgba(106, 27, 154, 0.02)',
         bgTotal: 'rgba(106, 27, 154, 0.08)'
       };
-    } else if (key.startsWith('potencia_ppc')) {
+    } else if (key.startsWith('potencia_ppc') || key.startsWith('curtailment')) {
       return {
         color: '#22c55e', // Verde claro
         bgHeader: 'rgba(34, 197, 94, 0.05)',
@@ -971,12 +875,19 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
         bgCell: 'rgba(16, 185, 129, 0.02)',
         bgTotal: 'rgba(16, 185, 129, 0.08)'
       };
-    } else if (key.startsWith('energia_pmi') || key.startsWith('energia pmi')) {
+    } else if (key.startsWith('energia_pmi') || key.startsWith('energia pmi') || key.startsWith('e_grid')) {
       return {
         color: '#0277BD', // Azul (cor do Elemento Energia PMI)
         bgHeader: 'rgba(2, 119, 189, 0.05)',
         bgCell: 'rgba(2, 119, 189, 0.02)',
         bgTotal: 'rgba(2, 119, 189, 0.08)'
+      };
+    } else if (key.startsWith('fator_ajuste') || key.startsWith('epi')) {
+      return {
+        color: '#334155', // Cinza escuro
+        bgHeader: 'rgba(51, 65, 85, 0.05)',
+        bgCell: 'rgba(51, 65, 85, 0.02)',
+        bgTotal: 'rgba(51, 65, 85, 0.08)'
       };
     }
     return {
@@ -1007,6 +918,18 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
       );
     }
     
+    if (label === 'Tracker Piranômetro') {
+      return (
+        <div style={{ lineHeight: '1.2' }}>
+          Tracker<br/>
+          Piranômetro
+        </div>
+      );
+    }
+    
+    if (label.toLowerCase() === 'epi') return 'EPI';
+    if (label.toLowerCase() === 'curtailment') return 'Curtailment';
+
     if (label.startsWith('Fator de Ajuste')) {
       return (
         <div style={{ lineHeight: '1.2' }}>
@@ -1381,6 +1304,14 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--red)' }}>Tolerância (°):</label>
                       <input type="number" step="1" className="input" value={trackerParams.tolerance} onChange={e => setTrackerParams({ ...trackerParams, tolerance: parseFloat(e.target.value) || 0 })} style={{ padding: '6px', borderColor: 'var(--red)' }} title="Diferença máxima aceitável em relação à referência." />
                     </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '150px' }}>
+                      <label style={{ fontSize: 12, fontWeight: 600 }}>Tol. Qtde Pontos Vento:</label>
+                      <input type="number" step="1" className="input" value={trackerParams.tol_pontos_vento || 0} onChange={e => setTrackerParams({ ...trackerParams, tol_pontos_vento: parseInt(e.target.value) || 0 })} style={{ padding: '6px' }} title="Qtde máxima de pontos fora da referência para ainda ser considerado Ok." />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '150px' }}>
+                      <label style={{ fontSize: 12, fontWeight: 600 }}>Tol. Qtde Pontos Travado:</label>
+                      <input type="number" step="1" className="input" value={trackerParams.tol_pontos_travado || 0} onChange={e => setTrackerParams({ ...trackerParams, tol_pontos_travado: parseInt(e.target.value) || 0 })} style={{ padding: '6px' }} title="Qtde máxima de pontos fora da referência para ainda ser considerado Ok." />
+                    </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: '8px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -1633,12 +1564,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                     return n
                   })
                   setNodes(updatedNodes)
-                  if (usinaAtual) {
-                    saveFlowConfig(usinaAtual, {
-                      nodes: updatedNodes.map(n => ({ id: n.id, data: n.data, position: n.position, type: n.type })),
-                      edges: edges
-                    })
-                  }
+                  saveNodeConfig(updatedNodes)
                   setSelectedNodeId(null)
                 }} 
                 className="btn btn-primary btn-sm"
@@ -1754,12 +1680,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                     return n
                   })
                   setNodes(updatedNodes)
-                  if (usinaAtual) {
-                    saveFlowConfig(usinaAtual, {
-                      nodes: updatedNodes.map(n => ({ id: n.id, data: n.data, position: n.position, type: n.type })),
-                      edges: edges
-                    })
-                  }
+                  saveNodeConfig(updatedNodes)
                   setSelectedNodeId(null)
                 }} 
                 className="btn btn-primary btn-sm"
@@ -2029,12 +1950,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                     return n
                   })
                   setNodes(updatedNodes)
-                  if (usinaAtual) {
-                    saveFlowConfig(usinaAtual, {
-                      nodes: updatedNodes.map(n => ({ id: n.id, data: n.data, position: n.position, type: n.type })),
-                      edges: edges
-                    })
-                  }
+                  saveNodeConfig(updatedNodes)
                   setSelectedNodeId(null)
                 }} 
                 className="btn btn-primary btn-sm"
@@ -2131,12 +2047,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                     return n
                   })
                   setNodes(updatedNodes)
-                  if (usinaAtual) {
-                    saveFlowConfig(usinaAtual, {
-                      nodes: updatedNodes.map(n => ({ id: n.id, data: n.data, position: n.position, type: n.type })),
-                      edges: edges
-                    })
-                  }
+                  saveNodeConfig(updatedNodes)
                   setSelectedNodeId(null)
                 }} 
                 className="btn btn-primary btn-sm"
@@ -2274,9 +2185,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                     return n;
                   });
                   setNodes(newNodes);
-                  saveFlowConfig(usinaAtual, { nodes: newNodes, edges }).catch(err => {
-                    console.error("Erro ao salvar fluxo do EPI", err);
-                  });
+                  saveNodeConfig(newNodes);
                   setSelectedNodeId(null);
                   setToast({ message: 'Variáveis do EPI salvas!', type: 'success' });
                 }}
@@ -2323,7 +2232,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                   accentColor: 'var(--amber)', cursor: 'pointer'
                 }} 
               />
-              Exibir Entradas
+              Entradas
             </label>
 
             <label style={{ 
@@ -2340,7 +2249,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                   accentColor: 'var(--amber)', cursor: 'pointer'
                 }} 
               />
-              Exibir Dados Medidos
+              Dados Medidos
             </label>
 
             <label style={{ 
@@ -2357,7 +2266,41 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                   accentColor: 'var(--amber)', cursor: 'pointer'
                 }} 
               />
-              Exibir Dados Válidos
+              Dados Válidos
+            </label>
+
+            <label style={{ 
+              display: 'flex', alignItems: 'center', gap: '8px', 
+              fontSize: '13px', cursor: 'pointer', userSelect: 'none', 
+              color: 'var(--text-primary)', fontWeight: '600'
+            }}>
+              <input 
+                type="checkbox" 
+                checked={showResults} 
+                onChange={(e) => setShowResults(e.target.checked)} 
+                style={{ 
+                  width: '16px', height: '16px', 
+                  accentColor: 'var(--amber)', cursor: 'pointer'
+                }} 
+              />
+              Resultados
+            </label>
+
+            <label style={{ 
+              display: 'flex', alignItems: 'center', gap: '8px', 
+              fontSize: '13px', cursor: 'pointer', userSelect: 'none', 
+              color: 'var(--text-primary)', fontWeight: '600'
+            }}>
+              <input 
+                type="checkbox" 
+                checked={showValidation} 
+                onChange={(e) => setShowValidation(e.target.checked)} 
+                style={{ 
+                  width: '16px', height: '16px', 
+                  accentColor: 'var(--amber)', cursor: 'pointer'
+                }} 
+              />
+              Validação
             </label>
 
             <div style={{ width: '1px', height: '16px', backgroundColor: 'var(--border)' }} />
@@ -2409,7 +2352,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                   <span>Tracker Piranômetro</span>
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
-                  <input type="checkbox" checked={visibleVars.energia} onChange={() => setVisibleVars(prev => ({ ...prev, energia: !prev.energia }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <input type="checkbox" checked={visibleVars.potencia_ppc} onChange={() => setVisibleVars(prev => ({ ...prev, potencia_ppc: !prev.potencia_ppc }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
                   <span>Potência PPC</span>
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
@@ -2418,7 +2361,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
                   <input type="checkbox" checked={visibleVars.pvsyst} onChange={() => setVisibleVars(prev => ({ ...prev, pvsyst: !prev.pvsyst }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
-                  <span>Energia Prevista (PVSyst)</span>
+                  <span>Energia Prevista</span>
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
                   <input type="checkbox" checked={visibleVars.epi} onChange={() => setVisibleVars(prev => ({ ...prev, epi: !prev.epi }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
@@ -2516,8 +2459,8 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                             color: isStyled ? theme.color : 'var(--text-primary)', 
                             borderBottom: '2px solid var(--border)', 
                             textAlign: 'center',
-                            whiteSpace: (firstCol.label.startsWith('Sujidade (') || firstCol.label.includes('PVSyst')) ? 'normal' : 'nowrap',
-                            minWidth: (firstCol.label.startsWith('Sujidade (') || firstCol.label.includes('PVSyst')) ? '100px' : 'auto',
+                            whiteSpace: (firstCol.label.startsWith('Sujidade (') || firstCol.label.includes('PVSyst') || firstCol.label.includes('Tracker Piranômetro')) ? 'normal' : 'nowrap',
+                            minWidth: (firstCol.label.startsWith('Sujidade (') || firstCol.label.includes('PVSyst') || firstCol.label.includes('Tracker Piranômetro')) ? '100px' : 'auto',
                             background: isStyled ? theme.bgHeader : 'var(--bg-secondary)',
                             verticalAlign: 'middle'
                           }}

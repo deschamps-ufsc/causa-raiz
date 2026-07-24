@@ -1,0 +1,41 @@
+{
+  "usina": "Cortez - SPE São Claus 1",
+  "dates": [
+    "2025-11-28"
+  ],
+  "operation": "sum",
+  "inputsList": [],
+  "outputFilter": "",
+  "geffParams": {
+    "beta": 1,
+    "SSF": 0,
+    "MLF": 0
+  },
+  "simultParams": {
+    "geff": true,
+    "tamb": true,
+    "tcel": true,
+    "energia_pmi": true
+  },
+  "trackerParams": {
+    "latitude": -23.55,
+    "longitude": -46.63,
+    "gcr": 0.3,
+    "max_angle": 60,
+    "tolerance": 10
+  },
+  "curtailmentParams": {
+    "refMin": 52.8,
+    "refMargin": 3,
+    "diffMargin": 5,
+    "resolutionMode": "1min"
+  },
+  "soilParams": {
+    "startTime": "",
+    "endTime": "",
+    "trimPercent": ""
+  },
+  "energiaPmiParams": {
+    "multiplier": 0.012
+  }
+}

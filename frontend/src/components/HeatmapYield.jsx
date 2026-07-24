@@ -12,10 +12,12 @@ export default function HeatmapYield({ usina, dates, activeFilters = [] }) {
   const colCat = 'skid'
   const rowCat1 = 'inversor'
   const rowCat2 = 'stringbox'
+  const rowCat3 = 'tracker'
 
   const [showRows, setShowRows] = useState({
     inversor: true,
     stringbox: true,
+    tracker: true,
     string: true
   })
   const toggleRow = (r) => setShowRows(prev => ({ ...prev, [r]: !prev[r] }))
@@ -40,6 +42,7 @@ export default function HeatmapYield({ usina, dates, activeFilters = [] }) {
     { label: 'Estação', value: 'estacao' },
     { label: 'Inversor', value: 'inversor' },
     { label: 'Stringbox', value: 'stringbox' },
+    { label: 'Tracker', value: 'tracker' },
   ]
 
   useEffect(() => {
@@ -131,7 +134,8 @@ export default function HeatmapYield({ usina, dates, activeFilters = [] }) {
       if (!map.has(label)) {
         let type = 'inversor'
         if (lvl === 1) type = 'stringbox'
-        if (lvl === 2) type = 'string'
+        if (lvl === 2) type = rowCat3 ? 'tracker' : 'string'
+        if (lvl === 3) type = 'string'
         const node = { label, values: {}, children: new Map(), isLeaf: false, level: lvl, type }
         for (let c of cols) node.values[c] = { integral: 0, avg_sum: 0, kwp: 0, yield: null, count: 0, serieName: '' }
         map.set(label, node)
@@ -145,6 +149,7 @@ export default function HeatmapYield({ usina, dates, activeFilters = [] }) {
       
       const h1 = r[rowCat1] || 'S/N'
       const h2 = rowCat2 ? (r[rowCat2] || 'S/N') : null
+      const h3 = rowCat3 ? (r[rowCat3] || 'S/N') : null
       
       let leafId = r.serie || '?'
       const elLower = elemento.toLowerCase()
@@ -172,6 +177,9 @@ export default function HeatmapYield({ usina, dates, activeFilters = [] }) {
       if (rowCat2) {
         parentForLeaf = getOrCreate(n1.children, h2, 1)
       }
+      if (rowCat3 && parentForLeaf.level === 1) {
+        parentForLeaf = getOrCreate(parentForLeaf.children, h3, 2)
+      }
 
       const leaf = getOrCreate(parentForLeaf.children, leafId, parentForLeaf.level + 1)
       leaf.isLeaf = true
@@ -191,7 +199,11 @@ export default function HeatmapYield({ usina, dates, activeFilters = [] }) {
 
       addVal(n1, ``)
       if (rowCat2) {
-        addVal(parentForLeaf, `Total ${h2}`)
+        addVal(n1.children.get(h2), `Total ${h2}`)
+      }
+      if (rowCat3 && h2 && h3) {
+        const n2 = n1.children.get(h2)
+        if (n2) addVal(n2.children.get(h3), `Total ${h3}`)
       }
       addVal(leaf, r.serie)
     })
@@ -438,6 +450,12 @@ export default function HeatmapYield({ usina, dates, activeFilters = [] }) {
               style={{ padding: '4px 12px', borderRadius: 6, fontSize: 13, fontWeight: showRows.stringbox ? 600 : 500, cursor: 'pointer', border: 'none', color: showRows.stringbox ? '#ea580c' : '#64748b', background: showRows.stringbox ? '#fff7ed' : 'transparent', transition: 'all 0.2s' }}
             >
               Stringbox
+            </button>
+            <button
+              onClick={() => toggleRow('tracker')}
+              style={{ padding: '4px 12px', borderRadius: 6, fontSize: 13, fontWeight: showRows.tracker ? 600 : 500, cursor: 'pointer', border: 'none', color: showRows.tracker ? '#ea580c' : '#64748b', background: showRows.tracker ? '#fff7ed' : 'transparent', transition: 'all 0.2s' }}
+            >
+              Tracker
             </button>
             <button
               onClick={() => toggleRow('string')}

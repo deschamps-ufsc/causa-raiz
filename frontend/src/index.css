@@ -477,6 +477,12 @@ select.input {
   left: 60px !important;
 }
 
+.tracker-plot .js-plotly-plot .plotly .modebar,
+.tracker-plot .plotly .modebar {
+  left: 0px !important;
+  top: 30px !important;
+}
+
 /* ── Info Badge Tooltips ─────────────────────────────────────── */
 .info-badge-wrap:hover .info-tooltip {
   display: block !important;

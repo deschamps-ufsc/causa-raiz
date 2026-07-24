@@ -253,6 +253,7 @@ def get_pivot_heatmap(
             m_sk = str(meta.get("skid") or "").strip()
             m_in = str(meta.get("inversor") or "").strip()
             m_sb = str(meta.get("stringbox") or "").strip()
+            m_tr = str(meta.get("tracker") or "").strip()
             m_st = str(meta.get("string") or "").strip()
             
             parts = [p for p in [m_sk, m_in, m_sb, m_st] if p]
@@ -270,6 +271,7 @@ def get_pivot_heatmap(
                 "skid": m_sk,
                 "inversor": m_in,
                 "stringbox": m_sb,
+                "tracker": m_tr,
                 "estacao": str(meta.get("estacao") or ""),
                 "avg_val": round(avg_val, 4),
                 "integral": round(integral, 4),
@@ -445,6 +447,13 @@ def get_trackers_heatmap(
 
     mapping = load_mapping(usina)
     
+    info_dict = {}
+    try:
+        from services.usina_info_service import load_usina_info
+        info_dict = load_usina_info(usina) or {}
+    except Exception:
+        pass
+    
     # Pegar parâmetros de tracker_config
     import json
     tracker_params = {}
@@ -452,11 +461,13 @@ def get_trackers_heatmap(
     if os.path.exists(config_path):
         with open(config_path, "r", encoding="utf-8") as f:
             cfg = json.load(f)
-            # Find node with id 'tracker'
-            for node in cfg.get("nodes", []):
-                if node.get("id") == "tracker":
-                    tracker_params = node.get("data", {}).get("trackerParams", {})
-                    break
+            if "nodeConfigs" in cfg:
+                tracker_params = cfg["nodeConfigs"].get("tracker", {}).get("trackerParams", {})
+            else:
+                for node in cfg.get("nodes", []):
+                    if node.get("id") == "tracker":
+                        tracker_params = node.get("data", {}).get("trackerParams", {})
+                        break
 
     # Filtrar séries com base no elemento 'Tracker'
     target_series = []
@@ -483,8 +494,23 @@ def get_trackers_heatmap(
                     # Usa o campo 'tracker' do mapeamento; fallback para inferição pelo nome da série
                     "tracker": str(meta.get("tracker") or "") or base.split("-")[-1],
                     "strings": str(meta.get("string") or ""),
+                    "cc_strings": []
                 }
             tracker_groups[base][typ] = col
+
+    for col, meta in mapping.items():
+        el = meta.get("elemento", "").lower()
+        if "pot" in el and "string" in el and "cc" in el:
+            sk = str(meta.get("skid") or "")
+            inv = str(meta.get("inversor") or "")
+            sb = str(meta.get("stringbox") or "")
+            tr = str(meta.get("tracker") or "") or col.split(".")[0].split("-")[-1]
+            
+            for base, tg in tracker_groups.items():
+                if tg["skid"] == sk and tg["inversor"] == inv and tg["stringbox"] == sb and tg["tracker"] == tr:
+                    tg["cc_strings"].append(col)
+                    target_series.append(col)
+                    break
 
     if not target_series:
         raise HTTPException(
@@ -494,6 +520,17 @@ def get_trackers_heatmap(
 
     active_filters = [f.strip() for f in filters.split(",")] if filters else []
     cols_to_read = list(set(target_series)) + active_filters
+
+    # Séries sintéticas: identificar e coletar colunas-fonte adicionais
+    synth_lookup = build_lookup(usina)
+    all_needed_cols = list(set(target_series)) + active_filters
+    synth_in_target = {c: synth_lookup[c] for c in all_needed_cols if c in synth_lookup}
+    for synth_name, synth_def in synth_in_target.items():
+        if synth_name in cols_to_read:
+            cols_to_read.remove(synth_name)  # não existe no Parquet
+        for src in get_source_cols(synth_def):
+            if src not in cols_to_read:
+                cols_to_read.append(src)
 
     from services.parquet_service import DATA_DIR
     dfs = []
@@ -534,6 +571,15 @@ def get_trackers_heatmap(
         raise HTTPException(status_code=422, detail="Nenhuma coluna válida no Parquet.")
         
     df = pd.concat(dfs, ignore_index=True)
+    
+    # Injetar séries sintéticas calculadas no DataFrame
+    for synth_name, synth_def in synth_in_target.items():
+        try:
+            df[synth_name] = compute_synthetic(df, synth_def)
+        except Exception as e:
+            logger.warning(f"[SYNTHETIC] Erro ao calcular '{synth_name}' em trackers: {e}")
+            df[synth_name] = 0.0
+
     if "timestamp" in df.columns:
         df.set_index("timestamp", inplace=True)
 
@@ -585,6 +631,8 @@ def get_trackers_heatmap(
     df["is_backtracking"] = is_backtracking_series.values
 
     df_no_bt = df[df["is_backtracking"] == 0].copy()
+    # Explicitamente ignorar períodos onde a referência do PVLib for vazia (NaN)
+    df_no_bt = df_no_bt.dropna(subset=["TrackerRef"])
     df_no_bt["_date_str"] = df_no_bt.index.strftime("%Y-%m-%d")
 
     records = []
@@ -598,6 +646,13 @@ def get_trackers_heatmap(
             pts_fora_alvo = 0
             pts_fora_atual = 0
 
+            pts_vento = 0
+            pts_travado = 0
+            mask_vento = pd.Series(False, index=df_group.index)
+
+            sum_diff_vento = 0.0
+            sum_diff_travado = 0.0
+
             col_alvo = data.get("alvo")
             if col_alvo and col_alvo in df_group.columns:
                 diff_series = (df_group[col_alvo] - df_group["TrackerRef"]).abs().dropna()
@@ -605,14 +660,53 @@ def get_trackers_heatmap(
                     diff_alvo = round(float(diff_series.mean()), 4)
                     count_alvo = len(diff_series)
                     pts_fora_alvo = int((diff_series > tolerance).sum())
+                
+                mask_vento = (df_group[col_alvo] - df_group["TrackerRef"]).abs() > tolerance
+                pts_vento = int(mask_vento.sum())
 
             col_atual = data.get("atual")
             if col_atual and col_atual in df_group.columns:
-                diff_series = (df_group[col_atual] - df_group["TrackerRef"]).abs().dropna()
+                diff_atual_series = (df_group[col_atual] - df_group["TrackerRef"]).abs()
+                diff_series = diff_atual_series.dropna()
                 if not diff_series.empty:
                     diff_atual = round(float(diff_series.mean()), 4)
                     count_atual = len(diff_series)
                     pts_fora_atual = int((diff_series > tolerance).sum())
+
+                mask_erro_atual = diff_atual_series > tolerance
+                mask_travado = mask_erro_atual & ~mask_vento
+                pts_travado = int(mask_travado.sum())
+                
+                sum_diff_vento = float(diff_atual_series[mask_vento].sum())
+                sum_diff_travado = float(diff_atual_series[mask_travado].sum())
+            else:
+                if col_alvo and col_alvo in df_group.columns:
+                    diff_alvo_series = (df_group[col_alvo] - df_group["TrackerRef"]).abs()
+                    sum_diff_vento = float(diff_alvo_series[mask_vento].sum())
+
+            energia_strings = 0.0
+            kwp_val = 0.0
+            if "cc_strings" in data and data["cc_strings"]:
+                valid_cc_cols = [c for c in data["cc_strings"] if c in df_group.columns]
+                if valid_cc_cols:
+                    energia_strings = float(df_group[valid_cc_cols].sum().sum()) / 60.0
+                
+                for c_col in data["cc_strings"]:
+                    meta_col = mapping.get(c_col, {})
+                    m_sk = str(meta_col.get("skid") or "").strip()
+                    m_in = str(meta_col.get("inversor") or "").strip()
+                    m_sb = str(meta_col.get("stringbox") or "").strip()
+                    m_st = str(meta_col.get("string") or "").strip()
+                    parts = [p for p in [m_sk, m_in, m_sb, m_st] if p]
+                    if m_sk and m_in and parts:
+                        target_prefix = "|".join(parts)
+                        for key_path, data_dict in info_dict.items():
+                            if key_path == target_prefix or key_path.startswith(target_prefix + "|"):
+                                kwp_val += data_dict.get("kwp", 0.0)
+                                
+            yield_val = None
+            if energia_strings > 0 and kwp_val > 0:
+                yield_val = energia_strings / kwp_val
 
             if diff_alvo is not None or diff_atual is not None:
                 records.append({
@@ -629,9 +723,18 @@ def get_trackers_heatmap(
                     "count_atual": count_atual,
                     "pts_fora_alvo": pts_fora_alvo,
                     "pts_fora_atual": pts_fora_atual,
+                    "pts_vento": pts_vento,
+                    "pts_travado": pts_travado,
+                    "sum_diff_vento": sum_diff_vento,
+                    "sum_diff_travado": sum_diff_travado,
+                    "alvo": col_alvo,
+                    "atual": col_atual,
                     "serie_alvo": col_alvo,
                     "serie_atual": col_atual,
-                    "strings": data.get("strings", "")
+                    "strings": data.get("strings", ""),
+                    "energia": round(energia_strings, 4),
+                    "kwp": round(kwp_val, 4) if kwp_val > 0 else None,
+                    "yield": round(yield_val, 4) if yield_val is not None else None
                 })
             
     return {
@@ -842,10 +945,13 @@ def get_trackers_heatmap_instant(
     if os.path.exists(config_path):
         with open(config_path, "r", encoding="utf-8") as f:
             cfg = json.load(f)
-            for node in cfg.get("nodes", []):
-                if node.get("id") == "tracker":
-                    tracker_params = node.get("data", {}).get("trackerParams", {})
-                    break
+            if "nodeConfigs" in cfg:
+                tracker_params = cfg["nodeConfigs"].get("tracker", {}).get("trackerParams", {})
+            else:
+                for node in cfg.get("nodes", []):
+                    if node.get("id") == "tracker":
+                        tracker_params = node.get("data", {}).get("trackerParams", {})
+                        break
 
     target_series = []
     tracker_groups = {} 
@@ -1013,3 +1119,182 @@ def get_trackers_heatmap_instant(
     from fastapi.responses import Response
     return Response(content=json.dumps(out_dict), media_type="application/json")
 
+
+@router.get("/heatmap/tracker_chart")
+def get_tracker_chart(usina: str, date: str, alvo: str = None, atual: str = None, filters: str = None):
+    from services.parquet_service import _parquet_path
+    import pyarrow.parquet as pq
+    import pandas as pd
+    import pvlib
+    import numpy as np
+    import json
+    
+    config_path = os.path.join(os.path.dirname(__file__), "..", "data", usina, "flow_config.json")
+    tracker_params = {}
+    if os.path.exists(config_path):
+        with open(config_path, "r", encoding="utf-8") as f:
+            flow_data = json.load(f)
+            if "nodeConfigs" in flow_data:
+                tracker_params = flow_data["nodeConfigs"].get("tracker", {}).get("trackerParams", {})
+            else:
+                for node in flow_data.get("nodes", []):
+                    if node.get("id") == "tracker":
+                        tracker_params = node.get("data", {}).get("trackerParams", {})
+                        break
+                        
+    lat = float(tracker_params.get("latitude", -23.55))
+    lon = float(tracker_params.get("longitude", -46.63))
+    gcr = float(tracker_params.get("gcr", 0.3))
+    max_angle = float(tracker_params.get("max_angle", 60))
+    time_offset = int(tracker_params.get("time_offset", 0))
+    tolerance = float(tracker_params.get("tolerance", 10))
+    
+    from services.parquet_service import DATA_DIR
+    active_filters = [f.strip() for f in filters.split(",")] if filters else []
+    if "Dados Válidos" not in active_filters:
+        active_filters.append("Dados Válidos")
+    
+    path = _parquet_path(date, usina)
+    processed_path = os.path.join(DATA_DIR, usina, "processed", f"{date}.parquet")
+    
+    from services.synthetic_service import build_lookup, get_source_cols, compute_synthetic
+    from services.mapping_service import load_mapping
+    
+    mapping = load_mapping(usina)
+    tracker_strings = []
+    meta_base = mapping.get(alvo) if alvo else mapping.get(atual)
+    if meta_base:
+        t_skid = meta_base.get("skid")
+        t_inv = meta_base.get("inversor")
+        t_sb = meta_base.get("stringbox")
+        t_tr = meta_base.get("tracker")
+        if t_skid and t_inv and t_sb and t_tr:
+            for col, meta in mapping.items():
+                el = meta.get("elemento", "").lower()
+                if "pot" in el and "string" in el and "cc" in el and \
+                   meta.get("skid") == t_skid and \
+                   meta.get("inversor") == t_inv and \
+                   meta.get("stringbox") == t_sb and \
+                   meta.get("tracker") == t_tr:
+                    tracker_strings.append(col)
+    
+    cols_to_read = list(active_filters) + tracker_strings
+    synth_lookup = build_lookup(usina)
+    synth_in_target = {col: synth_lookup[col] for col in cols_to_read if col in synth_lookup}
+    for synth_name, synth_def in list(synth_in_target.items()):
+        if synth_name in cols_to_read:
+            cols_to_read.remove(synth_name)
+        for src in get_source_cols(synth_def):
+            if src not in cols_to_read:
+                cols_to_read.append(src)
+                
+    df_raw = None
+    if os.path.exists(path):
+        schema = pq.read_schema(path)
+        cols_in_file = schema.names
+        read_cols = ["timestamp"]
+        if alvo and alvo in cols_in_file: read_cols.append(alvo)
+        if atual and atual in cols_in_file and atual not in read_cols: read_cols.append(atual)
+        valid_cols = [c for c in cols_to_read if c in cols_in_file and c not in read_cols]
+        read_cols.extend(valid_cols)
+        df_raw = pd.read_parquet(path, columns=read_cols)
+        
+    df_proc = None
+    if os.path.exists(processed_path):
+        schema_proc = pq.read_schema(processed_path)
+        cols_in_proc = schema_proc.names
+        valid_proc = [c for c in cols_to_read if c in cols_in_proc]
+        if valid_proc:
+            read_proc = ["timestamp"] + valid_proc
+            df_proc = pd.read_parquet(processed_path, columns=list(set(read_proc)))
+            
+    if df_raw is not None and df_proc is not None:
+        df_raw["timestamp"] = df_raw["timestamp"].dt.floor("min")
+        df_proc["timestamp"] = df_proc["timestamp"].dt.floor("min")
+        df = df_raw.merge(df_proc, on="timestamp", how="outer")
+    elif df_raw is not None:
+        df = df_raw
+    elif df_proc is not None:
+        df = df_proc
+    else:
+        raise HTTPException(status_code=404, detail="Parquet not found")
+        
+    for synth_name, synth_def in synth_in_target.items():
+        try:
+            df[synth_name] = compute_synthetic(df, synth_def)
+        except Exception:
+            df[synth_name] = 0.0
+
+    df.set_index("timestamp", inplace=True)
+    
+    times_for_pvlib = pd.DatetimeIndex(df.index.values)
+    if times_for_pvlib.tz is None:
+        times_for_pvlib = times_for_pvlib.tz_localize('America/Sao_Paulo', ambiguous='NaT', nonexistent='NaT')
+        
+    if time_offset != 0:
+        times_for_pvlib = times_for_pvlib - pd.Timedelta(minutes=time_offset)
+        
+    solpos = pvlib.solarposition.get_solarposition(times_for_pvlib, lat, lon)
+    trk = pvlib.tracking.singleaxis(solpos['apparent_zenith'], solpos['azimuth'], 
+                                    max_angle=max_angle, backtrack=True, gcr=gcr)
+    
+    pvlib_series = trk['tracker_theta'].values
+    if tracker_params.get("inverter_sinal", False):
+        pvlib_series = -pvlib_series
+        
+    df["pvlib"] = pvlib_series
+    
+    # Substituir os valores NaN e infinity de alvo e atual antes de converter pra lista
+    alvo_list = [round(x, 2) if pd.notnull(x) else None for x in df[alvo]] if alvo and alvo in df else None
+    atual_list = [round(x, 2) if pd.notnull(x) else None for x in df[atual]] if atual and atual in df else None
+    
+    # Calculate Vento and Travado flags
+    if alvo and alvo in df.columns:
+        diff_alvo = (df[alvo] - df["pvlib"]).abs()
+        mask_vento = diff_alvo > tolerance
+    else:
+        mask_vento = pd.Series(False, index=df.index)
+        
+    if atual and atual in df.columns:
+        mask_erro_atual = (df[atual] - df["pvlib"]).abs() > tolerance
+        mask_travado = mask_erro_atual & ~mask_vento
+    else:
+        mask_travado = pd.Series(False, index=df.index)
+        
+    has_data = pd.Series(False, index=df.index)
+    if alvo and alvo in df.columns: has_data = has_data | df[alvo].notnull()
+    if atual and atual in df.columns: has_data = has_data | df[atual].notnull()
+
+    if active_filters:
+        valid_data = pd.Series(True, index=df.index)
+        for f_col in active_filters:
+            if f_col in df.columns:
+                valid_data = valid_data & (df[f_col] == 1)
+        valid_data = valid_data & has_data
+    else:
+        valid_data = has_data.copy()
+        
+    mask_ok = has_data & df["pvlib"].notnull() & ~mask_vento & ~mask_travado
+        
+    vento_list = [1 if v else 0 for v in mask_vento]
+    travado_list = [1 if t else 0 for t in mask_travado]
+    ok_list = [1 if o else 0 for o in mask_ok]
+    valido_list = [1 if v else 0 for v in valid_data]
+    
+    strings_data = {}
+    for sc in tracker_strings:
+        if sc in df.columns:
+            strings_data[sc] = [round(x, 2) if pd.notnull(x) else None for x in df[sc]]
+    
+    return {
+        "timestamps": df.index.strftime("%Y-%m-%d %H:%M:%S").tolist(),
+        "alvo": alvo_list,
+        "atual": atual_list,
+        "pvlib": [round(x, 2) if pd.notnull(x) else None for x in df["pvlib"]],
+        "tolerance": tolerance,
+        "vento": vento_list,
+        "travado": travado_list,
+        "ok": ok_list,
+        "valido": valido_list,
+        "strings_data": strings_data
+    }

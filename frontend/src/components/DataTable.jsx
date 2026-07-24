@@ -20,6 +20,7 @@ export function formatSeriesName(name) {
   if (nameLower === 'referencia_ppc') return 'Referência PPC';
   if (nameLower === 'simultaneidade') return 'Simultaneidade';
   if (nameLower === 'curtailment') return 'Curtailment';
+  if (nameLower === 'epi') return 'EPI';
   return name;
 }
 

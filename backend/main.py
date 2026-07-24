@@ -90,3 +90,5 @@ async def on_startup():
 def health_check():
     """Verificação de saúde da API."""
     return {"status": "ok", "api": "Usina Solar v1.0.0"}
+
+

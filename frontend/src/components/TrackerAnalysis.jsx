@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
-import { fetchTrackerAnalysis, fetchFlowConfig } from '../services/api'
+import PlotWrapper from 'react-plotly.js'
+const Plot = PlotWrapper.default || PlotWrapper
+import axios from 'axios'
+import api, { fetchTrackerAnalysis, fetchFlowConfig } from '../services/api'
 import { exportTableToPdf, exportTableToPng } from '../utils/exportPdf'
 
 export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
@@ -29,9 +32,12 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
   const [visCols, setVisCols] = useState({
     serie: false,
     diff: true,
-    pts: false,
-    perc: false,
+    pts: true,
     status: true,
+    perdas: false,
+    kwp: true,
+    energia: true,
+    yield: true
   })
   const toggleCol = (c) => setVisCols(prev => ({ ...prev, [c]: !prev[c] }))
 
@@ -40,6 +46,30 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
   const [selectedDates, setSelectedDates] = useState([])
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [showPdfMenu, setShowPdfMenu] = useState(false)
+  
+  const [chartModal, setChartModal] = useState(null)
+  const [chartData, setChartData] = useState(null)
+  const [chartLoading, setChartLoading] = useState(false)
+  const [chartError, setChartError] = useState(null)
+  const [trackerTols, setTrackerTols] = useState({ vento: 0, travado: 0 })
+
+  const openChart = async (date, alvo, atual, status = null, trackerName = null, perdasLabel = null) => {
+      setChartModal({ date, alvo, atual, status, trackerName, perdasLabel })
+      setChartLoading(true)
+      setChartData(null)
+      setChartError(null)
+      try {
+          const res = await api.get('/heatmap/tracker_chart', {
+              params: { usina, date, alvo, atual, filters: activeFilters.join(',') }
+          })
+          setChartData(res.data)
+      } catch (err) {
+          console.error(err)
+          setChartError(err.message || String(err))
+      } finally {
+          setChartLoading(false)
+      }
+  }
 
   const load = async () => {
     if (!usina || !dates) return
@@ -81,13 +111,33 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
     fetchFlowConfig(usina)
       .then(config => {
         const set = new Set()
-        if (config && config.nodes) {
+        if (config && config.nodeConfigs) {
+          const trackerNode = config.nodeConfigs['tracker']
+          if (trackerNode && trackerNode.inputs) {
+            trackerNode.inputs.forEach(input => {
+              if (typeof input === 'string') set.add(input)
+              else if (input.series) set.add(input.series)
+            })
+          }
+          if (trackerNode && trackerNode.trackerParams) {
+            setTrackerTols({
+              vento: trackerNode.trackerParams.tol_pontos_vento || 0,
+              travado: trackerNode.trackerParams.tol_pontos_travado || 0
+            })
+          }
+        } else if (config && config.nodes) {
           const trackerNode = config.nodes.find(el => el.id === 'tracker')
           if (trackerNode && trackerNode.data?.inputs) {
             trackerNode.data.inputs.forEach(input => {
               if (typeof input === 'string') set.add(input)
               else if (input.series) set.add(input.series)
             })
+            if (trackerNode.data.trackerParams) {
+              setTrackerTols({
+                vento: trackerNode.data.trackerParams.tol_pontos_vento || 0,
+                travado: trackerNode.data.trackerParams.tol_pontos_travado || 0
+              })
+            }
           }
         }
         setSensorSeries(set)
@@ -114,7 +164,7 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
         if (lvl === 1) type = 'stringbox'
         if (lvl === 2) type = 'tracker'
         const node = { label, values: {}, children: new Map(), isLeaf: false, level: lvl, type }
-        for (let c of cols) node.values[c] = { diff_alvo_sum: 0, diff_atual_sum: 0, count_alvo: 0, count_atual: 0, pts_fora_alvo: 0, pts_fora_atual: 0, serieName: '', serie_alvo: '', serie_atual: '' }
+        for (let c of cols) node.values[c] = { diff_alvo_sum: 0, diff_atual_sum: 0, count_alvo: 0, count_atual: 0, pts_fora_alvo: 0, pts_fora_atual: 0, pts_vento: 0, pts_travado: 0, sum_diff_vento: 0, sum_diff_travado: 0, serieName: '', serie_alvo: '', serie_atual: '', energia: null, kwp: null, yield: null }
         map.set(label, node)
       }
       return map.get(label)
@@ -154,12 +204,25 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
             node.values[c].count_atual += r.count_atual
             node.values[c].pts_fora_atual += r.pts_fora_atual || 0
           }
+          node.values[c].pts_vento += r.pts_vento || 0
+          node.values[c].pts_travado += r.pts_travado || 0
+          node.values[c].sum_diff_vento += r.sum_diff_vento || 0
+          node.values[c].sum_diff_travado += r.sum_diff_travado || 0
           if (name !== undefined) {
              node.values[c].serieName = name
           }
           if (isLeafLvl) {
              node.values[c].serie_alvo = r.serie_alvo
              node.values[c].serie_atual = r.serie_atual
+          }
+          if (r.energia !== undefined && r.energia !== null) {
+              node.values[c].energia = (node.values[c].energia || 0) + r.energia
+          }
+          if (r.kwp !== undefined && r.kwp !== null) {
+              node.values[c].kwp = (node.values[c].kwp || 0) + r.kwp
+          }
+          if (node.values[c].energia > 0 && node.values[c].kwp > 0) {
+              node.values[c].yield = node.values[c].energia / node.values[c].kwp
           }
         }
       }
@@ -546,23 +609,7 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                 transition: 'all 0.2s'
               }}
             >
-              Qtd &gt; {tolerance}°
-            </button>
-            <button
-              onClick={() => toggleCol('perc')}
-              style={{
-                padding: '4px 12px',
-                borderRadius: 6,
-                fontSize: 13,
-                fontWeight: visCols.perc ? 600 : 500,
-                cursor: 'pointer',
-                border: 'none',
-                color: visCols.perc ? '#ea580c' : '#64748b',
-                background: visCols.perc ? '#fff7ed' : 'transparent',
-                transition: 'all 0.2s'
-              }}
-            >
-              % &gt; {tolerance}°
+              Qtde &gt; {tolerance}°
             </button>
             <button
               onClick={() => toggleCol('status')}
@@ -579,6 +626,70 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
               }}
             >
               Status
+            </button>
+            <button
+              onClick={() => toggleCol('perdas')}
+              style={{
+                padding: '4px 12px',
+                borderRadius: 6,
+                fontSize: 13,
+                fontWeight: visCols.perdas ? 600 : 500,
+                cursor: 'pointer',
+                border: 'none',
+                color: visCols.perdas ? '#ea580c' : '#64748b',
+                background: visCols.perdas ? '#fff7ed' : 'transparent',
+                transition: 'all 0.2s'
+              }}
+            >
+              Gatilho Perdas
+            </button>
+            <button
+              onClick={() => toggleCol('kwp')}
+              style={{
+                padding: '4px 8px',
+                borderRadius: 6,
+                fontSize: 13,
+                fontWeight: visCols.kwp ? 600 : 500,
+                cursor: 'pointer',
+                border: 'none',
+                color: visCols.kwp ? '#ea580c' : '#64748b',
+                background: visCols.kwp ? '#fff7ed' : 'transparent',
+                transition: 'all 0.2s'
+              }}
+            >
+              kWp
+            </button>
+            <button
+              onClick={() => toggleCol('energia')}
+              style={{
+                padding: '4px 8px',
+                borderRadius: 6,
+                fontSize: 13,
+                fontWeight: visCols.energia ? 600 : 500,
+                cursor: 'pointer',
+                border: 'none',
+                color: visCols.energia ? '#ea580c' : '#64748b',
+                background: visCols.energia ? '#fff7ed' : 'transparent',
+                transition: 'all 0.2s'
+              }}
+            >
+              Energia
+            </button>
+            <button
+              onClick={() => toggleCol('yield')}
+              style={{
+                padding: '4px 8px',
+                borderRadius: 6,
+                fontSize: 13,
+                fontWeight: visCols.yield ? 600 : 500,
+                cursor: 'pointer',
+                border: 'none',
+                color: visCols.yield ? '#ea580c' : '#64748b',
+                background: visCols.yield ? '#fff7ed' : 'transparent',
+                transition: 'all 0.2s'
+              }}
+            >
+              Yield
             </button>
           </div>
         </div>
@@ -651,7 +762,7 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                   <div style={{ color: '#ffffff', fontWeight: 600, fontSize: 11 }}>Tracker</div>
                 </td>
                 {pivotData.cols.map(c => {
-                  const numSubCols = [showAlvo && visCols.serie, showAlvo && visCols.diff, showAlvo && visCols.pts, showAlvo && visCols.perc, showAtual && visCols.serie, showAtual && visCols.diff, showAtual && visCols.pts, showAtual && visCols.perc].filter(Boolean).length + ((showAlvo || showAtual) && visCols.status ? 1 : 0)
+                  const numSubCols = [showAlvo && visCols.serie, showAlvo && visCols.diff, showAlvo && visCols.pts, showAtual && visCols.serie, showAtual && visCols.diff, showAtual && visCols.pts].filter(Boolean).length + ((showAlvo || showAtual) && visCols.status ? 1 : 0) + ((showAlvo || showAtual) && visCols.perdas ? 1 : 0) + ((showAlvo || showAtual) && visCols.kwp ? 1 : 0) + ((showAlvo || showAtual) && visCols.energia ? 1 : 0) + ((showAlvo || showAtual) && visCols.yield ? 1 : 0)
                   if (numSubCols === 0) return null
                   return (
                   <td key={c} colSpan={numSubCols} style={{ ...hdCell, textAlign: 'center', borderBottom: '1px solid #475569', borderLeft: '3px solid #0f172a' }}>
@@ -668,13 +779,15 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                   <React.Fragment key={`sub_${c}`}>
                     {showAlvo && visCols.serie && <td style={{...subHd, borderLeft: bL()}}>Série Alvo</td>}
                     {showAlvo && visCols.diff && <td style={{...subHd, borderLeft: bL()}}>Erro Alvo</td>}
-                    {showAlvo && visCols.pts && <td style={{...subHd, borderLeft: bL()}}>Qtd &gt; {tolerance}°</td>}
-                    {showAlvo && visCols.perc && <td style={{...subHd, borderLeft: bL()}}>% &gt; {tolerance}°</td>}
+                    {showAlvo && visCols.pts && <td style={{...subHd, borderLeft: bL()}}>QTDE ERRO ALVO</td>}
                     {showAtual && visCols.serie && <td style={{...subHd, borderLeft: bL()}}>Série Atual</td>}
                     {showAtual && visCols.diff && <td style={{...subHd, borderLeft: bL()}}>Erro Atual</td>}
-                    {showAtual && visCols.pts && <td style={{...subHd, borderLeft: bL()}}>Qtd &gt; {tolerance}°</td>}
-                    {showAtual && visCols.perc && <td style={{...subHd, borderLeft: bL()}}>% &gt; {tolerance}°</td>}
+                    {showAtual && visCols.pts && <td style={{...subHd, borderLeft: bL()}}>QTDE ERRO ATUAL</td>}
                     {(showAlvo || showAtual) && visCols.status && <td style={{...subHd, borderLeft: bL()}}>Status</td>}
+                    {(showAlvo || showAtual) && visCols.perdas && <td style={{...subHd, borderLeft: bL()}}>Gatilho Perdas</td>}
+                    {(showAlvo || showAtual) && visCols.kwp && <td style={{...subHd, textTransform: 'none', borderLeft: bL()}}>kWp</td>}
+                    {(showAlvo || showAtual) && visCols.energia && <td style={{...subHd, textTransform: 'none', borderLeft: bL()}}>Energia (kWh)</td>}
+                    {(showAlvo || showAtual) && visCols.yield && <td style={{...subHd, textTransform: 'none', borderLeft: bL()}}>Yield (kWh/kWp)</td>}
                   </React.Fragment>
                 )})}
               </tr>
@@ -725,12 +838,14 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                           {showAlvo && visCols.serie && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
                           {showAlvo && visCols.diff && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
                           {showAlvo && visCols.pts && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
-                          {showAlvo && visCols.perc && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
                           {showAtual && visCols.serie && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
                           {showAtual && visCols.diff && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
                           {showAtual && visCols.pts && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
-                          {showAtual && visCols.perc && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
                           {(showAlvo || showAtual) && visCols.status && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
+                          {(showAlvo || showAtual) && visCols.perdas && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
+                          {(showAlvo || showAtual) && visCols.kwp && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
+                          {(showAlvo || showAtual) && visCols.energia && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
+                          {(showAlvo || showAtual) && visCols.yield && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
                         </React.Fragment>
                       )
                     }
@@ -752,33 +867,98 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                              <>
                                {showAlvo && visCols.serie && <td style={{...cell, borderLeft: bL(), background: cBg, fontSize: 10, color: '#64748b', whiteSpace: 'nowrap'}}>{n.isLeaf ? rowVals.serie_alvo : ''}</td>}
                                {showAlvo && visCols.diff && <td style={{...cell, borderLeft: bL(), background: bgAlvo.bg, color: bgAlvo.text, fontWeight: 600}}>{fmt(rowVals.diff_alvo)}</td>}
-                               {showAlvo && visCols.pts && <td style={{...cell, borderLeft: bL(), background: cBg, fontWeight: 600}}>{rowVals.pts_fora_alvo}</td>}
-                               {showAlvo && visCols.perc && <td style={{...cell, borderLeft: bL(), background: cBg, fontWeight: 600}}>{pctAlvo.toFixed(1)}%</td>}
+                               {showAlvo && visCols.pts && <td style={{...cell, borderLeft: bL(), background: cBg, fontWeight: 600}}>{rowVals.pts_fora_alvo} ({pctAlvo.toFixed(1)}%)</td>}
                                
                                {showAtual && visCols.serie && <td style={{...cell, borderLeft: bL(), background: cBg, fontSize: 10, color: isSensor ? '#2563eb' : '#64748b', whiteSpace: 'nowrap', fontWeight: isSensor ? 700 : 400}}>{n.isLeaf ? rowVals.serie_atual : ''}{isSensor && ' 📡'}</td>}
                                {showAtual && visCols.diff && <td style={{...cell, borderLeft: bL(), background: bgAtual.bg, color: bgAtual.text, fontWeight: 600, boxShadow: isSensor ? 'inset 0 0 0 3px #3b82f6' : undefined}} title={isSensor ? 'Tracker com sensor instalado' : ''}>{fmt(rowVals.diff_atual)}</td>}
-                               {showAtual && visCols.pts && <td style={{...cell, borderLeft: bL(), background: cBg, fontWeight: 600, boxShadow: isSensor ? 'inset 0 0 0 3px #3b82f6' : undefined}}>{rowVals.pts_fora_atual}</td>}
-                               {showAtual && visCols.perc && <td style={{...cell, borderLeft: bL(), background: cBg, fontWeight: 600, boxShadow: isSensor ? 'inset 0 0 0 3px #3b82f6' : undefined}}>{pctAtual.toFixed(1)}%</td>}
+                               {showAtual && visCols.pts && <td style={{...cell, borderLeft: bL(), background: cBg, fontWeight: 600, boxShadow: isSensor ? 'inset 0 0 0 3px #3b82f6' : undefined}}>{rowVals.pts_fora_atual} ({pctAtual.toFixed(1)}%)</td>}
 
                                {(() => {
-                                 if (!(showAlvo || showAtual) || !visCols.status) return null;
-                                 const erroAlvo = rowVals.diff_alvo;
-                                 const erroAtual = rowVals.diff_atual;
-                                 let label, bg, color;
-                                 if (erroAlvo == null && erroAtual == null) {
-                                   return <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>;
+                                 if (!(showAlvo || showAtual)) return null;
+                                 if (!visCols.status && !visCols.perdas) return null;
+                                 if (rowVals.count_alvo === 0 && rowVals.count_atual === 0) {
+                                   return (
+                                     <>
+                                       {visCols.status && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
+                                       {visCols.perdas && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
+                                       {visCols.kwp && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
+                                       {visCols.energia && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
+                                       {visCols.yield && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
+                                     </>
+                                   );
                                  }
-                                 if (erroAlvo != null && erroAlvo >= 1) {
-                                   label = 'Vento'; bg = '#dbeafe'; color = '#1d4ed8';
-                                 } else if (erroAtual != null && erroAtual >= 1) {
-                                   label = 'Travado'; bg = '#fee2e2'; color = '#b91c1c';
+                                 let ptsVento = rowVals.pts_vento || 0;
+                                 let ptsTravado = rowVals.pts_travado || 0;
+                                 const totalPts = Math.max(rowVals.count_alvo || 0, rowVals.count_atual || 0);
+                                 
+                                 if (ptsVento <= trackerTols.vento) ptsVento = 0;
+                                 if (ptsTravado <= trackerTols.travado) ptsTravado = 0;
+                                 
+                                 const pctVento = totalPts > 0 ? (ptsVento / totalPts) * 100 : 0;
+                                 const pctTravado = totalPts > 0 ? (ptsTravado / totalPts) * 100 : 0;
+                                 
+                                 let label = '';
+                                 let bg = '#dcfce7';
+                                 let color = '#15803d';
+                                 
+                                 if (ptsVento === 0 && ptsTravado === 0) {
+                                   label = 'Ok';
+                                 } else if (ptsVento > 0 && ptsTravado === 0) {
+                                   label = `Vento: ${ptsVento} (${pctVento.toFixed(1)}%)`;
+                                   bg = '#dbeafe'; color = '#1d4ed8';
+                                 } else if (ptsTravado > 0 && ptsVento === 0) {
+                                   label = `Travado: ${ptsTravado} (${pctTravado.toFixed(1)}%)`;
+                                   bg = '#fee2e2'; color = '#b91c1c';
                                  } else {
-                                   label = 'Ok'; bg = '#dcfce7'; color = '#15803d';
+                                   label = `Vento: ${ptsVento} (${pctVento.toFixed(1)}%) | Travado: ${ptsTravado} (${pctTravado.toFixed(1)}%)`;
+                                   bg = '#fef08a'; color = '#854d0e';
                                  }
+                                 
+                                 let sumVento = rowVals.sum_diff_vento || 0;
+                                 let sumTravado = rowVals.sum_diff_travado || 0;
+                                 let totalPerdas = sumVento + sumTravado;
+                                 let perdasLabel = '-';
+                                 if (totalPerdas > 0) {
+                                     perdasLabel = `Vento: ${sumVento.toFixed(0)}° | Travado: ${sumTravado.toFixed(0)}° | Total: ${totalPerdas.toFixed(0)}°`;
+                                 }
+
                                  return (
-                                   <td style={{...cell, borderLeft: bL(), background: bg, color, fontWeight: 700, textAlign: 'center', whiteSpace: 'nowrap'}}>
-                                     {label}
-                                   </td>
+                                   <>
+                                     {visCols.status && (
+                                       <td 
+                                         onClick={() => {
+                                            if (rowVals.serie_alvo || rowVals.serie_atual) {
+                                                const targetDate = selectedDates.length > 0 ? selectedDates[0] : (dates ? dates.split(',')[0].trim() : '');
+                                                openChart(targetDate, rowVals.serie_alvo, rowVals.serie_atual, { label, bg, color }, `${c} - ${n.displayLabel}`, totalPerdas > 0 ? perdasLabel : null)
+                                            }
+                                         }}
+                                         style={{...cell, borderLeft: bL(), background: bg, color, fontWeight: 700, textAlign: 'center', whiteSpace: 'nowrap', cursor: (rowVals.serie_alvo || rowVals.serie_atual) ? 'pointer' : 'default'}}
+                                         title="Clique para abrir o gráfico"
+                                       >
+                                         {label}
+                                       </td>
+                                     )}
+                                     {visCols.perdas && (
+                                       <td style={{...cell, borderLeft: bL(), background: cBg, color: '#334155', textAlign: 'center', whiteSpace: 'nowrap'}}>
+                                         {perdasLabel}
+                                       </td>
+                                     )}
+                                     {visCols.kwp && (
+                                       <td style={{...cell, borderLeft: bL(), background: cBg, color: '#3b82f6', textAlign: 'center', whiteSpace: 'nowrap', fontWeight: 500}}>
+                                         {rowVals.kwp != null ? (rowVals.kwp).toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) : '-'}
+                                       </td>
+                                     )}
+                                     {visCols.energia && (
+                                       <td style={{...cell, borderLeft: bL(), background: cBg, color: '#1e293b', textAlign: 'center', whiteSpace: 'nowrap', fontWeight: 600}}>
+                                         {rowVals.energia != null ? (rowVals.energia / 1000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '-'}
+                                       </td>
+                                     )}
+                                     {visCols.yield && (
+                                       <td style={{...cell, borderLeft: bL(), background: cBg, color: '#1e293b', textAlign: 'center', whiteSpace: 'nowrap', fontWeight: 600}}>
+                                         {rowVals.yield != null ? (rowVals.yield / 1000).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
+                                       </td>
+                                     )}
+                                   </>
                                  );
                                })()}
                              </>
@@ -804,6 +984,179 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
           </p>
         </div>
       )}
+
+      {chartModal && (
+          <div style={{
+              position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+              background: 'rgba(0,0,0,0.5)', zIndex: 9999, 
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}>
+              <div style={{
+                  background: '#fff', borderRadius: 8, padding: 20, width: '90%', maxWidth: 1000,
+                  maxHeight: '90vh', overflowY: 'auto',
+                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+              }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          <h3 style={{ margin: 0 }}>
+                              Análise do Tracker {chartModal.trackerName ? `- ${chartModal.trackerName}` : ''}
+                          </h3>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                              {chartModal.status && (
+                                  <div style={{ padding: '4px 8px', borderRadius: 4, background: chartModal.status.bg, color: chartModal.status.color, fontWeight: 'bold', fontSize: 13 }}>
+                                      Status: {chartModal.status.label}
+                                  </div>
+                              )}
+                              {chartModal.perdasLabel && chartModal.perdasLabel !== '-' && (
+                                  <div style={{ padding: '4px 8px', borderRadius: 4, background: '#f8fafc', border: '1px solid #cbd5e1', color: '#334155', fontWeight: 'bold', fontSize: 13 }}>
+                                      Gatilho Perdas: {chartModal.perdasLabel}
+                                  </div>
+                              )}
+                          </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                          {chartModal.date && (
+                              <div style={{ padding: '4px 12px', borderRadius: 16, background: '#e2e8f0', color: '#334155', fontWeight: 'bold', fontSize: 14 }}>
+                                  {chartModal.date.split('-').reverse().join('/')}
+                              </div>
+                          )}
+                          <button onClick={() => setChartModal(null)} style={{ border: 'none', background: 'transparent', fontSize: 24, cursor: 'pointer', lineHeight: 1, padding: 0, marginTop: '-4px' }}>×</button>
+                      </div>
+                  </div>
+                  {chartLoading && <div>Carregando dados...</div>}
+                  {chartError && <div style={{ color: 'red', margin: '20px 0' }}>Erro: {chartError}</div>}
+                  {chartData && typeof chartData === 'object' && chartData.pvlib && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                          <div style={{ width: '100%', height: 400 }}>
+                              <Plot
+                                  data={[
+                                      {
+                                        x: chartData.timestamps,
+                                        y: chartData.pvlib.map(v => v !== null ? v + chartData.tolerance : null),
+                                        type: 'scatter', mode: 'lines', line: { width: 0 },
+                                        showlegend: false, hoverinfo: 'skip'
+                                      },
+                                      {
+                                        x: chartData.timestamps,
+                                        y: chartData.pvlib.map(v => v !== null ? v - chartData.tolerance : null),
+                                        type: 'scatter', mode: 'lines', line: { width: 0 },
+                                        fill: 'tonexty', fillcolor: 'rgba(74, 222, 128, 0.2)', // green-400 com 20% opacidade
+                                        name: 'Tolerância', hoverinfo: 'skip'
+                                      },
+                                      {
+                                        x: chartData.timestamps,
+                                        y: chartData.pvlib,
+                                        type: 'scatter', mode: 'lines', line: { color: '#22c55e', width: 1.5 }, // green-500
+                                        name: 'Referência'
+                                      },
+                                      {
+                                        x: chartData.timestamps,
+                                        y: chartData.alvo,
+                                        type: 'scatter', mode: 'lines', line: { color: 'orange', width: 1.5 },
+                                        name: 'Ângulo Alvo'
+                                      },
+                                      {
+                                        x: chartData.timestamps,
+                                        y: chartData.atual,
+                                        type: 'scatter', mode: 'lines', line: { color: 'purple', width: 1.5 },
+                                        name: 'Ângulo Atual'
+                                      },
+                                      {
+                                        x: chartData.timestamps,
+                                        y: chartData.vento,
+                                        type: 'scatter', mode: 'lines', line: { color: 'transparent', width: 0, shape: 'hvh' },
+                                        fill: 'tozeroy', fillcolor: 'rgba(59, 130, 246, 0.5)',
+                                        name: 'Vento', xaxis: 'x2', yaxis: 'y2'
+                                      },
+                                      {
+                                        x: chartData.timestamps,
+                                        y: chartData.travado,
+                                        type: 'scatter', mode: 'lines', line: { color: 'transparent', width: 0, shape: 'hvh' },
+                                        fill: 'tozeroy', fillcolor: 'rgba(239, 68, 68, 0.5)',
+                                        name: 'Travado', xaxis: 'x2', yaxis: 'y2'
+                                      },
+                                      {
+                                        x: chartData.timestamps,
+                                        y: chartData.ok,
+                                        type: 'scatter', mode: 'lines', line: { color: 'transparent', width: 0, shape: 'hvh' },
+                                        fill: 'tozeroy', fillcolor: 'rgba(34, 197, 94, 0.5)',
+                                        name: 'Ok', xaxis: 'x2', yaxis: 'y2'
+                                      },
+                                      {
+                                        x: chartData.timestamps,
+                                        y: chartData.valido,
+                                        type: 'scatter', mode: 'lines', line: { color: 'transparent', width: 0, shape: 'hvh' },
+                                        fill: 'tozeroy', fillcolor: 'rgba(100, 116, 139, 0.5)', // Slate/gray for Valid Data
+                                        name: 'Dados Válidos', xaxis: 'x3', yaxis: 'y3'
+                                      }
+                                  ]}
+                                  layout={{
+                                      legend: { orientation: 'h', y: 1.15, x: 1, xanchor: 'right' },
+                                      margin: { t: 50, r: 20, b: 30, l: 40 },
+                                      xaxis: { 
+                                          type: 'date',
+                                          anchor: 'y',
+                                          range: [`${chartModal.date} 00:00:00`, `${chartModal.date} 23:59:59`],
+                                          tickformat: '%H:%M',
+                                          dtick: 3600000
+                                      },
+                                      xaxis2: { anchor: 'y2', matches: 'x', showgrid: false, showticklabels: false, zeroline: false },
+                                      xaxis3: { anchor: 'y3', matches: 'x', showgrid: false, showticklabels: false, zeroline: false },
+                                      yaxis: { domain: [0, 0.89], title: 'Ângulo (°)' },
+                                      yaxis2: { domain: [0.89, 0.94], showticklabels: false, range: [0, 1.2], fixedrange: true, zeroline: false, showgrid: false, showline: false },
+                                      yaxis3: { domain: [0.94, 0.99], showticklabels: false, range: [0, 1.2], fixedrange: true, zeroline: false, showgrid: false, showline: false },
+                                      hovermode: 'x unified'
+                                  }}
+                                  style={{ width: '100%', height: '100%' }}
+                                  className="tracker-plot"
+                                  useResizeHandler
+                                  config={{
+                                      displaylogo: false,
+                                      modeBarButtonsToRemove: ['zoomIn2d', 'zoomOut2d', 'autoScale2d']
+                                  }}
+                              />
+                          </div>
+                          {chartData.strings_data && Object.keys(chartData.strings_data).length > 0 && (
+                              <div style={{ width: '100%', height: 300 }}>
+                                  <Plot
+                                      data={Object.keys(chartData.strings_data).map(sc => ({
+                                          x: chartData.timestamps,
+                                          y: chartData.strings_data[sc],
+                                          type: 'scatter', mode: 'lines', line: { width: 1.0 },
+                                          name: sc.split('.').pop(),
+                                          hovertemplate: '%{y:.2f} W'
+                                      }))}
+                                      layout={{
+                                          legend: { orientation: 'h', y: 1.15, x: 1, xanchor: 'right' },
+                                          margin: { t: 50, r: 20, b: 40, l: 40 },
+                                          xaxis: { 
+                                              type: 'date',
+                                              range: [`${chartModal.date} 00:00:00`, `${chartModal.date} 23:59:59`],
+                                              tickformat: '%H:%M',
+                                              dtick: 3600000
+                                          },
+                                          yaxis: { title: 'kW' },
+                                          hovermode: 'x unified'
+                                      }}
+                                      style={{ width: '100%', height: '100%' }}
+                                      className="tracker-plot"
+                                      useResizeHandler
+                                      config={{
+                                          displaylogo: false,
+                                          modeBarButtonsToRemove: ['zoomIn2d', 'zoomOut2d', 'autoScale2d']
+                                      }}
+                                  />
+                              </div>
+                          )}
+                      </div>
+                  )}
+                  {chartData && typeof chartData === 'string' && (
+                      <div style={{ color: 'red' }}>Erro ao carregar dados do servidor.</div>
+                  )}
+              </div>
+          </div>
+      )}
+
     </div>
   )
 }
