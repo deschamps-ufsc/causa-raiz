@@ -115,7 +115,7 @@ export function SaveVisualizationModal({ isOpen, onClose, onSave, hasLoadedVis, 
   )
 }
 
-export function LoadVisualizationModal({ isOpen, onClose, onLoad, onDelete, visualizations }) {
+export function LoadVisualizationModal({ isOpen, onClose, onLoad, onDelete, onToggleShare, visualizations }) {
   const [deleteRequest, setDeleteRequest] = useState(null)
 
   if (!isOpen) return null
@@ -142,10 +142,11 @@ export function LoadVisualizationModal({ isOpen, onClose, onLoad, onDelete, visu
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, tableLayout: 'fixed' }}>
               <thead>
                 <tr style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', textAlign: 'left' }}>
-                  <th style={{ padding: '8px 12px', width: '45%' }}>Nome</th>
-                  <th style={{ padding: '8px 12px', width: '25%' }}>Usuário</th>
+                  <th style={{ padding: '8px 12px', width: '38%' }}>Nome</th>
+                  <th style={{ padding: '8px 12px', width: '20%' }}>Usuário</th>
                   <th style={{ padding: '8px 12px', width: '12%' }}>Data</th>
-                  <th style={{ padding: '8px 12px', width: '18%' }}>Ações</th>
+                  <th style={{ padding: '8px 12px', width: '14%', textAlign: 'center' }}>Compartilhada</th>
+                  <th style={{ padding: '8px 12px', width: '16%' }}>Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -155,6 +156,20 @@ export function LoadVisualizationModal({ isOpen, onClose, onLoad, onDelete, visu
                     <td style={{ padding: '8px 12px', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={v.user}>{v.user}</td>
                     <td style={{ padding: '8px 12px', color: 'var(--text-secondary)' }}>
                       {new Date(v.created_at).toLocaleDateString()}
+                    </td>
+                    <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                      <select 
+                        value={v.shared ? "sim" : "nao"} 
+                        onChange={(e) => onToggleShare && onToggleShare(v, e.target.value === "sim")}
+                        style={{
+                          padding: '4px 8px', borderRadius: '6px', border: '1px solid var(--border)',
+                          background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: 12,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <option value="sim">Sim</option>
+                        <option value="nao">Não</option>
+                      </select>
                     </td>
                     <td style={{ padding: '8px 12px' }}>
                       <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>

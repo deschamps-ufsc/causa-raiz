@@ -28,6 +28,8 @@ class UsinaDetailed(BaseModel):
     total_strings: int
     total_modulos: int
     total_sinteticas: int
+    total_processadas: int
+    dias_presentes: int
     drive_link: str | None = None
 
 @router.get("", response_model=List[str])
@@ -40,9 +42,16 @@ def list_usinas():
     for item in os.listdir(DATA_DIR):
         if os.path.isdir(os.path.join(DATA_DIR, item)):
             usinas.append(item)
+    order = usina_service.get_usina_order()
+    
+    def sort_key(name):
+        try:
+            return (0, order.index(name))
+        except ValueError:
+            return (1, name)
             
     logger.info(f"[USINAS] Listando {len(usinas)} usinas.")
-    return sorted(usinas)
+    return sorted(usinas, key=sort_key)
 
 @router.get("/detailed", response_model=List[UsinaDetailed])
 def list_usinas_detailed(_: dict = Depends(require_analyst_or_admin)):
@@ -62,8 +71,25 @@ def list_usinas_detailed(_: dict = Depends(require_analyst_or_admin)):
                 drive_link=meta.get("drive_link"),
                 **stats
             ))
+    order = usina_service.get_usina_order()
+    
+    def sort_key(usina_detail):
+        try:
+            return (0, order.index(usina_detail.nome))
+        except ValueError:
+            return (1, usina_detail.nome)
             
-    return sorted(result, key=lambda x: x.nome)
+    return sorted(result, key=sort_key)
+
+@router.post("/reorder", response_model=dict)
+def reorder_usinas(order: List[str] = Body(...), _: dict = Depends(require_analyst_or_admin)):
+    """Atualiza a ordem de exibição das usinas."""
+    try:
+        usina_service.save_usina_order(order)
+        return {"status": "ok"}
+    except Exception as e:
+        logger.error(f"[USINAS] Erro ao reordenar usinas: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("", response_model=dict)
 def create_usina(usina: UsinaCreate = Body(...), current_user: dict = Depends(require_analyst_or_admin)):

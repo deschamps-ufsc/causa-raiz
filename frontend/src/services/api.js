@@ -85,6 +85,9 @@ export const updateUsinaDriveLink = (nome, driveLink) =>
 export const deleteUsina = (nome) =>
   api.delete(`/usinas/${encodeURIComponent(nome)}`).then(r => r.data)
 
+export const saveUsinasOrder = (order) =>
+  api.post('/usinas/reorder', order).then((r) => r.data)
+
 // ── Infos Usina (SKID/INV/MWp) ────────────────────────────────────────
 export const fetchUsinaInfo = (usina) =>
   api.get('/usina-info', { params: { usina } }).then((r) => r.data)

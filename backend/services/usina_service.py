@@ -13,6 +13,22 @@ from services.usina_info_service import load_usina_info
 from services.synthetic_service import load_synthetics
 
 METADATA_FILE = "metadata.json"
+USINA_ORDER_FILE = "usinas_order.json"
+
+def get_usina_order() -> list[str]:
+    path = os.path.join(DATA_DIR, USINA_ORDER_FILE)
+    if os.path.exists(path):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return []
+    return []
+
+def save_usina_order(order: list[str]):
+    path = os.path.join(DATA_DIR, USINA_ORDER_FILE)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(order, f, ensure_ascii=False)
 
 def get_usina_metadata(usina: str) -> dict:
     """Retorna metadados da usina (data criação, criador)."""
@@ -73,19 +89,42 @@ def get_usina_stats(usina: str) -> dict:
         for batch in synthetics.values():
             total_sinteticas += len(batch.get("series", []))
             
+        # Dias presentes
+        from services.parquet_service import list_available_dates
+        dates = list_available_dates(usina)
+        dias_presentes = len(dates)
+        
+        # Processadas
+        total_processadas = 0
+        if dates:
+            import pyarrow.parquet as pq
+            # Tenta ler o schema do primeiro dia processado disponível
+            for d in dates:
+                processed_path = os.path.join(DATA_DIR, usina, "processed", f"{d}.parquet")
+                if os.path.exists(processed_path):
+                    try:
+                        schema = pq.read_schema(processed_path)
+                        total_processadas = len([f.name for f in schema if f.name != "timestamp"])
+                        break
+                    except Exception:
+                        pass
+            
         return {
             "count_elementos": len(elementos),
             "count_series": series_mapeadas,
             "total_mwp": round(total_mwp, 4),
             "total_strings": total_strings,
             "total_modulos": total_modulos,
-            "total_sinteticas": total_sinteticas
+            "total_sinteticas": total_sinteticas,
+            "dias_presentes": dias_presentes,
+            "total_processadas": total_processadas
         }
     except Exception as e:
         logger.error(f"[USINA_SERVICE] Erro ao obter stats da usina {usina}: {e}")
         return {
             "count_elementos": 0, "count_series": 0, "total_mwp": 0,
-            "total_strings": 0, "total_modulos": 0, "total_sinteticas": 0
+            "total_strings": 0, "total_modulos": 0, "total_sinteticas": 0,
+            "dias_presentes": 0, "total_processadas": 0
         }
 
 def delete_usina_dir(usina: str):

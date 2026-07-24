@@ -107,6 +107,7 @@ class VisualizationPayload(BaseModel):
     visibleFilters: list[str] = Field(default_factory=list)
     filterColors: dict = Field(default_factory=dict)
     chartConfig: dict = Field(default_factory=dict)
+    shared: bool = False
 
 
 class VisualizationResponse(VisualizationPayload):

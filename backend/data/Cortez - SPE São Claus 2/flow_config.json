@@ -4,17 +4,17 @@
       "inputs": [
         {
           "sensors": [],
-          "series": "CLS01.1.MET-B.POA-Irrd",
+          "series": "CLS02.2.MET-B.POA-Irrd",
           "filter": "Irradiação_Qualidade"
         },
         {
           "sensors": [],
-          "series": "CLS01.3.MET-B.POA-Irrd",
+          "series": "CLS02.4.MET-A.POA-Irrd",
           "filter": "Irradiação_Qualidade"
         },
         {
           "sensors": [],
-          "series": "CLS01.5.MET-A.POA-Irrd",
+          "series": "CLS02.6.MET-B.POA-Irrd",
           "filter": "Irradiação_Qualidade"
         }
       ],
@@ -25,94 +25,90 @@
       "inputs": [
         {
           "sensors": [],
-          "series": "CLS01.1.MET-B.POA-Irrd_REAR",
+          "series": "CLS02.2.MET-B.POA-Irrd_REAR",
           "filter": "Irradiação_Qualidade"
         },
         {
           "sensors": [],
-          "series": "CLS01.3.MET-B.POA-Irrd_REAR",
+          "series": "CLS02.4.MET-A.POA-Irrd_REAR",
           "filter": "Irradiação_Qualidade"
         },
         {
           "sensors": [],
-          "series": "CLS01.5.MET-A.POA-Irrd_REAR",
+          "series": "CLS02.6.MET-B.POA-Irrd_REAR",
           "filter": "Irradiação_Qualidade"
         }
       ],
+      "outputFilter": "",
       "operation": "mean"
     },
     "tracker": {
       "inputs": [
         {
           "sensors": [
-            "CLS01.1.MET-B.POA-Irrd",
-            "CLS01.1.MET-B.POA-Irrd_REAR"
+            "CLS02.2.MET-B.POA-Irrd",
+            "CLS02.2.MET-B.POA-Irrd_REAR"
           ],
-          "series": "CLS01.1-INV04-SB12-TR046.PosAngAtual",
+          "series": "CLS02.2-INV04-SB12-TR046.PosAngAtual",
           "filter": ""
         },
         {
           "sensors": [
-            "CLS01.3.MET-B.POA-Irrd",
-            "CLS01.3.MET-B.POA-Irrd_REAR"
+            "CLS02.4.MET-A.POA-Irrd",
+            "CLS02.4.MET-A.POA-Irrd_REAR"
           ],
-          "series": "CLS01.3-INV04-SB12-TR046.PosAngAtual",
+          "series": "CLS02.4-INV04-SB12-TR046.PosAngAtual",
           "filter": ""
         },
         {
           "sensors": [
-            "CLS01.5.MET-A.POA-Irrd",
-            "CLS01.5.MET-A.POA-Irrd_REAR"
+            "CLS02.6.MET-B.POA-Irrd",
+            "CLS02.6.MET-B.POA-Irrd_REAR"
           ],
-          "series": "CLS01.5-INV04-SB12-TR046.PosAngAtual",
+          "series": "CLS02.6-INV04-SB12-TR046.PosAngAtual",
           "filter": ""
         }
       ],
       "outputFilter": "",
-      "operation": "mean",
+      "operation": "sum",
       "trackerParams": {
         "latitude": -11.1006,
         "longitude": -41.2715,
         "gcr": 0.34,
         "max_angle": 60,
         "tolerance": 10,
-        "inverter_sinal": true,
-        "time_offset": 0,
         "tol_pontos_vento": 10,
-        "tol_pontos_travado": 10
+        "tol_pontos_travado": 10,
+        "inverter_sinal": true
       }
     },
     "tamb": {
       "inputs": [
         {
-          "sensors": [],
-          "series": "CLS01.1.MET-EPE.T_SSTRH",
-          "filter": "Temperatura Ambiente"
-        },
-        {
-          "sensors": [],
-          "series": "",
-          "filter": ""
+          "series": "CLS02.4.MET-EPE.T_SSTRH",
+          "filter": "Temperatura Ambiente",
+          "sensors": []
         }
       ],
+      "outputFilter": "",
       "operation": "mean"
     },
     "tmod": {
       "inputs": [
         {
-          "sensors": [],
-          "series": "CLS01.1.MET-B.T_MOD",
-          "filter": ""
+          "series": "CLS02.2.MET-B.T_MOD",
+          "filter": "",
+          "sensors": []
         },
         {
-          "sensors": [],
-          "series": "CLS01.3.MET-B.T_MOD",
-          "filter": ""
+          "series": "CLS02.4.MET-A.T_MOD",
+          "filter": "",
+          "sensors": []
         },
         {
-          "sensors": [],
-          "series": "CLS01.5.MET-A.T_MOD",
-          "filter": ""
+          "series": "CLS02.6.MET-B.T_MOD",
+          "filter": "",
+          "sensors": []
         }
       ],
       "outputFilter": "",
@@ -122,15 +118,16 @@
       "inputs": [
         {
           "sensors": [],
-          "series": "CLS01.5.MET-A.TxaSuj_1",
+          "series": "CLS02.4.MET-A.TxaSuj_1",
           "filter": "Sujidade"
         },
         {
           "sensors": [],
-          "series": "CLS01.5.MET-A.TxaSuj_2",
+          "series": "CLS02.4.MET-A.TxaSuj_2",
           "filter": "Sujidade"
         }
       ],
+      "outputFilter": "",
       "operation": "mean",
       "startTime": "11:30",
       "endTime": "12:30",
@@ -139,35 +136,49 @@
     "potencia_ppc": {
       "inputs": [
         {
-          "sensors": [],
-          "series": "CLS01.PPC.PotAt",
-          "filter": "PotÃªncia_PPC"
+          "series": "CLS02.PPC.1-2-3.PotAt",
+          "filter": "",
+          "sensors": []
+        },
+        {
+          "series": "CLS02.PPC.4-5-6.PotAt",
+          "filter": "",
+          "sensors": []
         }
       ],
-      "outputFilter": "Pot_Teste",
-      "operation": "mean"
+      "outputFilter": "",
+      "operation": "sum"
     },
     "referencia_ppc": {
       "inputs": [
         {
           "sensors": [],
-          "series": "CLS01.PPC.RefPotAt",
+          "series": "CLS02.PPC.1-2-3.RefPotAt",
+          "filter": "Potência_PPC"
+        },
+        {
+          "sensors": [],
+          "series": "CLS02.PPC.4-5-6.RefPotAt",
           "filter": "Potência_PPC"
         }
       ],
       "outputFilter": "",
-      "operation": "mean",
-      "ppcRefValue": "52.8",
-      "ppcMargin": "3"
+      "operation": "sum"
     },
     "energia_pmi": {
       "inputs": [
         {
           "sensors": [],
-          "series": "CLS01_Pri_kWh_rec_int",
+          "series": "CLS02-C1_Pri_kWh_rec_int",
+          "filter": ""
+        },
+        {
+          "sensors": [],
+          "series": "CLS02-C2_Pri_kWh_rec_int",
           "filter": ""
         }
       ],
+      "outputFilter": "",
       "operation": "sum",
       "energiaPmiParams": {
         "multiplier": 0.012
@@ -175,7 +186,7 @@
     },
     "geff": {
       "beta": 0.78,
-      "SSF": 0.123,
+      "SSF": 0.12300000000000001,
       "MLF": 0.035,
       "type": "geff"
     },
@@ -205,11 +216,7 @@
     },
     "epi": {
       "inputs": [],
-      "operation": "sum",
-      "epiParams": {
-        "energiaVar": "E_Grid",
-        "irradianciaVar": "GlobInc"
-      }
+      "operation": "sum"
     }
   }
 }

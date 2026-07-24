@@ -1,0 +1,482 @@
+[
+  {
+    "id": "c3137da9-ef01-45c2-90bc-5ae372c2b959",
+    "created_at": "2026-07-24T01:00:52.825233",
+    "name": "EPI - CAP",
+    "user": "deschamps.ufsc@gmail.com",
+    "selectedDates": [
+      "2025-11-24",
+      "2025-11-25",
+      "2025-11-28",
+      "2025-12-01",
+      "2025-12-04"
+    ],
+    "selectedSeries": [
+      "tamb",
+      "tmod",
+      "tcel",
+      "sujidade",
+      "potencia_ppc",
+      "geff",
+      "gpoa",
+      "grear",
+      "referencia_ppc",
+      "energia_pmi",
+      "Energia PMI",
+      "Energia PMI_válida"
+    ],
+    "activeFilters": [],
+    "visibleFilters": [
+      "Dados Válidos",
+      "curtailment",
+      "Simultaneidade",
+      "Tracker Piranômetro"
+    ],
+    "filterColors": {
+      "Flag 5 minutos": "#ef4444",
+      "Simultaneidade": "#ef4444",
+      "curtailment": "#059669",
+      "Dados Válidos": "#7c3aed",
+      "Tracker Piranômetro": "#f97316"
+    },
+    "chartConfig": {
+      "gridX": true,
+      "gridY1": true,
+      "gridY2": false,
+      "gridY3": false,
+      "gridY4": false,
+      "xGridSpacing": "",
+      "xLimits": {
+        "min": "00:00",
+        "max": "23:59"
+      },
+      "y1Limits": {
+        "min": 0,
+        "max": 1493
+      },
+      "y2Limits": {
+        "min": 0,
+        "max": 59
+      },
+      "y3Limits": {
+        "min": 0,
+        "max": 56
+      },
+      "y4Limits": {
+        "min": 0,
+        "max": 105
+      },
+      "appliedRanges": {},
+      "seriesAxisMap": {
+        "gpoa": "y1",
+        "grear": "y1",
+        "tamb": "y2",
+        "tmod": "y2",
+        "tcel": "y2",
+        "sujidade": "y4",
+        "potencia_ppc": "y3",
+        "geff": "y1",
+        "grear_semTR": "y1",
+        "gpoa_semTR": "y1",
+        "geff_semTR": "y1",
+        "referencia_ppc": "y3",
+        "energia_pmi": "y3",
+        "geff_semTR_válida": "y1",
+        "Energia PMI": "y3",
+        "Energia PMI_válida": "y3"
+      },
+      "seriesColors": {
+        "gpoa": "#F9CC00",
+        "grear": "#F9A825",
+        "tamb": "#7F87BE",
+        "tmod": "#535DA8",
+        "tcel": "#283593",
+        "sujidade": "#D81B60",
+        "potencia_ppc": "#2E7D32",
+        "geff": "#EF6C00",
+        "grear_semTR": "#F6A866",
+        "gpoa_semTR": "#F9CC00",
+        "geff_semTR": "#EB8702",
+        "referencia_ppc": "#1565C0",
+        "energia_pmi": "#0277BD",
+        "geff_semTR_válida": "#EB87FF",
+        "Energia PMI": "#0277BD",
+        "Energia PMI_válida": "#0277BD"
+      },
+      "seriesWidths": {
+        "gpoa": 1,
+        "grear": 1,
+        "tamb": 1,
+        "tmod": 1,
+        "tcel": 1,
+        "potencia_ppc": 1,
+        "sujidade": 1,
+        "geff": 2.5,
+        "grear_semTR": 1,
+        "gpoa_semTR": 1,
+        "geff_semTR": 1,
+        "referencia_ppc": 1,
+        "energia_pmi": 1.5,
+        "geff_semTR_válida": 1,
+        "Energia PMI": 2.5,
+        "Energia PMI_válida": 1.5
+      },
+      "seriesDashes": {
+        "sujidade": "dot",
+        "gpoa": "solid",
+        "grear": "solid",
+        "tamb": "solid",
+        "tmod": "solid",
+        "tcel": "solid",
+        "potencia_ppc": "solid",
+        "geff": "solid",
+        "grear_semTR": "solid",
+        "gpoa_semTR": "solid",
+        "geff_semTR": "solid",
+        "referencia_ppc": "solid",
+        "energia_pmi": "solid",
+        "geff_semTR_válida": "solid",
+        "Energia PMI": "solid",
+        "Energia PMI_válida": "solid"
+      },
+      "seriesFills": {
+        "gpoa": 15,
+        "grear": 20,
+        "gpoa_semTR": 11,
+        "grear_semTR": 10,
+        "Energia PMI_válida": 11
+      },
+      "legendPosition": "none"
+    },
+    "shared": true
+  },
+  {
+    "id": "f49aba22-a84c-47fa-aac6-88e7202cb2d8",
+    "created_at": "2026-07-24T01:00:57.848472",
+    "name": "EPI - Campanha 1",
+    "user": "deschamps.ufsc@gmail.com",
+    "selectedDates": [
+      "2026-06-09",
+      "2026-06-10",
+      "2026-06-11",
+      "2026-06-12",
+      "2026-06-15",
+      "2026-06-16",
+      "2026-06-17"
+    ],
+    "selectedSeries": [
+      "tamb",
+      "tmod",
+      "tcel",
+      "sujidade",
+      "potencia_ppc",
+      "referencia_ppc",
+      "gpoa",
+      "geff",
+      "grear",
+      "Energia PMI",
+      "Energia PMI_válida"
+    ],
+    "activeFilters": [],
+    "visibleFilters": [
+      "Dados Válidos",
+      "curtailment",
+      "Simultaneidade",
+      "Tracker Piranômetro"
+    ],
+    "filterColors": {
+      "Flag 5 minutos": "#ef4444",
+      "Simultaneidade": "#ef4444",
+      "curtailment": "#059669",
+      "Dados Válidos": "#7c3aed",
+      "Tracker Piranômetro": "#f97316"
+    },
+    "chartConfig": {
+      "gridX": true,
+      "gridY1": true,
+      "gridY2": false,
+      "gridY3": false,
+      "gridY4": false,
+      "xGridSpacing": "",
+      "xLimits": {
+        "min": "00:00",
+        "max": "23:59"
+      },
+      "y1Limits": {
+        "min": 0,
+        "max": 1303
+      },
+      "y2Limits": {
+        "min": 0,
+        "max": 53
+      },
+      "y3Limits": {
+        "min": -3,
+        "max": 56
+      },
+      "y4Limits": {
+        "min": 0,
+        "max": 105
+      },
+      "appliedRanges": {},
+      "seriesAxisMap": {
+        "gpoa": "y1",
+        "grear": "y1",
+        "tamb": "y2",
+        "tmod": "y2",
+        "tcel": "y2",
+        "sujidade": "y4",
+        "potencia_ppc": "y3",
+        "geff": "y1",
+        "grear_semTR": "y1",
+        "gpoa_semTR": "y1",
+        "geff_semTR": "y1",
+        "CLS01.PPC.RefPotAt": "y3",
+        "referencia_ppc": "y3",
+        "Energia PMI": "y3",
+        "Energia PMI_válida": "y3"
+      },
+      "seriesColors": {
+        "gpoa": "#F9CC00",
+        "grear": "#F9A825",
+        "tamb": "#7F87BE",
+        "tmod": "#535DA8",
+        "tcel": "#283593",
+        "sujidade": "#D81B60",
+        "potencia_ppc": "#2E7D32",
+        "geff": "#EF6C00",
+        "grear_semTR": "#F6A866",
+        "gpoa_semTR": "#F9CC00",
+        "geff_semTR": "#EB8702",
+        "CLS01.PPC.RefPotAt": "#00838F",
+        "referencia_ppc": "#1565C0",
+        "Energia PMI": "#0277BD",
+        "Energia PMI_válida": "#0277BD"
+      },
+      "seriesWidths": {
+        "gpoa": 1,
+        "grear": 1,
+        "tamb": 1,
+        "tmod": 1,
+        "tcel": 1,
+        "potencia_ppc": 1.5,
+        "sujidade": 1,
+        "geff": 1.5,
+        "grear_semTR": 1,
+        "gpoa_semTR": 1,
+        "geff_semTR": 1,
+        "CLS01.PPC.RefPotAt": 2.5,
+        "referencia_ppc": 1.5,
+        "Energia PMI": 2.5,
+        "Energia PMI_válida": 1
+      },
+      "seriesDashes": {
+        "sujidade": "dot",
+        "gpoa": "solid",
+        "grear": "solid",
+        "tamb": "solid",
+        "tmod": "solid",
+        "tcel": "solid",
+        "potencia_ppc": "solid",
+        "geff": "solid",
+        "grear_semTR": "solid",
+        "gpoa_semTR": "solid",
+        "geff_semTR": "solid",
+        "CLS01.PPC.RefPotAt": "solid",
+        "referencia_ppc": "solid",
+        "Energia PMI": "solid",
+        "Energia PMI_válida": "solid"
+      },
+      "seriesFills": {
+        "gpoa": 15,
+        "grear": 20,
+        "gpoa_semTR": 11,
+        "grear_semTR": 10,
+        "Energia PMI_válida": 11
+      },
+      "legendPosition": "top"
+    },
+    "shared": true
+  },
+  {
+    "id": "c8d97280-89bd-4aa0-ba38-3d4db3731b12",
+    "created_at": "2026-07-24T01:01:01.707278",
+    "name": "PVSyst",
+    "user": "deschamps.ufsc@gmail.com",
+    "selectedDates": [
+      "2026-06-09",
+      "2026-06-10",
+      "2026-06-11",
+      "2026-06-12",
+      "2026-06-15",
+      "2026-06-16",
+      "2026-06-17"
+    ],
+    "selectedSeries": [
+      "E_Grid",
+      "GlobEff",
+      "GlobInc",
+      "PR",
+      "TArrWtd",
+      "E_Grid_válida",
+      "GlobInc_válida"
+    ],
+    "activeFilters": [],
+    "visibleFilters": [
+      "Dados Válidos"
+    ],
+    "filterColors": {
+      "Tracker Piranômetro": "#f97316",
+      "Simultaneidade": "#ef4444",
+      "curtailment": "#059669",
+      "Dados Válidos": "#7c3aed"
+    },
+    "chartConfig": {
+      "gridX": true,
+      "gridY1": true,
+      "gridY2": false,
+      "gridY3": false,
+      "gridY4": false,
+      "xGridSpacing": "",
+      "xLimits": {
+        "min": "00:00",
+        "max": "23:59"
+      },
+      "y1Limits": {
+        "min": -2843,
+        "max": 52781
+      },
+      "y2Limits": {
+        "min": 0,
+        "max": 1322
+      },
+      "y3Limits": {
+        "min": 0,
+        "max": 53
+      },
+      "y4Limits": {
+        "min": 0,
+        "max": 1
+      },
+      "appliedRanges": {},
+      "seriesAxisMap": {
+        "E_Grid": "y1",
+        "GlobEff": "y2",
+        "GlobInc": "y2",
+        "PR": "y4",
+        "TArrWtd": "y3",
+        "E_Grid_válida": "y1",
+        "GlobInc_válida": "y2"
+      },
+      "seriesColors": {
+        "E_Grid": "#2E7D32",
+        "GlobEff": "#EF6C00",
+        "GlobInc": "#F9A825",
+        "PR": "#C62828",
+        "TArrWtd": "#0277BD",
+        "E_Grid_válida": "#2E7D32",
+        "GlobInc_válida": "#F9A825"
+      },
+      "seriesWidths": {
+        "PR": 0.5
+      },
+      "seriesDashes": {
+        "PR": "dot"
+      },
+      "seriesFills": {
+        "GlobInc_válida": 20
+      },
+      "legendPosition": "right"
+    },
+    "shared": true
+  },
+  {
+    "id": "e4fb18a5-4141-478b-8fa3-f565c6f503b6",
+    "created_at": "2026-07-24T01:02:13.245613",
+    "name": "PPC",
+    "user": "deschamps.ufsc@gmail.com",
+    "selectedDates": [
+      "2026-06-10",
+      "2026-06-11",
+      "2026-06-12",
+      "2026-06-15",
+      "2026-06-16",
+      "2026-06-17"
+    ],
+    "selectedSeries": [
+      "Potência PPC_15min",
+      "potencia_ppc",
+      "referencia_ppc",
+      "Referência PPC_15min"
+    ],
+    "activeFilters": [],
+    "visibleFilters": [
+      "curtailment"
+    ],
+    "filterColors": {
+      "Tracker Piranômetro": "#f97316",
+      "Simultaneidade": "#ef4444",
+      "curtailment": "#059669",
+      "Dados Válidos": "#7c3aed"
+    },
+    "chartConfig": {
+      "gridX": true,
+      "gridY1": true,
+      "gridY2": false,
+      "gridY3": false,
+      "gridY4": false,
+      "xGridSpacing": "",
+      "xLimits": {
+        "min": "00:00",
+        "max": "23:59"
+      },
+      "y1Limits": {
+        "min": 0,
+        "max": 1
+      },
+      "y2Limits": {
+        "min": -3,
+        "max": 56
+      },
+      "y3Limits": {
+        "min": "",
+        "max": ""
+      },
+      "y4Limits": {
+        "min": "",
+        "max": ""
+      },
+      "appliedRanges": {},
+      "seriesAxisMap": {
+        "Potência PPC_15min": "y2",
+        "potencia_ppc": "y2",
+        "Referência PPC_15min": "y2",
+        "referencia_ppc": "y2"
+      },
+      "seriesColors": {
+        "Potência PPC_15min": "#7CB342",
+        "potencia_ppc": "#00838F",
+        "Referência PPC_15min": "#6A1B9A",
+        "referencia_ppc": "#E53935"
+      },
+      "seriesWidths": {
+        "Potência PPC_15min": 0.5,
+        "potencia_ppc": 1.5,
+        "Referência PPC_15min": 0.5,
+        "referencia_ppc": 1.5
+      },
+      "seriesDashes": {
+        "Potência PPC_15min": "solid",
+        "potencia_ppc": "solid",
+        "Referência PPC_15min": "solid",
+        "referencia_ppc": "solid"
+      },
+      "seriesFills": {
+        "Potência PPC_15min": 19,
+        "Referência PPC_15min": 6
+      },
+      "legendPosition": "right"
+    },
+    "shared": true
+  }
+]

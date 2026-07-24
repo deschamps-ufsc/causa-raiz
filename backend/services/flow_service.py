@@ -58,6 +58,47 @@ def run_flow_processing(usina: str, dates_str: str = None):
     if not available_dates:
         return {"status": "error", "message": "Nenhum dado bruto encontrado para as datas selecionadas."}
 
+    # 1.5 Carregar Mapeamento para Identificar Trackers e Strings
+    tracker_groups = {}
+    map_path = os.path.join(DATA_DIR, usina, "series_map.json")
+    if os.path.exists(map_path):
+        with open(map_path, "r", encoding="utf-8") as f:
+            mapping = json.load(f)
+            
+        for col, meta in mapping.items():
+            if meta.get("elemento") == "Tracker":
+                if col.endswith(".PosAngAlvo"):
+                    base = col.replace(".PosAngAlvo", "")
+                    typ = "alvo"
+                elif col.endswith(".PosAngAtual") or col.endswith(".PosAngMedido"):
+                    base = col.replace(".PosAngAtual", "").replace(".PosAngMedido", "")
+                    typ = "atual"
+                else:
+                    continue
+
+                if base not in tracker_groups:
+                    tracker_groups[base] = {
+                        "skid": str(meta.get("skid") or ""),
+                        "inversor": str(meta.get("inversor") or ""),
+                        "stringbox": str(meta.get("stringbox") or ""),
+                        "tracker": str(meta.get("tracker") or "") or base.split("-")[-1],
+                        "cc_strings": []
+                    }
+                tracker_groups[base][typ] = col
+                
+        for col, meta in mapping.items():
+            el = meta.get("elemento", "").lower()
+            if "pot" in el and "string" in el and "cc" in el:
+                sk = str(meta.get("skid") or "")
+                inv = str(meta.get("inversor") or "")
+                sb = str(meta.get("stringbox") or "")
+                tr = str(meta.get("tracker") or "") or col.split(".")[0].split("-")[-1]
+                
+                for base, tg in tracker_groups.items():
+                    if tg["skid"] == sk and tg["inversor"] == inv and tg["stringbox"] == sb and tg["tracker"] == tr:
+                        tg["cc_strings"].append(col)
+                        break
+
     # 2. Identificar Agregadores e Blocos Especiais
     aggregators = [n for n in nodes if n.get("data", {}).get("aggregator")]
     geff_nodes = [n for n in nodes if n.get("type") == "geff"]
@@ -121,6 +162,28 @@ def run_flow_processing(usina: str, dates_str: str = None):
                 
                 processed_df["Tracker Ref."] = ref_theta
                 processed_df["Tracker_is_backtracking"] = is_backtracking
+
+                # --- Calcula as flags Vento e Travado por Tracker ---
+                has_any_ref = ref_theta.notna()
+                for base, group in tracker_groups.items():
+                    alvo_col = group.get("alvo")
+                    atual_col = group.get("atual")
+                    
+                    if alvo_col and alvo_col in raw_df.columns:
+                        diff_alvo = (raw_df[alvo_col] - ref_theta).abs()
+                        mask_vento = diff_alvo > tol
+                    else:
+                        mask_vento = pd.Series(False, index=raw_df.index)
+                        
+                    if atual_col and atual_col in raw_df.columns:
+                        mask_erro_atual = (raw_df[atual_col] - ref_theta).abs() > tol
+                        mask_travado = mask_erro_atual & ~mask_vento
+                    else:
+                        mask_travado = pd.Series(False, index=raw_df.index)
+                        
+                    # Salva as flags apenas onde existe dados (evita 0 em madrugadas de forma errada, mas podemos setar 0)
+                    processed_df[f"tracker_{base}_vento"] = (mask_vento & has_any_ref).astype(int)
+                    processed_df[f"tracker_{base}_travado"] = (mask_travado & has_any_ref).astype(int)
 
                 for inp in tracker_inputs:
                     if isinstance(inp, str):
@@ -536,9 +599,47 @@ def run_flow_processing(usina: str, dates_str: str = None):
             # --- Cria as séries "_válida" multiplicando pela flag de Dados Válidos ---
             simult_flag = processed_df[out_name]
             for col in list(processed_df.columns):
-                if col != out_name and col != "Simultaneidade" and not col.endswith("_válida") and not col.lower().startswith("curtailment") and not col.startswith("flag_tracker_erro") and col != "Tracker Piranômetro":
+                if col != out_name and col != "Simultaneidade" and not col.endswith("_válida") and not col.lower().startswith("curtailment") and not col.startswith("flag_tracker_erro") and not col.startswith("tracker_") and col != "Tracker Piranômetro":
                     # Substitui os dados inválidos por NaN (vazio)
                     processed_df[f"{col}_válida"] = processed_df[col].where(simult_flag == 1, np.nan)
+
+            # --- Cria a série de Média de Potência CC de Strings OK ---
+            tracker_ok_strings = []
+            
+            # Load synthetic lookup once for the plant
+            try:
+                from services.synthetic_service import build_lookup, compute_synthetic
+                synth_lookup = build_lookup(usina)
+            except Exception as e:
+                logger.warning(f"Erro ao carregar lookup de séries sintéticas: {e}")
+                synth_lookup = {}
+                
+            for base, group in tracker_groups.items():
+                vento_col = f"tracker_{base}_vento"
+                travado_col = f"tracker_{base}_travado"
+                if vento_col in processed_df.columns and travado_col in processed_df.columns:
+                    mask_ok = (processed_df[vento_col] == 0) & (processed_df[travado_col] == 0)
+                    
+                    for st_col in group["cc_strings"]:
+                        if st_col not in raw_df.columns and st_col in synth_lookup:
+                            try:
+                                raw_df[st_col] = compute_synthetic(raw_df, synth_lookup[st_col])
+                            except Exception as e:
+                                logger.warning(f"Erro ao computar sintética {st_col}: {e}")
+                                
+                        if st_col in raw_df.columns:
+                            ok_st_series = raw_df[st_col].where(mask_ok, np.nan)
+                            tracker_ok_strings.append(ok_st_series)
+                            
+                            
+            if tracker_ok_strings:
+                df_ok_strings = pd.concat(tracker_ok_strings, axis=1)
+                # Calcula a média por minuto. Usamos min_periods=1 para que se houver ao menos 1 ok, tenhamos média.
+                media_strings_ok = df_ok_strings.mean(axis=1)
+                # Aplica filtro de Dados Válidos 
+                processed_df["Potência CC Média Strings OK_válida"] = media_strings_ok.where(simult_flag == 1, np.nan)
+            else:
+                processed_df["Potência CC Média Strings OK_válida"] = np.nan
 
             # --- Cria as séries de 15min para gpoa ---
             if "gpoa" in processed_df.columns:

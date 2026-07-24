@@ -1222,7 +1222,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                   if (selectedNodeId === 'tracker') return s.elemento === 'Tracker';
                   if (selectedNodeId === 'sujidade') return s.elemento === 'Sujidade';
                   if (selectedNodeId === 'energia_pmi') return s.elemento === 'Energia PMI';
-                  if (selectedNodeId === 'referencia_ppc') return s.elemento === 'Referência PPC';
+                  if (selectedNodeId === 'referencia_ppc') return s.elemento === 'Potência CA PPC';
                   if (selectedNodeId === 'potencia_ppc') return s.elemento && s.elemento.startsWith('Potência');
                   return true;
                 });

@@ -178,6 +178,17 @@ export default function DashboardPage() {
     }
   }
 
+  const handleToggleShare = async (vis, newSharedState) => {
+    try {
+      const updatedVis = { ...vis, shared: newSharedState }
+      await updateVisualization(usinaAtual, vis.id, updatedVis)
+      fetchVisualizations(usinaAtual).then(setSavedVisualizations).catch(() => {})
+    } catch (err) {
+      console.error("Erro ao alterar compartilhamento da visualização:", err)
+      alert("Erro ao alterar compartilhamento da visualização.")
+    }
+  }
+
 
   const { series, dates, loading: seriesLoading } = useSeries(selectedDates, usinaAtual)
   const { data, loading: dataLoading, error: dataError, query, clear } = useSeriesData()
@@ -1206,6 +1217,7 @@ export default function DashboardPage() {
         onClose={() => setIsLoadModalOpen(false)}
         onLoad={handleLoadVisualization}
         onDelete={handleDeleteVisualization}
+        onToggleShare={handleToggleShare}
         visualizations={savedVisualizations}
       />
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { fetchDetailedUsinas, createUsina, renameUsina, deleteUsina } from '../../services/api'
+import { fetchDetailedUsinas, createUsina, renameUsina, deleteUsina, saveUsinasOrder } from '../../services/api'
 import { useAuth } from '../../hooks/AuthContext'
 import UsinaDetail from './UsinaDetail'
 
@@ -114,6 +114,8 @@ function UsinaRow({ u, index, readOnly, setSelectedUsina, setEditingUsina, setNe
       <td style={{ padding: '12px', textAlign: 'center' }}>{u.count_elementos}</td>
       <td style={{ padding: '12px', textAlign: 'center' }}>{u.count_series}</td>
       <td style={{ padding: '12px', textAlign: 'center' }}>{u.total_sinteticas}</td>
+      <td style={{ padding: '12px', textAlign: 'center' }}>{u.total_processadas}</td>
+      <td style={{ padding: '12px', textAlign: 'center' }}>{u.dias_presentes}</td>
       <td style={{ padding: '12px', textAlign: 'center', minWidth: 100 }}>
         <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
           <button
@@ -168,13 +170,21 @@ export default function UsinasTab({ readOnly = false }) {
   const [draggedIndex, setDraggedIndex] = useState(null)
   const [draggedOverIndex, setDraggedOverIndex] = useState(null)
 
-  const reorderUsinas = (dragIndex, dropIndex) => {
-    setUsinas(prev => {
-      const result = Array.from(prev);
+  const reorderUsinas = async (dragIndex, dropIndex) => {
+    try {
+      const result = Array.from(usinas);
       const [removed] = result.splice(dragIndex, 1);
       result.splice(dropIndex, 0, removed);
-      return result;
-    });
+      
+      setUsinas(result);
+      
+      const order = result.map(u => u.nome);
+      await saveUsinasOrder(order);
+    } catch (err) {
+      setFeedback({ type: 'error', msg: 'Erro ao salvar a nova ordem das usinas.' })
+      // Opcionalmente recarregar para restaurar a ordem original
+      loadUsinas()
+    }
   }
 
   const loadUsinas = async () => {
@@ -352,7 +362,7 @@ export default function UsinasTab({ readOnly = false }) {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
                 <tr style={{ background: '#f8fafc' }}>
-                  {['Usina', 'Criação', 'Potência', 'Strings', 'Módulos', 'Elementos', 'Séries', 'Sintéticas', 'Ações'].map((l, i) => (
+                  {['Usina', 'Criação', 'Potência', 'Strings', 'Módulos', 'Elementos', 'Séries', 'Sintéticas', 'Processadas', 'Dias', 'Ações'].map((l, i) => (
                     <th key={l} style={{ 
                       padding: '10px 12px', textAlign: i === 0 ? 'left' : 'center', 
                       fontWeight: 700, color: '#94a3b8', fontSize: 10, 
