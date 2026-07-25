@@ -846,7 +846,7 @@ export default function SettingsPage() {
   return (
     <div style={{ flex: 1, background: '#f1f5f9', minHeight: '100%', padding: '32px 20px', boxSizing: 'border-box' }}>
       {/* Centered container */}
-      <div style={{ maxWidth: 1150, margin: '0 auto' }}>
+      <div style={{ maxWidth: 1400, margin: '0 auto' }}>
 
         {/* Header */}
         <div style={{ marginBottom: 26, display: 'flex', alignItems: 'center', gap: 12 }}>

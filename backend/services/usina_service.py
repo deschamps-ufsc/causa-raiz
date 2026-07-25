@@ -67,22 +67,51 @@ def get_usina_stats(usina: str) -> dict:
         info = load_usina_info(usina)
         synthetics = load_synthetics(usina)
         
-        # Elementos e Séries Mapeadas
+        # Elementos, Séries Mapeadas e Trackers
         elementos = set()
         series_mapeadas = 0
+        trackers = set()
+        skids = set()
+        inversores = set()
+        stringboxes = set()
+
         for col, data in mapping.items():
+            s = data.get("skid", "")
+            i = data.get("inversor", "")
+            sb = data.get("stringbox", "")
+            if s: skids.add(s)
+            if s and i: inversores.add(f"{s}|{i}")
+            if s and i and sb: stringboxes.add(f"{s}|{i}|{sb}")
+
             el = data.get("elemento")
             if el:
                 elementos.add(el)
                 series_mapeadas += 1
+            t = data.get("tracker")
+            if t:
+                trackers.add(f"{s}|{i}|{sb}|{t}")
                 
         # Potência, Strings, Módulos
         total_mwp = 0.0
         total_strings = len(info)
         total_modulos = 0
-        for record in info.values():
+        for key, record in info.items():
             total_mwp += record.get("kwp", 0) / 1000.0
             total_modulos += record.get("qtde_modulos", 0)
+            s = record.get("skid", "")
+            i = record.get("inversor", "")
+            sb = record.get("stringbox", "")
+            
+            # Fallback para JSONs legados que não continham esses campos no valor
+            if not s and key:
+                parts = str(key).split("|")
+                if len(parts) > 0: s = parts[0]
+                if len(parts) > 1: i = parts[1]
+                if len(parts) > 2: sb = parts[2]
+
+            if s: skids.add(s)
+            if s and i: inversores.add(f"{s}|{i}")
+            if s and i and sb: stringboxes.add(f"{s}|{i}|{sb}")
             
         # Sintéticas
         total_sinteticas = 0
@@ -108,13 +137,30 @@ def get_usina_stats(usina: str) -> dict:
                         break
                     except Exception:
                         pass
+                        
+        # Campanhas
+        count_campanhas = 0
+        campanhas_path = os.path.join(DATA_DIR, "campanhas.json")
+        if os.path.exists(campanhas_path):
+            try:
+                with open(campanhas_path, "r", encoding="utf-8") as f:
+                    campanhas_data = json.load(f)
+                    if usina in campanhas_data:
+                        count_campanhas = len(campanhas_data[usina])
+            except Exception:
+                pass
             
         return {
             "count_elementos": len(elementos),
             "count_series": series_mapeadas,
+            "count_campanhas": count_campanhas,
             "total_mwp": round(total_mwp, 4),
             "total_strings": total_strings,
             "total_modulos": total_modulos,
+            "total_skids": len(skids),
+            "total_inversores": len(inversores),
+            "total_stringboxes": len(stringboxes),
+            "total_trackers": len(trackers),
             "total_sinteticas": total_sinteticas,
             "dias_presentes": dias_presentes,
             "total_processadas": total_processadas
@@ -122,8 +168,9 @@ def get_usina_stats(usina: str) -> dict:
     except Exception as e:
         logger.error(f"[USINA_SERVICE] Erro ao obter stats da usina {usina}: {e}")
         return {
-            "count_elementos": 0, "count_series": 0, "total_mwp": 0,
+            "count_elementos": 0, "count_series": 0, "count_campanhas": 0, "total_mwp": 0,
             "total_strings": 0, "total_modulos": 0, "total_sinteticas": 0,
+            "total_skids": 0, "total_inversores": 0, "total_stringboxes": 0, "total_trackers": 0,
             "dias_presentes": 0, "total_processadas": 0
         }
 

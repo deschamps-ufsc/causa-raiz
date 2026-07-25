@@ -1119,11 +1119,14 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                         try:
                             trim_p = col.get("trim_percent", 0) / 100.0
                             if trim_p > 0:
-                                lower_p = trim_p / 2
-                                upper_p = 1.0 - (trim_p / 2)
-                                lower_bound = s_data.quantile(lower_p)
-                                upper_bound = s_data.quantile(upper_p)
-                                s_data = s_data[(s_data >= lower_bound) & (s_data <= upper_bound)]
+                                s_data_clean = s_data.dropna().sort_values()
+                                n = len(s_data_clean)
+                                if n > 0:
+                                    k = int(n * trim_p / 2.0)
+                                    if k > 0:
+                                        s_data = s_data_clean.iloc[k : n - k]
+                                    else:
+                                        s_data = s_data_clean
                         except Exception as e:
                             logger.error(f"Erro ao calcular média interna para sujidade: {e}")
                     
@@ -1221,7 +1224,7 @@ def export_pvsyst_xlsx(usina: str) -> bytes:
     geff_col = next((c for c in cols if c.lower() == 'geff'), None)
     tamb_col = next((c for c in cols if c.lower() == 'tamb'), None)
     tcel_col = next((c for c in cols if c.lower() == 'tcel'), None)
-    simult_col = next((c for c in cols if c.lower() == 'simultaneidade'), None)
+    valid_col = next((c for c in cols if c.lower() == 'dados válidos'), None)
     
     output_df = pd.DataFrame()
     if 'timestamp' in cols:
@@ -1229,8 +1232,8 @@ def export_pvsyst_xlsx(usina: str) -> bytes:
     elif full_df.index.name == 'timestamp':
         output_df['Timestamp'] = full_df.index
         
-    if simult_col and geff_col and tamb_col and tcel_col:
-        mask = full_df[simult_col].fillna(0).astype(int)
+    if valid_col and geff_col and tamb_col and tcel_col:
+        mask = full_df[valid_col].fillna(0).astype(int)
         output_df['Geff'] = full_df[geff_col].where(mask == 1, np.nan)
         output_df['Tamb'] = full_df[tamb_col].where(mask == 1, np.nan)
         output_df['Tcel'] = full_df[tcel_col].where(mask == 1, np.nan)

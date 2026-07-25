@@ -20,6 +20,7 @@ import { fetchVisualizations, createVisualization, updateVisualization, deleteVi
 import { SaveVisualizationModal, LoadVisualizationModal } from '../components/VisualizationModals'
 import FluxogramaView from '../components/FluxogramaView'
 import MapaView from '../components/MapaView'
+import { exportTableToPdf, exportTableToPng } from '../utils/exportPdf'
 
 export function formatSeriesName(name) {
   if (!name) return name;
@@ -82,6 +83,9 @@ export default function DashboardPage() {
   const [isSecondaryToolbarOpen, setIsSecondaryToolbarOpen] = useState(true)
   const [showEixosMenu, setShowEixosMenu] = useState(false)
   const [showSeriesMenu, setShowSeriesMenu] = useState(false)
+  
+  const tableRef = useRef(null)
+  const [showTableExportMenu, setShowTableExportMenu] = useState(false)
   
   const { user } = useAuth()
   
@@ -500,56 +504,56 @@ export default function DashboardPage() {
                         <div style={{ color: '#d97706', fontSize: 11, fontWeight: 600, lineHeight: 1.2 }}>
                           {selectedDates.length}/{filteredDates.length} selecionadas
                         </div>
-                        <div style={{ display: 'flex', gap: 6 }}>
+                        <div style={{ display: 'flex', gap: 4 }}>
                           <button 
                             className="btn btn-ghost btn-sm"
-                            style={{ fontSize: 10, padding: '2px 6px' }}
+                            style={{ fontSize: 14, padding: '4px 6px' }}
                             onClick={() => setSelectedDates([...filteredDates].sort((a,b) => a.localeCompare(b)))}
+                            title="Selecionar todos"
                           >
-                            Sel. todos
+                            ☑️
                           </button>
                           <button 
                             className="btn btn-ghost btn-sm"
-                            style={{ fontSize: 10, padding: '2px 6px' }}
+                            style={{ fontSize: 14, padding: '4px 6px' }}
                             onClick={() => setSelectedDates([])}
+                            title="Limpar seleção"
                           >
-                            Limpar
+                            🧹
                           </button>
-                        </div>
-                      </div>
-
-                      {selectedDates.length > 0 && (
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
-                          {!campanhaAtual ? (
+                          {selectedDates.length > 0 && !campanhaAtual && (
                             <>
                               <button 
-                                className="btn btn-outline btn-sm"
-                                style={{ fontSize: 10, flex: 1, padding: '4px' }}
+                                className="btn btn-ghost btn-sm"
+                                style={{ fontSize: 14, padding: '4px 6px' }}
                                 onClick={() => setIsCampanhaModalOpen(true)}
+                                title="Nova Campanha"
                               >
-                                ➕ Nova Campanha
+                                ➕
                               </button>
                               <button 
-                                className="btn btn-outline btn-sm"
-                                style={{ fontSize: 10, flex: 1, padding: '4px' }}
+                                className="btn btn-ghost btn-sm"
+                                style={{ fontSize: 14, padding: '4px 6px' }}
                                 disabled={campanhas.length === 0}
                                 onClick={() => setAddCampanhaModalOpen(true)}
-                                title={campanhas.length === 0 ? "Nenhuma campanha existe ainda" : "Adicionar dias a uma campanha"}
+                                title={campanhas.length === 0 ? "Nenhuma campanha existe ainda" : "Adicionar à Campanha"}
                               >
-                                📥 Adicionar
+                                📥
                               </button>
                             </>
-                          ) : (
+                          )}
+                          {selectedDates.length > 0 && campanhaAtual && (
                             <button 
-                              className="btn btn-sm"
-                              style={{ fontSize: 10, width: '100%', background: '#fee2e2', color: '#b91c1c', border: 'none' }}
+                              className="btn btn-ghost btn-sm"
+                              style={{ fontSize: 14, padding: '4px 6px', color: '#b91c1c' }}
                               onClick={handleRemoveFromCampanha}
+                              title="Remover Selecionados da Campanha"
                             >
-                              ❌ Remover Selecionados da Campanha
+                              ❌
                             </button>
                           )}
                         </div>
-                      )}
+                      </div>
                     </div>
                   )}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, maxHeight: 200, overflowY: 'auto', padding: '0 4px' }}>
@@ -893,6 +897,92 @@ export default function DashboardPage() {
               )}
               </div>
 
+              {/* Botão de Exportar para Excel/PDF - apenas na Tabela */}
+              {activeTab === 'table' && filteredData && (
+                <div style={{ position: 'relative', display: 'flex' }}>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ height: 34, boxSizing: 'border-box', padding: '0 16px', flexShrink: 0, fontWeight: 600, background: '#e2e8f0', color: '#1e293b', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '6px', cursor: 'pointer' }}
+                    onClick={() => setShowTableExportMenu(!showTableExportMenu)}
+                    title="Opções de Exportação"
+                  >
+                    📥 Exportar ▾
+                  </button>
+
+                  {showTableExportMenu && (
+                    <>
+                      <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setShowTableExportMenu(false)} />
+                      <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, padding: 8, zIndex: 50, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', display: 'flex', flexDirection: 'column', gap: 4, minWidth: 180 }}>
+                        <button 
+                          onClick={() => {
+                            setShowTableExportMenu(false);
+                            if (!filteredData || !filteredData.timestamps) return;
+                            const seriesNames = Object.keys(filteredData.series);
+                            const headers = ['Timestamp'];
+                            const headerMap = {};
+                            seriesNames.forEach(name => {
+                              const sinfo = seriesDict[name] || {};
+                              const parts = [];
+                              if (sinfo.elemento) parts.push(sinfo.elemento);
+                              const equip = [sinfo.skid, sinfo.inversor, sinfo.estacao, sinfo.stringbox].filter(Boolean).join(' · ');
+                              if (equip) parts.push(equip);
+                              parts.push(formatSeriesName(name));
+                              const colName = parts.join(' | ');
+                              headers.push(colName);
+                              headerMap[name] = colName;
+                            });
+                            const rows = filteredData.timestamps.map((ts, i) => {
+                              const row = { 'Timestamp': ts.slice(0, 19).replace('T', ' ') };
+                              seriesNames.forEach(name => {
+                                let val = filteredData.series[name][i];
+                                if (typeof val === 'number') val = Number(val.toFixed(3));
+                                row[headerMap[name]] = val;
+                              });
+                              return row;
+                            });
+                            import('xlsx').then(XLSX => {
+                              const ws = XLSX.utils.json_to_sheet(rows, { header: headers });
+                              const wb = XLSX.utils.book_new();
+                              XLSX.utils.book_append_sheet(wb, ws, "Dados");
+                              XLSX.writeFile(wb, `Exportacao_${usinaAtual || 'Usina'}.xlsx`);
+                            });
+                          }} 
+                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', fontSize: 13, cursor: 'pointer', border: 'none', background: 'transparent', textAlign: 'left', color: '#334155', fontWeight: 500, borderRadius: 4 }}
+                          onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        >
+                          <span style={{ fontSize: 16 }}>📊</span> Excel (.xlsx)
+                        </button>
+                        <button 
+                          onClick={() => { setShowTableExportMenu(false); exportTableToPng(tableRef.current, `Exportacao_${usinaAtual || 'Usina'}.png`, { scale: 2 }) }} 
+                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', fontSize: 13, cursor: 'pointer', border: 'none', background: 'transparent', textAlign: 'left', color: '#334155', fontWeight: 500, borderRadius: 4 }}
+                          onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        >
+                          <span style={{ fontSize: 16 }}>🖼️</span> Imagem (PNG)
+                        </button>
+                        <button 
+                          onClick={() => { setShowTableExportMenu(false); exportTableToPdf(tableRef.current, `Exportacao_${usinaAtual || 'Usina'}.pdf`, { forceOrientation: 'p', usinaName: usinaAtual || 'N/D', scale: 2 }) }} 
+                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', fontSize: 13, cursor: 'pointer', border: 'none', background: 'transparent', textAlign: 'left', color: '#334155', fontWeight: 500, borderRadius: 4 }}
+                          onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        >
+                          <span style={{ fontSize: 16 }}>📄</span> PDF (Retrato)
+                        </button>
+                        <button 
+                          onClick={() => { setShowTableExportMenu(false); exportTableToPdf(tableRef.current, `Exportacao_${usinaAtual || 'Usina'}.pdf`, { forceOrientation: 'l', usinaName: usinaAtual || 'N/D', scale: 2 }) }} 
+                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', fontSize: 13, cursor: 'pointer', border: 'none', background: 'transparent', textAlign: 'left', color: '#334155', fontWeight: 500, borderRadius: 4 }}
+                          onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        >
+                          <span style={{ fontSize: 16 }}>🗎</span> PDF (Paisagem)
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
               {activeTab === 'chart' && (
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button
@@ -1129,7 +1219,7 @@ export default function DashboardPage() {
               )}
 
               {!dataLoading && !dataError && filteredData && (
-                <div className="fade-in" style={{ height: '100%', overflow: 'hidden' }}>
+                <div ref={tableRef} className="fade-in" style={{ height: '100%', overflow: 'hidden', padding: '16px', background: '#fff', borderRadius: '8px' }}>
                   <DataTable data={filteredData} seriesDict={seriesDict} />
                 </div>
               )}

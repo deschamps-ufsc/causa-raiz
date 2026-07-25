@@ -131,7 +131,7 @@ export default memo(function DataTable({ data, seriesDict = {} }) {
         <table style={{ width: 'max-content', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             {table.getHeaderGroups().map((hg) => (
-              <tr key={hg.id} style={{ background: 'var(--bg-secondary)', position: 'sticky', top: 0 }}>
+              <tr key={hg.id}>
                 {hg.headers.map((header) => (
                   <th
                     key={header.id}
@@ -142,10 +142,11 @@ export default memo(function DataTable({ data, seriesDict = {} }) {
                       userSelect: 'none', color: 'var(--text-secondary)',
                       minWidth: header.id === '_ts' ? '160px' : '100px', maxWidth: header.id === '_ts' ? '180px' : '160px',
                       verticalAlign: 'top',
-                      position: header.id === '_ts' ? 'sticky' : 'static',
+                      position: 'sticky',
+                      top: 0,
                       left: header.id === '_ts' ? 0 : 'auto',
-                      zIndex: header.id === '_ts' ? 10 : 1,
-                      background: header.id === '_ts' ? 'var(--bg-secondary)' : 'transparent',
+                      zIndex: header.id === '_ts' ? 10 : 2,
+                      background: 'var(--bg-secondary)',
                       boxShadow: header.id === '_ts' ? '2px 0 5px -2px rgba(0,0,0,0.2)' : 'none'
                     }}
                   >

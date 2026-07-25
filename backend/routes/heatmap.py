@@ -403,6 +403,7 @@ def get_mapa_heatmap(
             m_in = str(meta.get("inversor") or "").strip()
             m_sb = str(meta.get("stringbox") or "").strip()
             m_st = str(meta.get("string") or "").strip()
+            m_tr = str(meta.get("tracker") or "").strip()
             
             parts = [p for p in [m_sk, m_in, m_sb, m_st] if p]
             if m_sk and m_in and parts:
@@ -417,6 +418,7 @@ def get_mapa_heatmap(
                 "skid": m_sk,
                 "inversor": m_in,
                 "stringbox": m_sb,
+                "tracker": m_tr,
                 "estacao": str(meta.get("estacao") or ""),
                 "avg_val": round(avg_val, 4),
                 "max_val": round(max_val, 4),
@@ -921,7 +923,9 @@ def get_mapa_heatmap_instant(
                     "val": val,
                     "kwp": kwp,
                     "skid": skid,
-                    "inversor": inversor
+                    "inversor": inversor,
+                    "stringbox": meta.get("stringbox"),
+                    "tracker": str(meta.get("tracker") or "").strip()
                 })
                 
         out_dict = {"date": date, "time": time, "records": records}

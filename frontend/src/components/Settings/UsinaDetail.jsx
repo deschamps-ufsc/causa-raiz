@@ -4,7 +4,7 @@ import {
   uploadExcel, uploadMapa,
   fetchUsinaInfo, importUsinaInfo, getUsinaInfoTemplateUrl,
   fetchSynthetics, importSyntheticExcel, saveBatchConfig, deleteBatch,
-  fetchDatesSummary, fetchDateDetails, fetchMappingSummary, deleteSeries
+  fetchDatesSummary, fetchDateDetails, fetchMappingSummary, deleteSeries, fetchMapaLayout
 } from '../../services/api'
 import { ErrorState } from '../StateComponents'
 import SeriesMapImport from '../SeriesMapImport'
@@ -218,6 +218,18 @@ export default function UsinaDetail({ usina, usinaObj }) {
   const [mapaError, setMapaError] = useState(null)
   const [mapaDragging, setMapaDragging] = useState(false)
   const mapaInputRef = useRef()
+  const [mapaLayout, setMapaLayout] = useState([])
+  const [mapaLayoutLoading, setMapaLayoutLoading] = useState(false)
+
+  useEffect(() => {
+    if (usina && activeTab === 'mapa') {
+      setMapaLayoutLoading(true)
+      fetchMapaLayout(usina)
+        .then(setMapaLayout)
+        .catch(() => setMapaLayout([]))
+        .finally(() => setMapaLayoutLoading(false))
+    }
+  }, [usina, activeTab])
 
   const handleMapaUpload = async () => {
     if (!mapaFile || !usina) return
@@ -225,6 +237,7 @@ export default function UsinaDetail({ usina, usinaObj }) {
     try {
       const res = await uploadMapa(usina, mapaFile, null) // no progress for now
       setMapaResult(res)
+      fetchMapaLayout(usina).then(setMapaLayout).catch(() => setMapaLayout([]))
     } catch (e) { setMapaError(e.message) }
     finally { setMapaLoading(false) }
   }
@@ -651,6 +664,40 @@ export default function UsinaDetail({ usina, usinaObj }) {
                 </div>
               )}
             </div>
+
+            {mapaLayoutLoading && <div style={{ marginTop: 20, textAlign: 'center', color: 'var(--text-muted)' }}>⏳ Carregando prévia do mapa...</div>}
+            {!mapaLayoutLoading && mapaLayout && mapaLayout.length > 0 && (
+              <div className="card fade-in" style={{ marginTop: 16 }}>
+                <div className="card-title">🔍 Prévia do Layout</div>
+                <div style={{ overflowX: 'auto', padding: 20, background: '#f8fafc', borderRadius: 8, border: '1px solid var(--border)', display: 'flex', justifyContent: 'center' }}>
+                  <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: `repeat(${Math.max(...mapaLayout.map(l => l.col)) + 1}, 6px)`,
+                      gridAutoRows: 'max-content',
+                      gap: 0,
+                      width: 'max-content'
+                  }}>
+                    {mapaLayout.map((cell, i) => {
+                      let isColor = false;
+                      if (typeof CSS !== 'undefined' && CSS.supports && CSS.supports('color', cell.label)) {
+                          isColor = true;
+                      }
+                      return (
+                        <div key={i} title={isColor ? undefined : cell.label} style={{
+                            gridRow: cell.row + 1,
+                            gridColumn: cell.col + 1,
+                            background: isColor ? cell.label.toLowerCase() : '#3b82f6',
+                            border: isColor ? 'none' : '1px solid rgba(0,0,0,0.15)',
+                            minHeight: isColor ? '4px' : '16px',
+                            width: '100%',
+                            boxSizing: 'border-box'
+                        }}></div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

@@ -306,8 +306,8 @@ const CurtailmentNode = ({ data }) => (
   }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
     <div style={{ fontSize: '14px', fontWeight: 700, color: '#b91c1c' }}>Filtro de<br/>Curtailment</div>
     <div style={{ fontSize: '9px', color: '#7f1d1d', marginTop: '4px', lineHeight: '1.2', fontWeight: 600 }}>
-      Ref: {data.curtailmentRefMin || 52.8} MW<br/>
-      Mg: {data.curtailmentRefMargin || 3}% | Tol: {data.curtailmentDiffMargin || 5}%
+      Ref: {data.curtailmentRefMin ?? 52.8} MW<br/>
+      Mg: {data.curtailmentRefMargin ?? 3}% | Tol: {data.curtailmentDiffMargin ?? 5}%
     </div>
     <Handle type="target" position={Position.Left} id="target-1" style={{ background: '#ef4444', top: '20px' }} />
     <Handle type="target" position={Position.Left} id="target-2" style={{ background: '#ef4444', top: '80px' }} />
@@ -428,6 +428,8 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
   const [energiaPmiParams, setEnergiaPmiParams] = useState({ multiplier: 0.012 })
   const [allSeries, setAllSeries] = useState([])
   const [isProcessing, setIsProcessing] = useState(false)
+  const [showTrackerSensorInfo, setShowTrackerSensorInfo] = useState(false)
+  const [showTrackerParamsInfo, setShowTrackerParamsInfo] = useState(false)
   const [toast, setToast] = useState(null)
   
   const pvsystFileInputRef = useRef(null)
@@ -1179,13 +1181,28 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
           />
           <div style={{
             position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-            background: 'var(--bg-card)', padding: '24px', borderRadius: '8px', zIndex: 1001,
-            width: '600px', maxWidth: '90vw', minHeight: '500px', maxHeight: '90vh', boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-            display: 'flex', flexDirection: 'column'
+            display: 'flex', gap: '16px',
+            maxWidth: '95vw', maxHeight: '90vh', zIndex: 1001
           }}>
-            <h3 style={{ marginTop: 0, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', paddingBottom: '12px', paddingRight: '80px' }}>
-              {getAggregatorDescription(selectedNodeId)}
-            </h3>
+            <div style={{
+              background: 'var(--bg-card)', padding: '24px', borderRadius: '8px', position: 'relative',
+              width: '600px', maxWidth: '100%', minHeight: '500px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+              display: 'flex', flexDirection: 'column'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '12px', paddingRight: '80px', marginBottom: '16px' }}>
+                <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>
+                  {getAggregatorDescription(selectedNodeId)}
+                </h3>
+                {selectedNodeId === 'tracker' && (
+                  <div 
+                    onClick={() => setShowTrackerParamsInfo(!showTrackerParamsInfo)}
+                    title="Informações e Ajuda"
+                    style={{ marginLeft: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#6A1B9A', fontSize: '14px', background: 'rgba(106, 27, 154, 0.1)', width: '24px', height: '24px', borderRadius: '50%' }}
+                  >
+                    ℹ️
+                  </div>
+                )}
+              </div>
             {(() => {
               const getBadgeProps = (nodeId) => {
                 if (!nodeId) return null;
@@ -1282,7 +1299,11 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
               {/* Parâmetros do Tracker (PVLIB) */}
               {selectedNodeId === 'tracker' && (
                 <div style={{ marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 12, padding: '16px', background: 'rgba(106, 27, 154, 0.05)', borderRadius: '8px', borderLeft: '4px solid #6A1B9A' }}>
-                  <h4 style={{ margin: 0, fontSize: '13px', color: '#6A1B9A' }}>Parâmetros da Curva de Referência (PVLib)</h4>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <h4 style={{ margin: 0, fontSize: '13px', color: '#6A1B9A' }}>Parâmetros da Curva de Referência (PVLib)</h4>
+                  </div>
+
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '120px' }}>
                       <label style={{ fontSize: 12, fontWeight: 600 }}>Latitude:</label>
@@ -1342,7 +1363,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                   </div>
                 </div>
               )}
-
+              
               {/* Parâmetros da Sujidade */}
               {selectedNodeId === 'sujidade' && (
                 <div style={{ marginBottom: 20, padding: '16px', background: 'rgba(109, 76, 65, 0.06)', borderRadius: '8px', borderLeft: '4px solid #6D4C41', display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -1574,8 +1595,42 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
               </button>
             </div>
           </div>
-        </>
-      )}
+
+          {/* Painel lateral de Informações */}
+          {selectedNodeId === 'tracker' && showTrackerParamsInfo && (
+            <div style={{
+              background: 'var(--bg-card)', padding: '24px', borderRadius: '8px',
+              width: '360px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+              display: 'flex', flexDirection: 'column'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
+                <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '16px' }}>Informações</h3>
+                <button onClick={() => setShowTrackerParamsInfo(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'var(--text-muted)' }}>✕</button>
+              </div>
+              
+              <h5 style={{ margin: '0 0 12px 0', color: '#6A1B9A', fontSize: '14px' }}>Dicionário de Parâmetros (PVLib)</h5>
+              <ul style={{ margin: '0 0 24px 0', paddingLeft: '20px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                <li style={{ marginBottom: '6px' }}><strong>Latitude/Longitude:</strong> Coordenadas da usina para o cálculo preciso da posição do sol (PVLib).</li>
+                <li style={{ marginBottom: '6px' }}><strong>GCR:</strong> Razão de cobertura do solo. Usado para modelar sombreamento entre fileiras (backtracking).</li>
+                <li style={{ marginBottom: '6px' }}><strong>Ângulo Máx:</strong> Rotação física máxima permitida pelo rastreador (ex: 60°).</li>
+                <li style={{ marginBottom: '6px' }}><strong>Tolerância (°):</strong> Diferença angular aceitável entre o medido e o ideal teórico.</li>
+                <li style={{ marginBottom: '6px' }}><strong>Tol. Qtde Pontos:</strong> Quantidade de pontos consecutivos fora da curva para alarmes de falha.</li>
+                <li style={{ marginBottom: '6px' }}><strong>Inverter Sinal:</strong> Corrige leitura invertida do sensor em relação à referência.</li>
+                <li><strong>Avanço/Atraso:</strong> Compensa atrasos temporais no relógio do datalogger.</li>
+              </ul>
+
+              <h5 style={{ margin: '0 0 12px 0', color: '#6A1B9A', fontSize: '14px' }}>Como adicionar sensores?</h5>
+              <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                Para associar sensores a um tracker, você deve primeiro adicionar as séries de irradiação nos blocos <strong>Gpoa (Irradiação Plano Array)</strong> e <strong>Grear (Irradiação Traseira)</strong> do fluxograma. 
+                <br/><br/>
+                Os sensores inseridos lá aparecerão automaticamente na lista deste bloco Tracker para serem selecionados.
+              </p>
+            </div>
+          )}
+
+        </div>
+      </>
+    )}
 
       {/* Modal Bloco Geff */}
       {selectedBlock && nodes.find(n => n.id === selectedNodeId)?.type === 'geff' && (
@@ -2547,6 +2602,9 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                       if (col.key === 'epi' && typeof val === 'number') {
                         formattedVal = (val * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
                       }
+                      if (col.key === 'fator_ajuste' && typeof val === 'number') {
+                        formattedVal = val.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+                      }
                       let cellBackground = isOutput ? theme.bgCell : 'transparent';
                       let cellColor = isOutput ? 'var(--text-primary)' : 'var(--text-secondary)';
                       
@@ -2653,6 +2711,9 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                       }
                       if (col.key === 'epi' && typeof val === 'number') {
                         formattedVal = (val * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+                      }
+                      if (col.key === 'fator_ajuste' && typeof val === 'number') {
+                        formattedVal = val.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
                       }
                       let cellBackground = isOutput ? theme.bgTotal : 'transparent';
                       let cellColor = isOutput ? theme.color : 'var(--text-primary)';

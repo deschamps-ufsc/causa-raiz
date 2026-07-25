@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
-import { fetchMapaHeatmap, fetchMapaLayout, fetchMapaTimes, fetchMapaInstant } from '../services/api'
+import { fetchMapaHeatmap, fetchMapaLayout, fetchMapaTimes, fetchMapaInstant, fetchFlowConfig } from '../services/api'
 import { exportTableToPdf, exportTableToPng } from '../utils/exportPdf'
 import { ErrorState } from './StateComponents'
 import GIF from 'gif.js'
@@ -30,7 +30,7 @@ export default function MapaView({ usina, dates, activeFilters = [] }) {
   const [timeInput, setTimeInput] = useState("")
   const [fixedMin, setFixedMin] = useState("")
   const [fixedMax, setFixedMax] = useState("")
-  const [highlights, setHighlights] = useState({ skid: false, inversor: false, stringbox: false, string: true })
+  const [highlights, setHighlights] = useState({ skid: false, inversor: false, stringbox: false, tracker: false, sensores: true, string: true })
   const [showGridMenu, setShowGridMenu] = useState(false)
   
   // Cores personalizadas
@@ -48,6 +48,47 @@ export default function MapaView({ usina, dates, activeFilters = [] }) {
   const [histogramBinSize, setHistogramBinSize] = useState(1000)
 
   const { data: chartData, loading: chartLoading, query: queryChartData } = useSeriesData()
+
+
+  const [sensorTrackers, setSensorTrackers] = useState(new Set())
+
+  useEffect(() => {
+    if (!usina) return
+    fetchFlowConfig(usina)
+      .then(config => {
+        const trackers = new Set()
+        const addTrackerFromInput = (input) => {
+           let str = typeof input === 'string' ? input : input.series
+           if (str) {
+               const skid = str.match(/(CLS\d+\.?\d*)/i)?.[1]
+               const inv = str.match(/(INV\d+)/i)?.[1]
+               const sb = str.match(/(SB\d+)/i)?.[1]
+               const tr = str.match(/(TR\d+)/i)?.[1]
+               if (skid && inv && sb && tr) {
+                  const trNorm = parseInt(tr.replace(/\D/g, ''), 10)
+                  trackers.add(`${skid}|${inv}|${sb}|${trNorm}`)
+               } else if (tr) {
+                  const trNorm = parseInt(tr.replace(/\D/g, ''), 10)
+                  trackers.add(trNorm.toString())
+               }
+           }
+        }
+        
+        if (config && config.nodeConfigs) {
+          const trackerNode = config.nodeConfigs['tracker']
+          if (trackerNode && trackerNode.inputs) {
+            trackerNode.inputs.forEach(addTrackerFromInput)
+          }
+        } else if (config && config.nodes) {
+          const trackerNode = config.nodes.find(el => el.id === 'tracker')
+          if (trackerNode && trackerNode.data?.inputs) {
+            trackerNode.data.inputs.forEach(addTrackerFromInput)
+          }
+        }
+        setSensorTrackers(trackers)
+      })
+      .catch(console.error)
+  }, [usina])
 
   useEffect(() => {
     if (!selectedChartSeries || selectedDates.length !== 1 || !usina) {
@@ -147,7 +188,7 @@ export default function MapaView({ usina, dates, activeFilters = [] }) {
       const seriesStats = {}
       filteredData.forEach(r => {
         const s = r.serie
-        if (!seriesStats[s]) seriesStats[s] = { serie: s, integral: 0, avg_sum: 0, kwp: 0, count: 0, inversor: r.inversor, skid: r.skid, stringbox: r.stringbox }
+        if (!seriesStats[s]) seriesStats[s] = { serie: s, integral: 0, avg_sum: 0, kwp: 0, count: 0, inversor: r.inversor, skid: r.skid, stringbox: r.stringbox, tracker: r.tracker }
         seriesStats[s].integral += r.integral || 0
         seriesStats[s].avg_sum += r.avg_val || 0
         seriesStats[s].kwp += r.kwp || 0
@@ -197,7 +238,7 @@ export default function MapaView({ usina, dates, activeFilters = [] }) {
       
       instantData.forEach(r => {
         const s = r.serie
-        seriesStats[s] = { serie: s, integral: r.val, kwp: r.kwp, inversor: r.inversor, skid: r.skid, stringbox: r.stringbox } // integral no modo instantâneo é apenas o valor val!
+        seriesStats[s] = { serie: s, integral: r.val, kwp: r.kwp, inversor: r.inversor, skid: r.skid, stringbox: r.stringbox, tracker: r.tracker } // integral no modo instantâneo é apenas o valor val!
         if (r.kwp > 0 && r.val != null) {
             seriesStats[s].yield = r.val / r.kwp
             allYields.push(seriesStats[s].yield)
@@ -336,18 +377,22 @@ export default function MapaView({ usina, dates, activeFilters = [] }) {
     const getInversorFromLabel = (l) => { const m = l.match(/(INV\d+)/i); return m ? m[1] : null; };
     const getSkidFromLabel = (l) => { const m = l.match(/(CLS\d+\.?\d*)/i); return m ? m[1] : null; };
     const getStringboxFromLabel = (l) => { const m = l.match(/(SB\d+)/i); return m ? m[1] : null; };
+    const getTrackerFromLabel = (l) => { const m = l.match(/(TR\d+)/i); return m ? m[1] : null; };
 
     const cells = layout.map(cell => {
       let stat = statLookup[cell.label]
       let inv = stat && stat.inversor ? stat.inversor : getInversorFromLabel(cell.label);
       let skid = stat && stat.skid ? stat.skid : getSkidFromLabel(cell.label);
       let sb = stat && stat.stringbox ? stat.stringbox : getStringboxFromLabel(cell.label);
+      let tracker = stat && stat.tracker ? stat.tracker : getTrackerFromLabel(cell.label);
       
       let absSkid = skid || null;
       let absInversor = (skid && inv) ? `${skid}|${inv}` : inv || null;
       let absStringbox = (skid && inv && sb) ? `${skid}|${inv}|${sb}` : sb || null;
+      let trNorm = tracker ? parseInt(tracker.toString().replace(/\D/g, ''), 10) : null;
+      let absTracker = (skid && inv && sb && trNorm != null && !isNaN(trNorm)) ? `${skid}|${inv}|${sb}|${trNorm}` : (trNorm != null && !isNaN(trNorm) ? trNorm.toString() : null);
 
-      let finalCell = { ...cell, stat: stat || null, val: null, color: 'transparent', isSpacer: false, skid: absSkid, inversor: absInversor, stringbox: absStringbox }
+      let finalCell = { ...cell, stat: stat || null, val: null, color: 'transparent', isSpacer: false, skid: absSkid, inversor: absInversor, stringbox: absStringbox, tracker: absTracker }
       if (stat) {
          if (metricType === 'yield') finalCell.val = stat.yield
          else if (metricType === 'kwp') finalCell.val = stat.kwp
@@ -406,7 +451,11 @@ export default function MapaView({ usina, dates, activeFilters = [] }) {
 
   const histogramValues = useMemo(() => {
      if (!aggregatedStats || !aggregatedStats.allStatsArr) return [];
-     const potenciaSeries = aggregatedStats.allStatsArr.filter(s => s.serie && s.serie.includes('PotenciaCC'));
+     const potenciaSeries = aggregatedStats.allStatsArr.filter(s => {
+       if (!s.serie) return false;
+       const sl = s.serie.toLowerCase();
+       return sl.includes('potenciacc') || sl.includes('potência cc') || sl.includes('power');
+     });
      return potenciaSeries.map(s => s.integral).filter(v => v !== null && v !== undefined);
   }, [aggregatedStats])
 
@@ -804,6 +853,8 @@ export default function MapaView({ usina, dates, activeFilters = [] }) {
                        {id: 'skid', label: 'Skid', color: '#000000'}, 
                        {id: 'inversor', label: 'Inversor', color: '#38bdf8'}, 
                        {id: 'stringbox', label: 'Stringbox', color: '#9333ea'},
+                       {id: 'tracker', label: 'Tracker', color: '#f97316'},
+                       {id: 'sensores', label: 'Sensores', color: '#2563eb'},
                        {id: 'string', label: 'String', color: '#94a3b8'}
                      ].map(grp => {
                          const isActive = highlights[grp.id]
@@ -1133,6 +1184,23 @@ export default function MapaView({ usina, dates, activeFilters = [] }) {
                      if (!bottom || bottom.isSpacer || bottom.skid !== cell.skid) bBottom = borderStyle;
                      if (!left || left.isSpacer || left.skid !== cell.skid) bLeft = borderStyle;
                      if (!right || right.isSpacer || right.skid !== cell.skid) bRight = borderStyle;
+                 }
+
+                 if (highlights.tracker && !cell.isSpacer && cell.tracker) {
+                     const borderStyle = '1px solid #f97316';
+                     if (!top || top.isSpacer || top.tracker !== cell.tracker) bTop = borderStyle;
+                     if (!bottom || bottom.isSpacer || bottom.tracker !== cell.tracker) bBottom = borderStyle;
+                     if (!left || left.isSpacer || left.tracker !== cell.tracker) bLeft = borderStyle;
+                     if (!right || right.isSpacer || right.tracker !== cell.tracker) bRight = borderStyle;
+                 }
+                 
+                 // Realce para strings que pertencem a um tracker com sensor
+                 if (highlights.sensores && !cell.isSpacer && cell.tracker && sensorTrackers.has(cell.tracker)) {
+                     const borderStyle = '2px solid #2563eb';
+                     if (!top || top.isSpacer || top.tracker !== cell.tracker) bTop = borderStyle;
+                     if (!bottom || bottom.isSpacer || bottom.tracker !== cell.tracker) bBottom = borderStyle;
+                     if (!left || left.isSpacer || left.tracker !== cell.tracker) bLeft = borderStyle;
+                     if (!right || right.isSpacer || right.tracker !== cell.tracker) bRight = borderStyle;
                  }
                  
                  return (

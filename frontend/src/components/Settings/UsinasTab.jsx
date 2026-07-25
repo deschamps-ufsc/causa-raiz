@@ -102,33 +102,24 @@ function UsinaRow({ u, index, readOnly, setSelectedUsina, setEditingUsina, setNe
           {u.nome}
         </div>
       </td>
-      <td style={{ padding: '12px', textAlign: 'center', color: '#64748b', fontSize: 11, minWidth: 100 }}>
-        <div style={{ fontWeight: 500 }}>{new Date(u.criado_em).toLocaleDateString()}</div>
-        <div style={{ fontSize: 9, opacity: 0.8 }}>por {u.criado_por}</div>
-      </td>
+
       <td style={{ padding: '12px', textAlign: 'center', fontWeight: 700, color: '#15803d' }}>
         {u.total_mwp.toFixed(2)} <span style={{ fontSize: 9, fontWeight: 400 }}>MWp</span>
       </td>
+      <td style={{ padding: '12px', textAlign: 'center' }}>{u.total_skids || 0}</td>
+      <td style={{ padding: '12px', textAlign: 'center' }}>{u.total_inversores || 0}</td>
+      <td style={{ padding: '12px', textAlign: 'center' }}>{u.total_stringboxes || 0}</td>
+      <td style={{ padding: '12px', textAlign: 'center' }}>{u.total_trackers || 0}</td>
       <td style={{ padding: '12px', textAlign: 'center' }}>{u.total_strings}</td>
       <td style={{ padding: '12px', textAlign: 'center' }}>{u.total_modulos}</td>
-      <td style={{ padding: '12px', textAlign: 'center' }}>{u.count_elementos}</td>
-      <td style={{ padding: '12px', textAlign: 'center' }}>{u.count_series}</td>
+      <td style={{ padding: '12px', textAlign: 'center' }}>{(u.count_series || 0) - (u.total_sinteticas || 0)}</td>
       <td style={{ padding: '12px', textAlign: 'center' }}>{u.total_sinteticas}</td>
       <td style={{ padding: '12px', textAlign: 'center' }}>{u.total_processadas}</td>
+      <td style={{ padding: '12px', textAlign: 'center' }}>{u.count_elementos}</td>
       <td style={{ padding: '12px', textAlign: 'center' }}>{u.dias_presentes}</td>
-      <td style={{ padding: '12px', textAlign: 'center', minWidth: 100 }}>
+      <td style={{ padding: '12px', textAlign: 'center' }}>{u.count_campanhas || 0}</td>
+      <td style={{ padding: '12px', textAlign: 'center', minWidth: 70 }}>
         <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
-          <button
-            onClick={e => { e.stopPropagation(); setSelectedUsina(u) }}
-            style={{
-              padding: '5px 8px', borderRadius: 6, border: '1px solid rgba(245,158,11,0.4)',
-              background: 'rgba(245,158,11,0.08)', color: '#b45309', cursor: 'pointer',
-              fontSize: 11, fontWeight: 700, transition: 'all 0.15s'
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.18)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.08)' }}
-            title="Abrir configurações"
-          >⚙️</button>
           {!readOnly && (
             <>
               <button
@@ -362,12 +353,60 @@ export default function UsinasTab({ readOnly = false }) {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
                 <tr style={{ background: '#f8fafc' }}>
-                  {['Usina', 'Criação', 'Potência', 'Strings', 'Módulos', 'Elementos', 'Séries', 'Sintéticas', 'Processadas', 'Dias', 'Ações'].map((l, i) => (
-                    <th key={l} style={{ 
-                      padding: '10px 12px', textAlign: i === 0 ? 'left' : 'center', 
+                  <th rowSpan={2} style={{ 
+                    padding: '10px 12px', textAlign: 'left', 
+                    fontWeight: 700, color: '#94a3b8', fontSize: 10, 
+                    letterSpacing: 0.5, textTransform: 'uppercase', 
+                    borderBottom: '1px solid #f1f5f9', whiteSpace: 'nowrap',
+                    verticalAlign: 'middle',
+                    borderRight: '1px solid #e2e8f0'
+                  }}>Usina</th>
+
+                  <th colSpan={7} style={{ 
+                    padding: '6px 12px', textAlign: 'center', 
+                    fontWeight: 700, color: '#94a3b8', fontSize: 10, 
+                    letterSpacing: 0.5, textTransform: 'uppercase', 
+                    borderBottom: '1px solid #e2e8f0', whiteSpace: 'nowrap',
+                    borderRight: '1px solid #e2e8f0'
+                  }}>Dados Técnicos</th>
+
+                  <th colSpan={3} style={{ 
+                    padding: '6px 12px', textAlign: 'center', 
+                    fontWeight: 700, color: '#94a3b8', fontSize: 10, 
+                    letterSpacing: 0.5, textTransform: 'uppercase', 
+                    borderBottom: '1px solid #e2e8f0', whiteSpace: 'nowrap',
+                    borderRight: '1px solid #e2e8f0'
+                  }}>Séries</th>
+
+                  {['Elementos', 'Dias', 'Campanhas', 'Ações'].map((l, i) => (
+                    <th key={l} rowSpan={2} style={{ 
+                      padding: '10px 12px', textAlign: 'center', 
                       fontWeight: 700, color: '#94a3b8', fontSize: 10, 
                       letterSpacing: 0.5, textTransform: 'uppercase', 
-                      borderBottom: '1px solid #f1f5f9', whiteSpace: 'nowrap'
+                      borderBottom: '1px solid #f1f5f9', whiteSpace: 'nowrap',
+                      verticalAlign: 'middle'
+                    }}>{l}</th>
+                  ))}
+                </tr>
+                <tr style={{ background: '#f8fafc' }}>
+                  {['Potência', 'Skids', 'Inversores', 'Stringboxes', 'Trackers', 'Strings', 'Módulos'].map((l, i) => (
+                    <th key={l} style={{ 
+                      padding: '10px 12px', textAlign: 'center', 
+                      fontWeight: 700, color: '#94a3b8', fontSize: 10, 
+                      letterSpacing: 0.5, textTransform: 'uppercase', 
+                      borderBottom: '1px solid #f1f5f9', whiteSpace: 'nowrap',
+                      paddingTop: 4,
+                      borderRight: i === 6 ? '1px solid #e2e8f0' : 'none'
+                    }}>{l}</th>
+                  ))}
+                  {['Nativas', 'Sintéticas', 'Processadas'].map((l, i) => (
+                    <th key={l} style={{ 
+                      padding: '10px 12px', textAlign: 'center', 
+                      fontWeight: 700, color: '#94a3b8', fontSize: 10, 
+                      letterSpacing: 0.5, textTransform: 'uppercase', 
+                      borderBottom: '1px solid #f1f5f9', whiteSpace: 'nowrap',
+                      paddingTop: 4,
+                      borderRight: i === 2 ? '1px solid #e2e8f0' : 'none'
                     }}>{l}</th>
                   ))}
                 </tr>

@@ -24,9 +24,14 @@ class UsinaDetailed(BaseModel):
     criado_por: str
     count_elementos: int
     count_series: int
+    count_campanhas: int = 0
     total_mwp: float
     total_strings: int
     total_modulos: int
+    total_skids: int = 0
+    total_inversores: int = 0
+    total_stringboxes: int = 0
+    total_trackers: int = 0
     total_sinteticas: int
     total_processadas: int
     dias_presentes: int
