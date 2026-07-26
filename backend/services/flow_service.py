@@ -67,10 +67,10 @@ def run_flow_processing(usina: str, dates_str: str = None):
             
         for col, meta in mapping.items():
             if meta.get("elemento") == "Tracker":
-                if col.endswith(".PosAngAlvo"):
+                if ".PosAngAlvo" in col:
                     base = col.replace(".PosAngAlvo", "")
                     typ = "alvo"
-                elif col.endswith(".PosAngAtual") or col.endswith(".PosAngMedido"):
+                elif ".PosAngAtual" in col or ".PosAngMedido" in col:
                     base = col.replace(".PosAngAtual", "").replace(".PosAngMedido", "")
                     typ = "atual"
                 else:

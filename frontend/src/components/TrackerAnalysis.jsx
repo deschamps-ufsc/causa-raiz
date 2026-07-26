@@ -164,7 +164,7 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
         if (lvl === 1) type = 'stringbox'
         if (lvl === 2) type = 'tracker'
         const node = { label, values: {}, children: new Map(), isLeaf: false, level: lvl, type }
-        for (let c of cols) node.values[c] = { diff_alvo_sum: 0, diff_atual_sum: 0, count_alvo: 0, count_atual: 0, pts_fora_alvo: 0, pts_fora_atual: 0, pts_vento: 0, pts_travado: 0, sum_diff_vento: 0, sum_diff_travado: 0, serieName: '', serie_alvo: '', serie_atual: '', energia: null, kwp: null, yield: null }
+        for (let c of cols) node.values[c] = { diff_alvo_sum: 0, diff_atual_sum: 0, count_alvo: 0, count_atual: 0, pts_fora_alvo: 0, pts_fora_atual: 0, pts_vento: 0, pts_travado: 0, sum_diff_vento: 0, sum_diff_travado: 0, serieName: '', serie_alvo: '', serie_atual: '', energia: null, kwp: null, yield: null, count_trackers: 0 }
         map.set(label, node)
       }
       return map.get(label)
@@ -208,6 +208,7 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
           node.values[c].pts_travado += r.pts_travado || 0
           node.values[c].sum_diff_vento += r.sum_diff_vento || 0
           node.values[c].sum_diff_travado += r.sum_diff_travado || 0
+          node.values[c].count_trackers = (node.values[c].count_trackers || 0) + 1
           if (name !== undefined) {
              node.values[c].serieName = name
           }
@@ -365,7 +366,15 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
   if (!usina || !dates) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '60px 20px', color: 'var(--text-muted)', textAlign: 'center' }}>
-        <span style={{ fontSize: 48 }}>🎯</span>
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginBottom: 4 }}>
+          <path d="M12 16V22M8 22H16" stroke="#475569" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <polygon points="3 14 15 5 22 9 10 18" fill="#3b82f6" stroke="#1e40af" strokeWidth="1.5" strokeLinejoin="round"/>
+          <path d="M9 9.5L16 13.5" stroke="#93c5fd" strokeWidth="1.5" strokeLinecap="round"/>
+          <path d="M7 11L13 6.5" stroke="#93c5fd" strokeWidth="1.5" strokeLinecap="round"/>
+          <path d="M11 16L17 11.5" stroke="#93c5fd" strokeWidth="1.5" strokeLinecap="round"/>
+          <path d="M3.5 6.5C4.5 3.5 7.5 2 11 2" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round"/>
+          <path d="M7.5 2H11V5.5" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
         <strong style={{ color: 'var(--text-secondary)', fontSize: 15 }}>Selecione uma ou mais datas no painel esquerdo</strong>
       </div>
     )
@@ -891,8 +900,12 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                                  let ptsTravado = rowVals.pts_travado || 0;
                                  const totalPts = Math.max(rowVals.count_alvo || 0, rowVals.count_atual || 0);
                                  
-                                 if (ptsVento <= trackerTols.vento) ptsVento = 0;
-                                 if (ptsTravado <= trackerTols.travado) ptsTravado = 0;
+                                 const countTrackers = rowVals.count_trackers || 1;
+                                 const thresholdVento = (trackerTols.vento || 0) * countTrackers;
+                                 const thresholdTravado = (trackerTols.travado || 0) * countTrackers;
+                                 
+                                 if (ptsVento <= thresholdVento) ptsVento = 0;
+                                 if (ptsTravado <= thresholdTravado) ptsTravado = 0;
                                  
                                  const pctVento = totalPts > 0 ? (ptsVento / totalPts) * 100 : 0;
                                  const pctTravado = totalPts > 0 ? (ptsTravado / totalPts) * 100 : 0;
@@ -977,10 +990,18 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
 
       {!pivotData && !loading && !error && (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, flex: 1, color: 'var(--text-muted)', textAlign: 'center' }}>
-          <span style={{ fontSize: 48 }}>🎯</span>
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginBottom: 4 }}>
+            <path d="M12 16V22M8 22H16" stroke="#475569" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <polygon points="3 14 15 5 22 9 10 18" fill="#3b82f6" stroke="#1e40af" strokeWidth="1.5" strokeLinejoin="round"/>
+            <path d="M9 9.5L16 13.5" stroke="#93c5fd" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M7 11L13 6.5" stroke="#93c5fd" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M11 16L17 11.5" stroke="#93c5fd" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M3.5 6.5C4.5 3.5 7.5 2 11 2" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round"/>
+            <path d="M7.5 2H11V5.5" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
           <strong style={{ color: 'var(--text-secondary)', fontSize: 16 }}>Análise de Erro dos Trackers</strong>
           <p style={{ fontSize: 13, maxWidth: 500 }}>
-            Selecione as datas para calcular a diferença média em graus entre a inclinação registrada no SCADA e a inclinação de referência simulada pelo PVLib (desconsiderando momentos de backtracking).
+            Selecione as datas para calcular a diferença média em graus entre a inclinação registrada no SCADA e a inclinação de referência simulada pelo PVLib.
           </p>
         </div>
       )}
@@ -1123,7 +1144,7 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                                           x: chartData.timestamps,
                                           y: chartData.strings_data[sc],
                                           type: 'scatter', mode: 'lines', line: { width: 1.0 },
-                                          name: sc.split('.').pop(),
+                                          name: sc,
                                           hovertemplate: '%{y:.2f} W'
                                       }))}
                                       layout={{

@@ -714,5 +714,98 @@
       },
       "legendPosition": "top"
     }
+  },
+  {
+    "id": "7b43f46e-96f6-4d5d-99fa-a8d9693bbbcf",
+    "created_at": "2026-07-24T15:20:59.241716",
+    "name": "Sujidade",
+    "user": "deschamps.ufsc@gmail.com",
+    "selectedDates": [
+      "2025-11-24",
+      "2025-11-25",
+      "2025-11-28",
+      "2025-12-01",
+      "2025-12-04",
+      "2026-06-09",
+      "2026-06-10",
+      "2026-06-11",
+      "2026-06-12",
+      "2026-06-15",
+      "2026-06-16",
+      "2026-06-17"
+    ],
+    "selectedSeries": [
+      "CLS01.5.MET-A.TxaSuj_1",
+      "CLS01.5.MET-A.TxaSuj_2",
+      "sujidade"
+    ],
+    "activeFilters": [],
+    "visibleFilters": [
+      "Dados Válidos"
+    ],
+    "filterColors": {
+      "Tracker Piranômetro": "#f97316",
+      "Simultaneidade": "#ef4444",
+      "curtailment": "#059669",
+      "Dados Válidos": "#7c3aed"
+    },
+    "chartConfig": {
+      "gridX": true,
+      "gridY1": true,
+      "gridY2": false,
+      "gridY3": false,
+      "gridY4": false,
+      "xGridSpacing": "",
+      "xLimits": {
+        "min": "00:00",
+        "max": "23:59"
+      },
+      "y1Limits": {
+        "min": 0,
+        "max": 1
+      },
+      "y2Limits": {
+        "min": "",
+        "max": ""
+      },
+      "y3Limits": {
+        "min": 98,
+        "max": 101
+      },
+      "y4Limits": {
+        "min": "",
+        "max": ""
+      },
+      "appliedRanges": {},
+      "seriesAxisMap": {
+        "CLS01.5.MET-A.TxaSuj_1": "y3",
+        "CLS01.5.MET-A.TxaSuj_2": "y3",
+        "sujidade": "y3",
+        "sujidade_válida": "y3"
+      },
+      "seriesColors": {
+        "CLS01.5.MET-A.TxaSuj_1": "#6D4C41",
+        "CLS01.5.MET-A.TxaSuj_2": "#6D4C41",
+        "sujidade": "#D81B60",
+        "sujidade_válida": "#D81B60"
+      },
+      "seriesWidths": {
+        "CLS01.5.MET-A.TxaSuj_1": 1,
+        "CLS01.5.MET-A.TxaSuj_2": 1,
+        "sujidade": 2.5,
+        "sujidade_válida": 0.5
+      },
+      "seriesDashes": {
+        "CLS01.5.MET-A.TxaSuj_1": "solid",
+        "CLS01.5.MET-A.TxaSuj_2": "solid",
+        "sujidade": "solid",
+        "sujidade_válida": "solid"
+      },
+      "seriesFills": {
+        "sujidade_válida": 20
+      },
+      "legendPosition": "right"
+    },
+    "shared": false
   }
 ]

@@ -1,0 +1,85 @@
+{
+  "nodeConfigs": {
+    "gpoa": {
+      "inputs": [],
+      "operation": "sum"
+    },
+    "grear": {
+      "inputs": [],
+      "operation": "sum"
+    },
+    "tracker": {
+      "inputs": [],
+      "outputFilter": "",
+      "operation": "sum",
+      "trackerParams": {
+        "latitude": -11.1006,
+        "longitude": -41.2715,
+        "gcr": 0.34,
+        "max_angle": 60,
+        "tolerance": 10,
+        "tol_pontos_vento": 10,
+        "tol_pontos_travado": 10,
+        "inverter_sinal": true
+      }
+    },
+    "tamb": {
+      "inputs": [],
+      "operation": "sum"
+    },
+    "tmod": {
+      "inputs": [],
+      "operation": "sum"
+    },
+    "sujidade": {
+      "inputs": [],
+      "operation": "sum"
+    },
+    "potencia_ppc": {
+      "inputs": [],
+      "operation": "sum"
+    },
+    "referencia_ppc": {
+      "inputs": [],
+      "operation": "sum"
+    },
+    "energia_pmi": {
+      "inputs": [],
+      "operation": "sum"
+    },
+    "geff": {
+      "beta": 0.78,
+      "SSF": 0.12300000000000001,
+      "MLF": 0.035,
+      "type": "geff"
+    },
+    "tcel": {
+      "type": "tcel"
+    },
+    "curtailment": {
+      "curtailmentRefMin": 52.8,
+      "curtailmentRefMargin": 2,
+      "curtailmentDiffMargin": 80,
+      "resolutionMode": "15min",
+      "type": "curtailment"
+    },
+    "simultaneidade": {
+      "simultParams": {
+        "geff": true,
+        "tamb": true,
+        "tcel": true,
+        "energia_pmi": true,
+        "curtailment": true,
+        "potencia_ppc": true,
+        "referencia_ppc": true
+      }
+    },
+    "pvsyst": {
+      "type": "pvsyst"
+    },
+    "epi": {
+      "inputs": [],
+      "operation": "sum"
+    }
+  }
+}

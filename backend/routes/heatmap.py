@@ -477,10 +477,10 @@ def get_trackers_heatmap(
     
     for col, meta in mapping.items():
         if meta.get("elemento") == "Tracker":
-            if col.endswith(".PosAngAlvo"):
+            if ".PosAngAlvo" in col:
                 base = col.replace(".PosAngAlvo", "")
                 typ = "alvo"
-            elif col.endswith(".PosAngAtual") or col.endswith(".PosAngMedido"):
+            elif ".PosAngAtual" in col or ".PosAngMedido" in col:
                 base = col.replace(".PosAngAtual", "").replace(".PosAngMedido", "")
                 typ = "atual"
             else:
@@ -632,7 +632,8 @@ def get_trackers_heatmap(
     df["TrackerRef"] = ref_theta_series.values
     df["is_backtracking"] = is_backtracking_series.values
 
-    df_no_bt = df[df["is_backtracking"] == 0].copy()
+    # Conforme nova regra de negócio, os períodos em backtracking não são mais descartados.
+    df_no_bt = df.copy()
     # Explicitamente ignorar períodos onde a referência do PVLib for vazia (NaN)
     df_no_bt = df_no_bt.dropna(subset=["TrackerRef"])
     df_no_bt["_date_str"] = df_no_bt.index.strftime("%Y-%m-%d")
@@ -659,10 +660,14 @@ def get_trackers_heatmap(
             vento_col = f"tracker_{base}_vento"
             if vento_col in df_group.columns:
                 mask_vento = df_group[vento_col] == 1
-                pts_vento = int(mask_vento.sum())
             elif col_alvo and col_alvo in df_group.columns:
                 mask_vento = (df_group[col_alvo] - df_group["TrackerRef"]).abs() > tolerance
-                pts_vento = int(mask_vento.sum())
+            else:
+                mask_vento = pd.Series(False, index=df_group.index)
+                
+            pts_vento = 0
+            if mask_vento.any():
+                pts_vento = int((mask_vento.groupby((~mask_vento).cumsum()).sum()).max())
 
             if col_alvo and col_alvo in df_group.columns:
                 diff_series = (df_group[col_alvo] - df_group["TrackerRef"]).abs().dropna()
@@ -687,7 +692,9 @@ def get_trackers_heatmap(
                     mask_erro_atual = diff_atual_series > tolerance
                     mask_travado = mask_erro_atual & ~mask_vento
                     
-                pts_travado = int(mask_travado.sum())
+                pts_travado = 0
+                if mask_travado.any():
+                    pts_travado = int((mask_travado.groupby((~mask_travado).cumsum()).sum()).max())
                 
                 sum_diff_vento = float(diff_atual_series[mask_vento].sum())
                 sum_diff_travado = float(diff_atual_series[mask_travado].sum())
@@ -972,10 +979,10 @@ def get_trackers_heatmap_instant(
     
     for col, meta in mapping.items():
         if meta.get("elemento") == "Tracker":
-            if col.endswith(".PosAngAlvo"):
+            if ".PosAngAlvo" in col:
                 base = col.replace(".PosAngAlvo", "")
                 typ = "alvo"
-            elif col.endswith(".PosAngAtual") or col.endswith(".PosAngMedido"):
+            elif ".PosAngAtual" in col or ".PosAngMedido" in col:
                 base = col.replace(".PosAngAtual", "").replace(".PosAngMedido", "")
                 typ = "atual"
             else:
@@ -1264,9 +1271,9 @@ def get_tracker_chart(usina: str, date: str, alvo: str = None, atual: str = None
     
     # Calculate Vento and Travado flags
     base = None
-    if alvo and alvo.endswith(".PosAngAlvo"):
+    if alvo and ".PosAngAlvo" in alvo:
         base = alvo.replace(".PosAngAlvo", "")
-    elif atual and (atual.endswith(".PosAngAtual") or atual.endswith(".PosAngMedido")):
+    elif atual and (".PosAngAtual" in atual or ".PosAngMedido" in atual):
         base = atual.replace(".PosAngAtual", "").replace(".PosAngMedido", "")
         
     vento_col = f"tracker_{base}_vento" if base else None

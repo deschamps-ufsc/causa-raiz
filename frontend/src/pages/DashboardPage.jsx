@@ -39,13 +39,51 @@ export function formatSeriesName(name) {
   return name;
 }
 
+const TrackerSVGIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: 2, marginTop: -2, verticalAlign: 'middle' }}>
+    <path d="M12 16V22M8 22H16" stroke="#475569" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <polygon points="3 14 15 5 22 9 10 18" fill="#3b82f6" stroke="#1e40af" strokeWidth="1.5" strokeLinejoin="round"/>
+    <path d="M9 9.5L16 13.5" stroke="#93c5fd" strokeWidth="1.5" strokeLinecap="round"/>
+    <path d="M7 11L13 6.5" stroke="#93c5fd" strokeWidth="1.5" strokeLinecap="round"/>
+    <path d="M11 16L17 11.5" stroke="#93c5fd" strokeWidth="1.5" strokeLinecap="round"/>
+    <path d="M3.5 6.5C4.5 3.5 7.5 2 11 2" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round"/>
+    <path d="M7.5 2H11V5.5" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+)
+
+const RootCauseSVGIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ verticalAlign: 'middle', marginTop: -2 }}>
+    {/* Tronco */}
+    <path d="M9 21V5" stroke="#94a3b8" strokeWidth="2.5" strokeLinecap="round"/>
+    <circle cx="9" cy="4" r="2.5" fill="#60a5fa" />
+    
+    {/* Galhos diagonais */}
+    <path d="M9 9L4 12" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round"/>
+    <path d="M9 15L4 18" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round"/>
+    <path d="M9 9L14 12" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round"/>
+    
+    {/* Caixas */}
+    <rect x="0" y="10" width="5" height="5" fill="#34d399" rx="1" />
+    <rect x="0" y="16" width="5" height="5" fill="#f87171" rx="1" />
+    <rect x="13" y="10" width="5" height="5" fill="#fbbf24" rx="1" />
+    
+    {/* Lupa grande */}
+    <circle cx="16" cy="16" r="5" stroke="#60a5fa" strokeWidth="2.5" fill="white" />
+    {/* Cabo da lupa */}
+    <path d="M19.5 19.5L23 23" stroke="#d1d5db" strokeWidth="3" strokeLinecap="round" />
+    
+    {/* Exclamação vermelha/laranja dentro da lupa */}
+    <path d="M16 13.5V16.5M16 18.5V18.6" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+)
+
 const TABS = [
-  { id: 'chart',   label: '📈 Gráfico' },
-  { id: 'table',   label: '📋 Tabela' },
-  { id: 'diagram', label: '🕸️ Diagrama' },
-  { id: 'desempenho', label: '📊 Desempenho' },
-  { id: 'heatmap', label: '🌡️ Análise de Causa Raiz' },
-  { id: 'mapa', label: '🗺️ Mapa' }
+  { id: 'chart',   icon: '📈', label: 'Gráfico' },
+  { id: 'table',   icon: '📋', label: 'Tabela' },
+  { id: 'diagram', icon: '🕸️', label: 'Diagrama' },
+  { id: 'desempenho', icon: '📊', label: 'Desempenho' },
+  { id: 'heatmap', icon: <RootCauseSVGIcon />, label: 'Análise de Causa Raiz' },
+  { id: 'mapa', icon: '🗺️', label: 'Mapa' }
 ]
 
 export default function DashboardPage() {
@@ -746,10 +784,16 @@ export default function DashboardPage() {
           {/* Linha 1: abas + seletor de usina */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div className="tabs" style={{ flex: '0 0 auto' }}>
+              <div className="tabs" style={{ flex: '0 0 auto', padding: '6px' }}>
                 {TABS.map((tab) => (
-                  <button key={tab.id} className={`tab ${activeTab === tab.id ? 'active' : ''}`} onClick={() => setActiveTab(tab.id)}>
-                    {tab.label}
+                  <button 
+                    key={tab.id} 
+                    className={`tab ${activeTab === tab.id ? 'active' : ''}`} 
+                    onClick={() => setActiveTab(tab.id)}
+                    style={{ fontSize: 14, padding: '10px 18px', gap: 8 }}
+                  >
+                    <span style={{ fontSize: 18, display: 'flex', alignItems: 'center' }}>{tab.icon}</span>
+                    <span>{tab.label}</span>
                   </button>
                 ))}
               </div>
@@ -1124,7 +1168,7 @@ export default function DashboardPage() {
             {[
               { id: 'integralizacao', icon: '🌡️', label: 'Integralização' },
               { id: 'ranking', icon: '🏆', label: 'Ranking' },
-              { id: 'trackers', icon: '🎯', label: 'Trackers' },
+              { id: 'trackers', icon: <TrackerSVGIcon />, label: 'Trackers' },
             ].map(tab => {
               const isActive = causaRaizTab === tab.id
               return (

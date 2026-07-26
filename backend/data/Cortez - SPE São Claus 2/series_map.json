@@ -43205,7 +43205,7 @@
     "inversor": null,
     "stringbox": null,
     "tracker": null,
-    "estacao": "MET-E",
+    "estacao": "MET-EPE",
     "string": null
   },
   "CLS02.4.MET-EPE.GHI-Irrd_2_SR100": {
@@ -43214,14 +43214,14 @@
     "inversor": null,
     "stringbox": null,
     "tracker": null,
-    "estacao": "MET-E",
+    "estacao": "MET-EPE",
     "string": null
   },
   "CLS02.2.MET-B.POA-Irrd": {
     "elemento": "Irradiação",
     "skid": "CLS02.2",
-    "inversor": null,
-    "stringbox": null,
+    "inversor": "INV04",
+    "stringbox": "SB12",
     "tracker": "TR046",
     "estacao": "MET-B",
     "string": null
@@ -43229,8 +43229,8 @@
   "CLS02.6.MET-B.POA-Irrd": {
     "elemento": "Irradiação",
     "skid": "CLS02.6",
-    "inversor": null,
-    "stringbox": null,
+    "inversor": "INV04",
+    "stringbox": "SB12",
     "tracker": "TR046",
     "estacao": "MET-B",
     "string": null
@@ -43238,8 +43238,8 @@
   "CLS02.4.MET-A.POA-Irrd": {
     "elemento": "Irradiação",
     "skid": "CLS02.4",
-    "inversor": null,
-    "stringbox": null,
+    "inversor": "INV04",
+    "stringbox": "SB12",
     "tracker": "TR046",
     "estacao": "MET-A",
     "string": null
@@ -43247,8 +43247,8 @@
   "CLS02.2.MET-B.POA-Irrd_REAR": {
     "elemento": "Irradiação",
     "skid": "CLS02.2",
-    "inversor": null,
-    "stringbox": null,
+    "inversor": "INV04",
+    "stringbox": "SB12",
     "tracker": "TR046",
     "estacao": "MET-B",
     "string": null
@@ -43256,8 +43256,8 @@
   "CLS02.4.MET-A.POA-Irrd_REAR": {
     "elemento": "Irradiação",
     "skid": "CLS02.4",
-    "inversor": null,
-    "stringbox": null,
+    "inversor": "INV04",
+    "stringbox": "SB12",
     "tracker": "TR046",
     "estacao": "MET-A",
     "string": null
@@ -43265,8 +43265,8 @@
   "CLS02.6.MET-B.POA-Irrd_REAR": {
     "elemento": "Irradiação",
     "skid": "CLS02.6",
-    "inversor": null,
-    "stringbox": null,
+    "inversor": "INV04",
+    "stringbox": "SB12",
     "tracker": "TR046",
     "estacao": "MET-B",
     "string": null
@@ -43745,7 +43745,7 @@
     "inversor": null,
     "stringbox": null,
     "tracker": null,
-    "estacao": "C.4-5",
+    "estacao": null,
     "string": null
   },
   "CLS02.PPC.1-2-3.PotAt": {
@@ -43754,7 +43754,7 @@
     "inversor": null,
     "stringbox": null,
     "tracker": null,
-    "estacao": "C.1-2",
+    "estacao": null,
     "string": null
   },
   "CLS02.4.MET-EPE.PcpAcm": {
@@ -43763,7 +43763,7 @@
     "inversor": null,
     "stringbox": null,
     "tracker": null,
-    "estacao": "MET-E",
+    "estacao": "MET-EPE",
     "string": null
   },
   "CLS02.PPC.1-2-3.RefPotAt": {
@@ -43772,7 +43772,7 @@
     "inversor": null,
     "stringbox": null,
     "tracker": null,
-    "estacao": "C.1-2",
+    "estacao": null,
     "string": null
   },
   "CLS02.PPC.4-5-6.RefPotAt": {
@@ -43781,7 +43781,7 @@
     "inversor": null,
     "stringbox": null,
     "tracker": null,
-    "estacao": "C.4-5",
+    "estacao": null,
     "string": null
   },
   "CLS02.4.MET-A.TxaSuj_2": {
@@ -43802,13 +43802,22 @@
     "estacao": "MET-A",
     "string": null
   },
+  "CLS02.4.MET-EPE.VentoVel": {
+    "elemento": "Velocidade do Vento",
+    "skid": "CLS02.4",
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": "MET-EPE",
+    "string": null
+  },
   "CLS02.4.MET-EPE.T_SSTRH": {
     "elemento": "Temperatura",
     "skid": "CLS02.4",
     "inversor": null,
     "stringbox": null,
     "tracker": null,
-    "estacao": "MET-A",
+    "estacao": "MET-EPE",
     "string": null
   },
   "CLS02.2.MET-B.T_MOD": {
@@ -43826,7 +43835,7 @@
     "inversor": null,
     "stringbox": null,
     "tracker": null,
-    "estacao": "MET-EPE",
+    "estacao": "MET-A",
     "string": null
   },
   "CLS02.6.MET-B.T_MOD": {
@@ -43835,7 +43844,7 @@
     "inversor": null,
     "stringbox": null,
     "tracker": null,
-    "estacao": "MET-EPE",
+    "estacao": "MET-B",
     "string": null
   },
   "CLS02.3-INV01.TenBC": {
@@ -47292,15 +47301,6 @@
     "stringbox": "SB24",
     "tracker": null,
     "estacao": null,
-    "string": null
-  },
-  "CLS02.4.MET-EPE.VentoVel": {
-    "elemento": "Velocidade do Vento",
-    "skid": "CLS02.4",
-    "inversor": null,
-    "stringbox": null,
-    "tracker": null,
-    "estacao": "MET-EPE",
     "string": null
   },
   "CLS02.1-INV01-SB13.PotenciaCC_01": {

@@ -143,6 +143,7 @@ def process_excel(content: bytes, original_filename: str, usina: str, skip_unmap
             dayfirst=TIMESTAMP_DAYFIRST,
             errors='coerce'
         )
+        df = df.drop_duplicates(subset=[ts_col, tag_col], keep='last')
         df = df.pivot(index=ts_col, columns=tag_col, values=val_col).reset_index()
         df = df.rename(columns={ts_col: "timestamp"})
         df = df.dropna(subset=["timestamp"])
@@ -165,6 +166,7 @@ def process_excel(content: bytes, original_filename: str, usina: str, skip_unmap
         melted = pd.melt(df, id_vars=id_vars, value_vars=value_vars, var_name='var_type', value_name='value')
         melted['tag'] = melted[tag_col].astype(str) + '_' + melted['var_type'].astype(str)
         
+        melted = melted.drop_duplicates(subset=[ts_col, 'tag'], keep='last')
         df = melted.pivot(index=ts_col, columns='tag', values='value').reset_index()
         df = df.rename(columns={ts_col: "timestamp"})
         df.columns.name = None
@@ -294,6 +296,7 @@ def process_raw_file(content: bytes, filename: str, usina: str, skip_unmapped: b
         )
         
         # Pivot
+        df = df.drop_duplicates(subset=[ts_col, tag_col], keep='last')
         df = df.pivot(index=ts_col, columns=tag_col, values=val_col).reset_index()
         # O nome da coluna do índice agora é o nome da coluna original do ts
         df = df.rename(columns={ts_col: "timestamp"})
@@ -320,6 +323,7 @@ def process_raw_file(content: bytes, filename: str, usina: str, skip_unmapped: b
         melted['tag'] = melted[tag_col].astype(str) + '_' + melted['var_type'].astype(str)
         
         # Pivot para voltar ao formato Largo (Wide) padrão da plataforma
+        melted = melted.drop_duplicates(subset=[ts_col, 'tag'], keep='last')
         df = melted.pivot(index=ts_col, columns='tag', values='value').reset_index()
         df = df.rename(columns={ts_col: "timestamp"})
         

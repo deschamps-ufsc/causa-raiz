@@ -170,3 +170,45 @@ def import_drive_data_stream(req: DriveImportRequest):
             yield json.dumps(msg) + "\n"
 
     return StreamingResponse(event_stream(), media_type="application/x-ndjson")
+
+
+class DriveExportSeriesRequest(BaseModel):
+    file_ids: list[str]
+
+@router.post("/export-series")
+def export_drive_series_names(req: DriveExportSeriesRequest):
+    """
+    Extrai os nomes das séries dos arquivos e retorna um Excel.
+    """
+    from services.extract_series_service import extract_series_names
+    import pandas as pd
+    import io
+    from fastapi.responses import StreamingResponse
+    
+    try:
+        all_data = []
+        for file_id in req.file_ids:
+            content, filename = download_file(file_id)
+            series = extract_series_names(content, filename)
+            for s in series:
+                all_data.append({"Arquivo": filename, "Série": s})
+                
+        df = pd.DataFrame(all_data)
+        
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Séries Mapeadas')
+        
+        output.seek(0)
+        
+        headers = {
+            'Content-Disposition': 'attachment; filename="series_mapeadas.xlsx"'
+        }
+        
+        return StreamingResponse(
+            output, 
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers=headers
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

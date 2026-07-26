@@ -110,6 +110,39 @@ export default function DriveImportModal({ usina, usinaObj, onClose, onSuccess }
     setSelectedFiles(newSelection)
   }
 
+  const handleExportSeriesNames = async () => {
+    const fileIds = Object.keys(selectedFiles).filter(id => selectedFiles[id])
+    if (fileIds.length === 0) { alert("Nenhum arquivo selecionado!"); return }
+    
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch('http://localhost:8000/api/drive/export-series', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_ids: fileIds })
+      })
+      if (!res.ok) {
+         const data = await res.json().catch(() => ({}))
+         throw new Error(data.detail || 'Erro ao exportar séries')
+      }
+      
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = "series_mapeadas.xlsx"
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // ── Passo 1: Preview (detectar datas antes de importar) ──────────
   const handlePreview = async () => {
     const fileIds = Object.keys(selectedFiles).filter(id => selectedFiles[id])
@@ -477,7 +510,15 @@ export default function DriveImportModal({ usina, usinaObj, onClose, onSuccess }
                 </label>
               </div>
               <div style={{ display: 'flex', gap: 12 }}>
-                <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
+                <button className="btn btn-ghost" onClick={onClose} disabled={loading}>Cancelar</button>
+                <button 
+                  className="btn btn-ghost" 
+                  onClick={handleExportSeriesNames} 
+                  disabled={selectedCount === 0 || loading}
+                  style={{ border: '1px solid var(--border)', background: 'var(--bg-secondary)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  {loading ? '⏳' : '📥'} Extrair Nomes de Séries
+                </button>
                 <button className="btn btn-primary" onClick={handlePreview} disabled={selectedCount === 0 || loading}>
                   {loading ? '⏳ Analisando...' : 'Próximo →'}
                 </button>
