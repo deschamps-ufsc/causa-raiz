@@ -560,13 +560,15 @@ def get_trackers_heatmap(
                 df_proc = pd.read_parquet(processed_path, columns=list(set(read_proc)))
                 
                 if df_day is not None:
-                    df_day["timestamp"] = df_day["timestamp"].dt.floor("min")
-                    df_proc["timestamp"] = df_proc["timestamp"].dt.floor("min")
+                    df_day = df_day.set_index("timestamp").resample("1min").mean(numeric_only=True).reset_index()
+                    df_proc = df_proc.set_index("timestamp").resample("1min").mean(numeric_only=True).reset_index()
                     df_day = df_day.merge(df_proc, on="timestamp", how="outer")
                 else:
-                    df_day = df_proc
+                    df_day = df_proc.set_index("timestamp").resample("1min").mean(numeric_only=True).reset_index()
                     
         if df_day is not None:
+            if "timestamp" in df_day.columns and not df_day.empty and len(df_day) > len(df_day["timestamp"].dt.floor("Min").unique()):
+                 df_day = df_day.set_index("timestamp").resample("1min").mean(numeric_only=True).reset_index()
             dfs.append(df_day)
             
     if not dfs:
@@ -1230,13 +1232,13 @@ def get_tracker_chart(usina: str, date: str, alvo: str = None, atual: str = None
             df_proc = pd.read_parquet(processed_path, columns=list(set(read_proc)))
             
     if df_raw is not None and df_proc is not None:
-        df_raw["timestamp"] = df_raw["timestamp"].dt.floor("min")
-        df_proc["timestamp"] = df_proc["timestamp"].dt.floor("min")
+        df_raw = df_raw.set_index("timestamp").resample("1min").mean(numeric_only=True).reset_index()
+        df_proc = df_proc.set_index("timestamp").resample("1min").mean(numeric_only=True).reset_index()
         df = df_raw.merge(df_proc, on="timestamp", how="outer")
     elif df_raw is not None:
-        df = df_raw
+        df = df_raw.set_index("timestamp").resample("1min").mean(numeric_only=True).reset_index()
     elif df_proc is not None:
-        df = df_proc
+        df = df_proc.set_index("timestamp").resample("1min").mean(numeric_only=True).reset_index()
     else:
         raise HTTPException(status_code=404, detail="Parquet not found")
         
