@@ -113,8 +113,8 @@ export const fetchPivotHeatmap = (usina, dates, elemento, filters = []) =>
 export const fetchYieldHeatmap = (usina, dates, elemento, filters = [], rowCat = 'skid', colCat = 'inversor') =>
   api.get('/heatmap/yield', { params: { usina, dates, elemento: elemento || undefined, filters: filters?.join(',') || undefined, row_cat: rowCat, col_cat: colCat } }).then((r) => r.data)
 
-export const fetchMapaHeatmap = (usina, dates, filters = []) =>
-  api.get('/heatmap/mapa', { params: { usina, dates, filters: filters?.join(',') || undefined } }).then((r) => r.data)
+export const fetchMapaHeatmap = (usina, dates, filters = [], variavel = 'potencia_cc') =>
+  api.get('/heatmap/mapa', { params: { usina, dates, filters: filters?.join(',') || undefined, variavel } }).then((r) => r.data)
 
 export const fetchTrackerAnalysis = (usina, dates, filters = []) =>
   api.get('/heatmap/trackers', { params: { usina, dates, filters: filters?.join(',') || undefined } }).then((r) => r.data)
@@ -122,8 +122,8 @@ export const fetchTrackerAnalysis = (usina, dates, filters = []) =>
 export const fetchMapaTimes = (usina, date) =>
   api.get('/heatmap/times', { params: { usina, date } }).then((r) => r.data)
 
-export const fetchMapaInstant = (usina, date, time, filters = []) =>
-  api.get('/heatmap/mapa/instant', { params: { usina, date, time, filters: filters?.join(',') || undefined } }).then((r) => r.data)
+export const fetchMapaInstant = (usina, date, time, filters = [], variavel = 'potencia_cc') =>
+  api.get('/heatmap/mapa/instant', { params: { usina, date, time, filters: filters?.join(',') || undefined, variavel } }).then((r) => r.data)
 
 export const fetchTrackersInstant = (usina, date, time, filters = []) =>
   api.get('/heatmap/trackers/instant', { params: { usina, date, time, filters: filters?.join(',') || undefined } }).then((r) => r.data)

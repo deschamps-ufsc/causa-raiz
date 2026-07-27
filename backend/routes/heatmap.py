@@ -290,6 +290,7 @@ def get_mapa_heatmap(
     usina: str = Query(...),
     dates:  str = Query(...),
     filters: Optional[str] = Query(None, description="String de filtros separados por vírgula para qualidade"),
+    variavel: Optional[str] = Query("potencia_cc", description="Variável a ser plotada (potencia_cc ou tensao_cc)")
 ):
     """
     Retorna integral e avg_val específicos para as séries definidas no layout do mapa.
@@ -326,7 +327,23 @@ def get_mapa_heatmap(
 
     synth_lookup = build_lookup(usina)
     all_needed_cols = list(set(target_series)) + active_filters
-    synth_in_target = {col: synth_lookup[col] for col in all_needed_cols if col in synth_lookup}
+    
+    tensao_mapping = {}
+    if variavel == "tensao_cc":
+        for col in target_series:
+            if col in synth_lookup:
+                synth_def = synth_lookup[col]
+                sources = get_source_cols(synth_def)
+                tensao_cols = [s for s in sources if "tensao" in s.lower() or "voltage" in s.lower()]
+                if tensao_cols:
+                    tensao_mapping[col] = tensao_cols[0]
+                    if tensao_cols[0] not in cols_to_read:
+                        cols_to_read.append(tensao_cols[0])
+        
+        synth_in_target = {col: synth_lookup[col] for col in active_filters if col in synth_lookup}
+    else:
+        synth_in_target = {col: synth_lookup[col] for col in all_needed_cols if col in synth_lookup}
+        
     for synth_name, synth_def in synth_in_target.items():
         if synth_name in cols_to_read:
             cols_to_read.remove(synth_name)
@@ -375,6 +392,7 @@ def get_mapa_heatmap(
         
     df = pd.concat(dfs, ignore_index=True)
 
+
     for synth_name, synth_def in synth_in_target.items():
         try:
             df[synth_name] = compute_synthetic(df, synth_def)
@@ -387,50 +405,77 @@ def get_mapa_heatmap(
     
     records = []
     
-    for date_str, df_group in df.groupby("_date_str"):
-        for col in target_series:
-            if col not in df_group.columns:
-                continue
-                
-            total_sum = df_group[col].sum()
-            avg_val = float(df_group[col].mean()) if not df_group[col].empty else 0.0
-            max_val = float(df_group[col].max()) if not df_group[col].empty else 0.0
-            integral = float(total_sum) / 60.0
-            
-            kwp_val = 0.0
-            meta = mapping.get(col, {})
-            m_sk = str(meta.get("skid") or "").strip()
-            m_in = str(meta.get("inversor") or "").strip()
-            m_sb = str(meta.get("stringbox") or "").strip()
-            m_st = str(meta.get("string") or "").strip()
-            m_tr = str(meta.get("tracker") or "").strip()
-            
-            parts = [p for p in [m_sk, m_in, m_sb, m_st] if p]
-            if m_sk and m_in and parts:
-                target_prefix = "|".join(parts)
-                for key_path, data_dict in info_dict.items():
-                    if key_path == target_prefix or key_path.startswith(target_prefix + "|"):
-                        kwp_val += data_dict.get("kwp", 0.0)
-
-            records.append({
-                "date": date_str,
-                "serie": col,
-                "skid": m_sk,
-                "inversor": m_in,
-                "stringbox": m_sb,
-                "tracker": m_tr,
-                "estacao": str(meta.get("estacao") or ""),
-                "avg_val": round(avg_val, 4),
-                "max_val": round(max_val, 4),
-                "integral": round(integral, 4),
-                "kwp": round(kwp_val, 4) if kwp_val > 0 else None
-            })
+    # Precalculate meta and kwp per serie to avoid nested looping per day
+    kwp_cache = {}
+    for col in target_series:
+        kwp_val = 0.0
+        meta = mapping.get(col, {})
+        m_sk = str(meta.get("skid") or "").strip()
+        m_in = str(meta.get("inversor") or "").strip()
+        m_sb = str(meta.get("stringbox") or "").strip()
+        m_st = str(meta.get("string") or "").strip()
+        m_tr = str(meta.get("tracker") or "").strip()
         
-    return {
-        "dates": dates,
-        "records": records
-    }
+        parts = [p for p in [m_sk, m_in, m_sb, m_st] if p]
+        if m_sk and m_in and parts:
+            target_prefix = "|".join(parts)
+            for key_path, data_dict in info_dict.items():
+                if key_path == target_prefix or key_path.startswith(target_prefix + "|"):
+                    kwp_val += data_dict.get("kwp", 0.0)
+                    
+        kwp_cache[col] = {
+            "skid": m_sk,
+            "inversor": m_in,
+            "stringbox": m_sb,
+            "tracker": m_tr,
+            "estacao": str(meta.get("estacao") or ""),
+            "kwp": round(kwp_val, 4) if kwp_val > 0 else None
+        }
+    
+    try:
+        for date_str, df_group in df.groupby("_date_str"):
+            for col in target_series:
+                if variavel == "tensao_cc":
+                    actual_col = tensao_mapping.get(col)
+                else:
+                    actual_col = col
 
+                if not actual_col or actual_col not in df_group.columns:
+                    continue
+                    
+                total_sum = df_group[actual_col].sum()
+                avg_raw = df_group[actual_col].mean()
+                max_raw = df_group[actual_col].max()
+                
+                avg_val = 0.0 if pd.isna(avg_raw) else float(avg_raw)
+                max_val = 0.0 if pd.isna(max_raw) else float(max_raw)
+                
+                integral = float(total_sum) / 60.0
+                
+                cached = kwp_cache.get(col)
+                if cached:
+                    records.append({
+                        "date": date_str,
+                        "serie": col,
+                        "skid": cached["skid"],
+                        "inversor": cached["inversor"],
+                        "stringbox": cached["stringbox"],
+                        "tracker": cached["tracker"],
+                        "estacao": cached["estacao"],
+                        "avg_val": round(avg_val, 4),
+                        "max_val": round(max_val, 4),
+                        "integral": round(integral, 4),
+                        "kwp": cached["kwp"]
+                    })
+        return {
+            "dates": dates,
+            "records": records
+        }
+    except Exception as e:
+        import traceback
+        with open("C:/mapa_error.txt", "w") as f:
+            f.write(f"Error: {str(e)}\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/heatmap/trackers")
@@ -789,13 +834,15 @@ def get_heatmap_times(usina: str = Query(...), date: str = Query(...)):
 
 
 _instant_cache = {}
+_tensao_mapping_cache = {}
 
 @router.get("/heatmap/mapa/instant")
 def get_mapa_heatmap_instant(
     usina: str = Query(...),
     date: str = Query(...),
     time: str = Query(...), # HH:MM
-    filters: Optional[str] = Query(None, description="Filtros separados por vírgula")
+    filters: Optional[str] = Query(None, description="Filtros separados por vírgula"),
+    variavel: Optional[str] = Query("potencia_cc", description="Variável a ser plotada (potencia_cc ou tensao_cc)")
 ):
     """
     Retorna a potência instantânea (e kwp) para o Mapa no minuto exato.
@@ -825,7 +872,29 @@ def get_mapa_heatmap_instant(
     from services.synthetic_service import build_lookup, get_source_cols, compute_synthetic
     synth_lookup = build_lookup(usina)
     all_needed_cols = list(set(target_series)) + active_filters
-    synth_in_target = {col: synth_lookup[col] for col in all_needed_cols if col in synth_lookup}
+    
+    tensao_mapping = {}
+    if variavel == "tensao_cc":
+        if usina not in _tensao_mapping_cache:
+            mapping_temp = {}
+            for col in target_series:
+                if col in synth_lookup:
+                    synth_def = synth_lookup[col]
+                    sources = get_source_cols(synth_def)
+                    tensao_cols = [s for s in sources if "tensao" in s.lower() or "voltage" in s.lower()]
+                    if tensao_cols:
+                        mapping_temp[col] = tensao_cols[0]
+            _tensao_mapping_cache[usina] = mapping_temp
+            
+        tensao_mapping = _tensao_mapping_cache[usina]
+        for col, t_col in tensao_mapping.items():
+            if t_col not in cols_to_read:
+                cols_to_read.append(t_col)
+        
+        synth_in_target = {col: synth_lookup[col] for col in active_filters if col in synth_lookup}
+    else:
+        synth_in_target = {col: synth_lookup[col] for col in all_needed_cols if col in synth_lookup}
+        
     for synth_name, synth_def in synth_in_target.items():
         if synth_name in cols_to_read:
             cols_to_read.remove(synth_name)
@@ -878,7 +947,7 @@ def get_mapa_heatmap_instant(
                     df_day[synth_name] = compute_synthetic(df_day, synth_def)
                 except Exception:
                     df_day[synth_name] = None
-                    
+
             _instant_cache[cache_key] = {"df": df_day, "attempted_cols": set(cols_to_read)}
             # Limitar cache a 2 dias para não estourar RAM
             if len(_instant_cache) > 2:
@@ -915,8 +984,13 @@ def get_mapa_heatmap_instant(
     try:
         records = []
         for serie in target_series:
-            if serie in df_min.columns:
-                val = float(row[serie]) if pd.notnull(row[serie]) else None
+            if variavel == "tensao_cc":
+                actual_col = tensao_mapping.get(serie)
+            else:
+                actual_col = serie
+
+            if actual_col and actual_col in df_min.columns:
+                val = float(row[actual_col]) if pd.notnull(row[actual_col]) else None
                 meta = mapping.get(serie, {})
                 inversor = meta.get("inversor")
                 skid = meta.get("skid")

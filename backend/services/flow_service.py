@@ -1091,9 +1091,12 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                             gpoa_series = processed_df["gpoa"]
                         
                         if gpoa_series is not None:
-                            valid_mask = s_data.notna() & gpoa_series.notna() & (gpoa_series > 0)
-                            if valid_mask.any():
-                                val = (s_data[valid_mask] * gpoa_series[valid_mask]).sum() / gpoa_series[valid_mask].sum()
+                            temp_s = s_data[~s_data.index.duplicated(keep='first')]
+                            temp_g = gpoa_series[~gpoa_series.index.duplicated(keep='first')]
+                            temp_df = pd.DataFrame({'s': temp_s, 'g': temp_g}).dropna()
+                            temp_df = temp_df[temp_df['g'] > 0]
+                            if not temp_df.empty:
+                                val = (temp_df['s'] * temp_df['g']).sum() / temp_df['g'].sum()
                             else:
                                 val = s_data.mean(skipna=True)
                         else:
@@ -1215,9 +1218,12 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                             gpoa_series = processed_df["gpoa"]
                         
                         if gpoa_series is not None:
-                            valid_mask = s_data.notna() & gpoa_series.notna() & (gpoa_series > 0)
-                            if valid_mask.any():
-                                val = (s_data[valid_mask] * gpoa_series[valid_mask]).sum() / gpoa_series[valid_mask].sum()
+                            temp_s = s_data[~s_data.index.duplicated(keep='first')]
+                            temp_g = gpoa_series[~gpoa_series.index.duplicated(keep='first')]
+                            temp_df = pd.DataFrame({'s': temp_s, 'g': temp_g}).dropna()
+                            temp_df = temp_df[temp_df['g'] > 0]
+                            if not temp_df.empty:
+                                val = (temp_df['s'] * temp_df['g']).sum() / temp_df['g'].sum()
                             else:
                                 val = s_data.mean(skipna=True)
                         else:

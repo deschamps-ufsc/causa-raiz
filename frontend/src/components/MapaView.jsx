@@ -7,6 +7,7 @@ import html2canvas from 'html2canvas'
 import PlotWrapper from 'react-plotly.js'
 const Plot = PlotWrapper.default || PlotWrapper
 import { useSeriesData } from '../hooks/useSeriesData'
+import { useSeries } from '../hooks/useSeries'
 
 export default function MapaView({ usina, dates, activeFilters = [] }) {
   const tableRef = useRef(null)
@@ -20,6 +21,7 @@ export default function MapaView({ usina, dates, activeFilters = [] }) {
   const [draftDates, setDraftDates] = useState([])
   const [metricType, setMetricType] = useState('integral') // 'integral', 'yield', 'desvio', 'kwp'
   const [showExportMenu, setShowExportMenu] = useState(false)
+  const [mapVariable, setMapVariable] = useState('potencia_cc') // 'potencia_cc' ou 'tensao_cc'
   
   // Instant mode states
   const [mapMode, setMapMode] = useState('integral') // 'integral' ou 'instant'
@@ -44,10 +46,16 @@ export default function MapaView({ usina, dates, activeFilters = [] }) {
   const [gifProgress, setGifProgress] = useState({ current: 0, total: 0, rendering: false })
   const [gifConfig, setGifConfig] = useState({ delay: 500, startIdx: 0, endIdx: 0 })
   const [selectedChartSeries, setSelectedChartSeries] = useState("")
+  const [selectedPPCSeries, setSelectedPPCSeries] = useState("")
   const [histogramRange, setHistogramRange] = useState(null)
   const [histogramBinSize, setHistogramBinSize] = useState(1000)
 
   const { data: chartData, loading: chartLoading, query: queryChartData } = useSeriesData()
+  const { series: availableSeries } = useSeries(selectedDates, usina)
+  
+  const ppcSeriesOptions = useMemo(() => {
+      return availableSeries.filter(s => s.elemento === 'Potência CA PPC').map(s => s.coluna).sort()
+  }, [availableSeries])
 
 
   const [sensorTrackers, setSensorTrackers] = useState(new Set())
@@ -91,11 +99,15 @@ export default function MapaView({ usina, dates, activeFilters = [] }) {
   }, [usina])
 
   useEffect(() => {
-    if (!selectedChartSeries || selectedDates.length !== 1 || !usina) {
+    if ((!selectedChartSeries && !selectedPPCSeries) || selectedDates.length !== 1 || !usina) {
         return
     }
-    queryChartData({ usina, dates: selectedDates[0], series: [selectedChartSeries] })
-  }, [usina, selectedDates, selectedChartSeries, queryChartData])
+    const seriesToQuery = []
+    if (selectedChartSeries) seriesToQuery.push(selectedChartSeries)
+    if (selectedPPCSeries) seriesToQuery.push(selectedPPCSeries)
+    
+    queryChartData({ usina, dates: selectedDates[0], series: seriesToQuery })
+  }, [usina, selectedDates, selectedChartSeries, selectedPPCSeries, queryChartData])
 
   useEffect(() => {
     if (availableTimes.length > 0) {
@@ -113,7 +125,7 @@ export default function MapaView({ usina, dates, activeFilters = [] }) {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetchMapaHeatmap(usina, dates, activeFilters)
+      const res = await fetchMapaHeatmap(usina, dates, activeFilters, mapVariable)
       setData(res.records)
       const dArr = dates.split(',').map(d => d.trim()).filter(Boolean).sort()
       setFetchedDates(dArr)
@@ -129,7 +141,7 @@ export default function MapaView({ usina, dates, activeFilters = [] }) {
     }
   }
 
-  // Load only when user clicks Processar. Reset if usina changes.
+  // Load only when user clicks Processar. Reset if usina or mapVariable changes.
   useEffect(() => {
     setData(null)
     setFetchedDates([])
@@ -139,7 +151,7 @@ export default function MapaView({ usina, dates, activeFilters = [] }) {
     setCurrentTimeIndex(0)
     setInstantData(null)
     setHistogramRange(null)
-  }, [usina])
+  }, [usina, mapVariable])
   
   // Efeito para carregar horários disponíveis quando entra no modo instantâneo
   useEffect(() => {
@@ -170,14 +182,14 @@ export default function MapaView({ usina, dates, activeFilters = [] }) {
       const time = availableTimes[currentTimeIndex]
       if (!time) return
       setLoadingInstant(true)
-      fetchMapaInstant(usina, selectedDates[0], time, activeFilters)
+      fetchMapaInstant(usina, selectedDates[0], time, activeFilters, mapVariable)
         .then(res => {
           setInstantData(res.records || [])
         })
         .catch(e => setError("Erro ao carregar dados instantâneos: " + e.message))
         .finally(() => setLoadingInstant(false))
     }
-  }, [currentTimeIndex, availableTimes, mapMode, selectedDates, usina, activeFilters])
+  }, [currentTimeIndex, availableTimes, mapMode, selectedDates, usina, activeFilters, mapVariable])
 
   // 1. Filter and Aggregate data (depends on mapMode, data, instantData)
   const aggregatedStats = useMemo(() => {
@@ -194,6 +206,14 @@ export default function MapaView({ usina, dates, activeFilters = [] }) {
         seriesStats[s].kwp += r.kwp || 0
         seriesStats[s].count += 1
       })
+
+      if (mapVariable === 'tensao_cc') {
+          Object.values(seriesStats).forEach(st => {
+              if (st.count > 0) {
+                  st.integral = st.avg_sum / st.count
+              }
+          })
+      }
 
       let allYields = []
       Object.keys(seriesStats).forEach(s => {
@@ -789,8 +809,8 @@ export default function MapaView({ usina, dates, activeFilters = [] }) {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '10px 0' }}>
       <div style={{ display: 'flex', gap: 10, marginBottom: 16, alignItems: 'center', flexWrap: 'wrap' }}>
          <div style={{ display: 'flex', alignItems: 'center', height: 34, boxSizing: 'border-box', background: '#ffffff', border: '1px solid var(--border)', borderRadius: 8, padding: '0 3px', gap: 2 }}>
-            {[
-              { id: 'integral', label: 'Energia' },
+             {[
+              { id: 'integral', label: mapVariable === 'tensao_cc' ? 'Média Diária' : 'Energia' },
               { id: 'yield', label: 'Yield' },
               { id: 'kwp', label: 'kWp' },
               { id: 'desvio', label: 'Desvio' },
@@ -883,28 +903,25 @@ export default function MapaView({ usina, dates, activeFilters = [] }) {
              )}
          </div>
          
+         {/* Toggle Variável */}
+         <div style={{ display: 'flex', alignItems: 'center', height: 34, boxSizing: 'border-box', background: '#f8fafc', border: '1px solid var(--border)', borderRadius: 8, padding: '0 3px', gap: 2 }}>
+            <button
+              onClick={() => setMapVariable('potencia_cc')}
+              style={{ height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 10px', borderRadius: 6, fontSize: 13, fontWeight: mapVariable === 'potencia_cc' ? 600 : 500, cursor: 'pointer', border: 'none', background: mapVariable === 'potencia_cc' ? '#fff' : 'transparent', color: mapVariable === 'potencia_cc' ? '#0f172a' : '#64748b', boxShadow: mapVariable === 'potencia_cc' ? '0 1px 2px rgb(0 0 0 / 0.1)' : 'none' }}
+            >
+              Potência CC
+            </button>
+            <button
+              onClick={() => setMapVariable('tensao_cc')}
+              style={{ height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 10px', borderRadius: 6, fontSize: 13, fontWeight: mapVariable === 'tensao_cc' ? 600 : 500, cursor: 'pointer', border: 'none', background: mapVariable === 'tensao_cc' ? '#fff' : 'transparent', color: mapVariable === 'tensao_cc' ? '#0f172a' : '#64748b', boxShadow: mapVariable === 'tensao_cc' ? '0 1px 2px rgb(0 0 0 / 0.1)' : 'none' }}
+            >
+              Tensão CC
+            </button>
+         </div>
+
          {renderDateSelector()}
 
-         {/* Seletor de série para o gráfico otimizado */}
-         <div style={{ marginLeft: 8, position: 'relative', display: 'flex', alignItems: 'center' }}>
-             <button 
-                 title={selectedChartSeries ? `Série Selecionada: ${selectedChartSeries}` : 'Selecionar série para o gráfico'}
-                 style={{ height: 34, boxSizing: 'border-box', padding: '0 10px', borderRadius: 6, border: '1px solid var(--border)', background: selectedChartSeries ? '#eff6ff' : '#f8fafc', fontSize: 13, fontWeight: 600, color: selectedChartSeries ? '#3b82f6' : '#64748b', display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', outline: 'none' }}
-             >
-                 📈 {selectedChartSeries ? 'Série ▾' : 'Série ▾'}
-             </button>
-             <select 
-                 value={selectedChartSeries}
-                 onChange={e => setSelectedChartSeries(e.target.value)}
-                 title={selectedChartSeries || 'Selecione a série...'}
-                 style={{ position: 'absolute', opacity: 0, inset: 0, width: '100%', height: '100%', cursor: 'pointer' }}
-             >
-                 <option value="">Selecione a série...</option>
-                 {layout && layout.length > 0 && Array.from(new Set(layout.map(l => l.label).filter(l => !l.startsWith('#')))).sort().map(s => (
-                     <option key={s} value={s}>{s}</option>
-                 ))}
-             </select>
-         </div>
+
 
          <div style={{ marginLeft: 'auto' }} />
 
@@ -1234,13 +1251,64 @@ export default function MapaView({ usina, dates, activeFilters = [] }) {
            {/* Gráfico 1: Série Temporal */}
            <div style={{ background: '#fff', borderRadius: 8, border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', padding: 16, minHeight: 350, flexShrink: 0 }}>
            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-             <h3 style={{ margin: 0, fontSize: 16, color: 'var(--text-primary)' }}>Análise de Série Temporal</h3>
-             {chartData && selectedChartSeries && (
-               <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#475569' }}>
-                 <div style={{ width: 14, height: 3, background: '#3b82f6', borderRadius: 2 }}></div>
-                 {selectedChartSeries}
+             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+               <h3 style={{ margin: 0, fontSize: 16, color: 'var(--text-primary)' }}>Análise de Série Temporal</h3>
+               
+               {/* Seletor de série para o gráfico otimizado */}
+               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                   <button 
+                       title={selectedChartSeries ? `Série Selecionada: ${selectedChartSeries}` : 'Selecionar série para o gráfico'}
+                       style={{ height: 34, boxSizing: 'border-box', padding: '0 10px', borderRadius: 6, border: '1px solid var(--border)', background: selectedChartSeries ? '#eff6ff' : '#f8fafc', fontSize: 13, fontWeight: 600, color: selectedChartSeries ? '#3b82f6' : '#64748b', display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', outline: 'none' }}
+                   >
+                       📈 {selectedChartSeries ? 'String ▾' : 'String ▾'}
+                   </button>
+                   <select 
+                       value={selectedChartSeries}
+                       onChange={e => setSelectedChartSeries(e.target.value)}
+                       title={selectedChartSeries || 'Selecione a série...'}
+                       style={{ position: 'absolute', opacity: 0, inset: 0, width: '100%', height: '100%', cursor: 'pointer' }}
+                   >
+                       <option value="">Selecione a série...</option>
+                       {layout && layout.length > 0 && Array.from(new Set(layout.map(l => l.label).filter(l => !l.startsWith('#')))).sort().map(s => (
+                           <option key={s} value={s}>{s}</option>
+                       ))}
+                   </select>
                </div>
-             )}
+
+               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                   <button 
+                       title={selectedPPCSeries ? `PPC Selecionado: ${selectedPPCSeries}` : 'Selecionar PPC para o gráfico'}
+                       style={{ height: 34, boxSizing: 'border-box', padding: '0 10px', borderRadius: 6, border: '1px solid var(--border)', background: selectedPPCSeries ? '#dcfce7' : '#f8fafc', fontSize: 13, fontWeight: 600, color: selectedPPCSeries ? '#16a34a' : '#64748b', display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', outline: 'none' }}
+                   >
+                       ⚡ {selectedPPCSeries ? 'PPC ▾' : 'PPC ▾'}
+                   </button>
+                   <select 
+                       value={selectedPPCSeries}
+                       onChange={e => setSelectedPPCSeries(e.target.value)}
+                       title={selectedPPCSeries || 'Selecione o PPC...'}
+                       style={{ position: 'absolute', opacity: 0, inset: 0, width: '100%', height: '100%', cursor: 'pointer' }}
+                   >
+                       <option value="">Selecione o PPC...</option>
+                       {ppcSeriesOptions.map(s => (
+                           <option key={s} value={s}>{s}</option>
+                       ))}
+                   </select>
+               </div>
+             </div>
+             <div style={{ display: 'flex', gap: 16 }}>
+               {chartData && selectedChartSeries && (
+                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#475569' }}>
+                   <div style={{ width: 14, height: 3, background: '#3b82f6', borderRadius: 2 }}></div>
+                   {selectedChartSeries}
+                 </div>
+               )}
+               {chartData && selectedPPCSeries && (
+                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#475569' }}>
+                   <div style={{ width: 14, height: 3, background: '#22c55e', borderRadius: 2 }}></div>
+                   {selectedPPCSeries}
+                 </div>
+               )}
+             </div>
            </div>
            
            <div style={{ flex: 1, background: '#f8fafc', borderRadius: 6, border: chartData ? 'none' : '2px dashed #cbd5e1', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#64748b', padding: chartData ? 0 : 24, textAlign: 'center', minHeight: 200, position: 'relative' }}>
@@ -1256,7 +1324,7 @@ export default function MapaView({ usina, dates, activeFilters = [] }) {
                   <span style={{ fontWeight: 600, fontSize: 14 }}>Área Reservada para o Gráfico</span>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 12, alignItems: 'center', fontSize: 12 }}>
                       <div style={{ background: '#e2e8f0', padding: '4px 8px', borderRadius: 4 }}>
-                          Série selecionada: <strong>{selectedChartSeries || '[Nenhuma selecionada]'}</strong>
+                          Série selecionada: <strong>{selectedChartSeries || selectedPPCSeries || '[Nenhuma selecionada]'}</strong>
                       </div>
                       <div style={{ background: '#e2e8f0', padding: '4px 8px', borderRadius: 4 }}>
                           Dia exibido: <strong>{selectedDates.length === 1 ? selectedDates[0] : (selectedDates.length === 0 ? 'Nenhum' : 'Múltiplos')}</strong>
@@ -1271,10 +1339,10 @@ export default function MapaView({ usina, dates, activeFilters = [] }) {
                 </>
               )}
               
-              {chartData && chartData.series && chartData.series[selectedChartSeries] && (
+              {chartData && chartData.series && (chartData.series[selectedChartSeries] || chartData.series[selectedPPCSeries]) && (
                  <Plot 
                    data={[
-                     {
+                     ...(selectedChartSeries && chartData.series[selectedChartSeries] ? [{
                        x: chartData.timestamps,
                        y: chartData.series[selectedChartSeries],
                        type: 'scatter',
@@ -1282,8 +1350,8 @@ export default function MapaView({ usina, dates, activeFilters = [] }) {
                        line: { color: '#3b82f6', width: 2 },
                        name: selectedChartSeries,
                        showlegend: false
-                     },
-                     ...(mapMode === 'instant' && availableTimes[currentTimeIndex] ? [{
+                     }] : []),
+                     ...(selectedChartSeries && chartData.series[selectedChartSeries] && mapMode === 'instant' && availableTimes[currentTimeIndex] ? [{
                          x: chartData.timestamps.filter(t => t.includes(` ${availableTimes[currentTimeIndex]}:`) || t.includes(`T${availableTimes[currentTimeIndex]}:`)),
                          y: chartData.series[selectedChartSeries].filter((v, i) => chartData.timestamps[i].includes(` ${availableTimes[currentTimeIndex]}:`) || chartData.timestamps[i].includes(`T${availableTimes[currentTimeIndex]}:`)),
                          type: 'scatter',
@@ -1291,13 +1359,34 @@ export default function MapaView({ usina, dates, activeFilters = [] }) {
                          marker: { color: '#ea580c', size: 10, line: { color: 'white', width: 2 } },
                          showlegend: false,
                          hoverinfo: 'skip'
+                     }] : []),
+                     ...(selectedPPCSeries && chartData.series[selectedPPCSeries] ? [{
+                       x: chartData.timestamps,
+                       y: chartData.series[selectedPPCSeries],
+                       type: 'scatter',
+                       mode: 'lines',
+                       line: { color: '#22c55e', width: 2 },
+                       name: selectedPPCSeries,
+                       yaxis: 'y2',
+                       showlegend: false
+                     }] : []),
+                     ...(selectedPPCSeries && chartData.series[selectedPPCSeries] && mapMode === 'instant' && availableTimes[currentTimeIndex] ? [{
+                         x: chartData.timestamps.filter(t => t.includes(` ${availableTimes[currentTimeIndex]}:`) || t.includes(`T${availableTimes[currentTimeIndex]}:`)),
+                         y: chartData.series[selectedPPCSeries].filter((v, i) => chartData.timestamps[i].includes(` ${availableTimes[currentTimeIndex]}:`) || chartData.timestamps[i].includes(`T${availableTimes[currentTimeIndex]}:`)),
+                         type: 'scatter',
+                         mode: 'markers',
+                         marker: { color: '#ea580c', size: 10, line: { color: 'white', width: 2 } },
+                         yaxis: 'y2',
+                         showlegend: false,
+                         hoverinfo: 'skip'
                      }] : [])
                    ]}
                    layout={{
-                     margin: { t: 10, r: 10, l: 40, b: 30 },
+                     margin: { t: 10, r: selectedPPCSeries ? 40 : 10, l: 40, b: 30 },
                      autosize: true,
                      xaxis: { type: 'date', tickformat: '%H:%M' },
                      yaxis: { automargin: true },
+                     ...(selectedPPCSeries ? { yaxis2: { automargin: true, overlaying: 'y', side: 'right' } } : {}),
                      paper_bgcolor: 'transparent',
                      plot_bgcolor: 'transparent'
                    }}
@@ -1311,7 +1400,7 @@ export default function MapaView({ usina, dates, activeFilters = [] }) {
            {/* Gráfico 2: Distribuição de Frequência */}
            <div style={{ background: '#fff', borderRadius: 8, border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', padding: 16, minHeight: 350, flexShrink: 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                 <h3 style={{ margin: 0, fontSize: 16, color: 'var(--text-primary)' }}>Distribuição de Valores (Potência CC)</h3>
+                 <h3 style={{ margin: 0, fontSize: 16, color: 'var(--text-primary)' }}>Distribuição de Valores ({mapVariable === 'tensao_cc' ? 'Tensão CC' : 'Potência CC'})</h3>
                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#475569' }}>
                     <label style={{ fontWeight: 500 }}>Agrupar a cada:</label>
                     <select 
@@ -1319,6 +1408,9 @@ export default function MapaView({ usina, dates, activeFilters = [] }) {
                        onChange={(e) => setHistogramBinSize(Number(e.target.value))}
                        style={{ padding: '4px 8px', borderRadius: 4, border: '1px solid var(--border)', background: '#fff', fontSize: 13, color: '#0f172a', cursor: 'pointer', outline: 'none' }}
                     >
+                       <option value={10}>10</option>
+                       <option value={20}>20</option>
+                       <option value={50}>50</option>
                        <option value={100}>100</option>
                        <option value={250}>250</option>
                        <option value={500}>500</option>
