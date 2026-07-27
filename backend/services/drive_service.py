@@ -75,16 +75,27 @@ def list_drive_folder(folder_id: str) -> List[Dict[str, Any]]:
     service = get_drive_service()
     
     try:
-        results = service.files().list(
-            q=f"'{folder_id}' in parents and trashed=false",
-            fields="files(id, name, mimeType, modifiedTime, size)",
-            pageSize=1000,
-            orderBy="name",
-            includeItemsFromAllDrives=True,
-            supportsAllDrives=True
-        ).execute()
+        all_files = []
+        page_token = None
         
-        return results.get('files', [])
+        while True:
+            results = service.files().list(
+                q=f"'{folder_id}' in parents and trashed=false",
+                fields="nextPageToken, files(id, name, mimeType, modifiedTime, size)",
+                pageSize=1000,
+                orderBy="name",
+                pageToken=page_token,
+                includeItemsFromAllDrives=True,
+                supportsAllDrives=True
+            ).execute()
+            
+            all_files.extend(results.get('files', []))
+            page_token = results.get('nextPageToken')
+            
+            if not page_token:
+                break
+                
+        return all_files
     except HttpError as error:
         print(f"[DRIVE_API_ERROR] Falha ao listar pasta {folder_id}: {error}")
         raise ValueError(f"Falha ao acessar o Google Drive. Verifique se o link é válido e se você tem acesso a ele. Erro: {error}")

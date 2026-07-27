@@ -167,7 +167,7 @@ export default function DashboardPage() {
     }
   }, [usinaAtual])
 
-  const handleSaveVisualization = async ({ name, saveAsNew }) => {
+  const handleSaveVisualization = async ({ name, saveAsNew, isShared }) => {
     try {
       const payload = {
         name,
@@ -177,7 +177,8 @@ export default function DashboardPage() {
         activeFilters,
         visibleFilters,
         filterColors,
-        chartConfig
+        chartConfig,
+        shared: isShared
       }
       
       let saved;
@@ -198,12 +199,16 @@ export default function DashboardPage() {
   const handleLoadVisualization = (vis) => {
     skipCleanup.current = true
     setLoadedVisualization(vis)
-    let datesToLoad = vis.selectedDates || [];
-    if (campanhaAtual) {
-      datesToLoad = datesToLoad.filter(d => filteredDates.includes(d));
+    
+    let effectiveDates = selectedDates;
+    
+    // Se não for uma visualização padrão do sistema, carregamos as datas dela
+    if (!vis.shared) {
+      effectiveDates = (vis.selectedDates || []).filter(d => filteredDates.includes(d));
+      setSelectedDates(effectiveDates)
     }
-    setSelectedDates(datesToLoad)
-    setPendingLoadVis(vis)
+    
+    setPendingLoadVis({ ...vis, effectiveDates })
     setShowEixosMenu(true)
     setShowSeriesMenu(true)
     // A query será disparada pelo useEffect quando filterSeries estiver pronto
@@ -220,16 +225,7 @@ export default function DashboardPage() {
     }
   }
 
-  const handleToggleShare = async (vis, newSharedState) => {
-    try {
-      const updatedVis = { ...vis, shared: newSharedState }
-      await updateVisualization(usinaAtual, vis.id, updatedVis)
-      fetchVisualizations(usinaAtual).then(setSavedVisualizations).catch(() => {})
-    } catch (err) {
-      console.error("Erro ao alterar compartilhamento da visualização:", err)
-      alert("Erro ao alterar compartilhamento da visualização.")
-    }
-  }
+
 
 
   const { series, dates, loading: seriesLoading } = useSeries(selectedDates, usinaAtual)
@@ -277,15 +273,10 @@ export default function DashboardPage() {
       const availableFilters = filterSeries.map(s => s.coluna)
       const allQuerySeries = Array.from(new Set([...(vis.selectedSeries || []), ...availableFilters]))
       
-      if (vis.selectedDates?.length && allQuerySeries.length && usinaAtual) {
-        let datesToLoad = vis.selectedDates || [];
-        if (campanhaAtual) {
-          datesToLoad = datesToLoad.filter(d => filteredDates.includes(d));
-        }
-        
+      if (vis.effectiveDates?.length && allQuerySeries.length && usinaAtual) {
         query({
           usina: usinaAtual,
-          dates: datesToLoad,
+          dates: vis.effectiveDates,
           series: allQuerySeries,
         })
       }
@@ -1343,6 +1334,7 @@ export default function DashboardPage() {
         onSave={handleSaveVisualization}
         hasLoadedVis={!!loadedVisualization}
         currentName={loadedVisualization?.name}
+        currentShared={loadedVisualization?.shared}
         existingNames={savedVisualizations.map(v => v.name)}
       />
       
@@ -1351,7 +1343,6 @@ export default function DashboardPage() {
         onClose={() => setIsLoadModalOpen(false)}
         onLoad={handleLoadVisualization}
         onDelete={handleDeleteVisualization}
-        onToggleShare={handleToggleShare}
         visualizations={savedVisualizations}
       />
 

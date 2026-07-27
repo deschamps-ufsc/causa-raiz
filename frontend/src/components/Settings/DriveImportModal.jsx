@@ -34,6 +34,7 @@ export default function DriveImportModal({ usina, usinaObj, onClose, onSuccess }
   // ── Passo de confirmação de data ──────────────────────────────────
   const [confirmStep, setConfirmStep] = useState(false) // true = mostra o painel de confirmação
   const [detectedFiles, setDetectedFiles] = useState([]) // [{ file_id, filename, detected_date, confirmed_date_display }]
+  const [fileSearch, setFileSearch] = useState('')
 
   // 1. Check link and get root folder metadata
   const handleCheckLink = async () => {
@@ -43,6 +44,7 @@ export default function DriveImportModal({ usina, usinaObj, onClose, onSuccess }
     setBreadcrumbs([])
     setCurrentItems([])
     setSelectedFiles({})
+    setFileSearch('')
     
     try {
       const res = await fetch('http://localhost:8000/api/drive/check-link', {
@@ -104,9 +106,11 @@ export default function DriveImportModal({ usina, usinaObj, onClose, onSuccess }
   
   const toggleAllFiles = () => {
     const filesOnly = currentItems.filter(i => i.mimeType !== 'application/vnd.google-apps.folder')
-    const allSelected = filesOnly.every(f => selectedFiles[f.id])
+    const filteredFiles = filesOnly.filter(f => f.name.toLowerCase().includes(fileSearch.toLowerCase()))
+    
+    const allSelected = filteredFiles.length > 0 && filteredFiles.every(f => selectedFiles[f.id])
     const newSelection = { ...selectedFiles }
-    filesOnly.forEach(f => { newSelection[f.id] = !allSelected })
+    filteredFiles.forEach(f => { newSelection[f.id] = !allSelected })
     setSelectedFiles(newSelection)
   }
 
@@ -250,7 +254,8 @@ export default function DriveImportModal({ usina, usinaObj, onClose, onSuccess }
   }
 
   const folders = currentItems.filter(i => i.mimeType === 'application/vnd.google-apps.folder')
-  const files = currentItems.filter(i => i.mimeType !== 'application/vnd.google-apps.folder')
+  const allFiles = currentItems.filter(i => i.mimeType !== 'application/vnd.google-apps.folder')
+  const files = allFiles.filter(f => f.name.toLowerCase().includes(fileSearch.toLowerCase()))
   const selectedCount = Object.values(selectedFiles).filter(v => v).length
 
   return (
@@ -464,12 +469,27 @@ export default function DriveImportModal({ usina, usinaObj, onClose, onSuccess }
                       </div>
                     ))}
                     
-                    {files.length > 0 && (
-                      <div style={{ padding: '8px 14px', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>ARQUIVOS</span>
-                        <button onClick={toggleAllFiles} style={{ background: 'none', border: 'none', color: 'var(--amber)', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
-                          Selecionar Todos
+                    {allFiles.length > 0 && (
+                      <div style={{ padding: '8px 14px', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>ARQUIVOS</span>
+                          <input 
+                            type="text" 
+                            className="input-field" 
+                            placeholder="Buscar arquivos..." 
+                            value={fileSearch}
+                            onChange={e => setFileSearch(e.target.value)}
+                            style={{ flex: 1, padding: '4px 8px', fontSize: 12, minHeight: 28 }}
+                          />
+                        </div>
+                        <button onClick={toggleAllFiles} style={{ background: 'none', border: 'none', color: 'var(--amber)', cursor: 'pointer', fontSize: 12, fontWeight: 600, flexShrink: 0 }}>
+                          {files.length > 0 && files.every(f => selectedFiles[f.id]) ? 'Desmarcar Todos' : 'Selecionar Todos'}
                         </button>
+                      </div>
+                    )}
+                    {files.length === 0 && allFiles.length > 0 && (
+                      <div style={{ padding: '20px 14px', textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>
+                        Nenhum arquivo encontrado com a busca "{fileSearch}".
                       </div>
                     )}
                     {files.map(file => (

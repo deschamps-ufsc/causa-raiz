@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react'
 
-export function SaveVisualizationModal({ isOpen, onClose, onSave, hasLoadedVis, currentName, existingNames = [] }) {
+export function SaveVisualizationModal({ isOpen, onClose, onSave, hasLoadedVis, currentName, currentShared, existingNames = [] }) {
   const [name, setName] = useState('')
   const [saveAsNew, setSaveAsNew] = useState(false)
+  const [isShared, setIsShared] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
     if (isOpen) {
       setName(currentName || '')
       setSaveAsNew(!hasLoadedVis) // Se não tem carregada, força 'novo'
+      setIsShared(currentShared || false)
       setError('')
     }
-  }, [isOpen, currentName, hasLoadedVis])
+  }, [isOpen, currentName, currentShared, hasLoadedVis])
 
   if (!isOpen) return null
 
@@ -28,7 +30,7 @@ export function SaveVisualizationModal({ isOpen, onClose, onSave, hasLoadedVis, 
       return
     }
 
-    onSave({ name: finalName, saveAsNew })
+    onSave({ name: finalName, saveAsNew, isShared })
     onClose()
   }
 
@@ -99,6 +101,22 @@ export function SaveVisualizationModal({ isOpen, onClose, onSave, hasLoadedVis, 
           {error && <p style={{ color: 'var(--red)', fontSize: 11, marginTop: 6, fontWeight: 500 }}>⚠️ {error}</p>}
         </div>
 
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            Escopo da Visualização
+          </label>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 13, cursor: 'pointer' }}>
+              <input type="radio" checked={!isShared} onChange={() => setIsShared(false)} />
+              Local (Apenas esta Usina)
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 13, cursor: 'pointer' }}>
+              <input type="radio" checked={isShared} onChange={() => setIsShared(true)} />
+              Padrão do Sistema (Todas as Usinas)
+            </label>
+          </div>
+        </div>
+
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 24 }}>
           <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
           <button 
@@ -115,10 +133,66 @@ export function SaveVisualizationModal({ isOpen, onClose, onSave, hasLoadedVis, 
   )
 }
 
-export function LoadVisualizationModal({ isOpen, onClose, onLoad, onDelete, onToggleShare, visualizations }) {
+export function LoadVisualizationModal({ isOpen, onClose, onLoad, onDelete, visualizations }) {
   const [deleteRequest, setDeleteRequest] = useState(null)
 
   if (!isOpen) return null
+
+  const systemVis = visualizations.filter(v => v.shared)
+  const localVis = visualizations.filter(v => !v.shared)
+
+  const renderTable = (list, emptyMessage) => (
+    <div style={{ flex: 1, border: '1px solid var(--border)', borderRadius: 8, overflowY: 'auto' }}>
+      {list.length === 0 ? (
+        <div style={{ padding: 16, textAlign: 'center', color: 'var(--text-muted)' }}>
+          {emptyMessage}
+        </div>
+      ) : (
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, tableLayout: 'fixed' }}>
+          <thead>
+            <tr style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', textAlign: 'left' }}>
+              <th style={{ padding: '8px 12px', width: '52%' }}>Nome</th>
+              <th style={{ padding: '8px 12px', width: '20%' }}>Usuário</th>
+              <th style={{ padding: '8px 12px', width: '12%' }}>Data</th>
+              <th style={{ padding: '8px 12px', width: '16%' }}>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {list.map(v => (
+              <tr key={v.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                <td style={{ padding: '8px 12px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={v.name}>{v.name}</td>
+                <td style={{ padding: '8px 12px', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={v.user}>{v.user}</td>
+                <td style={{ padding: '8px 12px', color: 'var(--text-secondary)' }}>
+                  {new Date(v.created_at).toLocaleDateString()}
+                </td>
+                <td style={{ padding: '8px 12px' }}>
+                  <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                    <button 
+                      className="btn btn-sm btn-primary" 
+                      style={{ padding: '4px 12px' }}
+                      onClick={() => { onLoad(v); onClose() }}
+                    >
+                      Carregar
+                    </button>
+                    <button 
+                      className="btn btn-sm btn-ghost" 
+                      style={{ padding: '4px 6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      onClick={() => setDeleteRequest({ id: v.id, name: v.name })}
+                      title="Excluir"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  )
 
   return (
     <div style={{
@@ -133,70 +207,20 @@ export function LoadVisualizationModal({ isOpen, onClose, onLoad, onDelete, onTo
       }}>
         <h3 style={{ margin: '0 0 16px 0' }}>Carregar Visualização</h3>
         
-        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', border: '1px solid var(--border)', borderRadius: 8 }}>
-          {visualizations.length === 0 ? (
-            <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-muted)' }}>
-              Nenhuma visualização salva para esta usina.
-            </div>
-          ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, tableLayout: 'fixed' }}>
-              <thead>
-                <tr style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', textAlign: 'left' }}>
-                  <th style={{ padding: '8px 12px', width: '38%' }}>Nome</th>
-                  <th style={{ padding: '8px 12px', width: '20%' }}>Usuário</th>
-                  <th style={{ padding: '8px 12px', width: '12%' }}>Data</th>
-                  <th style={{ padding: '8px 12px', width: '14%', textAlign: 'center' }}>Compartilhada</th>
-                  <th style={{ padding: '8px 12px', width: '16%' }}>Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visualizations.map(v => (
-                  <tr key={v.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                    <td style={{ padding: '8px 12px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={v.name}>{v.name}</td>
-                    <td style={{ padding: '8px 12px', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={v.user}>{v.user}</td>
-                    <td style={{ padding: '8px 12px', color: 'var(--text-secondary)' }}>
-                      {new Date(v.created_at).toLocaleDateString()}
-                    </td>
-                    <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                      <select 
-                        value={v.shared ? "sim" : "nao"} 
-                        onChange={(e) => onToggleShare && onToggleShare(v, e.target.value === "sim")}
-                        style={{
-                          padding: '4px 8px', borderRadius: '6px', border: '1px solid var(--border)',
-                          background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: 12,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        <option value="sim">Sim</option>
-                        <option value="nao">Não</option>
-                      </select>
-                    </td>
-                    <td style={{ padding: '8px 12px' }}>
-                      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                        <button 
-                          className="btn btn-sm btn-primary" 
-                          style={{ padding: '4px 12px' }}
-                          onClick={() => { onLoad(v); onClose() }}
-                        >
-                          Carregar
-                        </button>
-                        <button 
-                          className="btn btn-sm btn-ghost" 
-                          style={{ padding: '4px 6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                          onClick={() => setDeleteRequest({ id: v.id, name: v.name })}
-                          title="Excluir"
-                        >
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div>
+            <h4 style={{ margin: '0 0 8px 0', fontSize: 14, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              🌍 Padrões do Sistema
+            </h4>
+            {renderTable(systemVis, "Nenhum padrão de sistema salvo.")}
+          </div>
+          
+          <div>
+            <h4 style={{ margin: '0 0 8px 0', fontSize: 14, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              📍 Visualizações da Usina
+            </h4>
+            {renderTable(localVis, "Nenhuma visualização salva para esta usina.")}
+          </div>
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>

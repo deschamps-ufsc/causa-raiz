@@ -661,6 +661,7 @@ def run_flow_processing(usina: str, dates_str: str = None):
                                 loss_for_string = diff_clamped.where(mask_final, 0).fillna(0)
                                 total_loss_series += loss_for_string
                                 
+                total_loss_series = total_loss_series / 1000000
                 processed_df["Potência CC Strings Perdida Não OK"] = total_loss_series
                 processed_df["Potência CC Strings Perdida Não OK_válida"] = total_loss_series.where(simult_flag == 1, np.nan)
                 
@@ -670,6 +671,28 @@ def run_flow_processing(usina: str, dates_str: str = None):
                 processed_df["Potência CC Strings Perdida Não OK"] = np.nan
                 processed_df["Potência CC Strings Perdida Não OK_válida"] = np.nan
 
+
+            # --- Cria a série Potência CA Vaga e Recuperável ---
+            potencia_ppc = processed_df.get("potencia_ppc")
+            ppc_cols = [c for c in processed_df.columns if c.startswith("referencia_ppc") and not c.endswith("_semTR") and not c.endswith("_válida")]
+            if potencia_ppc is not None and ppc_cols:
+                ref_data = processed_df[ppc_cols[0]]
+                vaga = ref_data - potencia_ppc
+                processed_df["Potência CA Vaga"] = vaga
+                processed_df["Potência CA Vaga_válida"] = vaga.where(simult_flag == 1, np.nan)
+                
+                # Potência CA Recuperável = min(Potência CC Strings Perdida, Potência CA Vaga)
+                if "Potência CC Strings Perdida Não OK" in processed_df.columns:
+                    # Precisamos garantir que valores negativos (caso ref < pot) não causem valores bizarros,
+                    # então se vaga for negativa, o min já retornará o valor negativo. 
+                    # Na dúvida, se a potência vaga for negativa, a potência recuperável deve ser zero.
+                    # A regra fala: limitada pela CA vaga. Então primeiro garantimos que vaga seja >= 0 (opcional).
+                    # Deixaremos puramente o mínimo entre os dois (pandas .clip com upper)
+                    # Usamos numpy minimum para fazer a comparação element-wise entre as duas séries.
+                    perdida = processed_df["Potência CC Strings Perdida Não OK"]
+                    recuperavel = np.minimum(perdida, vaga.clip(lower=0))
+                    processed_df["Potência CA Recuperável"] = recuperavel
+                    processed_df["Potência CA Recuperável_válida"] = recuperavel.where(simult_flag == 1, np.nan)
 
             # --- Cria as séries de 15min para gpoa ---
             if "gpoa" in processed_df.columns:
