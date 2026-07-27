@@ -911,12 +911,8 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                     "node_id": "pvsyst_ajustada"
                 })
             elif group == "epi":
-                column_definitions.append({
-                    "key": "epi",
-                    "label": "EPI",
-                    "type": "special",
-                    "node_id": group
-                })
+                # Bloco morto, epi é tratado como aggregator
+                pass
             else:
                 node_label = "Geff" if node_type == "geff" else "Tcel" if node_type == "tcel" else node.get("data", {}).get("label", group)
                 
@@ -934,6 +930,35 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                         "type": "special",
                         "node_id": group
                     })
+
+        # Adiciona colunas extras logo após o EPI ser processado no loop
+        if group == "epi":
+            column_definitions.extend([
+                {
+                    "key": "Potência CC Strings Perdida Não OK_válida",
+                    "label": "Energia Perdida Desvio Tracker (Válido)",
+                    "type": "special",
+                    "node_id": "perdida_tracker"
+                },
+                {
+                    "key": "Potência CA Recuperável_válida",
+                    "label": "Energia CA Recuperável (Válido)",
+                    "type": "special",
+                    "node_id": "recuperavel"
+                },
+                {
+                    "key": "Energia PMI Corrigida_válida",
+                    "label": "Energia PMI Corrigida (Válido)",
+                    "type": "special",
+                    "node_id": "pmi_corrigida"
+                },
+                {
+                    "key": "epi_corrigido",
+                    "label": "EPI Corrigido",
+                    "type": "special",
+                    "node_id": "epi_corrigido"
+                }
+            ])
 
     # Adicionar grupo de validação (sempre no final)
     validation_cols = [
@@ -1206,7 +1231,7 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                         # Calcular integral (soma) e converter de 1-min para base horária / kW
                         raw_sum = s_data.sum(min_count=1)
                         if raw_sum is not None and not pd.isna(raw_sum):
-                            if col["node_id"] in ["potencia_ppc", "referencia_ppc", "energia_pmi"]:
+                            if col["node_id"] in ["potencia_ppc", "referencia_ppc", "energia_pmi", "perdida_tracker", "recuperavel"]:
                                 val = raw_sum / 0.06
                             elif col["node_id"] in ["pvsyst", "pvsyst_ajustada"]:
                                 val = raw_sum / 60.0
@@ -1236,6 +1261,20 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
             val_geff = row_data["geff_válida"]
             if val_glob != "-" and val_geff != "-" and val_glob != 0:
                 row_data["fator_ajuste"] = val_geff / val_glob
+                
+        # Calcula a Energia PMI Corrigida (Válido)
+        if "Energia PMI_válida" in row_data and "Potência CA Recuperável_válida" in row_data:
+            val_pmi = row_data["Energia PMI_válida"]
+            val_recup = row_data["Potência CA Recuperável_válida"]
+            if val_pmi != "-" and val_recup != "-":
+                row_data["Energia PMI Corrigida_válida"] = val_pmi + val_recup
+                
+        # Calcula o EPI Corrigido (Energia PMI Corrigida / Energia Prevista Ajustada)
+        if "Energia PMI Corrigida_válida" in row_data and "E_Grid_Ajustada_válida" in row_data:
+            val_pmi_corr = row_data["Energia PMI Corrigida_válida"]
+            val_pvsyst = row_data["E_Grid_Ajustada_válida"]
+            if val_pmi_corr != "-" and val_pvsyst != "-" and val_pvsyst != 0:
+                row_data["epi_corrigido"] = val_pmi_corr / val_pvsyst
                 
         rows.append(row_data)
 

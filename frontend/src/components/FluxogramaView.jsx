@@ -20,6 +20,7 @@ import SingleSeriesDropdown, { formatSeriesName } from './SingleSeriesDropdown'
 import { useUsina } from '../hooks/UsinaContext'
 import api, { fetchMappingData, fetchFlowConfig, saveFlowConfig, runFlow, fetchFlowIntegrals } from '../services/api'
 import { useChartSettings } from '../hooks/ChartSettingsContext'
+import { exportTableToPdf, exportTableToPng } from '../utils/exportPdf'
 
 // ── CUSTOM EDGES ─────────────────────────────────────────────────────────
 
@@ -410,6 +411,32 @@ const initialEdges = [
 
 // ── COMPONENT ─────────────────────────────────────────────────────────
 
+const getEpiColor = (val) => {
+  if (val < 0.97) {
+    return { bg: '#fee2e2', text: '#991b1b' }; // Vermelho
+  } else if (val >= 1.0) {
+    return { bg: '#dcfce7', text: '#166534' }; // Verde
+  } else {
+    // Interpolação entre 0.97 (Amarelo) e 1.0 (Verde)
+    const t = (val - 0.97) / 0.03;
+    
+    // Fundo: #fef08a (254, 240, 138) para #dcfce7 (220, 252, 231)
+    const bgR = Math.round(254 + (220 - 254) * t);
+    const bgG = Math.round(240 + (252 - 240) * t);
+    const bgB = Math.round(138 + (231 - 138) * t);
+    
+    // Texto: #854d0e (133, 77, 14) para #166534 (22, 101, 52)
+    const textR = Math.round(133 + (22 - 133) * t);
+    const textG = Math.round(77 + (101 - 77) * t);
+    const textB = Math.round(14 + (52 - 14) * t);
+
+    return { 
+      bg: `rgb(${bgR}, ${bgG}, ${bgB})`, 
+      text: `rgb(${textR}, ${textG}, ${textB})` 
+    };
+  }
+};
+
 export default function FluxogramaView({ elementos = [], selectedDates = [], showTitle = true, mode = 'all' }) {
   const { usinaAtual } = useUsina()
   const { filterSettings } = useChartSettings()
@@ -441,6 +468,8 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
   const [integralsData, setIntegralsData] = useState({ columns: [], rows: [] })
   const [isLoadingIntegrals, setIsLoadingIntegrals] = useState(false)
   const [integralsError, setIntegralsError] = useState(null)
+  const tableRef = useRef(null)
+  const [showPdfMenu, setShowPdfMenu] = useState(false)
   const [showInputs, setShowInputs] = useState(true)
   const [showMeasured, setShowMeasured] = useState(true)
   const [showValid, setShowValid] = useState(true)
@@ -624,6 +653,14 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
         totals['epi'] = totPmi / totPvsyst;
       }
     }
+    
+    if (totals['Energia PMI Corrigida_válida'] && totals['E_Grid_Ajustada_válida']) {
+      const totPmiCorr = totals['Energia PMI Corrigida_válida'];
+      const totPvsyst = totals['E_Grid_Ajustada_válida'];
+      if (typeof totPmiCorr === 'number' && typeof totPvsyst === 'number' && totPvsyst !== 0) {
+        totals['epi_corrigido'] = totPmiCorr / totPvsyst;
+      }
+    }
     if (totals['GlobInc_válida'] && totals['geff_válida']) {
       const totGlob = totals['GlobInc_válida'];
       const totGeff = totals['geff_válida'];
@@ -650,7 +687,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
 
       // 1.5. Filtro de Exibir Dados Medidos, Válidos e Resultados
       if (col.type === 'output' || col.type === 'special') {
-        const isResultColumn = ['fator_ajuste', 'epi', 'globinc', 'energia_prevista', 'energia_prevista_ajustada', 'energia_pmi', 'e_grid'].some(k => col.key.toLowerCase().includes(k)) || col.key.toLowerCase().startsWith('pvsyst');
+        const isResultColumn = ['fator_ajuste', 'epi', 'globinc', 'energia_prevista', 'energia_prevista_ajustada', 'energia_pmi', 'e_grid', 'perdida', 'recuperável', 'pmi corrigida'].some(k => col.key.toLowerCase().includes(k)) || col.key.toLowerCase().startsWith('pvsyst');
         
         if (isResultColumn) {
           if (!showResults) return false;
@@ -912,10 +949,20 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
     ];
     if (label.startsWith('Sujidade (')) {
       const rest = label.slice('Sujidade '.length);
+      const parts = rest.split(' ');
+      let formattedRest = rest;
+      if (parts.length > 1) {
+        formattedRest = (
+            <React.Fragment>
+              {parts[0]}<br/>
+              {parts.slice(1).join(' ')}
+            </React.Fragment>
+        );
+      }
       return (
         <div style={{ lineHeight: '1.2' }}>
           Sujidade<br/>
-          <span style={{ fontSize: '0.9em', fontWeight: 'normal' }}>{rest}</span>
+          <span style={{ fontSize: '0.9em', fontWeight: 'normal' }}>{formattedRest}</span>
         </div>
       );
     }
@@ -930,6 +977,14 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
     }
     
     if (label.toLowerCase() === 'epi') return 'EPI';
+    if (label.toLowerCase() === 'epi corrigido') {
+      return (
+        <div style={{ lineHeight: '1.2' }}>
+          EPI<br/>
+          Corrigido
+        </div>
+      );
+    }
     if (label.toLowerCase() === 'curtailment') return 'Curtailment';
 
     if (label.startsWith('Fator de Ajuste')) {
@@ -938,6 +993,35 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
           Fator<br/>
           de<br/>
           Ajuste
+        </div>
+      );
+    }
+    if (label.startsWith('Energia Perdida Desvio Tracker')) {
+      return (
+        <div style={{ lineHeight: '1.2' }}>
+          Energia Perdida<br/>
+          Desvio Tracker<br/>
+          <span style={{ fontSize: '0.9em', fontWeight: 'normal' }}>(Válido)</span>
+        </div>
+      );
+    }
+    
+    if (label.startsWith('Energia CA Recuperável')) {
+      return (
+        <div style={{ lineHeight: '1.2' }}>
+          Energia CA<br/>
+          Recuperável<br/>
+          <span style={{ fontSize: '0.9em', fontWeight: 'normal' }}>(Válido)</span>
+        </div>
+      );
+    }
+
+    if (label.startsWith('Energia PMI Corrigida')) {
+      return (
+        <div style={{ lineHeight: '1.2' }}>
+          Energia PMI<br/>
+          Corrigida<br/>
+          <span style={{ fontSize: '0.9em', fontWeight: 'normal' }}>(Válido)</span>
         </div>
       );
     }
@@ -2435,6 +2519,49 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
             >
               {isLoadingIntegrals ? '🔄 Carregando...' : '🔁 Atualizar'}
             </button>
+
+            <div style={{ width: '1px', height: '16px', backgroundColor: 'var(--border)', margin: '0 8px' }} />
+            
+            <div style={{ position: 'relative', display: 'flex', gap: '8px' }}>
+              <button
+                  className="btn btn-secondary"
+                  style={{ padding: '4px 12px', fontSize: '13px', flexShrink: 0, fontWeight: 600, background: '#e2e8f0', color: '#1e293b', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '6px' }}
+                  onClick={() => exportTableToPng(tableRef.current, 'Resultados.png')}
+                  title="Exportar tabela atual como Imagem PNG"
+              >
+                🖼️ PNG
+              </button>
+              <button 
+                  className="btn btn-secondary" 
+                  style={{ padding: '4px 12px', fontSize: '13px', flexShrink: 0, fontWeight: 600, background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '6px' }}
+                  onClick={() => setShowPdfMenu(!showPdfMenu)}
+                  title="Exportar tabela atual para PDF"
+              >
+                📄 PDF
+              </button>
+              
+              {showPdfMenu && (
+                <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, padding: 8, zIndex: 50, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', display: 'flex', flexDirection: 'column', gap: 4, minWidth: 160 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', marginBottom: 4, textTransform: 'uppercase' }}>Orientação</div>
+                  <button 
+                    onClick={() => { setShowPdfMenu(false); exportTableToPdf(tableRef.current, 'Resultados.pdf', { usinaName: usinaAtual || 'N/D', forceOrientation: 'p' }) }} 
+                    style={{ padding: '6px 12px', fontSize: 13, cursor: 'pointer', border: '1px solid var(--border)', background: '#f8fafc', borderRadius: 4, textAlign: 'left', color: '#334155', fontWeight: 500 }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
+                    onMouseLeave={e => e.currentTarget.style.background = '#f8fafc'}
+                  >
+                    📄 Retrato (Vertical)
+                  </button>
+                  <button 
+                    onClick={() => { setShowPdfMenu(false); exportTableToPdf(tableRef.current, 'Resultados.pdf', { usinaName: usinaAtual || 'N/D', forceOrientation: 'l' }) }} 
+                    style={{ padding: '6px 12px', fontSize: 13, cursor: 'pointer', border: '1px solid var(--border)', background: '#f8fafc', borderRadius: 4, textAlign: 'left', color: '#334155', fontWeight: 500 }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
+                    onMouseLeave={e => e.currentTarget.style.background = '#f8fafc'}
+                  >
+                    📄 Paisagem (Horizontal)
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -2451,7 +2578,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
             📭 Nenhuma integral calculada. Por favor, certifique-se de processar o fluxograma primeiro para gerar os dados consolidados.
           </div>
         ) : (
-          <div style={{ width: '100%', overflowX: 'auto', borderRadius: '8px', border: '1px solid var(--border)' }}>
+          <div ref={tableRef} style={{ width: '100%', overflowX: 'auto', borderRadius: '8px', border: '1px solid var(--border)' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
               <thead>
                 {/* LINHA 1 (Nível Superior) */}
@@ -2459,7 +2586,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                   <th 
                     rowSpan={2} 
                     style={{ 
-                      padding: '12px 16px', 
+                      padding: '8px 10px', 
                       fontWeight: '700', 
                       fontSize: '13px', 
                       color: 'var(--text-primary)', 
@@ -2487,7 +2614,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                           key={`group-${group.type}-${group.node_id}-${gIdx}`}
                           colSpan={group.columns.length}
                           style={{
-                            padding: '8px 12px',
+                            padding: '6px 8px',
                             fontWeight: '700',
                             fontSize: '12px',
                             color: 'var(--text-primary)',
@@ -2508,7 +2635,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                           key={`group-single-${firstCol.key}`}
                           rowSpan={2}
                           style={{ 
-                            padding: '12px 16px', 
+                            padding: '8px 8px', 
                             fontWeight: '700', 
                             fontSize: '12px', 
                             color: isStyled ? theme.color : 'var(--text-primary)', 
@@ -2541,7 +2668,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                           <th 
                             key={`sub-${col.type}-${col.key}`}
                             style={{ 
-                              padding: '6px 12px', 
+                              padding: '4px 6px', 
                               fontWeight: '700', 
                               fontSize: col.type === 'validation' ? '10px' : '11px', 
                               color: 'var(--text-secondary)', 
@@ -2574,7 +2701,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                     onMouseLeave={e => e.currentTarget.style.background = idx % 2 === 0 ? 'var(--bg-card)' : 'rgba(0,0,0,0.01)'}
                   >
                     <td style={{ 
-                      padding: '10px 16px', 
+                      padding: '6px 10px', 
                       fontWeight: '600', 
                       color: 'var(--text-primary)', 
                       borderBottom: '1px solid var(--border)', 
@@ -2599,7 +2726,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                       if (col.key.toLowerCase().includes('sujidade') && typeof val === 'number') {
                         formattedVal += '%';
                       }
-                      if (col.key === 'epi' && typeof val === 'number') {
+                      if ((col.key === 'epi' || col.key === 'epi_corrigido') && typeof val === 'number') {
                         formattedVal = (val * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
                       }
                       if (col.key === 'fator_ajuste' && typeof val === 'number') {
@@ -2630,17 +2757,10 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                         }
                       }
                       
-                      if (col.key === 'epi' && typeof val === 'number') {
-                        if (val >= 1.0) {
-                          cellBackground = '#dcfce7'; // Verde claro
-                          cellColor = '#166534'; // Texto verde escuro
-                        } else if (val >= 0.97) {
-                          cellBackground = '#fef08a'; // Amarelo claro
-                          cellColor = '#854d0e'; // Texto marrom/amarelo escuro
-                        } else {
-                          cellBackground = '#fee2e2'; // Vermelho claro
-                          cellColor = '#991b1b'; // Texto vermelho escuro
-                        }
+                      if ((col.key === 'epi' || col.key === 'epi_corrigido') && typeof val === 'number') {
+                        const epiColor = getEpiColor(val);
+                        cellBackground = epiColor.bg;
+                        cellColor = epiColor.text;
                       }
                       
                       let displayContent = formattedVal;
@@ -2668,7 +2788,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                         <td 
                           key={col.key} 
                           style={{ 
-                            padding: '10px 16px', 
+                            padding: '6px 8px', 
                             borderBottom: '1px solid var(--border)', 
                             textAlign: 'center',
                             whiteSpace: 'nowrap',
@@ -2686,7 +2806,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                 {totalsRow && (
                   <tr style={{ background: 'var(--bg-secondary)', fontWeight: 'bold', borderTop: '2px double var(--border)' }}>
                     <td style={{ 
-                      padding: '12px 16px', 
+                      padding: '8px 10px', 
                       fontWeight: '700', 
                       color: 'var(--text-primary)', 
                       textAlign: 'left',
@@ -2709,7 +2829,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                       if (col.key.toLowerCase().includes('sujidade') && typeof val === 'number') {
                         formattedVal += '%';
                       }
-                      if (col.key === 'epi' && typeof val === 'number') {
+                      if ((col.key === 'epi' || col.key === 'epi_corrigido') && typeof val === 'number') {
                         formattedVal = (val * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
                       }
                       if (col.key === 'fator_ajuste' && typeof val === 'number') {
@@ -2718,24 +2838,17 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                       let cellBackground = isOutput ? theme.bgTotal : 'transparent';
                       let cellColor = isOutput ? theme.color : 'var(--text-primary)';
                       
-                      if (col.key === 'epi' && typeof val === 'number') {
-                        if (val >= 1.0) {
-                          cellBackground = '#dcfce7'; // Verde claro
-                          cellColor = '#166534'; // Texto verde escuro
-                        } else if (val >= 0.97) {
-                          cellBackground = '#fef08a'; // Amarelo claro
-                          cellColor = '#854d0e'; // Texto marrom/amarelo escuro
-                        } else {
-                          cellBackground = '#fee2e2'; // Vermelho claro
-                          cellColor = '#991b1b'; // Texto vermelho escuro
-                        }
+                      if ((col.key === 'epi' || col.key === 'epi_corrigido') && typeof val === 'number') {
+                        const epiColor = getEpiColor(val);
+                        cellBackground = epiColor.bg;
+                        cellColor = epiColor.text;
                       }
                       
                       return (
                         <td 
                           key={col.key} 
                           style={{ 
-                            padding: '12px 16px', 
+                            padding: '8px 8px', 
                             textAlign: 'center',
                             whiteSpace: 'nowrap',
                             color: cellColor,
