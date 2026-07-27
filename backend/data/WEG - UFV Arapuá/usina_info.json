@@ -3814,5 +3814,7637 @@
     "qtde_modulos": 27,
     "wp": 640.0,
     "kwp": 17.28
+  },
+  "TS2|INV01|1": {
+    "skid": "TS2",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV01|2": {
+    "skid": "TS2",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV01|3": {
+    "skid": "TS2",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV01|4": {
+    "skid": "TS2",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV01|5": {
+    "skid": "TS2",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV01|6": {
+    "skid": "TS2",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV01|7": {
+    "skid": "TS2",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV01|8": {
+    "skid": "TS2",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV01|9": {
+    "skid": "TS2",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV01|10": {
+    "skid": "TS2",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV01|11": {
+    "skid": "TS2",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV01|12": {
+    "skid": "TS2",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV01|13": {
+    "skid": "TS2",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV01|14": {
+    "skid": "TS2",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV01|15": {
+    "skid": "TS2",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV01|16": {
+    "skid": "TS2",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV01|17": {
+    "skid": "TS2",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV01|18": {
+    "skid": "TS2",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV01|19": {
+    "skid": "TS2",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV01|20": {
+    "skid": "TS2",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV02|1": {
+    "skid": "TS2",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV02|2": {
+    "skid": "TS2",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV02|3": {
+    "skid": "TS2",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV02|4": {
+    "skid": "TS2",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV02|5": {
+    "skid": "TS2",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV02|6": {
+    "skid": "TS2",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV02|7": {
+    "skid": "TS2",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV02|8": {
+    "skid": "TS2",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV02|9": {
+    "skid": "TS2",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV02|10": {
+    "skid": "TS2",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV02|11": {
+    "skid": "TS2",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV02|12": {
+    "skid": "TS2",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV02|13": {
+    "skid": "TS2",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV02|14": {
+    "skid": "TS2",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV02|15": {
+    "skid": "TS2",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV02|16": {
+    "skid": "TS2",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV02|17": {
+    "skid": "TS2",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV02|18": {
+    "skid": "TS2",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV02|19": {
+    "skid": "TS2",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV02|20": {
+    "skid": "TS2",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV03|1": {
+    "skid": "TS2",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV03|2": {
+    "skid": "TS2",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV03|3": {
+    "skid": "TS2",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV03|4": {
+    "skid": "TS2",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV03|5": {
+    "skid": "TS2",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV03|6": {
+    "skid": "TS2",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV03|7": {
+    "skid": "TS2",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV03|8": {
+    "skid": "TS2",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV03|9": {
+    "skid": "TS2",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV03|10": {
+    "skid": "TS2",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV03|11": {
+    "skid": "TS2",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV03|12": {
+    "skid": "TS2",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV03|13": {
+    "skid": "TS2",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV03|14": {
+    "skid": "TS2",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV03|15": {
+    "skid": "TS2",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV03|16": {
+    "skid": "TS2",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV03|17": {
+    "skid": "TS2",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV03|18": {
+    "skid": "TS2",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV03|19": {
+    "skid": "TS2",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV03|20": {
+    "skid": "TS2",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV04|1": {
+    "skid": "TS2",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV04|2": {
+    "skid": "TS2",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV04|3": {
+    "skid": "TS2",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV04|4": {
+    "skid": "TS2",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV04|5": {
+    "skid": "TS2",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV04|6": {
+    "skid": "TS2",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV04|7": {
+    "skid": "TS2",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV04|8": {
+    "skid": "TS2",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV04|9": {
+    "skid": "TS2",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV04|10": {
+    "skid": "TS2",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV04|11": {
+    "skid": "TS2",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV04|12": {
+    "skid": "TS2",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV04|13": {
+    "skid": "TS2",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV04|14": {
+    "skid": "TS2",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV04|15": {
+    "skid": "TS2",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV04|16": {
+    "skid": "TS2",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV04|17": {
+    "skid": "TS2",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV04|18": {
+    "skid": "TS2",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV05|1": {
+    "skid": "TS2",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV05|2": {
+    "skid": "TS2",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV05|3": {
+    "skid": "TS2",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV05|4": {
+    "skid": "TS2",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV05|5": {
+    "skid": "TS2",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV05|6": {
+    "skid": "TS2",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV05|7": {
+    "skid": "TS2",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV05|8": {
+    "skid": "TS2",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV05|9": {
+    "skid": "TS2",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV05|10": {
+    "skid": "TS2",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV05|11": {
+    "skid": "TS2",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV05|12": {
+    "skid": "TS2",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV05|13": {
+    "skid": "TS2",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV05|14": {
+    "skid": "TS2",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV05|15": {
+    "skid": "TS2",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV05|16": {
+    "skid": "TS2",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV05|17": {
+    "skid": "TS2",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV05|18": {
+    "skid": "TS2",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV06|1": {
+    "skid": "TS2",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV06|2": {
+    "skid": "TS2",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV06|3": {
+    "skid": "TS2",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV06|4": {
+    "skid": "TS2",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV06|5": {
+    "skid": "TS2",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV06|6": {
+    "skid": "TS2",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV06|7": {
+    "skid": "TS2",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV06|8": {
+    "skid": "TS2",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV06|9": {
+    "skid": "TS2",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV06|10": {
+    "skid": "TS2",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV06|11": {
+    "skid": "TS2",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV06|12": {
+    "skid": "TS2",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV06|13": {
+    "skid": "TS2",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV06|14": {
+    "skid": "TS2",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV06|15": {
+    "skid": "TS2",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV06|16": {
+    "skid": "TS2",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV06|17": {
+    "skid": "TS2",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV06|18": {
+    "skid": "TS2",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV06|19": {
+    "skid": "TS2",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV06|20": {
+    "skid": "TS2",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV07|1": {
+    "skid": "TS2",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV07|2": {
+    "skid": "TS2",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV07|3": {
+    "skid": "TS2",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV07|4": {
+    "skid": "TS2",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV07|5": {
+    "skid": "TS2",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV07|6": {
+    "skid": "TS2",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV07|7": {
+    "skid": "TS2",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV07|8": {
+    "skid": "TS2",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV07|9": {
+    "skid": "TS2",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV07|10": {
+    "skid": "TS2",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV07|11": {
+    "skid": "TS2",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV07|12": {
+    "skid": "TS2",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV07|13": {
+    "skid": "TS2",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV07|14": {
+    "skid": "TS2",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV07|15": {
+    "skid": "TS2",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV07|16": {
+    "skid": "TS2",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV07|17": {
+    "skid": "TS2",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV07|18": {
+    "skid": "TS2",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV07|19": {
+    "skid": "TS2",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV07|20": {
+    "skid": "TS2",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV08|1": {
+    "skid": "TS2",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV08|2": {
+    "skid": "TS2",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV08|3": {
+    "skid": "TS2",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV08|4": {
+    "skid": "TS2",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV08|5": {
+    "skid": "TS2",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV08|6": {
+    "skid": "TS2",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV08|7": {
+    "skid": "TS2",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV08|8": {
+    "skid": "TS2",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV08|9": {
+    "skid": "TS2",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV08|10": {
+    "skid": "TS2",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV08|11": {
+    "skid": "TS2",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV08|12": {
+    "skid": "TS2",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV08|13": {
+    "skid": "TS2",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV08|14": {
+    "skid": "TS2",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV08|15": {
+    "skid": "TS2",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV08|16": {
+    "skid": "TS2",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV08|17": {
+    "skid": "TS2",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV08|18": {
+    "skid": "TS2",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV08|19": {
+    "skid": "TS2",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV08|20": {
+    "skid": "TS2",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV09|1": {
+    "skid": "TS2",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV09|2": {
+    "skid": "TS2",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV09|3": {
+    "skid": "TS2",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV09|4": {
+    "skid": "TS2",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV09|5": {
+    "skid": "TS2",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV09|6": {
+    "skid": "TS2",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV09|7": {
+    "skid": "TS2",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV09|8": {
+    "skid": "TS2",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV09|9": {
+    "skid": "TS2",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV09|10": {
+    "skid": "TS2",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV09|11": {
+    "skid": "TS2",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV09|12": {
+    "skid": "TS2",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV09|13": {
+    "skid": "TS2",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV09|14": {
+    "skid": "TS2",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV09|15": {
+    "skid": "TS2",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV09|16": {
+    "skid": "TS2",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV09|17": {
+    "skid": "TS2",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV09|18": {
+    "skid": "TS2",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV09|19": {
+    "skid": "TS2",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV09|20": {
+    "skid": "TS2",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV10|1": {
+    "skid": "TS2",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV10|2": {
+    "skid": "TS2",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV10|3": {
+    "skid": "TS2",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV10|4": {
+    "skid": "TS2",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV10|5": {
+    "skid": "TS2",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV10|6": {
+    "skid": "TS2",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV10|7": {
+    "skid": "TS2",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV10|8": {
+    "skid": "TS2",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV10|9": {
+    "skid": "TS2",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV10|10": {
+    "skid": "TS2",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV10|11": {
+    "skid": "TS2",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV10|12": {
+    "skid": "TS2",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV10|13": {
+    "skid": "TS2",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV10|14": {
+    "skid": "TS2",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV10|15": {
+    "skid": "TS2",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV10|16": {
+    "skid": "TS2",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV10|17": {
+    "skid": "TS2",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV10|18": {
+    "skid": "TS2",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV10|19": {
+    "skid": "TS2",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV10|20": {
+    "skid": "TS2",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV11|1": {
+    "skid": "TS2",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV11|2": {
+    "skid": "TS2",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV11|3": {
+    "skid": "TS2",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV11|4": {
+    "skid": "TS2",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV11|5": {
+    "skid": "TS2",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV11|6": {
+    "skid": "TS2",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV11|7": {
+    "skid": "TS2",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV11|8": {
+    "skid": "TS2",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV11|9": {
+    "skid": "TS2",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV11|10": {
+    "skid": "TS2",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV11|11": {
+    "skid": "TS2",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV11|12": {
+    "skid": "TS2",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV11|13": {
+    "skid": "TS2",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV11|14": {
+    "skid": "TS2",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV11|15": {
+    "skid": "TS2",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV11|16": {
+    "skid": "TS2",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV11|17": {
+    "skid": "TS2",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV11|18": {
+    "skid": "TS2",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV11|19": {
+    "skid": "TS2",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV11|20": {
+    "skid": "TS2",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV12|1": {
+    "skid": "TS2",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV12|2": {
+    "skid": "TS2",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV12|3": {
+    "skid": "TS2",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV12|4": {
+    "skid": "TS2",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV12|5": {
+    "skid": "TS2",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV12|6": {
+    "skid": "TS2",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV12|7": {
+    "skid": "TS2",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV12|8": {
+    "skid": "TS2",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV12|9": {
+    "skid": "TS2",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV12|10": {
+    "skid": "TS2",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV12|11": {
+    "skid": "TS2",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV12|12": {
+    "skid": "TS2",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV12|13": {
+    "skid": "TS2",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV12|14": {
+    "skid": "TS2",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV12|15": {
+    "skid": "TS2",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV12|16": {
+    "skid": "TS2",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV12|17": {
+    "skid": "TS2",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV12|18": {
+    "skid": "TS2",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV12|19": {
+    "skid": "TS2",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV12|20": {
+    "skid": "TS2",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV13|1": {
+    "skid": "TS2",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV13|2": {
+    "skid": "TS2",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV13|3": {
+    "skid": "TS2",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV13|4": {
+    "skid": "TS2",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV13|5": {
+    "skid": "TS2",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV13|6": {
+    "skid": "TS2",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV13|7": {
+    "skid": "TS2",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV13|8": {
+    "skid": "TS2",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV13|9": {
+    "skid": "TS2",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV13|10": {
+    "skid": "TS2",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV13|11": {
+    "skid": "TS2",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV13|12": {
+    "skid": "TS2",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV13|13": {
+    "skid": "TS2",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV13|14": {
+    "skid": "TS2",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV13|15": {
+    "skid": "TS2",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV13|16": {
+    "skid": "TS2",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV13|17": {
+    "skid": "TS2",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV13|18": {
+    "skid": "TS2",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV13|19": {
+    "skid": "TS2",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV13|20": {
+    "skid": "TS2",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV14|1": {
+    "skid": "TS2",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV14|2": {
+    "skid": "TS2",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV14|3": {
+    "skid": "TS2",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV14|4": {
+    "skid": "TS2",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV14|5": {
+    "skid": "TS2",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV14|6": {
+    "skid": "TS2",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV14|7": {
+    "skid": "TS2",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV14|8": {
+    "skid": "TS2",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV14|9": {
+    "skid": "TS2",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV14|10": {
+    "skid": "TS2",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV14|11": {
+    "skid": "TS2",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV14|12": {
+    "skid": "TS2",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV14|13": {
+    "skid": "TS2",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV14|14": {
+    "skid": "TS2",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV14|15": {
+    "skid": "TS2",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV14|16": {
+    "skid": "TS2",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV14|17": {
+    "skid": "TS2",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV14|18": {
+    "skid": "TS2",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV14|19": {
+    "skid": "TS2",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV14|20": {
+    "skid": "TS2",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV15|1": {
+    "skid": "TS2",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV15|2": {
+    "skid": "TS2",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV15|3": {
+    "skid": "TS2",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV15|4": {
+    "skid": "TS2",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV15|5": {
+    "skid": "TS2",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV15|6": {
+    "skid": "TS2",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV15|7": {
+    "skid": "TS2",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV15|8": {
+    "skid": "TS2",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV15|9": {
+    "skid": "TS2",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV15|10": {
+    "skid": "TS2",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV15|11": {
+    "skid": "TS2",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV15|12": {
+    "skid": "TS2",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV15|13": {
+    "skid": "TS2",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV15|14": {
+    "skid": "TS2",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV15|15": {
+    "skid": "TS2",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV15|16": {
+    "skid": "TS2",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV15|17": {
+    "skid": "TS2",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV15|18": {
+    "skid": "TS2",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV15|19": {
+    "skid": "TS2",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV15|20": {
+    "skid": "TS2",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV16|1": {
+    "skid": "TS2",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV16|2": {
+    "skid": "TS2",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV16|3": {
+    "skid": "TS2",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV16|4": {
+    "skid": "TS2",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV16|5": {
+    "skid": "TS2",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV16|6": {
+    "skid": "TS2",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV16|7": {
+    "skid": "TS2",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV16|8": {
+    "skid": "TS2",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV16|9": {
+    "skid": "TS2",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV16|10": {
+    "skid": "TS2",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV16|11": {
+    "skid": "TS2",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV16|12": {
+    "skid": "TS2",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV16|13": {
+    "skid": "TS2",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV16|14": {
+    "skid": "TS2",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV16|15": {
+    "skid": "TS2",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV16|16": {
+    "skid": "TS2",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV16|17": {
+    "skid": "TS2",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV16|18": {
+    "skid": "TS2",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV16|19": {
+    "skid": "TS2",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV16|20": {
+    "skid": "TS2",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV17|1": {
+    "skid": "TS2",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV17|2": {
+    "skid": "TS2",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV17|3": {
+    "skid": "TS2",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV17|4": {
+    "skid": "TS2",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV17|5": {
+    "skid": "TS2",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV17|6": {
+    "skid": "TS2",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV17|7": {
+    "skid": "TS2",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV17|8": {
+    "skid": "TS2",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV17|9": {
+    "skid": "TS2",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV17|10": {
+    "skid": "TS2",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV17|11": {
+    "skid": "TS2",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV17|12": {
+    "skid": "TS2",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV17|13": {
+    "skid": "TS2",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV17|14": {
+    "skid": "TS2",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV17|15": {
+    "skid": "TS2",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV17|16": {
+    "skid": "TS2",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV17|17": {
+    "skid": "TS2",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV17|18": {
+    "skid": "TS2",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV18|1": {
+    "skid": "TS2",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV18|2": {
+    "skid": "TS2",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV18|3": {
+    "skid": "TS2",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV18|4": {
+    "skid": "TS2",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV18|5": {
+    "skid": "TS2",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV18|6": {
+    "skid": "TS2",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV18|7": {
+    "skid": "TS2",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV18|8": {
+    "skid": "TS2",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV18|9": {
+    "skid": "TS2",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV18|10": {
+    "skid": "TS2",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV18|11": {
+    "skid": "TS2",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV18|12": {
+    "skid": "TS2",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV18|13": {
+    "skid": "TS2",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV18|14": {
+    "skid": "TS2",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV18|15": {
+    "skid": "TS2",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV18|16": {
+    "skid": "TS2",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV18|17": {
+    "skid": "TS2",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV18|18": {
+    "skid": "TS2",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS2|INV19|1": {
+    "skid": "TS2",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV19|2": {
+    "skid": "TS2",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV19|3": {
+    "skid": "TS2",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV19|4": {
+    "skid": "TS2",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV19|5": {
+    "skid": "TS2",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV19|6": {
+    "skid": "TS2",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV19|7": {
+    "skid": "TS2",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV19|8": {
+    "skid": "TS2",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV19|9": {
+    "skid": "TS2",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV19|10": {
+    "skid": "TS2",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV19|11": {
+    "skid": "TS2",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV19|12": {
+    "skid": "TS2",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV19|13": {
+    "skid": "TS2",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV19|14": {
+    "skid": "TS2",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV19|15": {
+    "skid": "TS2",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV19|16": {
+    "skid": "TS2",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV19|17": {
+    "skid": "TS2",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV19|18": {
+    "skid": "TS2",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV20|1": {
+    "skid": "TS2",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV20|2": {
+    "skid": "TS2",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV20|3": {
+    "skid": "TS2",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV20|4": {
+    "skid": "TS2",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV20|5": {
+    "skid": "TS2",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV20|6": {
+    "skid": "TS2",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV20|7": {
+    "skid": "TS2",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV20|8": {
+    "skid": "TS2",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV20|9": {
+    "skid": "TS2",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV20|10": {
+    "skid": "TS2",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV20|11": {
+    "skid": "TS2",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV20|12": {
+    "skid": "TS2",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV20|13": {
+    "skid": "TS2",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV20|14": {
+    "skid": "TS2",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV20|15": {
+    "skid": "TS2",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV20|16": {
+    "skid": "TS2",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV20|17": {
+    "skid": "TS2",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV20|18": {
+    "skid": "TS2",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV21|1": {
+    "skid": "TS2",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV21|2": {
+    "skid": "TS2",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV21|3": {
+    "skid": "TS2",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV21|4": {
+    "skid": "TS2",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV21|5": {
+    "skid": "TS2",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV21|6": {
+    "skid": "TS2",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV21|7": {
+    "skid": "TS2",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV21|8": {
+    "skid": "TS2",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV21|9": {
+    "skid": "TS2",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV21|10": {
+    "skid": "TS2",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV21|11": {
+    "skid": "TS2",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV21|12": {
+    "skid": "TS2",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV21|13": {
+    "skid": "TS2",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV21|14": {
+    "skid": "TS2",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV21|15": {
+    "skid": "TS2",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV21|16": {
+    "skid": "TS2",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV21|17": {
+    "skid": "TS2",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV21|18": {
+    "skid": "TS2",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV22|1": {
+    "skid": "TS2",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV22|2": {
+    "skid": "TS2",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV22|3": {
+    "skid": "TS2",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV22|4": {
+    "skid": "TS2",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV22|5": {
+    "skid": "TS2",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV22|6": {
+    "skid": "TS2",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV22|7": {
+    "skid": "TS2",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV22|8": {
+    "skid": "TS2",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV22|9": {
+    "skid": "TS2",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV22|10": {
+    "skid": "TS2",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV22|11": {
+    "skid": "TS2",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV22|12": {
+    "skid": "TS2",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV22|13": {
+    "skid": "TS2",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV22|14": {
+    "skid": "TS2",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV22|15": {
+    "skid": "TS2",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV22|16": {
+    "skid": "TS2",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV22|17": {
+    "skid": "TS2",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS2|INV22|18": {
+    "skid": "TS2",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV01|1": {
+    "skid": "TS3",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV01|2": {
+    "skid": "TS3",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV01|3": {
+    "skid": "TS3",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV01|4": {
+    "skid": "TS3",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV01|5": {
+    "skid": "TS3",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV01|6": {
+    "skid": "TS3",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV01|7": {
+    "skid": "TS3",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV01|8": {
+    "skid": "TS3",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV01|9": {
+    "skid": "TS3",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV01|10": {
+    "skid": "TS3",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV01|11": {
+    "skid": "TS3",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV01|12": {
+    "skid": "TS3",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV01|13": {
+    "skid": "TS3",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV01|14": {
+    "skid": "TS3",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV01|15": {
+    "skid": "TS3",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV01|16": {
+    "skid": "TS3",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV01|17": {
+    "skid": "TS3",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV01|18": {
+    "skid": "TS3",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV01|19": {
+    "skid": "TS3",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV01|20": {
+    "skid": "TS3",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV02|1": {
+    "skid": "TS3",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV02|2": {
+    "skid": "TS3",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV02|3": {
+    "skid": "TS3",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV02|4": {
+    "skid": "TS3",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV02|5": {
+    "skid": "TS3",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV02|6": {
+    "skid": "TS3",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV02|7": {
+    "skid": "TS3",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV02|8": {
+    "skid": "TS3",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV02|9": {
+    "skid": "TS3",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV02|10": {
+    "skid": "TS3",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV02|11": {
+    "skid": "TS3",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV02|12": {
+    "skid": "TS3",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV02|13": {
+    "skid": "TS3",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV02|14": {
+    "skid": "TS3",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV02|15": {
+    "skid": "TS3",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV02|16": {
+    "skid": "TS3",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV02|17": {
+    "skid": "TS3",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV02|18": {
+    "skid": "TS3",
+    "inversor": "INV02",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV03|1": {
+    "skid": "TS3",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV03|2": {
+    "skid": "TS3",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV03|3": {
+    "skid": "TS3",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV03|4": {
+    "skid": "TS3",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV03|5": {
+    "skid": "TS3",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV03|6": {
+    "skid": "TS3",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV03|7": {
+    "skid": "TS3",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV03|8": {
+    "skid": "TS3",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV03|9": {
+    "skid": "TS3",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV03|10": {
+    "skid": "TS3",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV03|11": {
+    "skid": "TS3",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV03|12": {
+    "skid": "TS3",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV03|13": {
+    "skid": "TS3",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV03|14": {
+    "skid": "TS3",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV03|15": {
+    "skid": "TS3",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV03|16": {
+    "skid": "TS3",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV03|17": {
+    "skid": "TS3",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV03|18": {
+    "skid": "TS3",
+    "inversor": "INV03",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV04|1": {
+    "skid": "TS3",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV04|2": {
+    "skid": "TS3",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV04|3": {
+    "skid": "TS3",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV04|4": {
+    "skid": "TS3",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV04|5": {
+    "skid": "TS3",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV04|6": {
+    "skid": "TS3",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV04|7": {
+    "skid": "TS3",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV04|8": {
+    "skid": "TS3",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV04|9": {
+    "skid": "TS3",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV04|10": {
+    "skid": "TS3",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV04|11": {
+    "skid": "TS3",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV04|12": {
+    "skid": "TS3",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV04|13": {
+    "skid": "TS3",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV04|14": {
+    "skid": "TS3",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV04|15": {
+    "skid": "TS3",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV04|16": {
+    "skid": "TS3",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV04|17": {
+    "skid": "TS3",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV04|18": {
+    "skid": "TS3",
+    "inversor": "INV04",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV05|1": {
+    "skid": "TS3",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV05|2": {
+    "skid": "TS3",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV05|3": {
+    "skid": "TS3",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV05|4": {
+    "skid": "TS3",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV05|5": {
+    "skid": "TS3",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV05|6": {
+    "skid": "TS3",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV05|7": {
+    "skid": "TS3",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV05|8": {
+    "skid": "TS3",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV05|9": {
+    "skid": "TS3",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV05|10": {
+    "skid": "TS3",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV05|11": {
+    "skid": "TS3",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV05|12": {
+    "skid": "TS3",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV05|13": {
+    "skid": "TS3",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV05|14": {
+    "skid": "TS3",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV05|15": {
+    "skid": "TS3",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV05|16": {
+    "skid": "TS3",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV05|17": {
+    "skid": "TS3",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV05|18": {
+    "skid": "TS3",
+    "inversor": "INV05",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV06|1": {
+    "skid": "TS3",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV06|2": {
+    "skid": "TS3",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV06|3": {
+    "skid": "TS3",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV06|4": {
+    "skid": "TS3",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV06|5": {
+    "skid": "TS3",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV06|6": {
+    "skid": "TS3",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV06|7": {
+    "skid": "TS3",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV06|8": {
+    "skid": "TS3",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV06|9": {
+    "skid": "TS3",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV06|10": {
+    "skid": "TS3",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV06|11": {
+    "skid": "TS3",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV06|12": {
+    "skid": "TS3",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV06|13": {
+    "skid": "TS3",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV06|14": {
+    "skid": "TS3",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV06|15": {
+    "skid": "TS3",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV06|16": {
+    "skid": "TS3",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV06|17": {
+    "skid": "TS3",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV06|18": {
+    "skid": "TS3",
+    "inversor": "INV06",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV07|1": {
+    "skid": "TS3",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV07|2": {
+    "skid": "TS3",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV07|3": {
+    "skid": "TS3",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV07|4": {
+    "skid": "TS3",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV07|5": {
+    "skid": "TS3",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV07|6": {
+    "skid": "TS3",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV07|7": {
+    "skid": "TS3",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV07|8": {
+    "skid": "TS3",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV07|9": {
+    "skid": "TS3",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV07|10": {
+    "skid": "TS3",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV07|11": {
+    "skid": "TS3",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV07|12": {
+    "skid": "TS3",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV07|13": {
+    "skid": "TS3",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV07|14": {
+    "skid": "TS3",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV07|15": {
+    "skid": "TS3",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV07|16": {
+    "skid": "TS3",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV07|17": {
+    "skid": "TS3",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV07|18": {
+    "skid": "TS3",
+    "inversor": "INV07",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV08|1": {
+    "skid": "TS3",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV08|2": {
+    "skid": "TS3",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV08|3": {
+    "skid": "TS3",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV08|4": {
+    "skid": "TS3",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV08|5": {
+    "skid": "TS3",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV08|6": {
+    "skid": "TS3",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV08|7": {
+    "skid": "TS3",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV08|8": {
+    "skid": "TS3",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV08|9": {
+    "skid": "TS3",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV08|10": {
+    "skid": "TS3",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV08|11": {
+    "skid": "TS3",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV08|12": {
+    "skid": "TS3",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV08|13": {
+    "skid": "TS3",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV08|14": {
+    "skid": "TS3",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV08|15": {
+    "skid": "TS3",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV08|16": {
+    "skid": "TS3",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV08|17": {
+    "skid": "TS3",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV08|18": {
+    "skid": "TS3",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV08|19": {
+    "skid": "TS3",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV08|20": {
+    "skid": "TS3",
+    "inversor": "INV08",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV09|1": {
+    "skid": "TS3",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV09|2": {
+    "skid": "TS3",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV09|3": {
+    "skid": "TS3",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV09|4": {
+    "skid": "TS3",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV09|5": {
+    "skid": "TS3",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV09|6": {
+    "skid": "TS3",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV09|7": {
+    "skid": "TS3",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV09|8": {
+    "skid": "TS3",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV09|9": {
+    "skid": "TS3",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV09|10": {
+    "skid": "TS3",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV09|11": {
+    "skid": "TS3",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV09|12": {
+    "skid": "TS3",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV09|13": {
+    "skid": "TS3",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV09|14": {
+    "skid": "TS3",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV09|15": {
+    "skid": "TS3",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV09|16": {
+    "skid": "TS3",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV09|17": {
+    "skid": "TS3",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV09|18": {
+    "skid": "TS3",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV09|19": {
+    "skid": "TS3",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV09|20": {
+    "skid": "TS3",
+    "inversor": "INV09",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV10|1": {
+    "skid": "TS3",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV10|2": {
+    "skid": "TS3",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV10|3": {
+    "skid": "TS3",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV10|4": {
+    "skid": "TS3",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV10|5": {
+    "skid": "TS3",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV10|6": {
+    "skid": "TS3",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV10|7": {
+    "skid": "TS3",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV10|8": {
+    "skid": "TS3",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV10|9": {
+    "skid": "TS3",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV10|10": {
+    "skid": "TS3",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV10|11": {
+    "skid": "TS3",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV10|12": {
+    "skid": "TS3",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV10|13": {
+    "skid": "TS3",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV10|14": {
+    "skid": "TS3",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV10|15": {
+    "skid": "TS3",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV10|16": {
+    "skid": "TS3",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV10|17": {
+    "skid": "TS3",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV10|18": {
+    "skid": "TS3",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV10|19": {
+    "skid": "TS3",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV10|20": {
+    "skid": "TS3",
+    "inversor": "INV10",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV11|1": {
+    "skid": "TS3",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV11|2": {
+    "skid": "TS3",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV11|3": {
+    "skid": "TS3",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV11|4": {
+    "skid": "TS3",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV11|5": {
+    "skid": "TS3",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV11|6": {
+    "skid": "TS3",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV11|7": {
+    "skid": "TS3",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV11|8": {
+    "skid": "TS3",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV11|9": {
+    "skid": "TS3",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV11|10": {
+    "skid": "TS3",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV11|11": {
+    "skid": "TS3",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV11|12": {
+    "skid": "TS3",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV11|13": {
+    "skid": "TS3",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV11|14": {
+    "skid": "TS3",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV11|15": {
+    "skid": "TS3",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV11|16": {
+    "skid": "TS3",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV11|17": {
+    "skid": "TS3",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV11|18": {
+    "skid": "TS3",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV11|19": {
+    "skid": "TS3",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV11|20": {
+    "skid": "TS3",
+    "inversor": "INV11",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV12|1": {
+    "skid": "TS3",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV12|2": {
+    "skid": "TS3",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV12|3": {
+    "skid": "TS3",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV12|4": {
+    "skid": "TS3",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV12|5": {
+    "skid": "TS3",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV12|6": {
+    "skid": "TS3",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV12|7": {
+    "skid": "TS3",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV12|8": {
+    "skid": "TS3",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV12|9": {
+    "skid": "TS3",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV12|10": {
+    "skid": "TS3",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV12|11": {
+    "skid": "TS3",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV12|12": {
+    "skid": "TS3",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV12|13": {
+    "skid": "TS3",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV12|14": {
+    "skid": "TS3",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV12|15": {
+    "skid": "TS3",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV12|16": {
+    "skid": "TS3",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV12|17": {
+    "skid": "TS3",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV12|18": {
+    "skid": "TS3",
+    "inversor": "INV12",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV13|1": {
+    "skid": "TS3",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV13|2": {
+    "skid": "TS3",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV13|3": {
+    "skid": "TS3",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV13|4": {
+    "skid": "TS3",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV13|5": {
+    "skid": "TS3",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV13|6": {
+    "skid": "TS3",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV13|7": {
+    "skid": "TS3",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV13|8": {
+    "skid": "TS3",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV13|9": {
+    "skid": "TS3",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV13|10": {
+    "skid": "TS3",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV13|11": {
+    "skid": "TS3",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV13|12": {
+    "skid": "TS3",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV13|13": {
+    "skid": "TS3",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV13|14": {
+    "skid": "TS3",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV13|15": {
+    "skid": "TS3",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV13|16": {
+    "skid": "TS3",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV13|17": {
+    "skid": "TS3",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV13|18": {
+    "skid": "TS3",
+    "inversor": "INV13",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV14|1": {
+    "skid": "TS3",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV14|2": {
+    "skid": "TS3",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV14|3": {
+    "skid": "TS3",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV14|4": {
+    "skid": "TS3",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV14|5": {
+    "skid": "TS3",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV14|6": {
+    "skid": "TS3",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV14|7": {
+    "skid": "TS3",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV14|8": {
+    "skid": "TS3",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV14|9": {
+    "skid": "TS3",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV14|10": {
+    "skid": "TS3",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV14|11": {
+    "skid": "TS3",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV14|12": {
+    "skid": "TS3",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV14|13": {
+    "skid": "TS3",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV14|14": {
+    "skid": "TS3",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV14|15": {
+    "skid": "TS3",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV14|16": {
+    "skid": "TS3",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV14|17": {
+    "skid": "TS3",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV14|18": {
+    "skid": "TS3",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV14|19": {
+    "skid": "TS3",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV14|20": {
+    "skid": "TS3",
+    "inversor": "INV14",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV15|1": {
+    "skid": "TS3",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV15|2": {
+    "skid": "TS3",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV15|3": {
+    "skid": "TS3",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV15|4": {
+    "skid": "TS3",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV15|5": {
+    "skid": "TS3",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV15|6": {
+    "skid": "TS3",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV15|7": {
+    "skid": "TS3",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV15|8": {
+    "skid": "TS3",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV15|9": {
+    "skid": "TS3",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV15|10": {
+    "skid": "TS3",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV15|11": {
+    "skid": "TS3",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV15|12": {
+    "skid": "TS3",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV15|13": {
+    "skid": "TS3",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV15|14": {
+    "skid": "TS3",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV15|15": {
+    "skid": "TS3",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV15|16": {
+    "skid": "TS3",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV15|17": {
+    "skid": "TS3",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV15|18": {
+    "skid": "TS3",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV15|19": {
+    "skid": "TS3",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV15|20": {
+    "skid": "TS3",
+    "inversor": "INV15",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV16|1": {
+    "skid": "TS3",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV16|2": {
+    "skid": "TS3",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV16|3": {
+    "skid": "TS3",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV16|4": {
+    "skid": "TS3",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV16|5": {
+    "skid": "TS3",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV16|6": {
+    "skid": "TS3",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV16|7": {
+    "skid": "TS3",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV16|8": {
+    "skid": "TS3",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV16|9": {
+    "skid": "TS3",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV16|10": {
+    "skid": "TS3",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV16|11": {
+    "skid": "TS3",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV16|12": {
+    "skid": "TS3",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV16|13": {
+    "skid": "TS3",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV16|14": {
+    "skid": "TS3",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV16|15": {
+    "skid": "TS3",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV16|16": {
+    "skid": "TS3",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV16|17": {
+    "skid": "TS3",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV16|18": {
+    "skid": "TS3",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV16|19": {
+    "skid": "TS3",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV16|20": {
+    "skid": "TS3",
+    "inversor": "INV16",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 635.0,
+    "kwp": 17.145
+  },
+  "TS3|INV17|1": {
+    "skid": "TS3",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV17|2": {
+    "skid": "TS3",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV17|3": {
+    "skid": "TS3",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV17|4": {
+    "skid": "TS3",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV17|5": {
+    "skid": "TS3",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV17|6": {
+    "skid": "TS3",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV17|7": {
+    "skid": "TS3",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV17|8": {
+    "skid": "TS3",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV17|9": {
+    "skid": "TS3",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV17|10": {
+    "skid": "TS3",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV17|11": {
+    "skid": "TS3",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV17|12": {
+    "skid": "TS3",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV17|13": {
+    "skid": "TS3",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV17|14": {
+    "skid": "TS3",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV17|15": {
+    "skid": "TS3",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV17|16": {
+    "skid": "TS3",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV17|17": {
+    "skid": "TS3",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV17|18": {
+    "skid": "TS3",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV17|19": {
+    "skid": "TS3",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV17|20": {
+    "skid": "TS3",
+    "inversor": "INV17",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV18|1": {
+    "skid": "TS3",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV18|2": {
+    "skid": "TS3",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV18|3": {
+    "skid": "TS3",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV18|4": {
+    "skid": "TS3",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV18|5": {
+    "skid": "TS3",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV18|6": {
+    "skid": "TS3",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV18|7": {
+    "skid": "TS3",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV18|8": {
+    "skid": "TS3",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV18|9": {
+    "skid": "TS3",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV18|10": {
+    "skid": "TS3",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV18|11": {
+    "skid": "TS3",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV18|12": {
+    "skid": "TS3",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV18|13": {
+    "skid": "TS3",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV18|14": {
+    "skid": "TS3",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV18|15": {
+    "skid": "TS3",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV18|16": {
+    "skid": "TS3",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV18|17": {
+    "skid": "TS3",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV18|18": {
+    "skid": "TS3",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV18|19": {
+    "skid": "TS3",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV18|20": {
+    "skid": "TS3",
+    "inversor": "INV18",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV19|1": {
+    "skid": "TS3",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV19|2": {
+    "skid": "TS3",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV19|3": {
+    "skid": "TS3",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV19|4": {
+    "skid": "TS3",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV19|5": {
+    "skid": "TS3",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV19|6": {
+    "skid": "TS3",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV19|7": {
+    "skid": "TS3",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV19|8": {
+    "skid": "TS3",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV19|9": {
+    "skid": "TS3",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV19|10": {
+    "skid": "TS3",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV19|11": {
+    "skid": "TS3",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV19|12": {
+    "skid": "TS3",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV19|13": {
+    "skid": "TS3",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV19|14": {
+    "skid": "TS3",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV19|15": {
+    "skid": "TS3",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV19|16": {
+    "skid": "TS3",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV19|17": {
+    "skid": "TS3",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV19|18": {
+    "skid": "TS3",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV19|19": {
+    "skid": "TS3",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV19|20": {
+    "skid": "TS3",
+    "inversor": "INV19",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV20|1": {
+    "skid": "TS3",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV20|2": {
+    "skid": "TS3",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV20|3": {
+    "skid": "TS3",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV20|4": {
+    "skid": "TS3",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV20|5": {
+    "skid": "TS3",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV20|6": {
+    "skid": "TS3",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV20|7": {
+    "skid": "TS3",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV20|8": {
+    "skid": "TS3",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV20|9": {
+    "skid": "TS3",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV20|10": {
+    "skid": "TS3",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV20|11": {
+    "skid": "TS3",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV20|12": {
+    "skid": "TS3",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV20|13": {
+    "skid": "TS3",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV20|14": {
+    "skid": "TS3",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV20|15": {
+    "skid": "TS3",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV20|16": {
+    "skid": "TS3",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV20|17": {
+    "skid": "TS3",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV20|18": {
+    "skid": "TS3",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV20|19": {
+    "skid": "TS3",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV20|20": {
+    "skid": "TS3",
+    "inversor": "INV20",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV21|1": {
+    "skid": "TS3",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV21|2": {
+    "skid": "TS3",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV21|3": {
+    "skid": "TS3",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV21|4": {
+    "skid": "TS3",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV21|5": {
+    "skid": "TS3",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV21|6": {
+    "skid": "TS3",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV21|7": {
+    "skid": "TS3",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV21|8": {
+    "skid": "TS3",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV21|9": {
+    "skid": "TS3",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV21|10": {
+    "skid": "TS3",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV21|11": {
+    "skid": "TS3",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV21|12": {
+    "skid": "TS3",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV21|13": {
+    "skid": "TS3",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV21|14": {
+    "skid": "TS3",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV21|15": {
+    "skid": "TS3",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV21|16": {
+    "skid": "TS3",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV21|17": {
+    "skid": "TS3",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV21|18": {
+    "skid": "TS3",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV21|19": {
+    "skid": "TS3",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV21|20": {
+    "skid": "TS3",
+    "inversor": "INV21",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV22|1": {
+    "skid": "TS3",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV22|2": {
+    "skid": "TS3",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "2",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV22|3": {
+    "skid": "TS3",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "3",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV22|4": {
+    "skid": "TS3",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV22|5": {
+    "skid": "TS3",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "5",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV22|6": {
+    "skid": "TS3",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "6",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV22|7": {
+    "skid": "TS3",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "7",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV22|8": {
+    "skid": "TS3",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "8",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV22|9": {
+    "skid": "TS3",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "9",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV22|10": {
+    "skid": "TS3",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "10",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV22|11": {
+    "skid": "TS3",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "11",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV22|12": {
+    "skid": "TS3",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "12",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV22|13": {
+    "skid": "TS3",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "13",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV22|14": {
+    "skid": "TS3",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "14",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV22|15": {
+    "skid": "TS3",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "15",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV22|16": {
+    "skid": "TS3",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "16",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV22|17": {
+    "skid": "TS3",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "17",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV22|18": {
+    "skid": "TS3",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "18",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV22|19": {
+    "skid": "TS3",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "19",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
+  },
+  "TS3|INV22|20": {
+    "skid": "TS3",
+    "inversor": "INV22",
+    "stringbox": "",
+    "string": "20",
+    "qtde_modulos": 27,
+    "wp": 640.0,
+    "kwp": 17.28
   }
 }

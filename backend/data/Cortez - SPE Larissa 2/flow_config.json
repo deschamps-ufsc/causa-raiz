@@ -1,15 +1,74 @@
 {
   "nodeConfigs": {
     "gpoa": {
-      "inputs": [],
-      "operation": "sum"
+      "inputs": [
+        {
+          "series": "LAR02.[2].[MET-A].[POA-Irrd].Value",
+          "filter": "Irradiação_Qualidade",
+          "sensors": []
+        },
+        {
+          "series": "LAR02.[4].[MET-B].[POA-Irrd].Value",
+          "filter": "Irradiação_Qualidade",
+          "sensors": []
+        },
+        {
+          "series": "LAR02.[6].[MET-B].[POA-Irrd].Value",
+          "filter": "Irradiação_Qualidade",
+          "sensors": []
+        }
+      ],
+      "outputFilter": "Irradiação_50_W",
+      "operation": "mean"
     },
     "grear": {
-      "inputs": [],
-      "operation": "sum"
+      "inputs": [
+        {
+          "series": "LAR02.[2].[MET-A].[POA-Irrd_REAR].Value",
+          "filter": "Irradiação_Qualidade",
+          "sensors": []
+        },
+        {
+          "series": "LAR02.[4].[MET-B].[POA-Irrd_REAR].Value",
+          "filter": "Irradiação_Qualidade",
+          "sensors": []
+        },
+        {
+          "series": "LAR02.[6].[MET-B].[POA-Irrd_REAR].Value",
+          "filter": "Irradiação_Qualidade",
+          "sensors": []
+        }
+      ],
+      "outputFilter": "",
+      "operation": "mean"
     },
     "tracker": {
-      "inputs": [],
+      "inputs": [
+        {
+          "sensors": [
+            "LAR02.[2].[MET-A].[POA-Irrd_REAR].Value",
+            "LAR02.[2].[MET-A].[POA-Irrd].Value"
+          ],
+          "series": "LAR02.[2].Trackers.[INV04-SB15].TR049.PosAngAtual.Value",
+          "filter": ""
+        },
+        {
+          "sensors": [
+            "LAR02.[4].[MET-B].[POA-Irrd_REAR].Value",
+            "LAR02.[4].[MET-B].[POA-Irrd].Value"
+          ],
+          "series": "LAR02.[4].Trackers.[INV04-SB15].TR049.PosAngAtual.Value",
+          "filter": ""
+        },
+        {
+          "sensors": [
+            "LAR02.[6].[MET-B].[POA-Irrd_REAR].Value",
+            "LAR02.[6].[MET-B].[POA-Irrd].Value"
+          ],
+          "series": "LAR02.[6].Trackers.[INV04-SB15].TR049.PosAngAtual.Value",
+          "filter": ""
+        }
+      ],
       "outputFilter": "",
       "operation": "sum",
       "trackerParams": {
@@ -24,28 +83,91 @@
       }
     },
     "tamb": {
-      "inputs": [],
-      "operation": "sum"
+      "inputs": [
+        {
+          "sensors": [],
+          "series": "LAR02.[4].[MET-EPE].T_SSTRH.Value",
+          "filter": "Temperatura Ambiente"
+        }
+      ],
+      "outputFilter": "",
+      "operation": "mean"
     },
     "tmod": {
-      "inputs": [],
-      "operation": "sum"
+      "inputs": [
+        {
+          "sensors": [],
+          "series": "LAR02.[2].[MET-A].T_MOD.Value",
+          "filter": ""
+        },
+        {
+          "sensors": [],
+          "series": "LAR02.[4].[MET-B].T_MOD.Value",
+          "filter": ""
+        },
+        {
+          "sensors": [],
+          "series": "LAR02.[6].[MET-B].T_MOD.Value",
+          "filter": ""
+        }
+      ],
+      "outputFilter": "",
+      "operation": "mean"
     },
     "sujidade": {
-      "inputs": [],
-      "operation": "sum"
+      "inputs": [
+        {
+          "sensors": [],
+          "series": "LAR02.[2].[MET-A].TxaSuj_1.Value",
+          "filter": "Sujidade"
+        },
+        {
+          "sensors": [],
+          "series": "LAR02.[2].[MET-A].TxaSuj_2.Value",
+          "filter": "Sujidade"
+        }
+      ],
+      "outputFilter": "",
+      "operation": "mean",
+      "startTime": "11:30",
+      "endTime": "12:30",
+      "trimPercent": "25"
     },
     "potencia_ppc": {
-      "inputs": [],
+      "inputs": [
+        {
+          "sensors": [],
+          "series": "LAR02.PPC.Measurements.PotAt.Value",
+          "filter": ""
+        }
+      ],
+      "outputFilter": "",
       "operation": "sum"
     },
     "referencia_ppc": {
-      "inputs": [],
+      "inputs": [
+        {
+          "sensors": [],
+          "series": "LAR02.PPC.Measurements.RefPotAt.Value",
+          "filter": "Potência_PPC"
+        }
+      ],
+      "outputFilter": "",
       "operation": "sum"
     },
     "energia_pmi": {
-      "inputs": [],
-      "operation": "sum"
+      "inputs": [
+        {
+          "sensors": [],
+          "series": "LAR02_Pri_kWh_del_int",
+          "filter": ""
+        }
+      ],
+      "outputFilter": "",
+      "operation": "sum",
+      "energiaPmiParams": {
+        "multiplier": 0.012
+      }
     },
     "geff": {
       "beta": 0.78,
@@ -79,7 +201,11 @@
     },
     "epi": {
       "inputs": [],
-      "operation": "sum"
+      "operation": "sum",
+      "epiParams": {
+        "energiaVar": "E_Grid",
+        "irradianciaVar": "GlobInc"
+      }
     }
   }
 }

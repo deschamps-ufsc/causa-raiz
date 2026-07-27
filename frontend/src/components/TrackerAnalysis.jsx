@@ -52,6 +52,7 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
   const [chartLoading, setChartLoading] = useState(false)
   const [chartError, setChartError] = useState(null)
   const [trackerTols, setTrackerTols] = useState({ vento: 0, travado: 0 })
+  const [infoModalOpen, setInfoModalOpen] = useState(false)
 
   const openChart = async (date, alvo, atual, status = null, trackerName = null, perdasLabel = null) => {
       setChartModal({ date, alvo, atual, status, trackerName, perdasLabel })
@@ -718,6 +719,14 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
           <div style={{ position: 'relative', display: 'flex', gap: '8px' }}>
             <button
                 className="btn btn-secondary"
+                style={{ padding: '6px 12px', flexShrink: 0, fontWeight: 600, background: '#f8fafc', color: '#0f172a', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '6px' }}
+                onClick={() => setInfoModalOpen(true)}
+                title="Informações sobre o cálculo das métricas"
+            >
+              ℹ️ Entenda as Métricas
+            </button>
+            <button
+                className="btn btn-secondary"
                 style={{ padding: '6px 16px', flexShrink: 0, fontWeight: 600, background: '#e2e8f0', color: '#1e293b', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '6px' }}
                 onClick={() => exportTableToPng(tableRef.current, 'TrackerAnalysis.png')}
                 title="Exportar tabela atual como Imagem PNG"
@@ -918,13 +927,13 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                                    label = 'Ok';
                                  } else if (ptsVento > 0 && ptsTravado === 0) {
                                    label = `Vento: ${ptsVento} (${pctVento.toFixed(1)}%)`;
-                                   bg = '#dbeafe'; color = '#1d4ed8';
+                                   bg = '#dbeafe'; color = '#1d4ed8'; // Azul
                                  } else if (ptsTravado > 0 && ptsVento === 0) {
                                    label = `Travado: ${ptsTravado} (${pctTravado.toFixed(1)}%)`;
-                                   bg = '#fee2e2'; color = '#b91c1c';
+                                   bg = '#fef08a'; color = '#854d0e'; // Amarelo
                                  } else {
                                    label = `Vento: ${ptsVento} (${pctVento.toFixed(1)}%) | Travado: ${ptsTravado} (${pctTravado.toFixed(1)}%)`;
-                                   bg = '#fef08a'; color = '#854d0e';
+                                   bg = '#fee2e2'; color = '#b91c1c'; // Vermelho
                                  }
                                  
                                  let sumVento = rowVals.sum_diff_vento || 0;
@@ -1013,7 +1022,7 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
               display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
               <div style={{
-                  background: '#fff', borderRadius: 8, padding: 20, width: '90%', maxWidth: 1000,
+                  background: '#fff', borderRadius: 8, padding: 20, width: '90%', maxWidth: 1200,
                   maxHeight: '90vh', overflowY: 'auto',
                   boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
               }}>
@@ -1093,7 +1102,7 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                                         x: chartData.timestamps,
                                         y: chartData.travado,
                                         type: 'scatter', mode: 'lines', line: { color: 'transparent', width: 0, shape: 'hvh' },
-                                        fill: 'tozeroy', fillcolor: 'rgba(239, 68, 68, 0.5)',
+                                        fill: 'tozeroy', fillcolor: 'rgba(234, 179, 8, 0.5)', // Amarelo (yellow-500)
                                         name: 'Travado', xaxis: 'x2', yaxis: 'y2'
                                       },
                                       {
@@ -1109,6 +1118,13 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                                         type: 'scatter', mode: 'lines', line: { color: 'transparent', width: 0, shape: 'hvh' },
                                         fill: 'tozeroy', fillcolor: 'rgba(100, 116, 139, 0.5)', // Slate/gray for Valid Data
                                         name: 'Dados Válidos', xaxis: 'x3', yaxis: 'y3'
+                                      },
+                                      {
+                                        x: chartData.timestamps,
+                                        y: chartData.backtracking,
+                                        type: 'scatter', mode: 'lines', line: { color: 'transparent', width: 0, shape: 'hvh' },
+                                        fill: 'tozeroy', fillcolor: 'rgba(239, 68, 68, 0.8)', // Vermelho mais forte
+                                        name: 'Backtracking', xaxis: 'x4', yaxis: 'y4'
                                       }
                                   ]}
                                   layout={{
@@ -1123,9 +1139,11 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                                       },
                                       xaxis2: { anchor: 'y2', matches: 'x', showgrid: false, showticklabels: false, zeroline: false },
                                       xaxis3: { anchor: 'y3', matches: 'x', showgrid: false, showticklabels: false, zeroline: false },
-                                      yaxis: { domain: [0, 0.89], title: 'Ângulo (°)' },
-                                      yaxis2: { domain: [0.89, 0.94], showticklabels: false, range: [0, 1.2], fixedrange: true, zeroline: false, showgrid: false, showline: false },
-                                      yaxis3: { domain: [0.94, 0.99], showticklabels: false, range: [0, 1.2], fixedrange: true, zeroline: false, showgrid: false, showline: false },
+                                      xaxis4: { anchor: 'y4', matches: 'x', showgrid: false, showticklabels: false, zeroline: false },
+                                      yaxis: { domain: [0, 0.85], title: 'Ângulo (°)' },
+                                      yaxis2: { domain: [0.85, 0.90], showticklabels: false, range: [0, 1.2], fixedrange: true, zeroline: false, showgrid: false, showline: false },
+                                      yaxis3: { domain: [0.90, 0.95], showticklabels: false, range: [0, 1.2], fixedrange: true, zeroline: false, showgrid: false, showline: false },
+                                      yaxis4: { domain: [0.95, 1.0], showticklabels: false, range: [0, 1.2], fixedrange: true, zeroline: false, showgrid: false, showline: false },
                                       hovermode: 'x unified'
                                   }}
                                   style={{ width: '100%', height: '100%' }}
@@ -1140,13 +1158,22 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                           {chartData.strings_data && Object.keys(chartData.strings_data).length > 0 && (
                               <div style={{ width: '100%', height: 300 }}>
                                   <Plot
-                                      data={Object.keys(chartData.strings_data).map(sc => ({
-                                          x: chartData.timestamps,
-                                          y: chartData.strings_data[sc],
-                                          type: 'scatter', mode: 'lines', line: { width: 1.0 },
-                                          name: sc,
-                                          hovertemplate: '%{y:.2f} W'
-                                      }))}
+                                      data={Object.keys(chartData.strings_data).map(sc => {
+                                          let lineStyle = { width: 1.0 };
+                                          let dashStyle = 'solid';
+                                          if (sc === 'Potência CC Média Strings OK') {
+                                              lineStyle = { width: 3.0, dash: 'dot' };
+                                          } else if (sc === 'Potência CC Média Strings OK_válida') {
+                                              lineStyle = { width: 3.0 };
+                                          }
+                                          return {
+                                              x: chartData.timestamps,
+                                              y: chartData.strings_data[sc],
+                                              type: 'scatter', mode: 'lines', line: lineStyle,
+                                              name: sc,
+                                              hovertemplate: '%{y:.2f} W'
+                                          };
+                                      })}
                                       layout={{
                                           legend: { orientation: 'h', y: 1.15, x: 1, xanchor: 'right' },
                                           margin: { t: 50, r: 20, b: 40, l: 40 },
@@ -1176,6 +1203,77 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                   )}
               </div>
           </div>
+      )}
+
+      {infoModalOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: '#fff', borderRadius: 8, padding: 20, width: '100%', maxWidth: 900, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: '#0f172a' }}>Entenda as Métricas (Tabela vs. Status)</h2>
+              <button 
+                onClick={() => setInfoModalOpen(false)}
+                style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: 16, cursor: 'pointer', fontWeight: 'bold', color: '#64748b' }}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <p style={{ fontSize: 14, color: '#334155', lineHeight: 1.5, marginBottom: 20 }}>
+              As métricas baseadas na <strong>Quantidade de Erro</strong> e as métricas de <strong>Status (Vento/Travado)</strong> possuem naturezas matemáticas diferentes: a primeira avalia a volumetria total do dia, enquanto a segunda avalia a persistência consecutiva da falha.
+              <br/><br/>
+              <em>Nota: Períodos de backtracking são considerados em todos os cálculos, excluindo-se apenas períodos em que a referência da posição teórica do tracker pelo PVLib é zero, ou seja, períodos sem sol.</em>
+            </p>
+
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr>
+                  <th style={{ background: '#f8fafc', padding: '10px', textAlign: 'left', borderBottom: '2px solid #cbd5e1', color: '#0f172a' }}>Coluna</th>
+                  <th style={{ background: '#f8fafc', padding: '10px', textAlign: 'left', borderBottom: '2px solid #cbd5e1', color: '#0f172a' }}>Origem dos Dados</th>
+                  <th style={{ background: '#f8fafc', padding: '10px', textAlign: 'left', borderBottom: '2px solid #cbd5e1', color: '#0f172a' }}>Como é Calculado</th>
+                  <th style={{ background: '#f8fafc', padding: '10px', textAlign: 'left', borderBottom: '2px solid #cbd5e1', color: '#0f172a' }}>É por dado Consecutivo?</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0', fontWeight: 600 }}>ERRO ALVO</td>
+                  <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0' }}>Diferença absoluta entre o Setpoint (Alvo) lido e a Referência Ideal (PVLib).</td>
+                  <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0' }}>É a <strong>média aritmética</strong> de todos os desvios de ângulo registrados ao longo do dia inteiro.</td>
+                  <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0' }}>Não se aplica (é uma média do dia).</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0', fontWeight: 600 }}>QTDE ERRO ALVO</td>
+                  <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0' }}>Mesmo cálculo do Erro Alvo.</td>
+                  <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0' }}>É a <strong>soma simples</strong> de todos os minutos em que o erro superou a tolerância parametrizada.</td>
+                  <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0' }}><strong>NÃO</strong>. Qualquer minuto que extrapole o limite, isolado ou não, entra para a soma.</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0', fontWeight: 600 }}>ERRO ATUAL</td>
+                  <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0' }}>Diferença absoluta entre a Posição Real (Medido) e a Referência Ideal (PVLib).</td>
+                  <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0' }}>É a <strong>média aritmética</strong> de todos os desvios de posição real registrados ao longo do dia.</td>
+                  <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0' }}>Não se aplica (é uma média do dia).</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0', fontWeight: 600 }}>QTDE ERRO ATUAL</td>
+                  <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0' }}>Mesmo cálculo do Erro Atual.</td>
+                  <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0' }}>É a <strong>soma simples</strong> de todos os minutos em que o erro físico superou a tolerância.</td>
+                  <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0' }}><strong>NÃO</strong>. Cada minuto que falhar é somado no montante final, isolado ou não.</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0', fontWeight: 600 }}>STATUS</td>
+                  <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0' }}>Verifica as flags internamente:<br/>1. <strong>Vento</strong>: Falha no Alvo.<br/>2. <strong>Travado</strong>: Falha no Atual SEM Falha no Alvo.</td>
+                  <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0' }}>Calcula qual foi a <strong>maior sequência ininterrupta</strong> de falha. O Frontend compara contra a tolerância (ex: 10 min). Se a sequência máxima for menor, o status é "Ok".</td>
+                  <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0' }}><strong>SIM</strong>. O status exige falhas consecutivas. Pontos isolados são ignorados na exibição do status.</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0', fontWeight: 600 }}>GATILHO PERDAS</td>
+                  <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0' }}>Integral do erro (Graus x Minuto) baseado na Posição Real nos momentos de erro.</td>
+                  <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0' }}>É a <strong>soma total de graus</strong> perdidos. O código pega todos os minutos com flags ativadas e soma os graus de desvio.</td>
+                  <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0' }}><strong>NÃO</strong>. Todo grau de desvio em momentos de erro é acumulado para quantificar a perda de alinhamento.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
 
     </div>

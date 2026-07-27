@@ -45,28 +45,28 @@
     "tracker": {
       "inputs": [
         {
-          "series": "LAR01.[1].Trackers.[INV04-SB15].TR049.PosAngAtual.Value",
-          "filter": "",
           "sensors": [
             "LAR01.[1].[MET-A].[POA-Irrd_REAR].Value",
             "LAR01.[1].[MET-A].[POA-Irrd].Value"
-          ]
+          ],
+          "series": "LAR01.[1].Trackers.[INV04-SB15].TR049.PosAngAtual.Value",
+          "filter": ""
         },
         {
-          "series": "LAR01.[3].Trackers.[INV04-SB15].TR049.PosAngAtual.Value",
-          "filter": "",
           "sensors": [
             "LAR01.[3].[MET-B].[POA-Irrd_REAR].Value",
             "LAR01.[3].[MET-B].[POA-Irrd].Value"
-          ]
+          ],
+          "series": "LAR01.[3].Trackers.[INV04-SB15].TR049.PosAngAtual.Value",
+          "filter": ""
         },
         {
-          "series": "LAR01.[5].Trackers.[INV04-SB15].TR049.PosAngAtual.Value",
-          "filter": "",
           "sensors": [
             "LAR01.[5].[MET-B].[POA-Irrd_REAR].Value",
             "LAR01.[5].[MET-B].[POA-Irrd].Value"
-          ]
+          ],
+          "series": "LAR01.[5].Trackers.[INV04-SB15].TR049.PosAngAtual.Value",
+          "filter": ""
         }
       ],
       "outputFilter": "",
@@ -136,13 +136,13 @@
     "potencia_ppc": {
       "inputs": [
         {
+          "sensors": [],
           "series": "LAR01.PPC.Measurements.PotAt.Value",
-          "filter": "",
-          "sensors": []
+          "filter": ""
         }
       ],
       "outputFilter": "",
-      "operation": "mean"
+      "operation": "sum"
     },
     "referencia_ppc": {
       "inputs": [
@@ -153,7 +153,7 @@
         }
       ],
       "outputFilter": "",
-      "operation": "mean"
+      "operation": "sum"
     },
     "energia_pmi": {
       "inputs": [
@@ -201,7 +201,11 @@
     },
     "epi": {
       "inputs": [],
-      "operation": "sum"
+      "operation": "sum",
+      "epiParams": {
+        "energiaVar": "E_Grid",
+        "irradianciaVar": "GlobInc"
+      }
     }
   }
 }

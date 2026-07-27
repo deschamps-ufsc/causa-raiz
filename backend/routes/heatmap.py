@@ -1220,6 +1220,8 @@ def get_tracker_chart(usina: str, date: str, alvo: str = None, atual: str = None
         if atual and atual in cols_in_file and atual not in read_cols: read_cols.append(atual)
         valid_cols = [c for c in cols_to_read if c in cols_in_file and c not in read_cols]
         read_cols.extend(valid_cols)
+        if "Tracker_is_backtracking" in cols_in_file and "Tracker_is_backtracking" not in read_cols:
+            read_cols.append("Tracker_is_backtracking")
         df_raw = pd.read_parquet(path, columns=read_cols)
         
     df_proc = None
@@ -1229,6 +1231,12 @@ def get_tracker_chart(usina: str, date: str, alvo: str = None, atual: str = None
         valid_proc = [c for c in cols_to_read if c in cols_in_proc]
         if valid_proc:
             read_proc = ["timestamp"] + valid_proc
+            if "Tracker_is_backtracking" in cols_in_proc and "Tracker_is_backtracking" not in read_proc:
+                read_proc.append("Tracker_is_backtracking")
+            if "Potência CC Média Strings OK" in cols_in_proc and "Potência CC Média Strings OK" not in read_proc:
+                read_proc.append("Potência CC Média Strings OK")
+            if "Potência CC Média Strings OK_válida" in cols_in_proc and "Potência CC Média Strings OK_válida" not in read_proc:
+                read_proc.append("Potência CC Média Strings OK_válida")
             df_proc = pd.read_parquet(processed_path, columns=list(set(read_proc)))
             
     if df_raw is not None and df_proc is not None:
@@ -1311,6 +1319,12 @@ def get_tracker_chart(usina: str, date: str, alvo: str = None, atual: str = None
         valid_data = has_data.copy()
         
     mask_ok = has_data & df["pvlib"].notnull() & ~mask_vento & ~mask_travado
+    
+    backtracking_list = []
+    if "Tracker_is_backtracking" in df.columns:
+        backtracking_list = [1 if b == 1 else 0 for b in df["Tracker_is_backtracking"]]
+    else:
+        backtracking_list = [0] * len(df)
         
     vento_list = [1 if v else 0 for v in mask_vento]
     travado_list = [1 if t else 0 for t in mask_travado]
@@ -1321,6 +1335,11 @@ def get_tracker_chart(usina: str, date: str, alvo: str = None, atual: str = None
     for sc in tracker_strings:
         if sc in df.columns:
             strings_data[sc] = [round(x, 2) if pd.notnull(x) else None for x in df[sc]]
+            
+    if "Potência CC Média Strings OK" in df.columns:
+        strings_data["Potência CC Média Strings OK"] = [round(x, 2) if pd.notnull(x) else None for x in df["Potência CC Média Strings OK"]]
+    if "Potência CC Média Strings OK_válida" in df.columns:
+        strings_data["Potência CC Média Strings OK_válida"] = [round(x, 2) if pd.notnull(x) else None for x in df["Potência CC Média Strings OK_válida"]]
     
     return {
         "timestamps": df.index.strftime("%Y-%m-%d %H:%M:%S").tolist(),
@@ -1332,5 +1351,6 @@ def get_tracker_chart(usina: str, date: str, alvo: str = None, atual: str = None
         "travado": travado_list,
         "ok": ok_list,
         "valido": valido_list,
+        "backtracking": backtracking_list,
         "strings_data": strings_data
     }

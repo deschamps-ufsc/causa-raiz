@@ -112,6 +112,9 @@ def run_flow_processing(usina: str, dates_str: str = None):
         raw_df = pd.read_parquet(raw_path)
         if "timestamp" in raw_df.columns:
             raw_df.set_index("timestamp", inplace=True)
+            
+        # Agrupa dados sub-minutais para a média exata do minuto correspondente
+        raw_df = raw_df.resample('1min').mean()
         
         processed_df = pd.DataFrame(index=raw_df.index)
         
@@ -636,10 +639,37 @@ def run_flow_processing(usina: str, dates_str: str = None):
                 df_ok_strings = pd.concat(tracker_ok_strings, axis=1)
                 # Calcula a média por minuto. Usamos min_periods=1 para que se houver ao menos 1 ok, tenhamos média.
                 media_strings_ok = df_ok_strings.mean(axis=1)
+                processed_df["Potência CC Média Strings OK"] = media_strings_ok
                 # Aplica filtro de Dados Válidos 
                 processed_df["Potência CC Média Strings OK_válida"] = media_strings_ok.where(simult_flag == 1, np.nan)
+                
+                # --- Calcula a perda (Strings Perdida Não OK) ---
+                total_loss_series = pd.Series(0.0, index=processed_df.index)
+                for base, group in tracker_groups.items():
+                    vento_col = f"tracker_{base}_vento"
+                    travado_col = f"tracker_{base}_travado"
+                    if vento_col in processed_df.columns and travado_col in processed_df.columns:
+                        mask_nao_ok = (processed_df[vento_col] == 1) | (processed_df[travado_col] == 1)
+                        for st_col in group["cc_strings"]:
+                            if st_col in raw_df.columns:
+                                st_data = raw_df[st_col]
+                                # Considerar apenas se a string tiver valor válido maior que zero (ignorando falhas elétricas)
+                                valid_string_mask = (st_data.notna()) & (st_data > 0)
+                                diff = media_strings_ok - st_data
+                                diff_clamped = diff.clip(lower=0)
+                                mask_final = mask_nao_ok & valid_string_mask
+                                loss_for_string = diff_clamped.where(mask_final, 0).fillna(0)
+                                total_loss_series += loss_for_string
+                                
+                processed_df["Potência CC Strings Perdida Não OK"] = total_loss_series
+                processed_df["Potência CC Strings Perdida Não OK_válida"] = total_loss_series.where(simult_flag == 1, np.nan)
+                
             else:
+                processed_df["Potência CC Média Strings OK"] = np.nan
                 processed_df["Potência CC Média Strings OK_válida"] = np.nan
+                processed_df["Potência CC Strings Perdida Não OK"] = np.nan
+                processed_df["Potência CC Strings Perdida Não OK_válida"] = np.nan
+
 
             # --- Cria as séries de 15min para gpoa ---
             if "gpoa" in processed_df.columns:

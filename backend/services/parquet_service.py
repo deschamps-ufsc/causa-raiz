@@ -202,6 +202,9 @@ def query_data(
             parquet_cols = [f.name for f in schema]
             read_cols = [c for c in final_cols if c in parquet_cols]
             df_day = pd.read_parquet(path, columns=["timestamp"] + read_cols)
+            if not df_day.empty:
+                df_day = df_day.set_index("timestamp").resample("1min").mean(numeric_only=True).reset_index()
+
         
         # 2. Tentar ler dados processados (agregadores)
         if os.path.exists(processed_path):
