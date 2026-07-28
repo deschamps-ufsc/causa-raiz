@@ -488,6 +488,9 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
     energia_pmi: true,
     potencia_ppc: true,
     referencia_ppc: true,
+    curtailment: true,
+    perdida_tracker: true,
+    recuperavel: true,
     pvsyst: true,
     epi: true
   })
@@ -708,11 +711,16 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
       if (colKey.startsWith('tcel') && !visibleVars.tcel) return false;
       if (colKey.startsWith('sujidade') && !visibleVars.sujidade) return false;
       if (colKey.startsWith('tracker') && !visibleVars.tracker) return false;
+      if (colKey.startsWith('curtailment') && !visibleVars.curtailment) return false;
       if (colKey.startsWith('energia_pmi')) return visibleVars.energia_pmi;
       if (colKey.startsWith('referencia_ppc')) return visibleVars.referencia_ppc;
       if (colKey.startsWith('potencia_ppc')) return visibleVars.potencia_ppc;
+      if (colKey.startsWith('energia pmi corrigida')) return visibleVars.energia_pmi;
       if (colKey.startsWith('energia pmi')) return visibleVars.energia_pmi;
       if (colKey.startsWith('energia')) return visibleVars.energia;
+      if (colKey.startsWith('potência cc strings perdida')) return visibleVars.perdida_tracker;
+      if (colKey.startsWith('potência ca recuperável')) return visibleVars.recuperavel;
+      if (colKey.startsWith('fator_ajuste') || colKey.startsWith('globinc')) return visibleVars.pvsyst;
       if (colKey.startsWith('e_grid') || colKey.startsWith('pvsyst')) return visibleVars.pvsyst;
       if (colKey.startsWith('epi')) return visibleVars.epi;
 
@@ -2503,8 +2511,24 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                   <span>Energia Prevista</span>
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.referencia_ppc} onChange={() => setVisibleVars(prev => ({ ...prev, referencia_ppc: !prev.referencia_ppc }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>Referência PPC</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.curtailment} onChange={() => setVisibleVars(prev => ({ ...prev, curtailment: !prev.curtailment }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>Curtailment</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
                   <input type="checkbox" checked={visibleVars.epi} onChange={() => setVisibleVars(prev => ({ ...prev, epi: !prev.epi }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
                   <span>EPI</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.perdida_tracker} onChange={() => setVisibleVars(prev => ({ ...prev, perdida_tracker: !prev.perdida_tracker }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>Energia Perdida Tracker</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.recuperavel} onChange={() => setVisibleVars(prev => ({ ...prev, recuperavel: !prev.recuperavel }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>Energia CA Recuperável</span>
                 </label>
               </div>
             </details>
@@ -2642,7 +2666,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                             borderBottom: '2px solid var(--border)', 
                             textAlign: 'center',
                             whiteSpace: (firstCol.label.startsWith('Sujidade (') || firstCol.label.includes('PVSyst') || firstCol.label.includes('Tracker Piranômetro')) ? 'normal' : 'nowrap',
-                            minWidth: (firstCol.label.startsWith('Sujidade (') || firstCol.label.includes('PVSyst') || firstCol.label.includes('Tracker Piranômetro')) ? '100px' : 'auto',
+                            minWidth: (firstCol.label.startsWith('Sujidade (') || firstCol.label.includes('PVSyst') || firstCol.label.includes('Tracker Piranômetro')) ? '60px' : 'auto',
                             background: isStyled ? theme.bgHeader : 'var(--bg-secondary)',
                             verticalAlign: 'middle'
                           }}

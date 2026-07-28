@@ -179,8 +179,8 @@
       "type": "tcel"
     },
     "curtailment": {
-      "curtailmentRefMin": 52.8,
-      "curtailmentRefMargin": 2,
+      "curtailmentRefMin": 50,
+      "curtailmentRefMargin": 0,
       "curtailmentDiffMargin": 80,
       "resolutionMode": "15min",
       "type": "curtailment"

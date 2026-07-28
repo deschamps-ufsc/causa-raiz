@@ -593,5 +593,90 @@
       "legendPosition": "right"
     },
     "shared": true
+  },
+  {
+    "id": "44396848-55ba-41e6-80e1-8b89370c5252",
+    "created_at": "2026-07-27T23:34:19.628016",
+    "name": "Sujidade",
+    "user": "deschamps.ufsc@gmail.com",
+    "selectedDates": [
+      "2026-06-10",
+      "2026-06-11",
+      "2026-06-12",
+      "2026-06-15",
+      "2026-06-16"
+    ],
+    "selectedSeries": [
+      "sujidade",
+      "sujidade_válida",
+      "LAR02.[2].[MET-A].TxaSuj_1.Value",
+      "LAR02.[2].[MET-A].TxaSuj_2.Value"
+    ],
+    "activeFilters": [],
+    "visibleFilters": [],
+    "filterColors": {
+      "Tracker Piranômetro": "#f97316",
+      "Simultaneidade": "#ef4444",
+      "curtailment": "#059669",
+      "Dados Válidos": "#7c3aed"
+    },
+    "chartConfig": {
+      "gridX": true,
+      "gridY1": true,
+      "gridY2": false,
+      "gridY3": false,
+      "gridY4": false,
+      "xGridSpacing": "",
+      "xLimits": {
+        "min": "",
+        "max": "23:59"
+      },
+      "y1Limits": {
+        "min": 1,
+        "max": 1
+      },
+      "y2Limits": {
+        "min": "",
+        "max": ""
+      },
+      "y3Limits": {
+        "min": 99,
+        "max": 100
+      },
+      "y4Limits": {
+        "min": "",
+        "max": ""
+      },
+      "appliedRanges": {},
+      "seriesAxisMap": {
+        "sujidade": "y3",
+        "sujidade_válida": "y3",
+        "LAR02.[2].[MET-A].TxaSuj_1.Value": "y3",
+        "LAR02.[2].[MET-A].TxaSuj_2.Value": "y3"
+      },
+      "seriesColors": {
+        "sujidade": "#EF6C00",
+        "sujidade_válida": "#EF6C00",
+        "LAR02.[2].[MET-A].TxaSuj_1.Value": "#6D4C41",
+        "LAR02.[2].[MET-A].TxaSuj_2.Value": "#6D4C41"
+      },
+      "seriesWidths": {
+        "sujidade": 1,
+        "sujidade_válida": 1,
+        "LAR02.[2].[MET-A].TxaSuj_1.Value": 1,
+        "LAR02.[2].[MET-A].TxaSuj_2.Value": 1
+      },
+      "seriesDashes": {
+        "sujidade": "solid",
+        "sujidade_válida": "solid",
+        "LAR02.[2].[MET-A].TxaSuj_1.Value": "solid",
+        "LAR02.[2].[MET-A].TxaSuj_2.Value": "solid"
+      },
+      "seriesFills": {
+        "sujidade_válida": 8
+      },
+      "legendPosition": "right"
+    },
+    "shared": true
   }
 ]

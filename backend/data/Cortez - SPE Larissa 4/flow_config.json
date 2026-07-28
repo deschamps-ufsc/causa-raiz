@@ -45,28 +45,28 @@
     "tracker": {
       "inputs": [
         {
-          "series": "LAR04.[1].Trackers.[INV04-SB15].TR049.PosAngAtual.Value",
-          "filter": "",
           "sensors": [
             "LAR04.[1].[MET-A].[POA-Irrd_REAR].Value",
             "LAR04.[1].[MET-A].[POA-Irrd].Value"
-          ]
+          ],
+          "series": "LAR04.[1].Trackers.[INV04-SB15].TR049.PosAngAtual.Value",
+          "filter": ""
         },
         {
-          "series": "LAR04.[3].Trackers.[INV04-SB15].TR049.PosAngAtual.Value",
-          "filter": "",
           "sensors": [
             "LAR04.[3].[MET-B].[POA-Irrd_REAR].Value",
             "LAR04.[3].[MET-B].[POA-Irrd].Value"
-          ]
+          ],
+          "series": "LAR04.[1].Trackers.[INV04-SB15].TR049.PosAngAtual.Value",
+          "filter": ""
         },
         {
-          "series": "LAR04.[5].Trackers.[INV04-SB15].TR049.PosAngAtual.Value",
-          "filter": "",
           "sensors": [
             "LAR04.[5].[MET-B].[POA-Irrd_REAR].Value",
             "LAR04.[5].[MET-B].[POA-Irrd].Value"
-          ]
+          ],
+          "series": "LAR04.[1].Trackers.[INV04-SB15].TR049.PosAngAtual.Value",
+          "filter": ""
         }
       ],
       "outputFilter": "",
@@ -179,8 +179,8 @@
       "type": "tcel"
     },
     "curtailment": {
-      "curtailmentRefMin": 52.8,
-      "curtailmentRefMargin": 2,
+      "curtailmentRefMin": 50,
+      "curtailmentRefMargin": 0,
       "curtailmentDiffMargin": 80,
       "resolutionMode": "15min",
       "type": "curtailment"
