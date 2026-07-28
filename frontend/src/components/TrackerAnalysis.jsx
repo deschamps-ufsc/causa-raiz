@@ -18,6 +18,7 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
   const [expandedPaths, setExpandedPaths] = useState(new Set())
 
   const tableRef = useRef(null)
+  const chartContentRef = useRef(null)
 
   const [showAlvo, setShowAlvo] = useState(true)
   const [showAtual, setShowAtual] = useState(true)
@@ -51,11 +52,53 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
   const [chartData, setChartData] = useState(null)
   const [chartLoading, setChartLoading] = useState(false)
   const [chartError, setChartError] = useState(null)
+  const [chartXRange, setChartXRange] = useState(['00:00', '23:59'])
+  const [chartRevision, setChartRevision] = useState(0)
+  const isRelayoutRef = useRef(false)
   const [trackerTols, setTrackerTols] = useState({ vento: 0, travado: 0 })
   const [infoModalOpen, setInfoModalOpen] = useState(false)
+  const [showChartExportMenu, setShowChartExportMenu] = useState(false)
+
+  // Atualiza chartXRange e incrementa revision para forçar re-render do Plotly
+  const updateXRange = (newRange) => {
+    setChartXRange(newRange)
+    setChartRevision(r => r + 1)
+  }
+
+  // Captura zoom do Plotly e sincroniza o eixo X entre os dois gráficos
+  const handleChartRelayout = (e) => {
+    // Ignora eventos disparados programaticamente (feedback loop)
+    if (isRelayoutRef.current) return
+
+    // Zoom box ou pan: xaxis.range[0] / xaxis.range[1]
+    if (e['xaxis.range[0]'] && e['xaxis.range[1]']) {
+      const r0 = e['xaxis.range[0]']
+      const r1 = e['xaxis.range[1]']
+      const extractTime = (v) => {
+        const s = String(v)
+        const m = s.match(/(\d{2}:\d{2})/)
+        return m ? m[1] : null
+      }
+      const t0 = extractTime(r0)
+      const t1 = extractTime(r1)
+      if (t0 && t1) {
+        isRelayoutRef.current = true
+        updateXRange([t0, t1])
+        setTimeout(() => { isRelayoutRef.current = false }, 100)
+      }
+    }
+    // Double-click autorange: reseta para dia inteiro
+    if (e['xaxis.autorange']) {
+      isRelayoutRef.current = true
+      updateXRange(['00:00', '23:59'])
+      setTimeout(() => { isRelayoutRef.current = false }, 100)
+    }
+  }
 
   const openChart = async (date, alvo, atual, status = null, trackerName = null, perdasLabel = null) => {
       setChartModal({ date, alvo, atual, status, trackerName, perdasLabel })
+      setChartXRange(['00:00', '23:59'])
+      setChartRevision(0)
       setChartLoading(true)
       setChartData(null)
       setChartError(null)
@@ -1021,7 +1064,7 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
               background: 'rgba(0,0,0,0.5)', zIndex: 9999, 
               display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
-              <div style={{
+              <div ref={chartContentRef} style={{
                   background: '#fff', borderRadius: 8, padding: 20, width: '90%', maxWidth: 1200,
                   maxHeight: '90vh', overflowY: 'auto',
                   boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
@@ -1031,7 +1074,7 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                           <h3 style={{ margin: 0 }}>
                               Análise do Tracker {chartModal.trackerName ? `- ${chartModal.trackerName}` : ''}
                           </h3>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                               {chartModal.status && (
                                   <div style={{ padding: '4px 8px', borderRadius: 4, background: chartModal.status.bg, color: chartModal.status.color, fontWeight: 'bold', fontSize: 13 }}>
                                       Status: {chartModal.status.label}
@@ -1042,15 +1085,75 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                                       Gatilho Perdas: {chartModal.perdasLabel}
                                   </div>
                               )}
+                              <div data-html2canvas-ignore="true" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#64748b' }}>
+                                  <span style={{ fontWeight: 600 }}>Eixo X:</span>
+                                  <input
+                                      type="time"
+                                      value={chartXRange[0]}
+                                      onChange={e => updateXRange([e.target.value, chartXRange[1]])}
+                                      style={{ padding: '3px 6px', borderRadius: 4, border: '1px solid #cbd5e1', fontSize: 12, width: 90, background: '#f8fafc', color: '#334155' }}
+                                  />
+                                  <span>—</span>
+                                  <input
+                                      type="time"
+                                      value={chartXRange[1]}
+                                      onChange={e => updateXRange([chartXRange[0], e.target.value])}
+                                      style={{ padding: '3px 6px', borderRadius: 4, border: '1px solid #cbd5e1', fontSize: 12, width: 90, background: '#f8fafc', color: '#334155' }}
+                                  />
+                                  <button
+                                      onClick={() => updateXRange(['00:00', '23:59'])}
+                                      title="Resetar para dia inteiro"
+                                      style={{ padding: '3px 8px', borderRadius: 4, border: '1px solid #cbd5e1', background: '#f1f5f9', cursor: 'pointer', fontSize: 12, color: '#475569', lineHeight: 1 }}
+                                  >↺</button>
+                              </div>
                           </div>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <div style={{ position: 'relative' }} data-html2canvas-ignore="true">
+                              <button
+                                  className="btn btn-secondary"
+                                  onClick={() => setShowChartExportMenu(!showChartExportMenu)}
+                                  title="Exportar gráfico"
+                                  style={{ padding: '6px 12px', fontSize: 13, flexShrink: 0, fontWeight: 600, background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '6px' }}
+                              >
+                                  📥 Exportar
+                              </button>
+                              {showChartExportMenu && (
+                                  <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, padding: 8, zIndex: 50, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', display: 'flex', flexDirection: 'column', gap: 4, minWidth: 160 }}>
+                                      <button 
+                                          onClick={() => { setShowChartExportMenu(false); exportTableToPng(chartContentRef.current, `tracker_${chartModal.trackerName || 'chart'}_${chartModal.date}.png`) }} 
+                                          style={{ padding: '6px 12px', fontSize: 13, cursor: 'pointer', border: '1px solid var(--border)', background: '#f8fafc', borderRadius: 4, textAlign: 'left', color: '#334155', fontWeight: 500 }}
+                                          onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
+                                          onMouseLeave={e => e.currentTarget.style.background = '#f8fafc'}
+                                      >
+                                          🖼️ Imagem (PNG)
+                                      </button>
+                                      <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', marginTop: 4, marginBottom: 2, textTransform: 'uppercase' }}>PDF</div>
+                                      <button 
+                                          onClick={() => { setShowChartExportMenu(false); exportTableToPdf(chartContentRef.current, `tracker_${chartModal.trackerName || 'chart'}_${chartModal.date}.pdf`, { usinaName: usina || 'N/D', forceOrientation: 'p' }) }} 
+                                          style={{ padding: '6px 12px', fontSize: 13, cursor: 'pointer', border: '1px solid var(--border)', background: '#f8fafc', borderRadius: 4, textAlign: 'left', color: '#334155', fontWeight: 500 }}
+                                          onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
+                                          onMouseLeave={e => e.currentTarget.style.background = '#f8fafc'}
+                                      >
+                                          📄 Retrato (Vertical)
+                                      </button>
+                                      <button 
+                                          onClick={() => { setShowChartExportMenu(false); exportTableToPdf(chartContentRef.current, `tracker_${chartModal.trackerName || 'chart'}_${chartModal.date}.pdf`, { usinaName: usina || 'N/D', forceOrientation: 'l' }) }} 
+                                          style={{ padding: '6px 12px', fontSize: 13, cursor: 'pointer', border: '1px solid var(--border)', background: '#f8fafc', borderRadius: 4, textAlign: 'left', color: '#334155', fontWeight: 500 }}
+                                          onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
+                                          onMouseLeave={e => e.currentTarget.style.background = '#f8fafc'}
+                                      >
+                                          🗎 Paisagem (Horizontal)
+                                      </button>
+                                  </div>
+                              )}
+                          </div>
                           {chartModal.date && (
                               <div style={{ padding: '4px 12px', borderRadius: 16, background: '#e2e8f0', color: '#334155', fontWeight: 'bold', fontSize: 14 }}>
                                   {chartModal.date.split('-').reverse().join('/')}
                               </div>
                           )}
-                          <button onClick={() => setChartModal(null)} style={{ border: 'none', background: 'transparent', fontSize: 24, cursor: 'pointer', lineHeight: 1, padding: 0, marginTop: '-4px' }}>×</button>
+                          <button data-html2canvas-ignore="true" onClick={() => setChartModal(null)} style={{ border: 'none', background: 'transparent', fontSize: 24, cursor: 'pointer', lineHeight: 1, padding: 0, marginTop: '-4px' }}>×</button>
                       </div>
                   </div>
                   {chartLoading && <div>Carregando dados...</div>}
@@ -1133,7 +1236,7 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                                       xaxis: { 
                                           type: 'date',
                                           anchor: 'y',
-                                          range: [`${chartModal.date} 00:00:00`, `${chartModal.date} 23:59:59`],
+                                          range: [`${chartModal.date} ${chartXRange[0]}:00`, `${chartModal.date} ${chartXRange[1]}:59`],
                                           tickformat: '%H:%M',
                                           dtick: 3600000
                                       },
@@ -1153,6 +1256,8 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                                       displaylogo: false,
                                       modeBarButtonsToRemove: ['zoomIn2d', 'zoomOut2d', 'autoScale2d']
                                   }}
+                                  onRelayout={handleChartRelayout}
+                                  revision={chartRevision}
                               />
                           </div>
                           {chartData.strings_data && Object.keys(chartData.strings_data).length > 0 && (
@@ -1179,7 +1284,7 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                                           margin: { t: 50, r: 20, b: 40, l: 40 },
                                           xaxis: { 
                                               type: 'date',
-                                              range: [`${chartModal.date} 00:00:00`, `${chartModal.date} 23:59:59`],
+                                              range: [`${chartModal.date} ${chartXRange[0]}:00`, `${chartModal.date} ${chartXRange[1]}:59`],
                                               tickformat: '%H:%M',
                                               dtick: 3600000
                                           },
@@ -1193,6 +1298,8 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                                           displaylogo: false,
                                           modeBarButtonsToRemove: ['zoomIn2d', 'zoomOut2d', 'autoScale2d']
                                       }}
+                                      onRelayout={handleChartRelayout}
+                                      revision={chartRevision}
                                   />
                               </div>
                           )}

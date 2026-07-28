@@ -276,8 +276,11 @@ export const saveFlowConfig = (usina, config) =>
 export const runFlow = (usina, dates) =>
   api.post(`/flow/${encodeURIComponent(usina)}/run${dates ? `?dates=${dates}` : ''}`).then((r) => r.data)
 
+export const checkFlowStatus = (usina, taskId) =>
+  api.get(`/flow/${encodeURIComponent(usina)}/status/${encodeURIComponent(taskId)}`).then((r) => r.data)
+
 export const fetchFlowIntegrals = (usina) =>
-  api.get(`/flow/${encodeURIComponent(usina)}/integrals`).then((r) => r.data)
+  api.get(`/flow/${encodeURIComponent(usina)}/integrals`, { timeout: 300000 }).then((r) => r.data)
 
 // ============================================================================
 // ── CAMPANHAS (PERFORMANCE CAMPAIGNS)

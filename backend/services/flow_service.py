@@ -13,9 +13,10 @@ def get_processed_path(date: str, usina: str) -> str:
     os.makedirs(processed_dir, exist_ok=True)
     return os.path.join(processed_dir, f"{date}.parquet")
 
-def run_flow_processing(usina: str, dates_str: str = None):
+def run_flow_processing(usina: str, dates_str: str = None, progress_callback=None):
     """
     Executa o processamento de todo o fluxograma para a usina.
+    progress_callback: se fornecido, é chamado com (dia_atual_idx, total_dias, data_str)
     """
     logger.info(f"[FLOW] Iniciando processamento para a usina: {usina}")
     
@@ -103,9 +104,20 @@ def run_flow_processing(usina: str, dates_str: str = None):
     aggregators = [n for n in nodes if n.get("data", {}).get("aggregator")]
     geff_nodes = [n for n in nodes if n.get("type") == "geff"]
 
-    results_summary = []
+    # Pré-carrega lookup de séries sintéticas UMA VEZ para a usina (antes do loop de datas)
+    from services.synthetic_service import build_lookup, compute_synthetic
+    try:
+        synth_lookup = build_lookup(usina)
+    except Exception as e:
+        logger.warning(f"Erro ao carregar lookup de séries sintéticas: {e}")
+        synth_lookup = {}
 
-    for date in available_dates:
+    results_summary = []
+    total_dates = len(available_dates)
+
+    for date_idx, date in enumerate(available_dates):
+        if progress_callback:
+            progress_callback(date_idx, total_dates, date)
         raw_path = _parquet_path(date, usina)
         if not os.path.exists(raw_path): continue
         
@@ -608,14 +620,6 @@ def run_flow_processing(usina: str, dates_str: str = None):
 
             # --- Cria a série de Média de Potência CC de Strings OK ---
             tracker_ok_strings = []
-            
-            # Load synthetic lookup once for the plant
-            try:
-                from services.synthetic_service import build_lookup, compute_synthetic
-                synth_lookup = build_lookup(usina)
-            except Exception as e:
-                logger.warning(f"Erro ao carregar lookup de séries sintéticas: {e}")
-                synth_lookup = {}
                 
             for base, group in tracker_groups.items():
                 vento_col = f"tracker_{base}_vento"

@@ -18,7 +18,7 @@ import {
 import '@xyflow/react/dist/style.css'
 import SingleSeriesDropdown, { formatSeriesName } from './SingleSeriesDropdown'
 import { useUsina } from '../hooks/UsinaContext'
-import api, { fetchMappingData, fetchFlowConfig, saveFlowConfig, runFlow, fetchFlowIntegrals } from '../services/api'
+import api, { fetchMappingData, fetchFlowConfig, saveFlowConfig, runFlow, checkFlowStatus, fetchFlowIntegrals } from '../services/api'
 import { useChartSettings } from '../hooks/ChartSettingsContext'
 import { exportTableToPdf, exportTableToPng } from '../utils/exportPdf'
 
@@ -455,6 +455,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
   const [energiaPmiParams, setEnergiaPmiParams] = useState({ multiplier: 0.012 })
   const [allSeries, setAllSeries] = useState([])
   const [isProcessing, setIsProcessing] = useState(false)
+  const [flowProgress, setFlowProgress] = useState(null) // { progress, total, current_day }
   const [showTrackerSensorInfo, setShowTrackerSensorInfo] = useState(false)
   const [showTrackerParamsInfo, setShowTrackerParamsInfo] = useState(false)
   const [toast, setToast] = useState(null)
@@ -854,10 +855,48 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
     }
     try {
       setIsProcessing(true)
-      const res = await runFlow(usinaAtual, selectedDates.join(','))
+      setFlowProgress(null)
+
+      // 1. Inicia a task em background (retorna imediatamente)
+      const startRes = await runFlow(usinaAtual, selectedDates.join(','))
+      const taskId = startRes.task_id
+
+      if (!taskId) {
+        // Fallback: se o backend retornou resultado direto (compatibilidade)
+        if (startRes.status === 'ok') {
+          setToast({ title: 'Processamento Concluído', message: `Processados ${startRes.processed_days} dias.`, type: 'success' })
+          setTimeout(() => setToast(c => c?.title === 'Processamento Concluído' ? null : c), 5000)
+          loadIntegrals(usinaAtual)
+        }
+        return
+      }
+
+      // 2. Polling a cada 2s até finalizar
+      const poll = () => new Promise((resolve, reject) => {
+        const interval = setInterval(async () => {
+          try {
+            const status = await checkFlowStatus(usinaAtual, taskId)
+
+            if (status.status === 'processing') {
+              setFlowProgress({ progress: status.progress, total: status.total, current_day: status.current_day })
+            } else if (status.status === 'done') {
+              clearInterval(interval)
+              resolve(status.result)
+            } else if (status.status === 'error') {
+              clearInterval(interval)
+              reject(new Error(status.message || 'Erro no processamento'))
+            }
+          } catch (pollErr) {
+            clearInterval(interval)
+            reject(pollErr)
+          }
+        }, 2000)
+      })
+
+      const result = await poll()
       setToast({
         title: 'Processamento Concluído',
-        message: `Foram processados com sucesso ${res.processed_days} dias de dados.`,
+        message: `Foram processados com sucesso ${result.processed_days} dias de dados.`,
         type: 'success'
       })
       setTimeout(() => {
@@ -875,6 +914,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
       }, 6000)
     } finally {
       setIsProcessing(false)
+      setFlowProgress(null)
     }
   }
 
@@ -1184,7 +1224,11 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
             onMouseEnter={e => !isProcessing && (e.currentTarget.style.transform = 'translateY(-2px)')}
             onMouseLeave={e => !isProcessing && (e.currentTarget.style.transform = 'translateY(0)')}
           >
-            {isProcessing ? '⚙️ Processando...' : '🚀 Processar Fluxograma'}
+            {isProcessing
+              ? (flowProgress && flowProgress.total > 0
+                  ? `⚙️ ${flowProgress.progress + 1}/${flowProgress.total} dias...`
+                  : '⚙️ Iniciando...')
+              : '🚀 Processar Fluxograma'}
           </button>
           <ReactFlow
             nodes={nodes}
