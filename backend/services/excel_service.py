@@ -205,8 +205,15 @@ def process_excel(content: bytes, original_filename: str, usina: str, skip_unmap
             else:
                 df[col] = pd.to_numeric(df[col], errors='coerce')
 
-    # Preenchimento de buracos (Forward Fill) para lidar com economia de dados do SCADA
+    # 1. Agrupa por minuto (eliminando duplicatas reais)
+    df.set_index("timestamp", inplace=True)
+    df = df.resample('1min').mean()
+    
+    # 2. Preenchimento de buracos (Forward Fill) em cima da grade de minutos perfeita
     df = df.ffill()
+    
+    # 3. Voltar a coluna timestamp
+    df.reset_index(inplace=True)
 
     if skip_unmapped:
         from services.mapping_service import load_mapping
@@ -373,9 +380,15 @@ def process_raw_file(content: bytes, filename: str, usina: str, skip_unmapped: b
             else:
                 df[col] = pd.to_numeric(df[col], errors='coerce')
 
-    # Preenchimento de buracos (Forward Fill) para lidar com economia de dados do SCADA
+    # 1. Agrupa por minuto (eliminando duplicatas reais)
+    df.set_index("timestamp", inplace=True)
+    df = df.resample('1min').mean()
+    
+    # 2. Preenchimento de buracos (Forward Fill) em cima da grade de minutos perfeita
     df = df.ffill()
     
+    # 3. Voltar a coluna timestamp
+    df.reset_index(inplace=True)
     if skip_unmapped:
         from services.mapping_service import load_mapping
         mapping = load_mapping(usina)
@@ -433,8 +446,12 @@ def process_raw_file(content: bytes, filename: str, usina: str, skip_unmapped: b
         df = df.sort_values('timestamp').reset_index(drop=True)
         
         # Faz um ffill novamente após o merge para preencher os buracos nos timestamps
-        # recém-adicionados onde as colunas antigas não tinham correspondência
+        # recém-adicionados onde as colunas antigas não tinham correspondência.
+        # Aplica resample novamente para higienizar caso o parquet antigo contivesse segundos exatos.
+        df.set_index("timestamp", inplace=True)
+        df = df.resample('1min').mean()
         df = df.ffill()
+        df.reset_index(inplace=True)
         
     # ── Salvar no Parquet final ──
     logger.info(f"[PARQUET] Salvando em '{parquet_path}'...")
