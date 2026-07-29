@@ -463,7 +463,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
   const pvsystFileInputRef = useRef(null)
   const [pvsystColumns, setPvsystColumns] = useState([])
   const [isLoadingPvsystColumns, setIsLoadingPvsystColumns] = useState(false)
-  const [epiParams, setEpiParams] = useState({ energiaVar: '', irradianciaVar: '' })
+  const [epiParams, setEpiParams] = useState({ energiaVar: '', irradianciaVar: '', ohmVar: '', earrayVar: '' })
 
   // Estados para Tabela de Integrais Diárias
   const [integralsData, setIntegralsData] = useState({ columns: [], rows: [] })
@@ -476,6 +476,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
   const [showValid, setShowValid] = useState(true)
   const [showResults, setShowResults] = useState(true)
   const [showValidation, setShowValidation] = useState(true)
+  const [showValidInfo, setShowValidInfo] = useState(false)
   const [visibleVars, setVisibleVars] = useState({
     gpoa: true,
     grear: true,
@@ -483,7 +484,9 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
     tamb: true,
     tmod: true,
     tcel: true,
-    sujidade: true,
+    sujidade_dia: true,
+    sujidade_hora: true,
+    sujidade_media: true,
     energia: true,
     tracker: true,
     energia_pmi: true,
@@ -691,7 +694,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
 
       // 1.5. Filtro de Exibir Dados Medidos, Válidos e Resultados
       if (col.type === 'output' || col.type === 'special') {
-        const isResultColumn = ['fator_ajuste', 'epi', 'globinc', 'energia_prevista', 'energia_prevista_ajustada', 'energia_pmi', 'e_grid', 'perdida', 'recuperável', 'pmi corrigida'].some(k => col.key.toLowerCase().includes(k)) || col.key.toLowerCase().startsWith('pvsyst');
+        const isResultColumn = ['fator_ajuste', 'epi', 'globinc', 'energia_esperada', 'energia_esperada_ajustada', 'energia_pmi', 'e_grid', 'perdida', 'recuperável', 'pmi corrigida'].some(k => col.key.toLowerCase().includes(k)) || col.key.toLowerCase().startsWith('pvsyst');
         
         if (isResultColumn) {
           if (!showResults) return false;
@@ -710,7 +713,10 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
       if (colKey.startsWith('tamb') && !visibleVars.tamb) return false;
       if (colKey.startsWith('tmod') && !visibleVars.tmod) return false;
       if (colKey.startsWith('tcel') && !visibleVars.tcel) return false;
-      if (colKey.startsWith('sujidade') && !visibleVars.sujidade) return false;
+      if (colKey === 'sujidade' && !visibleVars.sujidade_dia) return false;
+      if (colKey === 'sujidade_restricted' && !visibleVars.sujidade_hora) return false;
+      if (colKey === 'sujidade_trimmed' && !visibleVars.sujidade_media) return false;
+      if (colKey.startsWith('sujidade_in') && !visibleVars.sujidade_dia && !visibleVars.sujidade_hora && !visibleVars.sujidade_media) return false;
       if (colKey.startsWith('tracker') && !visibleVars.tracker) return false;
       if (colKey.startsWith('curtailment') && !visibleVars.curtailment) return false;
       if (colKey.startsWith('energia_pmi')) return visibleVars.energia_pmi;
@@ -1064,6 +1070,27 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
       );
     }
 
+    if (label.startsWith('Energia Esperada Ajustada')) {
+      return (
+        <div style={{ lineHeight: '1.2' }}>
+          Energia<br/>
+          Esperada<br/>
+          Ajustada<br/>
+          <span style={{ fontSize: '0.9em', fontWeight: 'normal' }}>(Válido)</span>
+        </div>
+      );
+    }
+    
+    if (label.startsWith('Energia Esperada')) {
+      return (
+        <div style={{ lineHeight: '1.2' }}>
+          Energia<br/>
+          Esperada<br/>
+          <span style={{ fontSize: '0.9em', fontWeight: 'normal' }}>(Válido)</span>
+        </div>
+      );
+    }
+
     if (label.startsWith('Energia PMI Corrigida')) {
       return (
         <div style={{ lineHeight: '1.2' }}>
@@ -1279,7 +1306,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                   })
                 }
                 if (node.id === 'tracker') {
-                  setTrackerParams(node.data.trackerParams || { latitude: -23.55, longitude: -46.63, gcr: 0.3, max_angle: 60, tolerance: 10 })
+                  setTrackerParams(node.data.trackerParams || { latitude: -23.55, longitude: -46.63, gcr: 0.3, max_angle: 60, tolerance: 10, angulo_defesa: -60 })
                 }
                 if (node.id === 'sujidade') {
                   setSoilParams({
@@ -1464,6 +1491,10 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '150px' }}>
                       <label style={{ fontSize: 12, fontWeight: 600 }}>Tol. Qtde Pontos Vento:</label>
                       <input type="number" step="1" className="input" value={trackerParams.tol_pontos_vento || 0} onChange={e => setTrackerParams({ ...trackerParams, tol_pontos_vento: parseInt(e.target.value) || 0 })} style={{ padding: '6px' }} title="Qtde máxima de pontos fora da referência para ainda ser considerado Ok." />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '150px' }}>
+                      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--blue)' }}>Ângulo de Defesa (°):</label>
+                      <input type="number" step="1" className="input" value={trackerParams.angulo_defesa ?? -60} onChange={e => setTrackerParams({ ...trackerParams, angulo_defesa: parseFloat(e.target.value) || 0 })} style={{ padding: '6px', borderColor: 'var(--blue)' }} title="Ângulo fixo alvo para identificar o comando de Vento." />
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '150px' }}>
                       <label style={{ fontSize: 12, fontWeight: 600 }}>Tol. Qtde Pontos Travado:</label>
@@ -2338,7 +2369,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
               ) : (
                 <>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Variável de Energia Prevista:</label>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Variável de Energia Esperada:</label>
                     <select 
                       value={epiParams.energiaVar} 
                       onChange={(e) => setEpiParams({ ...epiParams, energiaVar: e.target.value })}
@@ -2353,6 +2384,28 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                     <select 
                       value={epiParams.irradianciaVar} 
                       onChange={(e) => setEpiParams({ ...epiParams, irradianciaVar: e.target.value })}
+                      style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }}
+                    >
+                      <option value="">-- Selecione a variável --</option>
+                      {pvsystColumns.map(col => <option key={col} value={col}>{col}</option>)}
+                    </select>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Variável de Perdas Ôhmicas:</label>
+                    <select 
+                      value={epiParams.ohmVar} 
+                      onChange={(e) => setEpiParams({ ...epiParams, ohmVar: e.target.value })}
+                      style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }}
+                    >
+                      <option value="">-- Selecione a variável --</option>
+                      {pvsystColumns.map(col => <option key={col} value={col}>{col}</option>)}
+                    </select>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Variável de Energia do Arranjo na Entrada do Inversor:</label>
+                    <select 
+                      value={epiParams.earrayVar} 
+                      onChange={(e) => setEpiParams({ ...epiParams, earrayVar: e.target.value })}
                       style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }}
                     >
                       <option value="">-- Selecione a variável --</option>
@@ -2406,6 +2459,93 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
           <div>
             <h3 style={{ margin: 0, fontSize: '18px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
               📋 Tabela de Dados
+              <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+                <button
+                  onClick={() => setShowValidInfo(v => !v)}
+                  title="Entenda como a validação é calculada"
+                  style={{
+                    background: showValidInfo ? 'rgba(251,191,36,0.2)' : 'rgba(255,255,255,0.06)',
+                    border: `1px solid ${showValidInfo ? 'var(--amber)' : 'var(--border)'}`,
+                    borderRadius: '50%',
+                    width: '22px', height: '22px',
+                    cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '12px', fontWeight: '700',
+                    color: showValidInfo ? 'var(--amber)' : 'var(--text-secondary)',
+                    lineHeight: 1,
+                    transition: 'all 0.2s ease',
+                    flexShrink: 0,
+                  }}
+                >
+                  i
+                </button>
+                {showValidInfo && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '30px',
+                    left: '0',
+                    zIndex: 9999,
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '12px',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
+                    padding: '18px 28px',
+                    width: '1080px',
+                    maxWidth: '95vw',
+                    fontSize: '12px',
+                    color: 'var(--text-primary)',
+                    lineHeight: '1.6',
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                      <span style={{ fontWeight: '700', fontSize: '13px', color: 'var(--amber)' }}>ℹ️ Como a validação é calculada</span>
+                      <button onClick={() => setShowValidInfo(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '16px', lineHeight: 1, padding: '0 2px' }}>✕</button>
+                    </div>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11.5px', tableLayout: 'fixed' }}>
+                      <colgroup>
+                        <col style={{ width: '22%' }} />
+                        <col style={{ width: '28%' }} />
+                        <col style={{ width: '50%' }} />
+                      </colgroup>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                          <th style={{ textAlign: 'left', padding: '5px 10px', color: 'var(--text-secondary)', fontWeight: '600' }}>Coluna</th>
+                          <th style={{ textAlign: 'left', padding: '5px 10px', color: 'var(--text-secondary)', fontWeight: '600' }}>Série base</th>
+                          <th style={{ textAlign: 'left', padding: '5px 10px', color: 'var(--text-secondary)', fontWeight: '600' }}>Critério de aprovação</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                          <td style={{ padding: '6px 10px', color: 'var(--text-primary)' }}>Irradiância &gt; 600 W/m²<br/><span style={{ color: 'var(--text-secondary)' }}>Dados Medidos</span></td>
+                          <td style={{ padding: '6px 10px', fontFamily: 'monospace', color: 'var(--amber)', fontSize: '11px' }}>gpoa_15min<br/><span style={{ color: 'var(--text-secondary)', fontFamily: 'sans-serif', fontSize: '10px' }}>média 15 min da gpoa (1-min)</span></td>
+                          <td style={{ padding: '6px 10px' }}>Bloco consecutivo ≥ 3h com média 15 min &gt; 600 W/m²</td>
+                        </tr>
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)' }}>
+                          <td style={{ padding: '6px 10px', color: 'var(--text-primary)' }}>Irradiância &gt; 600 W/m²<br/><span style={{ color: 'var(--text-secondary)' }}>Dados Válidos</span></td>
+                          <td style={{ padding: '6px 10px', fontFamily: 'monospace', color: 'var(--amber)', fontSize: '11px' }}>gpoa_válida_15min<br/><span style={{ color: 'var(--text-secondary)', fontFamily: 'sans-serif', fontSize: '10px' }}>média 15 min da gpoa_válida (1-min)</span></td>
+                          <td style={{ padding: '6px 10px' }}>Bloco consecutivo ≥ 3h com média 15 min &gt; 600 W/m² <span style={{ color: 'var(--amber)', fontWeight: 600 }}>← usada na decisão final</span></td>
+                        </tr>
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                          <td style={{ padding: '6px 10px', color: 'var(--text-primary)' }}>Irradiação &gt; 3 kWh/m²<br/><span style={{ color: 'var(--text-secondary)' }}>Dados Medidos</span></td>
+                          <td style={{ padding: '6px 10px', fontFamily: 'monospace', color: 'var(--amber)', fontSize: '11px' }}>gpoa (1-min)<br/><span style={{ color: 'var(--text-secondary)', fontFamily: 'sans-serif', fontSize: '10px' }}>soma integral do dia ÷ 60.000</span></td>
+                          <td style={{ padding: '6px 10px' }}>Σ gpoa [W/m²·min] ÷ 60.000 ≥ 3 kWh/m²</td>
+                        </tr>
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)' }}>
+                          <td style={{ padding: '6px 10px', color: 'var(--text-primary)' }}>Irradiação &gt; 3 kWh/m²<br/><span style={{ color: 'var(--text-secondary)' }}>Dados Válidos</span></td>
+                          <td style={{ padding: '6px 10px', fontFamily: 'monospace', color: 'var(--amber)', fontSize: '11px' }}>gpoa_válida (1-min)<br/><span style={{ color: 'var(--text-secondary)', fontFamily: 'sans-serif', fontSize: '10px' }}>soma integral do dia ÷ 60.000</span></td>
+                          <td style={{ padding: '6px 10px' }}>Σ gpoa_válida ÷ 60.000 ≥ 3 kWh/m² <span style={{ color: 'var(--amber)', fontWeight: 600 }}>← usada na decisão final</span></td>
+                        </tr>
+                        <tr>
+                          <td style={{ padding: '6px 10px', color: 'var(--text-primary)', fontWeight: 600 }}>Validação (Dia Válido)</td>
+                          <td style={{ padding: '6px 10px', color: 'var(--text-secondary)' }} colSpan={2}>Ambas as colunas de <strong>Dados Válidos</strong> aprovadas simultaneamente</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <div style={{ marginTop: '12px', padding: '8px 10px', background: 'rgba(251,191,36,0.08)', borderRadius: '8px', borderLeft: '3px solid var(--amber)', fontSize: '11px', color: 'var(--text-secondary)' }}>
+                      <strong style={{ color: 'var(--amber)' }}>Contagem de pontos:</strong> cada ponto = 1 minuto. Ex: 540 pts = 9 h. A coluna "consecutivos" mostra o maior bloco ininterrupto acima do limiar.
+                    </div>
+                  </div>
+                )}
+              </div>
             </h3>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -2507,8 +2647,8 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
               <div style={{ 
                 position: 'absolute', top: '100%', right: 0, marginTop: '8px', 
                 background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '6px', 
-                padding: '10px 12px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 50, 
-                display: 'flex', flexDirection: 'column', gap: '10px', minWidth: '140px' 
+                padding: '10px 16px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 50, 
+                display: 'flex', flexDirection: 'column', gap: '10px', minWidth: '220px', whiteSpace: 'nowrap' 
               }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
                   <input type="checkbox" checked={visibleVars.gpoa} onChange={() => setVisibleVars(prev => ({ ...prev, gpoa: !prev.gpoa }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
@@ -2535,8 +2675,16 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                   <span>T<sub>cel</sub></span>
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
-                  <input type="checkbox" checked={visibleVars.sujidade} onChange={() => setVisibleVars(prev => ({ ...prev, sujidade: !prev.sujidade }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
-                  <span>Sujidade</span>
+                  <input type="checkbox" checked={visibleVars.sujidade_dia} onChange={() => setVisibleVars(prev => ({ ...prev, sujidade_dia: !prev.sujidade_dia }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>Sujidade (Dia Completo)</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.sujidade_hora} onChange={() => setVisibleVars(prev => ({ ...prev, sujidade_hora: !prev.sujidade_hora }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>Sujidade (Hora Restrita)</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.sujidade_media} onChange={() => setVisibleVars(prev => ({ ...prev, sujidade_media: !prev.sujidade_media }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>Sujidade (Média Interna)</span>
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
                   <input type="checkbox" checked={visibleVars.tracker} onChange={() => setVisibleVars(prev => ({ ...prev, tracker: !prev.tracker }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
@@ -2552,7 +2700,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
                   <input type="checkbox" checked={visibleVars.pvsyst} onChange={() => setVisibleVars(prev => ({ ...prev, pvsyst: !prev.pvsyst }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
-                  <span>Energia Prevista</span>
+                  <span>Energia Esperada</span>
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
                   <input type="checkbox" checked={visibleVars.referencia_ppc} onChange={() => setVisibleVars(prev => ({ ...prev, referencia_ppc: !prev.referencia_ppc }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
@@ -2676,7 +2824,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                     const firstCol = group.columns[0];
                     const theme = getColumnTheme(firstCol);
                     
-                    if (group.type === 'input' || group.type === 'validation') {
+                    if (group.type === 'input') {
                       return (
                         <th 
                           key={`group-${group.type}-${group.node_id}-${gIdx}`}
@@ -2692,9 +2840,35 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                             background: 'var(--bg-secondary)'
                           }}
                         >
-                          {group.type === 'validation' ? `Resultados - ${usinaAtual || ''}` : formatGroupHeaderLabel(group.node_id)}
+                          {formatGroupHeaderLabel(group.node_id)}
                         </th>
                       );
+                    } else if (group.type === 'validation') {
+                      // Render each validation column directly with rowSpan=2 (no group header cell)
+                      return group.columns.map((col) => {
+                        const colTheme = getColumnTheme(col);
+                        return (
+                          <th
+                            key={`val-direct-${col.key}`}
+                            rowSpan={2}
+                            style={{
+                              padding: '8px 8px',
+                              fontWeight: '700',
+                              fontSize: '11px',
+                              color: colTheme.color,
+                              borderBottom: '2px solid var(--border)',
+                              textAlign: 'center',
+                              whiteSpace: 'normal',
+                              minWidth: col.key === 'dia_valido' ? '80px' : '160px',
+                              background: 'var(--bg-secondary)',
+                              verticalAlign: 'middle',
+                            }}
+                          >
+                            {col.label}
+                          </th>
+                        );
+                      });
+
                     } else {
                       // Output ou Special (spans across both rows)
                       const isStyled = group.type === 'output' || group.type === 'special';
@@ -2722,10 +2896,10 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                   })}
                 </tr>
 
-                {/* LINHA 2 (Nível Inferior - apenas se houver inputs ou validação) */}
-                {headerGroups.some(g => g.type === 'input' || g.type === 'validation') && (
+                {/* LINHA 2 (Nível Inferior - apenas se houver inputs) */}
+                {headerGroups.some(g => g.type === 'input') && (
                   <tr style={{ background: 'var(--bg-secondary)' }}>
-                    {headerGroups.filter(g => g.type === 'input' || g.type === 'validation').map(group => {
+                    {headerGroups.filter(g => g.type === 'input').map(group => {
                       return group.columns.map((col, idx) => {
                         const theme = getColumnTheme(col);
                         // Extrair apenas o número da entrada (ex: "Gpoa - Entrada 2" -> "2")

@@ -143,6 +143,7 @@ def run_flow_processing(usina: str, dates_str: str = None, progress_callback=Non
                 gcr = float(tracker_params.get("gcr", 0.3))
                 max_angle = float(tracker_params.get("max_angle", 60))
                 tol = float(tracker_params.get("tolerance", 10))
+                angulo_defesa = float(tracker_params.get("angulo_defesa", -60))
                 
                 times_for_pvlib = pd.DatetimeIndex(raw_df.index.values)
                 if times_for_pvlib.tz is None:
@@ -173,7 +174,8 @@ def run_flow_processing(usina: str, dates_str: str = None, progress_callback=Non
                 is_backtracking_vals = (np.round(ref_theta_vals, 2) != np.round(trk_false_vals, 2)).astype(float)
                 
                 ref_theta = pd.Series(ref_theta_vals, index=raw_df.index)
-                is_backtracking = pd.Series(is_backtracking_vals, index=raw_df.index).fillna(0).astype(int)
+                is_backtracking = pd.Series(is_backtracking_vals, index=raw_df.index).fillna(0).astype(bool)
+                is_backtracking = (is_backtracking & ref_theta.notna()).astype(int)
                 
                 processed_df["Tracker Ref."] = ref_theta
                 processed_df["Tracker_is_backtracking"] = is_backtracking
@@ -184,19 +186,26 @@ def run_flow_processing(usina: str, dates_str: str = None, progress_callback=Non
                     alvo_col = group.get("alvo")
                     atual_col = group.get("atual")
                     
+                    if atual_col and atual_col in raw_df.columns:
+                        mask_erro_atual = (raw_df[atual_col] - ref_theta).abs() > tol
+                    else:
+                        mask_erro_atual = pd.Series(False, index=raw_df.index)
+                        
                     if alvo_col and alvo_col in raw_df.columns:
-                        diff_alvo = (raw_df[alvo_col] - ref_theta).abs()
-                        mask_vento = diff_alvo > tol
+                        mask_alvo_divergente = (raw_df[alvo_col] - ref_theta).abs() > tol
+                    else:
+                        mask_alvo_divergente = pd.Series(False, index=raw_df.index)
+                        
+                    mask_erro_alvo = mask_alvo_divergente & mask_erro_atual
+                    mask_travado = mask_erro_atual & ~mask_erro_alvo
+                    
+                    if alvo_col and alvo_col in raw_df.columns:
+                        mask_vento = mask_erro_alvo & (raw_df[alvo_col] == angulo_defesa)
                     else:
                         mask_vento = pd.Series(False, index=raw_df.index)
                         
-                    if atual_col and atual_col in raw_df.columns:
-                        mask_erro_atual = (raw_df[atual_col] - ref_theta).abs() > tol
-                        mask_travado = mask_erro_atual & ~mask_vento
-                    else:
-                        mask_travado = pd.Series(False, index=raw_df.index)
-                        
                     # Salva as flags apenas onde existe dados (evita 0 em madrugadas de forma errada, mas podemos setar 0)
+                    processed_df[f"tracker_{base}_erro_alvo"] = (mask_erro_alvo & has_any_ref).astype(int)
                     processed_df[f"tracker_{base}_vento"] = (mask_vento & has_any_ref).astype(int)
                     processed_df[f"tracker_{base}_travado"] = (mask_travado & has_any_ref).astype(int)
 
@@ -498,8 +507,10 @@ def run_flow_processing(usina: str, dates_str: str = None, progress_callback=Non
             epi_params = epi_node.get("data", {}).get("epiParams", {})
             energia_var = epi_params.get("energiaVar")
             irrad_var = epi_params.get("irradianciaVar")
+            ohm_var = epi_params.get("ohmVar")
+            earray_var = epi_params.get("earrayVar")
             
-            vars_to_load = [v for v in [energia_var, irrad_var] if v]
+            vars_to_load = [v for v in [energia_var, irrad_var, ohm_var, earray_var] if v]
             if vars_to_load:
                 pvsyst_path = os.path.join(DATA_DIR, usina, "pvsyst_data.parquet")
                 if os.path.exists(pvsyst_path):
@@ -530,7 +541,12 @@ def run_flow_processing(usina: str, dates_str: str = None, progress_callback=Non
                                 
                             for v in vars_to_load:
                                 if v in df_pvsyst_day.columns:
-                                    processed_df[v] = df_pvsyst_day[v]
+                                    if v == ohm_var:
+                                        processed_df["OhmLoss"] = df_pvsyst_day[v]
+                                    elif v == earray_var:
+                                        processed_df["EArray"] = df_pvsyst_day[v]
+                                    else:
+                                        processed_df[v] = df_pvsyst_day[v]
                     except Exception as e:
                         logger.warning(f"[EPI] Erro ao carregar PVSyst para {date}: {e}")
 
@@ -622,10 +638,10 @@ def run_flow_processing(usina: str, dates_str: str = None, progress_callback=Non
             tracker_ok_strings = []
                 
             for base, group in tracker_groups.items():
-                vento_col = f"tracker_{base}_vento"
+                erro_alvo_col = f"tracker_{base}_erro_alvo"
                 travado_col = f"tracker_{base}_travado"
-                if vento_col in processed_df.columns and travado_col in processed_df.columns:
-                    mask_ok = (processed_df[vento_col] == 0) & (processed_df[travado_col] == 0)
+                if erro_alvo_col in processed_df.columns and travado_col in processed_df.columns:
+                    mask_ok = (processed_df[erro_alvo_col] == 0) & (processed_df[travado_col] == 0)
                     
                     for st_col in group["cc_strings"]:
                         if st_col not in raw_df.columns and st_col in synth_lookup:
@@ -650,10 +666,10 @@ def run_flow_processing(usina: str, dates_str: str = None, progress_callback=Non
                 # --- Calcula a perda (Strings Perdida Não OK) ---
                 total_loss_series = pd.Series(0.0, index=processed_df.index)
                 for base, group in tracker_groups.items():
-                    vento_col = f"tracker_{base}_vento"
+                    erro_alvo_col = f"tracker_{base}_erro_alvo"
                     travado_col = f"tracker_{base}_travado"
-                    if vento_col in processed_df.columns and travado_col in processed_df.columns:
-                        mask_nao_ok = (processed_df[vento_col] == 1) | (processed_df[travado_col] == 1)
+                    if erro_alvo_col in processed_df.columns and travado_col in processed_df.columns:
+                        mask_nao_ok = (processed_df[erro_alvo_col] == 1) | (processed_df[travado_col] == 1)
                         for st_col in group["cc_strings"]:
                             if st_col in raw_df.columns:
                                 st_data = raw_df[st_col]
@@ -676,28 +692,6 @@ def run_flow_processing(usina: str, dates_str: str = None, progress_callback=Non
                 processed_df["Potência CC Strings Perdida Não OK_válida"] = np.nan
 
 
-            # --- Cria a série Potência CA Vaga e Recuperável ---
-            potencia_ppc = processed_df.get("potencia_ppc")
-            ppc_cols = [c for c in processed_df.columns if c.startswith("referencia_ppc") and not c.endswith("_semTR") and not c.endswith("_válida")]
-            if potencia_ppc is not None and ppc_cols:
-                ref_data = processed_df[ppc_cols[0]]
-                vaga = ref_data - potencia_ppc
-                processed_df["Potência CA Vaga"] = vaga
-                processed_df["Potência CA Vaga_válida"] = vaga.where(simult_flag == 1, np.nan)
-                
-                # Potência CA Recuperável = min(Potência CC Strings Perdida, Potência CA Vaga)
-                if "Potência CC Strings Perdida Não OK" in processed_df.columns:
-                    # Precisamos garantir que valores negativos (caso ref < pot) não causem valores bizarros,
-                    # então se vaga for negativa, o min já retornará o valor negativo. 
-                    # Na dúvida, se a potência vaga for negativa, a potência recuperável deve ser zero.
-                    # A regra fala: limitada pela CA vaga. Então primeiro garantimos que vaga seja >= 0 (opcional).
-                    # Deixaremos puramente o mínimo entre os dois (pandas .clip com upper)
-                    # Usamos numpy minimum para fazer a comparação element-wise entre as duas séries.
-                    perdida = processed_df["Potência CC Strings Perdida Não OK"]
-                    recuperavel = np.minimum(perdida, vaga.clip(lower=0))
-                    processed_df["Potência CA Recuperável"] = recuperavel
-                    processed_df["Potência CA Recuperável_válida"] = recuperavel.where(simult_flag == 1, np.nan)
-
             # --- Cria as séries de 15min para gpoa ---
             if "gpoa" in processed_df.columns:
                 processed_df["gpoa_15min"] = processed_df.groupby(pd.Grouper(freq="15min"))["gpoa"].transform("mean")
@@ -708,6 +702,35 @@ def run_flow_processing(usina: str, dates_str: str = None, progress_callback=Non
             # --- Cria série E_Grid_Ajustada_válida ---
             if "E_Grid_válida" in processed_df.columns and "GlobInc_válida" in processed_df.columns and "geff_válida" in processed_df.columns:
                 processed_df["E_Grid_Ajustada_válida"] = processed_df["E_Grid_válida"] * (processed_df["geff_válida"] / processed_df["GlobInc_válida"].replace(0, np.nan))
+                processed_df["E_Grid_Ajustada_MW_válida"] = processed_df["E_Grid_Ajustada_válida"] / 1000.0
+
+            # --- Cria série Ajuste Potência CC String -> E_Grid ---
+            if "E_Grid" in processed_df.columns and "EArray" in processed_df.columns and "OhmLoss" in processed_df.columns:
+                processed_df["Ajuste Potência CC String -> E_Grid"] = processed_df["E_Grid"] / (processed_df["EArray"] + processed_df["OhmLoss"]).replace(0, np.nan)
+            
+            if "E_Grid_válida" in processed_df.columns and "EArray_válida" in processed_df.columns and "OhmLoss_válida" in processed_df.columns:
+                processed_df["Ajuste Potência CC String -> E_Grid_válida"] = processed_df["E_Grid_válida"] / (processed_df["EArray_válida"] + processed_df["OhmLoss_válida"]).replace(0, np.nan)
+
+            # --- Cria série Potência CC Strings Perdida Não OK Corrigida ---
+            if "Ajuste Potência CC String -> E_Grid" in processed_df.columns and "Potência CC Strings Perdida Não OK" in processed_df.columns:
+                processed_df["Potência CC Strings Perdida Não OK Corrigida"] = processed_df["Ajuste Potência CC String -> E_Grid"] * processed_df["Potência CC Strings Perdida Não OK"]
+                
+            if "Ajuste Potência CC String -> E_Grid_válida" in processed_df.columns and "Potência CC Strings Perdida Não OK_válida" in processed_df.columns:
+                processed_df["Potência CC Strings Perdida Não OK Corrigida_válida"] = processed_df["Ajuste Potência CC String -> E_Grid_válida"] * processed_df["Potência CC Strings Perdida Não OK_válida"]
+
+            # --- Cria a série Potência CA Vaga_válida e Recuperável_válida ---
+            energia_pmi_valida = processed_df.get("Energia PMI_válida")
+            egrid_mw_valida = processed_df.get("E_Grid_Ajustada_MW_válida")
+            
+            if energia_pmi_valida is not None and egrid_mw_valida is not None:
+                vaga_valida = (egrid_mw_valida - energia_pmi_valida).clip(lower=0)
+                processed_df["Potência CA Vaga_válida"] = vaga_valida
+                
+                if "Potência CC Strings Perdida Não OK Corrigida_válida" in processed_df.columns:
+                    # Garantimos que vaga seja >= 0
+                    perdida_valida = processed_df["Potência CC Strings Perdida Não OK Corrigida_válida"]
+                    recuperavel_valida = np.minimum(perdida_valida, vaga_valida.clip(lower=0))
+                    processed_df["Potência CA Recuperável_válida"] = recuperavel_valida
 
 
         # Salvar o dia processado
@@ -887,7 +910,7 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
             node_type = node.get("type", "")
             
             if group == "pvsyst":
-                # Adiciona GlobInc (Válido) logo antes da Energia Prevista, que ficará logo após Energia PMI
+                # Adiciona GlobInc (Válido) logo antes da Energia Esperada, que ficará logo após Energia PMI
                 column_definitions.append({
                     "key": "GlobInc_válida",
                     "label": "GlobInc (Válido)",
@@ -903,14 +926,14 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                 })
                 column_definitions.append({
                     "key": "E_Grid_válida",
-                    "label": "Energia Prevista (Válido)",
+                    "label": "Energia Esperada (Válido)",
                     "type": "special",
                     "node_id": "pvsyst"
                 })
-                # Adiciona Energia Prevista Ajustada (Válido)
+                # Adiciona Energia Esperada Ajustada (Válido)
                 column_definitions.append({
                     "key": "E_Grid_Ajustada_válida",
-                    "label": "Energia Prevista Ajustada (Válido)",
+                    "label": "Energia Esperada Ajustada (Válido)",
                     "type": "special",
                     "node_id": "pvsyst_ajustada"
                 })
@@ -939,7 +962,7 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
         if group == "epi":
             column_definitions.extend([
                 {
-                    "key": "Potência CC Strings Perdida Não OK_válida",
+                    "key": "Potência CC Strings Perdida Não OK Corrigida_válida",
                     "label": "Energia Perdida Desvio Tracker (Válido)",
                     "type": "special",
                     "node_id": "perdida_tracker"
@@ -1258,7 +1281,7 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
             else:
                 row_data[col_key] = float(val)
                 
-        # Calcula o EPI (Energia PMI (Válido) / Energia Prevista Ajustada (Válido))
+        # Calcula o EPI (Energia PMI (Válido) / Energia Esperada Ajustada (Válido))
         if "Energia PMI_válida" in row_data and "E_Grid_Ajustada_válida" in row_data:
             val_pmi = row_data["Energia PMI_válida"]
             val_pvsyst = row_data["E_Grid_Ajustada_válida"]
@@ -1279,7 +1302,7 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
             if val_pmi != "-" and val_recup != "-":
                 row_data["Energia PMI Corrigida_válida"] = val_pmi + val_recup
                 
-        # Calcula o EPI Corrigido (Energia PMI Corrigida / Energia Prevista Ajustada)
+        # Calcula o EPI Corrigido (Energia PMI Corrigida / Energia Esperada Ajustada)
         if "Energia PMI Corrigida_válida" in row_data and "E_Grid_Ajustada_válida" in row_data:
             val_pmi_corr = row_data["Energia PMI Corrigida_válida"]
             val_pvsyst = row_data["E_Grid_Ajustada_válida"]

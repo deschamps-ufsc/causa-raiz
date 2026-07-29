@@ -272,6 +272,7 @@ def get_pivot_heatmap(
                 "inversor": m_in,
                 "stringbox": m_sb,
                 "tracker": m_tr,
+                "string": m_st,
                 "estacao": str(meta.get("estacao") or ""),
                 "avg_val": round(avg_val, 4),
                 "integral": round(integral, 4),
@@ -650,6 +651,9 @@ def get_trackers_heatmap(
     max_angle = float(tracker_params.get("max_angle", 60))
     time_offset = int(tracker_params.get("time_offset", 0))
     tolerance = float(tracker_params.get("tolerance", 10))
+    angulo_defesa = float(tracker_params.get("angulo_defesa", -60))
+    tol_vento = int(tracker_params.get("tol_pontos_vento", 0))
+    tol_travado = int(tracker_params.get("tol_pontos_travado", 0))
 
     times_for_pvlib = pd.DatetimeIndex(df.index.values)
     if times_for_pvlib.tz is None:
@@ -696,25 +700,52 @@ def get_trackers_heatmap(
             pts_fora_alvo = 0
             pts_fora_atual = 0
 
+            pts_erro_alvo = 0
             pts_vento = 0
             pts_travado = 0
+            mask_erro_alvo = pd.Series(False, index=df_group.index)
             mask_vento = pd.Series(False, index=df_group.index)
 
+            sum_diff_erro_alvo = 0.0
             sum_diff_vento = 0.0
             sum_diff_travado = 0.0
 
             col_alvo = data.get("alvo")
+            col_atual = data.get("atual")
+            erro_alvo_col = f"tracker_{base}_erro_alvo"
             vento_col = f"tracker_{base}_vento"
-            if vento_col in df_group.columns:
-                mask_vento = df_group[vento_col] == 1
-            elif col_alvo and col_alvo in df_group.columns:
-                mask_vento = (df_group[col_alvo] - df_group["TrackerRef"]).abs() > tolerance
+            travado_col = f"tracker_{base}_travado"
+            
+            if erro_alvo_col in df_group.columns and travado_col in df_group.columns:
+                mask_erro_alvo = df_group[erro_alvo_col] == 1
+                mask_vento = df_group[vento_col] == 1 if vento_col in df_group.columns else pd.Series(False, index=df_group.index)
+                mask_travado = df_group[travado_col] == 1
             else:
-                mask_vento = pd.Series(False, index=df_group.index)
+                if col_atual and col_atual in df_group.columns:
+                    mask_erro_atual = (df_group[col_atual] - df_group["TrackerRef"]).abs() > tolerance
+                else:
+                    mask_erro_atual = pd.Series(False, index=df_group.index)
+                    
+                if col_alvo and col_alvo in df_group.columns:
+                    mask_alvo_divergente = (df_group[col_alvo] - df_group["TrackerRef"]).abs() > tolerance
+                else:
+                    mask_alvo_divergente = pd.Series(False, index=df_group.index)
+                    
+                mask_erro_alvo = mask_alvo_divergente & mask_erro_atual
+                mask_travado = mask_erro_atual & ~mask_erro_alvo
+                if col_alvo and col_alvo in df_group.columns:
+                    mask_vento = mask_erro_alvo & (df_group[col_alvo] == angulo_defesa)
+                else:
+                    mask_vento = pd.Series(False, index=df_group.index)
                 
+            pts_erro_alvo = 0
+            if mask_erro_alvo.any():
+                streaks = mask_erro_alvo.groupby((~mask_erro_alvo).cumsum()).sum()
+                pts_erro_alvo = int(streaks[streaks > tol_vento].sum())
             pts_vento = 0
             if mask_vento.any():
-                pts_vento = int((mask_vento.groupby((~mask_vento).cumsum()).sum()).max())
+                streaks = mask_vento.groupby((~mask_vento).cumsum()).sum()
+                pts_vento = int(streaks[streaks > tol_vento].sum())
 
             if col_alvo and col_alvo in df_group.columns:
                 diff_series = (df_group[col_alvo] - df_group["TrackerRef"]).abs().dropna()
@@ -723,8 +754,7 @@ def get_trackers_heatmap(
                     count_alvo = len(diff_series)
                     pts_fora_alvo = int((diff_series > tolerance).sum())
 
-            col_atual = data.get("atual")
-            travado_col = f"tracker_{base}_travado"
+
             if col_atual and col_atual in df_group.columns:
                 diff_atual_series = (df_group[col_atual] - df_group["TrackerRef"]).abs()
                 diff_series = diff_atual_series.dropna()
@@ -733,21 +763,20 @@ def get_trackers_heatmap(
                     count_atual = len(diff_series)
                     pts_fora_atual = int((diff_series > tolerance).sum())
 
-                if travado_col in df_group.columns:
-                    mask_travado = df_group[travado_col] == 1
-                else:
-                    mask_erro_atual = diff_atual_series > tolerance
-                    mask_travado = mask_erro_atual & ~mask_vento
+
                     
                 pts_travado = 0
                 if mask_travado.any():
-                    pts_travado = int((mask_travado.groupby((~mask_travado).cumsum()).sum()).max())
+                    streaks_travado = mask_travado.groupby((~mask_travado).cumsum()).sum()
+                    pts_travado = int(streaks_travado[streaks_travado > tol_travado].sum())
                 
+                sum_diff_erro_alvo = float(diff_atual_series[mask_erro_alvo].sum())
                 sum_diff_vento = float(diff_atual_series[mask_vento].sum())
                 sum_diff_travado = float(diff_atual_series[mask_travado].sum())
             else:
                 if col_alvo and col_alvo in df_group.columns:
                     diff_alvo_series = (df_group[col_alvo] - df_group["TrackerRef"]).abs()
+                    sum_diff_erro_alvo = float(diff_alvo_series[mask_erro_alvo].sum())
                     sum_diff_vento = float(diff_alvo_series[mask_vento].sum())
 
             energia_strings = 0.0
@@ -789,8 +818,10 @@ def get_trackers_heatmap(
                     "count_atual": count_atual,
                     "pts_fora_alvo": pts_fora_alvo,
                     "pts_fora_atual": pts_fora_atual,
+                    "pts_erro_alvo": pts_erro_alvo,
                     "pts_vento": pts_vento,
                     "pts_travado": pts_travado,
+                    "sum_diff_erro_alvo": sum_diff_erro_alvo,
                     "sum_diff_vento": sum_diff_vento,
                     "sum_diff_travado": sum_diff_travado,
                     "alvo": col_alvo,
@@ -1360,24 +1391,31 @@ def get_tracker_chart(usina: str, date: str, alvo: str = None, atual: str = None
     elif atual and (".PosAngAtual" in atual or ".PosAngMedido" in atual):
         base = atual.replace(".PosAngAtual", "").replace(".PosAngMedido", "")
         
+    erro_alvo_col = f"tracker_{base}_erro_alvo" if base else None
     vento_col = f"tracker_{base}_vento" if base else None
     travado_col = f"tracker_{base}_travado" if base else None
     
-    if vento_col and vento_col in df.columns:
-        mask_vento = df[vento_col] == 1
-    elif alvo and alvo in df.columns:
-        diff_alvo = (df[alvo] - df["pvlib"]).abs()
-        mask_vento = diff_alvo > tolerance
-    else:
-        mask_vento = pd.Series(False, index=df.index)
-        
-    if travado_col and travado_col in df.columns:
+    if erro_alvo_col and erro_alvo_col in df.columns and travado_col and travado_col in df.columns:
+        mask_erro_alvo = df[erro_alvo_col] == 1
+        mask_vento = df[vento_col] == 1 if vento_col in df.columns else pd.Series(False, index=df.index)
         mask_travado = df[travado_col] == 1
-    elif atual and atual in df.columns:
-        mask_erro_atual = (df[atual] - df["pvlib"]).abs() > tolerance
-        mask_travado = mask_erro_atual & ~mask_vento
     else:
-        mask_travado = pd.Series(False, index=df.index)
+        if atual and atual in df.columns:
+            mask_erro_atual = (df[atual] - df["pvlib"]).abs() > tolerance
+        else:
+            mask_erro_atual = pd.Series(False, index=df.index)
+            
+        if alvo and alvo in df.columns:
+            mask_alvo_divergente = (df[alvo] - df["pvlib"]).abs() > tolerance
+        else:
+            mask_alvo_divergente = pd.Series(False, index=df.index)
+            
+        mask_erro_alvo = mask_alvo_divergente & mask_erro_atual
+        mask_travado = mask_erro_atual & ~mask_erro_alvo
+        if alvo and alvo in df.columns:
+            mask_vento = mask_erro_alvo & (df[alvo] == tracker_params.get("angulo_defesa", -60))
+        else:
+            mask_vento = pd.Series(False, index=df.index)
         
     has_data = pd.Series(False, index=df.index)
     if alvo and alvo in df.columns: has_data = has_data | df[alvo].notnull()
@@ -1392,14 +1430,15 @@ def get_tracker_chart(usina: str, date: str, alvo: str = None, atual: str = None
     else:
         valid_data = has_data.copy()
         
-    mask_ok = has_data & df["pvlib"].notnull() & ~mask_vento & ~mask_travado
+    mask_ok = has_data & df["pvlib"].notnull() & ~mask_erro_alvo & ~mask_travado
     
     backtracking_list = []
     if "Tracker_is_backtracking" in df.columns:
-        backtracking_list = [1 if b == 1 else 0 for b in df["Tracker_is_backtracking"]]
+        backtracking_list = [1 if (b == 1 and pd.notnull(p)) else 0 for b, p in zip(df["Tracker_is_backtracking"], df["pvlib"])]
     else:
         backtracking_list = [0] * len(df)
         
+    erro_alvo_list = [1 if e else 0 for e in mask_erro_alvo]
     vento_list = [1 if v else 0 for v in mask_vento]
     travado_list = [1 if t else 0 for t in mask_travado]
     ok_list = [1 if o else 0 for o in mask_ok]
@@ -1421,6 +1460,7 @@ def get_tracker_chart(usina: str, date: str, alvo: str = None, atual: str = None
         "atual": atual_list,
         "pvlib": [round(x, 2) if pd.notnull(x) else None for x in df["pvlib"]],
         "tolerance": tolerance,
+        "erro_alvo": erro_alvo_list,
         "vento": vento_list,
         "travado": travado_list,
         "ok": ok_list,

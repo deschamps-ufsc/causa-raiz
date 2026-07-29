@@ -480,121 +480,6 @@
     "shared": true
   },
   {
-    "id": "b609549a-247c-4770-94da-577a2ab43b48",
-    "created_at": "2026-07-27T01:45:12.396283",
-    "name": "Potência CC Strings Perdida",
-    "user": "deschamps.ufsc@gmail.com",
-    "selectedDates": [
-      "2026-06-09",
-      "2026-06-10",
-      "2026-06-11",
-      "2026-06-12",
-      "2026-06-15",
-      "2026-06-16",
-      "2026-06-17"
-    ],
-    "selectedSeries": [
-      "Potência CC Strings Perdida Não OK",
-      "Potência CC Strings Perdida Não OK_válida",
-      "potencia_ppc",
-      "potencia_ppc_válida",
-      "referencia_ppc",
-      "referencia_ppc_válida",
-      "Potência CA Recuperável",
-      "Potência CA Recuperável_válida",
-      "Potência CA Vaga",
-      "Potência CA Vaga_válida"
-    ],
-    "activeFilters": [],
-    "visibleFilters": [],
-    "filterColors": {
-      "Tracker Piranômetro": "#f97316",
-      "Simultaneidade": "#ef4444",
-      "curtailment": "#059669",
-      "Dados Válidos": "#7c3aed"
-    },
-    "chartConfig": {
-      "gridX": true,
-      "gridY1": true,
-      "gridY2": false,
-      "gridY3": false,
-      "gridY4": false,
-      "xGridSpacing": "",
-      "xLimits": {
-        "min": "00:00",
-        "max": "23:59"
-      },
-      "y1Limits": {
-        "min": 0,
-        "max": 57
-      },
-      "y2Limits": {
-        "min": "",
-        "max": ""
-      },
-      "y3Limits": {
-        "min": "",
-        "max": ""
-      },
-      "y4Limits": {
-        "min": "",
-        "max": ""
-      },
-      "appliedRanges": {
-        "y1": [
-          0,
-          57
-        ]
-      },
-      "seriesAxisMap": {
-        "Potência CC Média Strings OK": "hidden:y3",
-        "Potência CC Média Strings OK_válida": "hidden:y3",
-        "Potência CC Strings Perdida Não OK": "y1",
-        "Potência CC Strings Perdida Não OK_válida": "y1",
-        "potencia_ppc": "y1",
-        "potencia_ppc_válida": "y1",
-        "referencia_ppc": "y1",
-        "referencia_ppc_válida": "y1",
-        "Potência CA Recuperável": "y1",
-        "Potência CA Recuperável_válida": "y1",
-        "Potência CA Vaga": "y1",
-        "Potência CA Vaga_válida": "y1"
-      },
-      "seriesColors": {
-        "Potência CC Média Strings OK": "#C62828",
-        "Potência CC Média Strings OK_válida": "#EF6C00",
-        "Potência CC Strings Perdida Não OK": "#F9CC00",
-        "Potência CC Strings Perdida Não OK_válida": "#F9CC00",
-        "potencia_ppc": "#00838F",
-        "potencia_ppc_válida": "#00838F",
-        "referencia_ppc": "#E53935",
-        "referencia_ppc_válida": "#E53935",
-        "Potência CA Recuperável": "#7BFF19",
-        "Potência CA Recuperável_válida": "#7BFF19",
-        "Potência CA Vaga": "#8748AE",
-        "Potência CA Vaga_válida": "#8748AE"
-      },
-      "seriesWidths": {
-        "potencia_ppc": 1,
-        "potencia_ppc_válida": 1,
-        "referencia_ppc": 1,
-        "referencia_ppc_válida": 1
-      },
-      "seriesDashes": {
-        "potencia_ppc": "solid",
-        "potencia_ppc_válida": "solid",
-        "referencia_ppc": "solid",
-        "referencia_ppc_válida": "solid"
-      },
-      "seriesFills": {
-        "Potência CC Strings Perdida Não OK_válida": 10,
-        "potencia_ppc_válida": 10
-      },
-      "legendPosition": "right"
-    },
-    "shared": true
-  },
-  {
     "id": "44396848-55ba-41e6-80e1-8b89370c5252",
     "created_at": "2026-07-27T23:34:19.628016",
     "name": "Sujidade",
@@ -674,6 +559,129 @@
       },
       "seriesFills": {
         "sujidade_válida": 8
+      },
+      "legendPosition": "right"
+    },
+    "shared": true
+  },
+  {
+    "id": "b609549a-247c-4770-94da-577a2ab43b48",
+    "created_at": "2026-07-29T01:35:26.926570",
+    "name": "Potência CC Strings Perdida",
+    "user": "deschamps.ufsc@gmail.com",
+    "selectedDates": [
+      "2026-06-10",
+      "2026-06-11",
+      "2026-06-12",
+      "2026-06-15",
+      "2026-06-16"
+    ],
+    "selectedSeries": [
+      "referencia_ppc",
+      "Potência CA Recuperável_válida",
+      "Potência CA Vaga_válida",
+      "Energia PMI",
+      "E_Grid_Ajustada_MW_válida",
+      "Potência CC Strings Perdida Não OK Corrigida",
+      "Potência CC Strings Perdida Não OK Corrigida_válida"
+    ],
+    "activeFilters": [],
+    "visibleFilters": [],
+    "filterColors": {
+      "Tracker Piranômetro": "#f97316",
+      "Simultaneidade": "#ef4444",
+      "curtailment": "#059669",
+      "Dados Válidos": "#7c3aed"
+    },
+    "chartConfig": {
+      "gridX": true,
+      "gridY1": true,
+      "gridY2": false,
+      "gridY3": false,
+      "gridY4": false,
+      "xGridSpacing": "",
+      "xLimits": {
+        "min": "00:00",
+        "max": "23:59"
+      },
+      "y1Limits": {
+        "min": 0,
+        "max": 3
+      },
+      "y2Limits": {
+        "min": "",
+        "max": ""
+      },
+      "y3Limits": {
+        "min": 0,
+        "max": 15
+      },
+      "y4Limits": {
+        "min": "",
+        "max": ""
+      },
+      "appliedRanges": {},
+      "seriesAxisMap": {
+        "Potência CC Média Strings OK": "hidden:y3",
+        "Potência CC Média Strings OK_válida": "hidden:y3",
+        "Potência CC Strings Perdida Não OK": "y3",
+        "Potência CC Strings Perdida Não OK_válida": "y3",
+        "potencia_ppc": "y3",
+        "potencia_ppc_válida": "y3",
+        "referencia_ppc": "y3",
+        "referencia_ppc_válida": "y3",
+        "Potência CA Recuperável": "y3",
+        "Potência CA Recuperável_válida": "y3",
+        "Potência CA Vaga": "y3",
+        "Potência CA Vaga_válida": "y3",
+        "geff_semTR_válida": "hidden:y1",
+        "E_Grid_Ajustada_válida": "y2",
+        "Energia PMI": "y3",
+        "E_Grid_Ajustada_MW_válida": "y3",
+        "Potência CC Strings Perdida Não OK Corrigida": "y3",
+        "Potência CC Strings Perdida Não OK Corrigida_válida": "y3"
+      },
+      "seriesColors": {
+        "Potência CC Média Strings OK": "#C62828",
+        "Potência CC Média Strings OK_válida": "#EF6C00",
+        "Potência CC Strings Perdida Não OK": "#F9CC00",
+        "Potência CC Strings Perdida Não OK_válida": "#F9CC00",
+        "potencia_ppc": "#00838F",
+        "potencia_ppc_válida": "#00838F",
+        "referencia_ppc": "#E53935",
+        "referencia_ppc_válida": "#E53935",
+        "Potência CA Recuperável": "#7BFF19",
+        "Potência CA Recuperável_válida": "#7BFF19",
+        "Potência CA Vaga": "#8748AE",
+        "Potência CA Vaga_válida": "#8748AE",
+        "geff_semTR_válida": "#F9CC00",
+        "E_Grid_Ajustada_válida": "#D81B60",
+        "Energia PMI": "#0277BD",
+        "E_Grid_Ajustada_MW_válida": "#1565C0",
+        "Potência CC Strings Perdida Não OK Corrigida": "#2E7D32",
+        "Potência CC Strings Perdida Não OK Corrigida_válida": "#00695C"
+      },
+      "seriesWidths": {
+        "potencia_ppc": 1,
+        "potencia_ppc_válida": 1,
+        "referencia_ppc": 1,
+        "referencia_ppc_válida": 1,
+        "geff_semTR_válida": 1,
+        "Energia PMI": 1,
+        "E_Grid_Ajustada_MW_válida": 2.5
+      },
+      "seriesDashes": {
+        "potencia_ppc": "solid",
+        "potencia_ppc_válida": "solid",
+        "referencia_ppc": "solid",
+        "referencia_ppc_válida": "solid",
+        "geff_semTR_válida": "solid",
+        "Energia PMI": "solid"
+      },
+      "seriesFills": {
+        "Potência CC Strings Perdida Não OK_válida": 10,
+        "potencia_ppc_válida": 10,
+        "Energia PMI": 9
       },
       "legendPosition": "right"
     },

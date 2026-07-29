@@ -204,7 +204,9 @@
       "operation": "sum",
       "epiParams": {
         "energiaVar": "E_Grid",
-        "irradianciaVar": "GlobInc"
+        "irradianciaVar": "GlobInc",
+        "earrayVar": "EArray",
+        "ohmVar": "OhmLoss"
       }
     }
   }

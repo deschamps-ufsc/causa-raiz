@@ -100,7 +100,7 @@ def list_series_for_dates(dates_str: str, usina: str) -> list[dict]:
         elemento = info.get("elemento")
         # Forçar PVSyst para colunas que vieram do arquivo PVSyst ou derivadas
         base_col = col.replace("_válida", "")
-        if base_col in pvsyst_cols or base_col == "E_Grid_Ajustada":
+        if base_col in pvsyst_cols or base_col.startswith("E_Grid_Ajustada") or base_col.startswith("OhmLoss") or base_col.startswith("EArray") or base_col.startswith("Ajuste Potência CC"):
             elemento = "PVSyst"
             info["mapeada"] = True
             
@@ -133,7 +133,7 @@ def list_series_for_dates(dates_str: str, usina: str) -> list[dict]:
             "tracker": info.get("tracker"),
             "string": info.get("string"),
             "estacao": info.get("estacao"),
-            "mapeada": col in mapping,
+            "mapeada": col in mapping or info.get("mapeada", False),
             "processada": (col in proc_cols) and (col not in raw_cols),
             "sintetica": col in synth_cols,
         })
@@ -333,7 +333,7 @@ def _resolve_columns(
         filtered = []
         for col in all_cols:
             info = mapping.get(col, {})
-            if col in pvsyst_cols:
+            if col in pvsyst_cols or col.startswith("E_Grid_Ajustada") or col.startswith("OhmLoss") or col.startswith("EArray") or col.startswith("Ajuste Potência CC"):
                 info["elemento"] = "PVSyst"
                 info["mapeada"] = True
             

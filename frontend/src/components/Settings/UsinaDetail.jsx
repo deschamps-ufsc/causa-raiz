@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
   uploadExcel, uploadMapa,
@@ -66,6 +67,7 @@ export default function UsinaDetail({ usina, usinaObj }) {
   const [skipUnmapped, setSkipUnmapped] = useState(false)
   const [deleteSeriesModalOpen, setDeleteSeriesModalOpen] = useState(false)
   const [dayToDelete, setDayToDelete] = useState(null)
+  const [showNaoImportadas, setShowNaoImportadas] = useState(false)
   const inputRef = useRef()
 
   const handleDayCardClick = async (date) => {
@@ -436,11 +438,34 @@ export default function UsinaDetail({ usina, usinaObj }) {
                       <div className="card-title" style={{ margin: 0 }}>
                         📈 Resumo de {selectedDateForSummary}
                       </div>
-                      <button className="btn btn-primary btn-sm" onClick={() => navigate('/dashboard', { state: { date: selectedDateForSummary } })}>
-                        📊 Ver no Dashboard
-                      </button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {dateSummaryData && (
+                          <button
+                            className="btn btn-sm"
+                            onClick={() => setShowNaoImportadas(true)}
+                            style={{
+                              border: dateSummaryData.mapeadas_nao_importadas?.count > 0
+                                ? '1px solid rgba(251,191,36,0.6)'
+                                : '1px solid rgba(34,197,94,0.4)',
+                              color: dateSummaryData.mapeadas_nao_importadas?.count > 0
+                                ? 'var(--amber)'
+                                : 'var(--green)',
+                              background: dateSummaryData.mapeadas_nao_importadas?.count > 0
+                                ? 'rgba(251,191,36,0.08)'
+                                : 'rgba(34,197,94,0.07)',
+                            }}
+                          >
+                            {dateSummaryData.mapeadas_nao_importadas?.count > 0
+                              ? `⚠️ Séries Não Importadas (${dateSummaryData.mapeadas_nao_importadas.count})`
+                              : '✅ Séries Não Importadas'}
+                          </button>
+                        )}
+                        <button className="btn btn-primary btn-sm" onClick={() => navigate('/dashboard', { state: { date: selectedDateForSummary } })}>
+                          📊 Ver no Dashboard
+                        </button>
+                      </div>
                     </div>
-                    
+
                     {dateSummaryLoading ? (
                       <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>⏳ Carregando detalhes...</div>
                     ) : dateSummaryData ? (
@@ -489,6 +514,8 @@ export default function UsinaDetail({ usina, usinaObj }) {
                             </div>
                           )
                         })}
+
+
                       </div>
                     ) : null}
                   </div>
@@ -496,7 +523,113 @@ export default function UsinaDetail({ usina, usinaObj }) {
               </div>
             )}
             
+            {/* Portal: Modal Séries Mapeadas e Não Importadas */}
+            {showNaoImportadas && createPortal(
+              <div
+                onClick={() => setShowNaoImportadas(false)}
+                style={{
+                  position: 'fixed', inset: 0, zIndex: 9999,
+                  background: 'rgba(0,0,0,0.6)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                <div
+                  onClick={e => e.stopPropagation()}
+                  style={{
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 14,
+                    boxShadow: '0 16px 48px rgba(0,0,0,0.45)',
+                    padding: '24px 28px',
+                    width: 'min(700px, 92vw)',
+                    maxHeight: '80vh',
+                    display: 'flex', flexDirection: 'column',
+                    gap: 16,
+                  }}
+                >
+                  {/* Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--text-primary)' }}>
+                        Séries Mapeadas e Não Importadas
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+                        {selectedDateForSummary}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowNaoImportadas(false)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 22, lineHeight: 1, padding: '2px 6px' }}
+                    >✕</button>
+                  </div>
+
+                  {/* Conteúdo */}
+                  {dateSummaryData?.mapeadas_nao_importadas?.count > 0 ? (
+                    <>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div style={{ fontSize: 32, fontWeight: 800, color: 'var(--amber)' }}>
+                          {dateSummaryData.mapeadas_nao_importadas.count}
+                        </div>
+                        <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                          série{dateSummaryData.mapeadas_nao_importadas.count !== 1 ? 's' : ''} mapeada{dateSummaryData.mapeadas_nao_importadas.count !== 1 ? 's' : ''} não
+                          encontrada{dateSummaryData.mapeadas_nao_importadas.count !== 1 ? 's' : ''} no arquivo deste dia<br />
+                          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                            Total mapeado (nativas): {mappingSummary?.total_nativas ?? '?'}
+                          </span>
+                        </div>
+                      </div>
+                      <div style={{
+                        display: 'flex', flexWrap: 'wrap', gap: '5px 7px',
+                        overflowY: 'auto',
+                        maxHeight: 'calc(80vh - 200px)',
+                        padding: '4px 0',
+                      }}>
+                        {[...dateSummaryData.mapeadas_nao_importadas.values]
+                          .sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' }))
+                          .map(v => (
+                            <span key={v} style={{
+                              fontSize: 11, fontFamily: 'monospace',
+                              background: 'rgba(251,191,36,0.09)',
+                              border: '1px solid rgba(251,191,36,0.28)',
+                              color: 'var(--text-secondary)',
+                              borderRadius: 5, padding: '3px 8px',
+                              whiteSpace: 'nowrap',
+                            }}>
+                              {v}
+                            </span>
+                          ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{
+                      display: 'flex', flexDirection: 'column',
+                      alignItems: 'center', justifyContent: 'center',
+                      padding: '36px 0', gap: 14,
+                    }}>
+                      <div style={{ fontSize: 44 }}>✅</div>
+                      <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--green)' }}>
+                        Todas as séries mapeadas foram importadas!
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>
+                        Todas as {mappingSummary?.total_nativas ?? ''} séries nativas do mapeamento estão presentes neste dia.
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    style={{ alignSelf: 'flex-end' }}
+                    onClick={() => setShowNaoImportadas(false)}
+                  >
+                    Fechar
+                  </button>
+                </div>
+              </div>,
+              document.body
+            )}
+
             {/* Drive Import Modal */}
+
             {driveModalOpen && (
               <DriveImportModal
                 usina={usina}

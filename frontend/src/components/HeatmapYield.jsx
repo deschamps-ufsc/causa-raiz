@@ -156,15 +156,19 @@ export default function HeatmapYield({ usina, dates, activeFilters = [] }) {
       const isStringVar = elLower.includes('string') || elLower.includes('cc') || elLower.includes('dc')
       
       if (isStringVar) {
-        const strMatch = leafId.match(/(?:string|str)\D*(\d+)/i)
-        if (strMatch) {
-          leafId = `String ${parseInt(strMatch[1], 10)}`
+        if (r.string) {
+          leafId = `String ${r.string}`
         } else {
-          const numMatch = leafId.match(/(\d+)$/)
-          if (numMatch) {
-            leafId = `String ${parseInt(numMatch[1], 10)}`
+          const strMatch = leafId.match(/(?:string|str)\D*(\d+)/i)
+          if (strMatch) {
+            leafId = `String ${parseInt(strMatch[1], 10)}`
           } else {
-            leafId = `String ${leafId.split(/[._]/).pop()}`
+            const numMatch = leafId.match(/(\d+)$/)
+            if (numMatch) {
+              leafId = `String ${parseInt(numMatch[1], 10)}`
+            } else {
+              leafId = `String ${leafId.split(/[._]/).pop()}`
+            }
           }
         }
       } else {

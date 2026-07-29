@@ -125,6 +125,14 @@ def get_date_details(date: str, usina: str = Query(..., description="Nome da usi
                 else:
                     nao_mapeadas.append(s["coluna"])
 
+        # Identifica séries mapeadas que não estão presentes no parquet da data
+        mapping = load_mapping(usina)
+        present_cols = {s["coluna"] for s in series_info}
+        mapeadas_nao_importadas = [
+            col for col in mapping.keys() 
+            if col not in present_cols
+        ]
+
         def fmt(s_set):
             l = sorted(list(s_set))
             return {"count": len(l), "values": l}
@@ -139,7 +147,8 @@ def get_date_details(date: str, usina: str = Query(..., description="Nome da usi
             "strings": fmt(strings),
             "outros": {"count": len(outros), "values": sorted(outros)},
             "nao_mapeadas": {"count": len(nao_mapeadas), "values": sorted(nao_mapeadas)},
-            "processadas": {"count": len(processadas), "values": sorted(processadas)}
+            "processadas": {"count": len(processadas), "values": sorted(processadas)},
+            "mapeadas_nao_importadas": {"count": len(mapeadas_nao_importadas), "values": sorted(mapeadas_nao_importadas)}
         }
     except Exception as e:
         logger.error(f"[DATES DETAILS] Erro: {e}")

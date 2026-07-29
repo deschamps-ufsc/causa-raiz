@@ -38,7 +38,9 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
     perdas: false,
     kwp: true,
     energia: true,
-    yield: true
+    yield: true,
+    desvio: true,
+    desvioMax: true
   })
   const toggleCol = (c) => setVisCols(prev => ({ ...prev, [c]: !prev[c] }))
 
@@ -208,7 +210,7 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
         if (lvl === 1) type = 'stringbox'
         if (lvl === 2) type = 'tracker'
         const node = { label, values: {}, children: new Map(), isLeaf: false, level: lvl, type }
-        for (let c of cols) node.values[c] = { diff_alvo_sum: 0, diff_atual_sum: 0, count_alvo: 0, count_atual: 0, pts_fora_alvo: 0, pts_fora_atual: 0, pts_vento: 0, pts_travado: 0, sum_diff_vento: 0, sum_diff_travado: 0, serieName: '', serie_alvo: '', serie_atual: '', energia: null, kwp: null, yield: null, count_trackers: 0 }
+        for (let c of cols) node.values[c] = { diff_alvo_sum: 0, diff_atual_sum: 0, count_alvo: 0, count_atual: 0, pts_fora_alvo: 0, pts_fora_atual: 0, pts_erro_alvo: 0, pts_vento: 0, pts_travado: 0, sum_diff_erro_alvo: 0, sum_diff_vento: 0, sum_diff_travado: 0, serieName: '', serie_alvo: '', serie_atual: '', energia: null, kwp: null, yield: null, count_trackers: 0 }
         map.set(label, node)
       }
       return map.get(label)
@@ -248,8 +250,10 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
             node.values[c].count_atual += r.count_atual
             node.values[c].pts_fora_atual += r.pts_fora_atual || 0
           }
+          node.values[c].pts_erro_alvo += r.pts_erro_alvo || 0
           node.values[c].pts_vento += r.pts_vento || 0
           node.values[c].pts_travado += r.pts_travado || 0
+          node.values[c].sum_diff_erro_alvo += r.sum_diff_erro_alvo || 0
           node.values[c].sum_diff_vento += r.sum_diff_vento || 0
           node.values[c].sum_diff_travado += r.sum_diff_travado || 0
           node.values[c].count_trackers = (node.values[c].count_trackers || 0) + 1
@@ -366,10 +370,68 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
       return { bg: `rgba(${r},${g},${b},0.8)`, text: textColor }
     }
 
+    const allYields = [];
+    const collectYields = (nodes) => {
+      for (const node of nodes) {
+        if (node.isLeaf) {
+          for (const c in node.values) {
+             const y = node.values[c].yield;
+             if (y != null && !isNaN(y)) {
+               allYields.push(y);
+             }
+          }
+        }
+        if (node.children) collectYields(node.children);
+      }
+    };
+    collectYields(tree);
+    
+    const globalMean = allYields.length > 0 ? allYields.reduce((a,b)=>a+b,0)/allYields.length : 0;
+    const globalMax = allYields.length > 0 ? Math.max(...allYields) : 0;
+
+    const getDesvioColor = (val, mean=globalMean) => {
+      if (val == null || !mean) return { bg: 'transparent', text: '#94a3b8' }
+      const pct = (val / mean - 1) * 100
+      
+      const interpolate = (c1, c2, factor) => Math.round(c1 + (c2 - c1) * Math.max(0, Math.min(1, factor)))
+      
+      const green = [99, 190, 123]
+      const yellow = [255, 235, 132]
+      const lightRed = [248, 105, 107]
+      const pureRed = [255, 0, 0]
+
+      let r, g, b, f = 0
+
+      if (pct <= -20) { 
+          [r,g,b] = pureRed 
+      }
+      else if (pct <= -5) { 
+          [r,g,b] = lightRed 
+      }
+      else if (pct >= 5) { 
+          [r,g,b] = green 
+      }
+      else if (pct > 0) {
+          f = pct / 5
+          r = interpolate(yellow[0], green[0], f)
+          g = interpolate(yellow[1], green[1], f)
+          b = interpolate(yellow[2], green[2], f)
+      } else {
+          f = (pct - (-5)) / 5
+          r = interpolate(lightRed[0], yellow[0], f)
+          g = interpolate(lightRed[1], yellow[1], f)
+          b = interpolate(lightRed[2], yellow[2], f)
+      }
+      return { bg: `rgb(${r},${g},${b})`, text: pct <= -20 ? '#fff' : '#1e293b' }
+    }
+
     return {
       cols: Array.from(cols).sort(),
       tree,
-      getErrorColor
+      getErrorColor,
+      getDesvioColor,
+      globalMean,
+      globalMax
     }
   }, [data, selectedDates, colCat, rowCat1, rowCat2])
 
@@ -744,6 +806,38 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
             >
               Yield
             </button>
+            <button
+              onClick={() => toggleCol('desvio')}
+              style={{
+                padding: '4px 8px',
+                borderRadius: 6,
+                fontSize: 13,
+                fontWeight: visCols.desvio ? 600 : 500,
+                cursor: 'pointer',
+                border: 'none',
+                color: visCols.desvio ? '#ea580c' : '#64748b',
+                background: visCols.desvio ? '#fff7ed' : 'transparent',
+                transition: 'all 0.2s'
+              }}
+            >
+              Desvio Média
+            </button>
+            <button
+              onClick={() => toggleCol('desvioMax')}
+              style={{
+                padding: '4px 8px',
+                borderRadius: 6,
+                fontSize: 13,
+                fontWeight: visCols.desvioMax ? 600 : 500,
+                cursor: 'pointer',
+                border: 'none',
+                color: visCols.desvioMax ? '#ea580c' : '#64748b',
+                background: visCols.desvioMax ? '#fff7ed' : 'transparent',
+                transition: 'all 0.2s'
+              }}
+            >
+              Desvio Máx
+            </button>
           </div>
         </div>
 
@@ -823,7 +917,7 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                   <div style={{ color: '#ffffff', fontWeight: 600, fontSize: 11 }}>Tracker</div>
                 </td>
                 {pivotData.cols.map(c => {
-                  const numSubCols = [showAlvo && visCols.serie, showAlvo && visCols.diff, showAlvo && visCols.pts, showAtual && visCols.serie, showAtual && visCols.diff, showAtual && visCols.pts].filter(Boolean).length + ((showAlvo || showAtual) && visCols.status ? 1 : 0) + ((showAlvo || showAtual) && visCols.perdas ? 1 : 0) + ((showAlvo || showAtual) && visCols.kwp ? 1 : 0) + ((showAlvo || showAtual) && visCols.energia ? 1 : 0) + ((showAlvo || showAtual) && visCols.yield ? 1 : 0)
+                  const numSubCols = [showAlvo && visCols.serie, showAlvo && visCols.diff, showAlvo && visCols.pts, showAtual && visCols.serie, showAtual && visCols.diff, showAtual && visCols.pts].filter(Boolean).length + ((showAlvo || showAtual) && visCols.status ? 1 : 0) + ((showAlvo || showAtual) && visCols.perdas ? 1 : 0) + ((showAlvo || showAtual) && visCols.kwp ? 1 : 0) + ((showAlvo || showAtual) && visCols.energia ? 1 : 0) + ((showAlvo || showAtual) && visCols.yield ? 1 : 0) + ((showAlvo || showAtual) && visCols.desvio ? 1 : 0) + ((showAlvo || showAtual) && visCols.desvioMax ? 1 : 0)
                   if (numSubCols === 0) return null
                   return (
                   <td key={c} colSpan={numSubCols} style={{ ...hdCell, textAlign: 'center', borderBottom: '1px solid #475569', borderLeft: '3px solid #0f172a' }}>
@@ -849,6 +943,8 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                     {(showAlvo || showAtual) && visCols.kwp && <td style={{...subHd, textTransform: 'none', borderLeft: bL()}}>kWp</td>}
                     {(showAlvo || showAtual) && visCols.energia && <td style={{...subHd, textTransform: 'none', borderLeft: bL()}}>Energia (kWh)</td>}
                     {(showAlvo || showAtual) && visCols.yield && <td style={{...subHd, textTransform: 'none', borderLeft: bL()}}>Yield (kWh/kWp)</td>}
+                    {(showAlvo || showAtual) && visCols.desvio && <td style={{...subHd, textTransform: 'none', borderLeft: bL()}}>Desvio Média</td>}
+                    {(showAlvo || showAtual) && visCols.desvioMax && <td style={{...subHd, textTransform: 'none', borderLeft: bL()}}>Desvio Máx</td>}
                   </React.Fragment>
                 )})}
               </tr>
@@ -907,6 +1003,8 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                           {(showAlvo || showAtual) && visCols.kwp && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
                           {(showAlvo || showAtual) && visCols.energia && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
                           {(showAlvo || showAtual) && visCols.yield && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
+                          {(showAlvo || showAtual) && visCols.desvio && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
+                          {(showAlvo || showAtual) && visCols.desvioMax && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
                         </React.Fragment>
                       )
                     }
@@ -945,46 +1043,46 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                                        {visCols.kwp && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
                                        {visCols.energia && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
                                        {visCols.yield && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
+                                       {visCols.desvio && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
+                                       {visCols.desvioMax && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
                                      </>
                                    );
                                  }
                                  let ptsVento = rowVals.pts_vento || 0;
                                  let ptsTravado = rowVals.pts_travado || 0;
+                                 let ptsErroAlvo = rowVals.pts_erro_alvo || 0;
                                  const totalPts = Math.max(rowVals.count_alvo || 0, rowVals.count_atual || 0);
-                                 
-                                 const countTrackers = rowVals.count_trackers || 1;
-                                 const thresholdVento = (trackerTols.vento || 0) * countTrackers;
-                                 const thresholdTravado = (trackerTols.travado || 0) * countTrackers;
-                                 
-                                 if (ptsVento <= thresholdVento) ptsVento = 0;
-                                 if (ptsTravado <= thresholdTravado) ptsTravado = 0;
                                  
                                  const pctVento = totalPts > 0 ? (ptsVento / totalPts) * 100 : 0;
                                  const pctTravado = totalPts > 0 ? (ptsTravado / totalPts) * 100 : 0;
+                                 const pctErroAlvo = totalPts > 0 ? (ptsErroAlvo / totalPts) * 100 : 0;
                                  
                                  let label = '';
                                  let bg = '#dcfce7';
                                  let color = '#15803d';
                                  
-                                 if (ptsVento === 0 && ptsTravado === 0) {
+                                 if (ptsVento === 0 && ptsTravado === 0 && ptsErroAlvo === 0) {
                                    label = 'Ok';
-                                 } else if (ptsVento > 0 && ptsTravado === 0) {
-                                   label = `Vento: ${ptsVento} (${pctVento.toFixed(1)}%)`;
-                                   bg = '#dbeafe'; color = '#1d4ed8'; // Azul
-                                 } else if (ptsTravado > 0 && ptsVento === 0) {
+                                 } else if (ptsErroAlvo > 0 && ptsTravado === 0) {
+                                   label = ptsVento > 0 ? `Vento: ${ptsVento} (${pctVento.toFixed(1)}%)` : `Erro Alvo: ${ptsErroAlvo} (${pctErroAlvo.toFixed(1)}%)`;
+                                   bg = ptsVento > 0 ? '#dbeafe' : '#fce7f3'; // Azul para vento, Rosa para Erro Alvo
+                                   color = ptsVento > 0 ? '#1d4ed8' : '#be185d';
+                                 } else if (ptsTravado > 0 && ptsErroAlvo === 0) {
                                    label = `Travado: ${ptsTravado} (${pctTravado.toFixed(1)}%)`;
                                    bg = '#fef08a'; color = '#854d0e'; // Amarelo
                                  } else {
-                                   label = `Vento: ${ptsVento} (${pctVento.toFixed(1)}%) | Travado: ${ptsTravado} (${pctTravado.toFixed(1)}%)`;
+                                   let erroLabel = ptsVento > 0 ? `Vento: ${ptsVento} (${pctVento.toFixed(1)}%)` : `Erro Alvo: ${ptsErroAlvo} (${pctErroAlvo.toFixed(1)}%)`;
+                                   label = `${erroLabel} | Travado: ${ptsTravado} (${pctTravado.toFixed(1)}%)`;
                                    bg = '#fee2e2'; color = '#b91c1c'; // Vermelho
                                  }
                                  
                                  let sumVento = rowVals.sum_diff_vento || 0;
                                  let sumTravado = rowVals.sum_diff_travado || 0;
-                                 let totalPerdas = sumVento + sumTravado;
+                                 let sumErroAlvo = rowVals.sum_diff_erro_alvo || 0;
+                                 let totalPerdas = sumErroAlvo + sumTravado;
                                  let perdasLabel = '-';
                                  if (totalPerdas > 0) {
-                                     perdasLabel = `Vento: ${sumVento.toFixed(0)}° | Travado: ${sumTravado.toFixed(0)}° | Total: ${totalPerdas.toFixed(0)}°`;
+                                     perdasLabel = `Erro Alvo: ${sumErroAlvo.toFixed(0)}° | Travado: ${sumTravado.toFixed(0)}° | Total: ${totalPerdas.toFixed(0)}°`;
                                  }
 
                                  return (
@@ -1021,6 +1119,16 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                                      {visCols.yield && (
                                        <td style={{...cell, borderLeft: bL(), background: cBg, color: '#1e293b', textAlign: 'center', whiteSpace: 'nowrap', fontWeight: 600}}>
                                          {rowVals.yield != null ? (rowVals.yield / 1000).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
+                                       </td>
+                                     )}
+                                     {visCols.desvio && (
+                                       <td style={{...cell, borderLeft: bL(), background: pivotData.getDesvioColor(rowVals.yield, pivotData.globalMean).bg, color: pivotData.getDesvioColor(rowVals.yield, pivotData.globalMean).text, textAlign: 'center', whiteSpace: 'nowrap', fontWeight: 700}}>
+                                         {rowVals.yield != null && pivotData.globalMean ? `${((rowVals.yield / pivotData.globalMean - 1) * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%` : '-'}
+                                       </td>
+                                     )}
+                                     {visCols.desvioMax && (
+                                       <td style={{...cell, borderLeft: bL(), background: pivotData.getDesvioColor(rowVals.yield, pivotData.globalMax).bg, color: pivotData.getDesvioColor(rowVals.yield, pivotData.globalMax).text, textAlign: 'center', whiteSpace: 'nowrap', fontWeight: 700}}>
+                                         {rowVals.yield != null && pivotData.globalMax ? `${((rowVals.yield / pivotData.globalMax - 1) * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%` : '-'}
                                        </td>
                                      )}
                                    </>
@@ -1196,6 +1304,13 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                                       },
                                       {
                                         x: chartData.timestamps,
+                                        y: chartData.erro_alvo,
+                                        type: 'scatter', mode: 'lines', line: { color: 'transparent', width: 0, shape: 'hvh' },
+                                        fill: 'tozeroy', fillcolor: 'rgba(255, 182, 193, 0.5)', // Rosa claro
+                                        name: 'Erro Alvo', xaxis: 'x2', yaxis: 'y2'
+                                      },
+                                      {
+                                        x: chartData.timestamps,
                                         y: chartData.vento,
                                         type: 'scatter', mode: 'lines', line: { color: 'transparent', width: 0, shape: 'hvh' },
                                         fill: 'tozeroy', fillcolor: 'rgba(59, 130, 246, 0.5)',
@@ -1280,8 +1395,8 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                                           };
                                       })}
                                       layout={{
-                                          legend: { orientation: 'h', y: 1.15, x: 1, xanchor: 'right' },
-                                          margin: { t: 50, r: 20, b: 40, l: 40 },
+                                          legend: { orientation: 'h', y: 1.02, yanchor: 'bottom', x: 0.5, xanchor: 'center' },
+                                          margin: { t: 80, r: 20, b: 40, l: 40 },
                                           xaxis: { 
                                               type: 'date',
                                               range: [`${chartModal.date} ${chartXRange[0]}:00`, `${chartModal.date} ${chartXRange[1]}:59`],
@@ -1314,7 +1429,7 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
 
       {infoModalOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#fff', borderRadius: 8, padding: 20, width: '100%', maxWidth: 900, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}>
+          <div style={{ background: '#fff', borderRadius: 8, padding: 20, width: '100%', maxWidth: 1000, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: '#0f172a' }}>Entenda as Métricas (Tabela vs. Status)</h2>
               <button 
@@ -1367,7 +1482,7 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                 </tr>
                 <tr>
                   <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0', fontWeight: 600 }}>STATUS</td>
-                  <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0' }}>Verifica as flags internamente:<br/>1. <strong>Vento</strong>: Falha no Alvo.<br/>2. <strong>Travado</strong>: Falha no Atual SEM Falha no Alvo.</td>
+                  <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0' }}>Verifica as flags internamente <strong>priorizando o estado físico</strong>:<br/>Se a Posição Atual estiver alinhada com o sol, o status é <strong>OK</strong>.<br/>Somente se houver Falha Física (desalinhado):<br/>1. <strong>Vento</strong>: Se o Comando (Alvo) também divergir (ex: defesa).<br/>2. <strong>Travado</strong>: Se o Comando estiver para o sol, mas a estrutura travou.</td>
                   <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0' }}>Calcula qual foi a <strong>maior sequência ininterrupta</strong> de falha. O Frontend compara contra a tolerância (ex: 10 min). Se a sequência máxima for menor, o status é "Ok".</td>
                   <td style={{ padding: '12px 10px', borderBottom: '1px solid #e2e8f0' }}><strong>SIM</strong>. O status exige falhas consecutivas. Pontos isolados são ignorados na exibição do status.</td>
                 </tr>
@@ -1379,6 +1494,56 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                 </tr>
               </tbody>
             </table>
+
+            <h3 style={{ fontSize: 15, fontWeight: 700, margin: '24px 0 12px 0', color: '#0f172a' }}>Matriz de Decisão do Status (Prioridade Física)</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '40px 110px 1fr 1fr', gap: 0, background: '#cbd5e1', border: '1px solid #cbd5e1', borderRadius: 8, overflow: 'hidden' }}>
+              
+              {/* Canto superior esquerdo vazio (span 2x2) */}
+              <div style={{ background: '#f8fafc', gridColumn: '1 / span 2', gridRow: '1 / span 2' }}></div>
+              
+              {/* Header Mestre TOPO */}
+              <div style={{ background: '#f8fafc', gridColumn: '3 / span 2', padding: '8px', textAlign: 'center', fontWeight: 600, color: '#334155', borderBottom: '1px solid #cbd5e1', borderLeft: '1px solid #cbd5e1' }}>
+                Ângulo ALVO (Comando)
+              </div>
+              
+              {/* Sub Headers TOPO */}
+              <div style={{ background: '#f8fafc', padding: '8px', textAlign: 'center', color: '#64748b', fontSize: 12, borderLeft: '1px solid #cbd5e1' }}>OK (Aponta pro sol)</div>
+              <div style={{ background: '#f8fafc', padding: '8px', textAlign: 'center', color: '#64748b', fontSize: 12, borderLeft: '1px solid #cbd5e1' }}>Fora (Ex: Defesa/Vento)</div>
+
+              {/* Header Mestre ESQUERDA */}
+              <div style={{ background: '#f8fafc', gridRow: '3 / span 2', gridColumn: '1', writingMode: 'vertical-rl', transform: 'rotate(180deg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px', fontWeight: 600, color: '#334155', borderTop: '1px solid #cbd5e1', borderRight: '1px solid #cbd5e1' }}>
+                Ângulo ATUAL (Físico)
+              </div>
+              
+              {/* Linha 1 */}
+              <div style={{ background: '#f8fafc', padding: '12px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: '#64748b', fontSize: 12, borderTop: '1px solid #cbd5e1' }}>
+                OK<br/>(Acompanha sol)
+              </div>
+              <div style={{ background: '#ffffff', padding: 12, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', borderTop: '1px solid #cbd5e1', borderLeft: '1px solid #cbd5e1' }}>
+                <span style={{ background: '#dcfce7', color: '#166534', padding: '4px 12px', borderRadius: 16, fontWeight: 700, marginBottom: 4, fontSize: 12 }}>STATUS OK</span>
+                <span style={{ fontSize: 11, color: '#64748b', textAlign: 'center' }}>Funcionamento normal.</span>
+              </div>
+              <div style={{ background: '#ffffff', padding: 12, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', borderTop: '1px solid #cbd5e1', borderLeft: '1px solid #cbd5e1' }}>
+                <span style={{ background: '#dcfce7', color: '#166534', padding: '4px 12px', borderRadius: 16, fontWeight: 700, marginBottom: 4, fontSize: 12 }}>STATUS OK</span>
+                <span style={{ fontSize: 11, color: '#64748b', textAlign: 'center' }}>Comando de defesa ignorado, mas estrutura manteve-se no sol.</span>
+              </div>
+
+              {/* Linha 2 */}
+              <div style={{ background: '#f8fafc', padding: '12px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: '#64748b', fontSize: 12, borderTop: '1px solid #cbd5e1' }}>
+                Fora<br/>(Desalinhado)
+              </div>
+              <div style={{ background: '#ffffff', padding: 12, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', borderTop: '1px solid #cbd5e1', borderLeft: '1px solid #cbd5e1' }}>
+                <span style={{ background: '#fef9c3', color: '#854d0e', padding: '4px 12px', borderRadius: 16, fontWeight: 700, marginBottom: 4, fontSize: 12 }}>TRAVADO</span>
+                <span style={{ fontSize: 11, color: '#64748b', textAlign: 'center' }}>Deveria seguir o sol, mas não obedeceu (falha mecânica).</span>
+              </div>
+              <div style={{ background: '#ffffff', padding: 12, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', borderTop: '1px solid #cbd5e1', borderLeft: '1px solid #cbd5e1' }}>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 4 }}>
+                  <span style={{ background: '#fee2e2', color: '#991b1b', padding: '4px 12px', borderRadius: 16, fontWeight: 700, fontSize: 12 }}>ERRO ALVO</span>
+                  <span style={{ background: '#dbeafe', color: '#1e40af', padding: '4px 12px', borderRadius: 16, fontWeight: 700, fontSize: 12 }}>VENTO (-60°)</span>
+                </div>
+                <span style={{ fontSize: 11, color: '#64748b', textAlign: 'center' }}>Comando fora do padrão foi acionado e a estrutura acatou. (Vento é classificado apenas se o alvo for exatamente -60°).</span>
+              </div>
+            </div>
           </div>
         </div>
       )}

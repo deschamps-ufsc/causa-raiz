@@ -79,7 +79,8 @@
         "inverter_sinal": true,
         "time_offset": 0,
         "tol_pontos_vento": 10,
-        "tol_pontos_travado": 10
+        "tol_pontos_travado": 10,
+        "angulo_defesa": -60
       }
     },
     "tamb": {
