@@ -560,6 +560,9 @@ def get_trackers_heatmap(
                     target_series.append(col)
                     break
 
+    for base in tracker_groups.keys():
+        target_series.append(f"tracker_{base}_perda_válida")
+
     if not target_series:
         raise HTTPException(
             status_code=422,
@@ -803,6 +806,11 @@ def get_trackers_heatmap(
             if energia_strings > 0 and kwp_val > 0:
                 yield_val = energia_strings / kwp_val
 
+            perda_energia = 0.0
+            perda_valida_col = f"tracker_{base}_perda_válida"
+            if perda_valida_col in df_group.columns:
+                perda_energia = float(df_group[perda_valida_col].sum()) / 60.0 / 1000.0
+
             if diff_alvo is not None or diff_atual is not None:
                 records.append({
                     "date": date_str,
@@ -830,6 +838,7 @@ def get_trackers_heatmap(
                     "serie_atual": col_atual,
                     "strings": data.get("strings", ""),
                     "energia": round(energia_strings, 4),
+                    "perda_energia": round(perda_energia, 4) if perda_energia > 0 else None,
                     "kwp": round(kwp_val, 4) if kwp_val > 0 else None,
                     "yield": round(yield_val, 4) if yield_val is not None else None
                 })
@@ -1445,9 +1454,43 @@ def get_tracker_chart(usina: str, date: str, alvo: str = None, atual: str = None
     valido_list = [1 if v else 0 for v in valid_data]
     
     strings_data = {}
+    strings_loss = {}
+    
+    margem_perda_cc = float(tracker_params.get("margem_perda_cc", 0.0)) / 100.0
+    considerar_ganhos = tracker_params.get("considerar_ganhos", False)
+    if considerar_ganhos:
+        margem_perda_cc = 0.0
+        
+    media_ok_col = "Potência CC Média Strings OK"
+    
     for sc in tracker_strings:
         if sc in df.columns:
             strings_data[sc] = [round(x, 2) if pd.notnull(x) else None for x in df[sc]]
+            
+            # Cálculo de perda individual da string sob demanda
+            if media_ok_col in df.columns:
+                st_data = df[sc]
+                media_ok = df[media_ok_col]
+                
+                valid_string_mask = (st_data.notna()) & (st_data > 0)
+                diff = media_ok - st_data
+                diff_clamped = diff if considerar_ganhos else diff.clip(lower=0)
+                
+                mask_nao_ok = mask_erro_alvo | mask_travado
+                mask_final = mask_nao_ok & valid_string_mask
+                
+                if margem_perda_cc > 0:
+                    pct_diff = diff / media_ok
+                    mask_threshold = pct_diff > margem_perda_cc
+                    mask_final = mask_final & mask_threshold
+                
+                loss_series = diff_clamped.where(mask_final, 0).fillna(0)
+                # Aplicamos a valid_data (simult_flag)
+                loss_valida = loss_series.where(valid_data, 0).fillna(0)
+                
+                loss_kwh = float(loss_valida.sum()) / 60.0 / 1000.0
+                if loss_kwh > 0:
+                    strings_loss[sc] = round(loss_kwh, 2)
             
     if "Potência CC Média Strings OK" in df.columns:
         strings_data["Potência CC Média Strings OK"] = [round(x, 2) if pd.notnull(x) else None for x in df["Potência CC Média Strings OK"]]
@@ -1466,5 +1509,6 @@ def get_tracker_chart(usina: str, date: str, alvo: str = None, atual: str = None
         "ok": ok_list,
         "valido": valido_list,
         "backtracking": backtracking_list,
-        "strings_data": strings_data
+        "strings_data": strings_data,
+        "strings_loss": strings_loss
     }

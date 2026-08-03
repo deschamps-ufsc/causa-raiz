@@ -296,6 +296,33 @@ const PVSystNode = ({ data }) => (
   </div>
 )
 
+const PVLibNode = ({ data }) => {
+  return (
+  <div style={{
+    ...baseNodeStyle, padding: '12px', borderRadius: '10px', 
+    width: '120px', height: data.height || '120px', 
+    background: '#ffffff',
+    border: '2px solid #0ea5e9',
+    boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    gap: '8px',
+    cursor: 'pointer',
+    position: 'relative',
+    transition: 'all 0.2s'
+  }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+    <Handle type="target" position={Position.Left} style={{ background: '#0ea5e9' }} />
+    <Handle type="source" position={Position.Right} id="out-right" style={{ background: '#0ea5e9' }} />
+    <div style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ fontSize: '26px', fontWeight: 800, color: '#0ea5e9', letterSpacing: '-1px' }}>PV</span>
+        <span style={{ fontSize: '26px', fontWeight: 300, color: '#0ea5e9', letterSpacing: '-1px' }}>lib</span>
+      </div>
+      <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748b', marginTop: '4px' }}>Python Model</div>
+    </div>
+  </div>
+)}
+
 const CurtailmentNode = ({ data }) => (
   <div style={{
     padding: '8px', borderRadius: '10px', background: '#fee2e2',
@@ -325,7 +352,8 @@ const nodeTypes = {
   geff: GeffNode,
   tcel: TcelNode,
   curtailment: CurtailmentNode,
-  pvsyst: PVSystNode
+  pvsyst: PVSystNode,
+  pvlib: PVLibNode
 }
 
 const edgeTypes = {
@@ -366,6 +394,7 @@ const initialNodes = [
       ]
     } 
   },
+  { id: 'pvlib', type: 'pvlib', position: { x: 630, y: 80 }, data: { height: '70px' } },
   { id: 'pvsyst', type: 'pvsyst', position: { x: 630, y: 190 }, data: { height: '120px' } },
   { 
     id: 'epi', 
@@ -404,6 +433,8 @@ const initialEdges = [
   { id: 'e-referencia_ppc-curtailment', source: 'referencia_ppc', target: 'curtailment', targetHandle: 'target-2', type: 'straight', markerEnd: { type: MarkerType.ArrowClosed } },
   { id: 'e-curtailment-simult', source: 'curtailment', target: 'simultaneidade', targetHandle: 'target-bottom-1', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed } },
   { id: 'e-energia_pmi-simult', source: 'energia_pmi', target: 'simultaneidade', targetHandle: 'target-bottom-2', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed } },
+  { id: 'e-simult-pvlib', source: 'simultaneidade', target: 'pvlib', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed } },
+  { id: 'e-pvlib-epi', source: 'pvlib', sourceHandle: 'out-right', target: 'epi', targetHandle: 'target-top', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed } },
   { id: 'e-simult-pvsyst', source: 'simultaneidade', target: 'pvsyst', type: 'straight', markerEnd: { type: MarkerType.ArrowClosed } },
   { id: 'e-pvsyst-epi', source: 'pvsyst', sourceHandle: 'out-bottom', target: 'epi', targetHandle: 'target-top', type: 'straight', markerEnd: { type: MarkerType.ArrowClosed } },
   { id: 'e-energia-epi', source: 'energia_pmi', target: 'epi', targetHandle: 'target-bottom', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed } }
@@ -448,22 +479,33 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
   const [operation, setOperation] = useState('sum')
   const [outputFilter, setOutputFilter] = useState('')
   const [geffParams, setGeffParams] = useState({ beta: 1, SSF: 0, MLF: 0 })
+  const [pvlibParams, setPvlibParams] = useState({
+    latitude: 0, longitude: 0, altitude: 0, tz: 'America/Sao_Paulo',
+    selected_modulos: [], selected_inversores: [],
+    loss_ohm_dc: 1.5, loss_ohm_ac: 1.0, loss_ohm_ac_mt: 0, trafo_pnom: 0, trafo_iron_loss: 0, trafo_copper_loss: 0, soiling: 2.0
+  })
   const [simultParams, setSimultParams] = useState({ geff: true, tamb: true, tcel: true, energia_pmi: true, curtailment: false })
-  const [trackerParams, setTrackerParams] = useState({ latitude: -23.55, longitude: -46.63, gcr: 0.3, max_angle: 60, tolerance: 10, tol_pontos_vento: 0, tol_pontos_travado: 0 })
+  const [trackerParams, setTrackerParams] = useState({ latitude: -23.55, longitude: -46.63, gcr: 0.3, max_angle: 60, tolerance: 10, tol_pontos_vento: 0, tol_pontos_travado: 0, margem_perda_cc: 0 })
   const [curtailmentParams, setCurtailmentParams] = useState({ refMin: 52.8, refMargin: 3, diffMargin: 5, resolutionMode: '1min' })
   const [soilParams, setSoilParams] = useState({ startTime: '', endTime: '', trimPercent: '' })
   const [energiaPmiParams, setEnergiaPmiParams] = useState({ multiplier: 0.012 })
   const [allSeries, setAllSeries] = useState([])
+  const [epiParams, setEpiParams] = useState({ energiaVar: '', irradianciaVar: '', ohmVar: '', earrayVar: '' })
+  
+  const [equipamentos, setEquipamentos] = useState({ modulos: [], inversores: [] })
+
+  // --- Processamento ---
   const [isProcessing, setIsProcessing] = useState(false)
   const [flowProgress, setFlowProgress] = useState(null) // { progress, total, current_day }
   const [showTrackerSensorInfo, setShowTrackerSensorInfo] = useState(false)
   const [showTrackerParamsInfo, setShowTrackerParamsInfo] = useState(false)
+  const [showPvlibParamsInfo, setShowPvlibParamsInfo] = useState(false)
+  const [showPvlibInstructions, setShowPvlibInstructions] = useState(false)
   const [toast, setToast] = useState(null)
   
   const pvsystFileInputRef = useRef(null)
   const [pvsystColumns, setPvsystColumns] = useState([])
   const [isLoadingPvsystColumns, setIsLoadingPvsystColumns] = useState(false)
-  const [epiParams, setEpiParams] = useState({ energiaVar: '', irradianciaVar: '', ohmVar: '', earrayVar: '' })
 
   // Estados para Tabela de Integrais Diárias
   const [integralsData, setIntegralsData] = useState({ columns: [], rows: [] })
@@ -515,6 +557,14 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
       .map(([name, source]) => ({ name, source }))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [nodes]);
+
+  useEffect(() => {
+    if (selectedNodeId === 'pvlib' && usinaAtual) {
+      if (selectedBlock?.pvlibParams) {
+        setPvlibParams(selectedBlock.pvlibParams);
+      }
+    }
+  }, [selectedNodeId, usinaAtual]);
 
   useEffect(() => {
     if (selectedNodeId === 'epi' && usinaAtual) {
@@ -668,6 +718,14 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
         totals['epi_corrigido'] = totPmiCorr / totPvsyst;
       }
     }
+    
+    if (totals['Energia PMI_válida'] && totals['pvlib_E_Grid_válida']) {
+      const totPmi = totals['Energia PMI_válida'];
+      const totPvlib = totals['pvlib_E_Grid_válida'];
+      if (typeof totPmi === 'number' && typeof totPvlib === 'number' && totPvlib !== 0) {
+        totals['epi_pvlib'] = totPmi / totPvlib;
+      }
+    }
     if (totals['GlobInc_válida'] && totals['geff_válida']) {
       const totGlob = totals['GlobInc_válida'];
       const totGeff = totals['geff_válida'];
@@ -769,6 +827,20 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
 
   useEffect(() => {
     if (!usinaAtual) return
+    loadEquipamentos()
+  }, [usinaAtual])
+
+  const loadEquipamentos = async () => {
+    try {
+      const res = await api.get('/settings/equipamentos')
+      if (res.data) setEquipamentos(res.data)
+    } catch (e) {
+      console.error("Erro ao carregar equipamentos:", e)
+    }
+  }
+
+  useEffect(() => {
+    if (!usinaAtual) return
     fetchMappingData(usinaAtual)
       .then(mapping => {
         const arr = Object.entries(mapping || {}).map(([col, meta]) => ({
@@ -800,7 +872,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
     'inputs', 'outputFilter', 'operation', 'startTime', 'endTime', 'trimPercent',
     'trackerParams', 'beta', 'SSF', 'MLF', 'ppcRefValue', 'ppcMargin',
     'energiaPmiParams', 'simultParams', 'curtailmentRefMin', 'curtailmentRefMargin',
-    'curtailmentDiffMargin', 'resolutionMode', 'epiParams'
+    'curtailmentDiffMargin', 'resolutionMode', 'epiParams', 'pvlibParams'
   ]
 
   // Persiste apenas os campos per-usina no flow_config.json
@@ -968,7 +1040,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
         bgCell: 'rgba(16, 185, 129, 0.02)',
         bgTotal: 'rgba(16, 185, 129, 0.08)'
       };
-    } else if (key.startsWith('energia_pmi') || key.startsWith('energia pmi') || key.startsWith('e_grid')) {
+    } else if (key.startsWith('energia_pmi') || key.startsWith('energia pmi') || key.startsWith('e_grid') || key.startsWith('pvlib')) {
       return {
         color: '#0277BD', // Azul (cor do Elemento Energia PMI)
         bgHeader: 'rgba(2, 119, 189, 0.05)',
@@ -1076,6 +1148,17 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
           Energia<br/>
           Esperada<br/>
           Ajustada<br/>
+          <span style={{ fontSize: '0.9em', fontWeight: 'normal' }}>(Válido)</span>
+        </div>
+      );
+    }
+    
+    if (label.startsWith('Energia Esperada PVLib')) {
+      return (
+        <div style={{ lineHeight: '1.2' }}>
+          Energia<br/>
+          Esperada<br/>
+          PVLib<br/>
           <span style={{ fontSize: '0.9em', fontWeight: 'normal' }}>(Válido)</span>
         </div>
       );
@@ -1306,7 +1389,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                   })
                 }
                 if (node.id === 'tracker') {
-                  setTrackerParams(node.data.trackerParams || { latitude: -23.55, longitude: -46.63, gcr: 0.3, max_angle: 60, tolerance: 10, angulo_defesa: -60 })
+                  setTrackerParams(node.data.trackerParams || { latitude: -23.55, longitude: -46.63, gcr: 0.3, max_angle: 60, tolerance: 10, angulo_defesa: -60, margem_perda_cc: 0 })
                 }
                 if (node.id === 'sujidade') {
                   setSoilParams({
@@ -1459,73 +1542,101 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                 </div>
               )}
 
-              {/* Parâmetros do Tracker (PVLIB) */}
+              {/* Parâmetros do Tracker (PVLIB) e Análise */}
               {selectedNodeId === 'tracker' && (
-                <div style={{ marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 12, padding: '16px', background: 'rgba(106, 27, 154, 0.05)', borderRadius: '8px', borderLeft: '4px solid #6A1B9A' }}>
+                <div style={{ marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
                   
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <h4 style={{ margin: 0, fontSize: '13px', color: '#6A1B9A' }}>Parâmetros da Curva de Referência (PVLib)</h4>
+                  {/* Bloco 1: Parâmetros da Curva de Referência */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '16px', background: 'rgba(106, 27, 154, 0.05)', borderRadius: '8px', borderLeft: '4px solid #6A1B9A' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <h4 style={{ margin: 0, fontSize: '13px', color: '#6A1B9A' }}>Parâmetros da Curva de Referência (PVLib)</h4>
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '120px' }}>
+                        <label style={{ fontSize: 12, fontWeight: 600 }}>Latitude:</label>
+                        <input type="number" step="0.0001" className="input" value={trackerParams.latitude} onChange={e => setTrackerParams({ ...trackerParams, latitude: parseFloat(e.target.value) || 0 })} style={{ padding: '6px' }} />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '120px' }}>
+                        <label style={{ fontSize: 12, fontWeight: 600 }}>Longitude:</label>
+                        <input type="number" step="0.0001" className="input" value={trackerParams.longitude} onChange={e => setTrackerParams({ ...trackerParams, longitude: parseFloat(e.target.value) || 0 })} style={{ padding: '6px' }} />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '100px' }}>
+                        <label style={{ fontSize: 12, fontWeight: 600 }}>GCR:</label>
+                        <input type="number" step="0.01" className="input" value={trackerParams.gcr} onChange={e => setTrackerParams({ ...trackerParams, gcr: parseFloat(e.target.value) || 0 })} style={{ padding: '6px' }} />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '100px' }}>
+                        <label style={{ fontSize: 12, fontWeight: 600 }}>Ângulo Máx (°):</label>
+                        <input type="number" step="1" className="input" value={trackerParams.max_angle} onChange={e => setTrackerParams({ ...trackerParams, max_angle: parseFloat(e.target.value) || 0 })} style={{ padding: '6px' }} />
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <input 
+                          type="checkbox" 
+                          id="inverterSinal"
+                          checked={trackerParams.inverter_sinal || false}
+                          onChange={e => setTrackerParams({ ...trackerParams, inverter_sinal: e.target.checked })}
+                          style={{ cursor: 'pointer' }}
+                        />
+                        <label htmlFor="inverterSinal" style={{ fontSize: 12, fontWeight: 600, cursor: 'pointer', color: '#6A1B9A' }}>
+                          Inverter Sinal da Curva (-/+)
+                        </label>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: '#6A1B9A' }}>Avanço/Atraso (min):</label>
+                        <input 
+                          type="number" 
+                          step="1" 
+                          className="input" 
+                          value={trackerParams.time_offset || 0} 
+                          onChange={e => setTrackerParams({ ...trackerParams, time_offset: parseInt(e.target.value) || 0 })} 
+                          style={{ padding: '4px 6px', width: '80px', fontSize: '12px' }} 
+                          title="Deslocamento temporal da curva teórica em minutos (positivo = curva para frente/atrasada, negativo = curva para trás/adiantada)" 
+                        />
+                      </div>
+                    </div>
                   </div>
 
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '120px' }}>
-                      <label style={{ fontSize: 12, fontWeight: 600 }}>Latitude:</label>
-                      <input type="number" step="0.0001" className="input" value={trackerParams.latitude} onChange={e => setTrackerParams({ ...trackerParams, latitude: parseFloat(e.target.value) || 0 })} style={{ padding: '6px' }} />
+                  {/* Bloco 2: Parâmetros Análise dos Trackers */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '16px', background: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <h4 style={{ margin: 0, fontSize: '13px', color: 'var(--text-primary)' }}>Parâmetros Análise dos Trackers</h4>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '120px' }}>
-                      <label style={{ fontSize: 12, fontWeight: 600 }}>Longitude:</label>
-                      <input type="number" step="0.0001" className="input" value={trackerParams.longitude} onChange={e => setTrackerParams({ ...trackerParams, longitude: parseFloat(e.target.value) || 0 })} style={{ padding: '6px' }} />
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '100px' }}>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--red)' }}>Tolerância (°):</label>
+                        <input type="number" step="1" className="input" value={trackerParams.tolerance} onChange={e => setTrackerParams({ ...trackerParams, tolerance: parseFloat(e.target.value) || 0 })} style={{ padding: '6px', borderColor: 'var(--red)' }} title="Diferença máxima aceitável em relação à referência." />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '150px' }}>
+                        <label style={{ fontSize: 12, fontWeight: 600 }}>Tol. Qtde Pontos Vento:</label>
+                        <input type="number" step="1" className="input" value={trackerParams.tol_pontos_vento || 0} onChange={e => setTrackerParams({ ...trackerParams, tol_pontos_vento: parseInt(e.target.value) || 0 })} style={{ padding: '6px' }} title="Qtde máxima de pontos fora da referência para ainda ser considerado Ok." />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '150px' }}>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--blue)' }}>Ângulo de Defesa (°):</label>
+                        <input type="number" step="1" className="input" value={trackerParams.angulo_defesa ?? -60} onChange={e => setTrackerParams({ ...trackerParams, angulo_defesa: parseFloat(e.target.value) || 0 })} style={{ padding: '6px', borderColor: 'var(--blue)' }} title="Ângulo fixo alvo para identificar o comando de Vento." />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '150px' }}>
+                        <label style={{ fontSize: 12, fontWeight: 600 }}>Tol. Qtde Pontos Travado:</label>
+                        <input type="number" step="1" className="input" value={trackerParams.tol_pontos_travado || 0} onChange={e => setTrackerParams({ ...trackerParams, tol_pontos_travado: parseInt(e.target.value) || 0 })} style={{ padding: '6px' }} title="Qtde máxima de pontos fora da referência para ainda ser considerado Ok." />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '150px' }}>
+                        <label style={{ fontSize: 12, fontWeight: 600 }}>Margem de Perda CC (%):</label>
+                        <input type="number" step="1" className="input" value={trackerParams.considerar_ganhos ? 0 : (trackerParams.margem_perda_cc || 0)} disabled={trackerParams.considerar_ganhos} onChange={e => setTrackerParams({ ...trackerParams, margem_perda_cc: parseFloat(e.target.value) || 0 })} style={{ padding: '6px', background: trackerParams.considerar_ganhos ? '#f1f5f9' : 'inherit', color: trackerParams.considerar_ganhos ? '#94a3b8' : 'inherit' }} title="Queda mínima necessária da String em relação à Referência para ser considerada como perda. Padrão: 0. Desabilitado se ganhos forem computados." />
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '100px' }}>
-                      <label style={{ fontSize: 12, fontWeight: 600 }}>GCR:</label>
-                      <input type="number" step="0.01" className="input" value={trackerParams.gcr} onChange={e => setTrackerParams({ ...trackerParams, gcr: parseFloat(e.target.value) || 0 })} style={{ padding: '6px' }} />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '100px' }}>
-                      <label style={{ fontSize: 12, fontWeight: 600 }}>Ângulo Máx (°):</label>
-                      <input type="number" step="1" className="input" value={trackerParams.max_angle} onChange={e => setTrackerParams({ ...trackerParams, max_angle: parseFloat(e.target.value) || 0 })} style={{ padding: '6px' }} />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '100px' }}>
-                      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--red)' }}>Tolerância (°):</label>
-                      <input type="number" step="1" className="input" value={trackerParams.tolerance} onChange={e => setTrackerParams({ ...trackerParams, tolerance: parseFloat(e.target.value) || 0 })} style={{ padding: '6px', borderColor: 'var(--red)' }} title="Diferença máxima aceitável em relação à referência." />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '150px' }}>
-                      <label style={{ fontSize: 12, fontWeight: 600 }}>Tol. Qtde Pontos Vento:</label>
-                      <input type="number" step="1" className="input" value={trackerParams.tol_pontos_vento || 0} onChange={e => setTrackerParams({ ...trackerParams, tol_pontos_vento: parseInt(e.target.value) || 0 })} style={{ padding: '6px' }} title="Qtde máxima de pontos fora da referência para ainda ser considerado Ok." />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '150px' }}>
-                      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--blue)' }}>Ângulo de Defesa (°):</label>
-                      <input type="number" step="1" className="input" value={trackerParams.angulo_defesa ?? -60} onChange={e => setTrackerParams({ ...trackerParams, angulo_defesa: parseFloat(e.target.value) || 0 })} style={{ padding: '6px', borderColor: 'var(--blue)' }} title="Ângulo fixo alvo para identificar o comando de Vento." />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '150px' }}>
-                      <label style={{ fontSize: 12, fontWeight: 600 }}>Tol. Qtde Pontos Travado:</label>
-                      <input type="number" step="1" className="input" value={trackerParams.tol_pontos_travado || 0} onChange={e => setTrackerParams({ ...trackerParams, tol_pontos_travado: parseInt(e.target.value) || 0 })} style={{ padding: '6px' }} title="Qtde máxima de pontos fora da referência para ainda ser considerado Ok." />
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <input 
-                        type="checkbox" 
-                        id="inverterSinal"
-                        checked={trackerParams.inverter_sinal || false}
-                        onChange={e => setTrackerParams({ ...trackerParams, inverter_sinal: e.target.checked })}
-                        style={{ cursor: 'pointer' }}
-                      />
-                      <label htmlFor="inverterSinal" style={{ fontSize: 12, fontWeight: 600, cursor: 'pointer', color: '#6A1B9A' }}>
-                        Inverter Sinal da Curva (-/+)
-                      </label>
-                    </div>
-                    
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <label style={{ fontSize: 12, fontWeight: 600, color: '#6A1B9A' }}>Avanço/Atraso (min):</label>
-                      <input 
-                        type="number" 
-                        step="1" 
-                        className="input" 
-                        value={trackerParams.time_offset || 0} 
-                        onChange={e => setTrackerParams({ ...trackerParams, time_offset: parseInt(e.target.value) || 0 })} 
-                        style={{ padding: '4px 6px', width: '80px', fontSize: '12px' }} 
-                        title="Deslocamento temporal da curva teórica em minutos (positivo = curva para frente/atrasada, negativo = curva para trás/adiantada)" 
-                      />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <input 
+                          type="checkbox" 
+                          id="considerarGanhos"
+                          checked={trackerParams.considerar_ganhos || false}
+                          onChange={e => setTrackerParams({ ...trackerParams, considerar_ganhos: e.target.checked })}
+                          style={{ cursor: 'pointer' }}
+                        />
+                        <label htmlFor="considerarGanhos" style={{ fontSize: 12, fontWeight: 600, cursor: 'pointer', color: '#047857' }} title="Se habilitado, contabiliza os momentos em que a string supera a referência para abater das perdas. (A Margem de Perda CC será forçada para 0%).">
+                          Computar Ganhos CC (-)
+                        </label>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1775,20 +1886,28 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                 <button onClick={() => setShowTrackerParamsInfo(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'var(--text-muted)' }}>✕</button>
               </div>
               
-              <h5 style={{ margin: '0 0 12px 0', color: '#6A1B9A', fontSize: '14px' }}>Dicionário de Parâmetros (PVLib)</h5>
+              <h5 style={{ margin: '0 0 12px 0', color: '#6A1B9A', fontSize: '14px' }}>Dicionário de Parâmetros da Curva de Referência (PVLib)</h5>
               <ul style={{ margin: '0 0 24px 0', paddingLeft: '20px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
                 <li style={{ marginBottom: '6px' }}><strong>Latitude/Longitude:</strong> Coordenadas da usina para o cálculo preciso da posição do sol (PVLib).</li>
                 <li style={{ marginBottom: '6px' }}><strong>GCR:</strong> Razão de cobertura do solo. Usado para modelar sombreamento entre fileiras (backtracking).</li>
                 <li style={{ marginBottom: '6px' }}><strong>Ângulo Máx:</strong> Rotação física máxima permitida pelo rastreador (ex: 60°).</li>
-                <li style={{ marginBottom: '6px' }}><strong>Tolerância (°):</strong> Diferença angular aceitável entre o medido e o ideal teórico.</li>
-                <li style={{ marginBottom: '6px' }}><strong>Tol. Qtde Pontos:</strong> Quantidade de pontos consecutivos fora da curva para alarmes de falha.</li>
                 <li style={{ marginBottom: '6px' }}><strong>Inverter Sinal:</strong> Corrige leitura invertida do sensor em relação à referência.</li>
                 <li><strong>Avanço/Atraso:</strong> Compensa atrasos temporais no relógio do datalogger.</li>
               </ul>
 
+              <h5 style={{ margin: '0 0 12px 0', color: 'var(--text-primary)', fontSize: '14px' }}>Dicionário de Parâmetros Análise dos Trackers</h5>
+              <ul style={{ margin: '0 0 24px 0', paddingLeft: '20px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                <li style={{ marginBottom: '6px' }}><strong>Tolerância (°):</strong> Diferença angular aceitável entre o medido e o ideal teórico.</li>
+                <li style={{ marginBottom: '6px' }}><strong>Tol. Qtde Pontos Vento:</strong> Quantidade de pontos consecutivos fora da curva para alarmes de vento.</li>
+                <li style={{ marginBottom: '6px' }}><strong>Ângulo de Defesa (°):</strong> Ângulo fixo alvo para identificar o comando de Vento.</li>
+                <li style={{ marginBottom: '6px' }}><strong>Tol. Qtde Pontos Travado:</strong> Quantidade de pontos consecutivos fora da curva para alarmes de falha/travado.</li>
+                <li style={{ marginBottom: '6px' }}><strong>Margem de Perda CC (%):</strong> Percentual mínimo de queda da string em relação à referência para registrar perda. Desabilitado caso Ganhos CC sejam computados.</li>
+                <li><strong>Computar Ganhos CC (-):</strong> Se habilitado, a diferença negativa (quando a string ganha da média) também é contabilizada, abatendo no valor da perda. Força a Margem de Perda CC para 0%.</li>
+              </ul>
+
               <h5 style={{ margin: '0 0 12px 0', color: '#6A1B9A', fontSize: '14px' }}>Como adicionar sensores?</h5>
               <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                Para associar sensores a um tracker, você deve primeiro adicionar as séries de irradiação nos blocos <strong>Gpoa (Irradiação Plano Array)</strong> e <strong>Grear (Irradiação Traseira)</strong> do fluxograma. 
+                Para associar sensores a um tracker, você deve primeiro adicionar as séries de irradiação nos blocos <strong>Gpoa (Irradiância Plano Array)</strong> e <strong>Grear (Irradiância Traseira)</strong> do fluxograma. 
                 <br/><br/>
                 Os sensores inseridos lá aparecerão automaticamente na lista deste bloco Tracker para serem selecionados.
               </p>
@@ -2278,6 +2397,267 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                 Salvar
               </button>
             </div>
+          </div>
+        </>
+      )}
+
+      {/* Modal Bloco PVLib */}
+      {selectedNodeId === 'pvlib' && (
+        <>
+          <div 
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000 }} 
+            onClick={() => setSelectedNodeId(null)} 
+          />
+          <div style={{
+            position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+            display: 'flex', gap: '16px',
+            maxWidth: '95vw', maxHeight: '90vh', zIndex: 1001
+          }}>
+            <div style={{
+              background: 'var(--bg-card)', padding: '24px', borderRadius: '8px', position: 'relative',
+              width: '800px', maxWidth: '100%', minHeight: '500px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+              display: 'flex', flexDirection: 'column'
+            }}>
+            <h3 style={{ marginTop: 0, color: '#0ea5e9', borderBottom: '1px solid var(--border)', paddingBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '24px', fontWeight: 800, color: '#0ea5e9', letterSpacing: '-1px' }}>PV<span style={{fontWeight: 300}}>lib</span></span>
+                <span style={{ color: 'var(--text-primary)', fontSize: '18px' }}>Simulação Física (Python)</span>
+                
+                <div 
+                  onClick={() => setShowPvlibInstructions(!showPvlibInstructions)}
+                  title="Instruções"
+                  style={{ marginLeft: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#0ea5e9', fontSize: '14px', background: 'rgba(14, 165, 233, 0.1)', width: '24px', height: '24px', borderRadius: '50%' }}
+                >
+                  📝
+                </div>
+                <div 
+                  onClick={() => setShowPvlibParamsInfo(!showPvlibParamsInfo)}
+                  title="Informações e Ajuda"
+                  style={{ marginLeft: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#0ea5e9', fontSize: '14px', background: 'rgba(14, 165, 233, 0.1)', width: '24px', height: '24px', borderRadius: '50%' }}
+                >
+                  ℹ️
+                </div>
+              </div>
+              <button onClick={() => setSelectedNodeId(null)} style={{ background: 'none', border: 'none', fontSize: '16px', cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
+            </h3>
+            
+            <div style={{ margin: '20px 0', display: 'flex', flexDirection: 'column', gap: 24 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
+                <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-secondary)' }}>
+                  Configure os parâmetros para simular a usina utilizando o modelo físico da biblioteca PVlib.
+                </p>
+                <button 
+                  className="btn" 
+                  style={{ background: 'var(--bg-secondary)', color: '#0ea5e9', border: '1px solid #0ea5e9', padding: '6px 12px', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                  onClick={() => {
+                    setPvlibParams(prev => ({
+                      ...prev,
+                      latitude: trackerParams?.latitude || 0,
+                      longitude: trackerParams?.longitude || 0,
+                      gcr: trackerParams?.gcr || 0
+                    }))
+                    setToast({ message: 'Parâmetros importados do Tracker.', type: 'success' })
+                  }}
+                  title="Importa Latitude, Longitude e GCR do bloco Tracker ativo."
+                >
+                  🔄 Importar do Tracker
+                </button>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                
+                {/* Location */}
+                <div style={{ background: 'rgba(14, 165, 233, 0.05)', padding: '16px', borderRadius: '8px', borderLeft: '4px solid #0ea5e9' }}>
+                  <h4 style={{ margin: '0 0 12px 0', color: '#0ea5e9', fontSize: '14px' }}>Localização e Parâmetros</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600 }}>Latitude:</label>
+                      <input type="number" step="0.0001" className="input" value={pvlibParams.latitude} onChange={e => setPvlibParams({...pvlibParams, latitude: parseFloat(e.target.value)||0})} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600 }}>Longitude:</label>
+                      <input type="number" step="0.0001" className="input" value={pvlibParams.longitude} onChange={e => setPvlibParams({...pvlibParams, longitude: parseFloat(e.target.value)||0})} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600 }}>Altitude (m):</label>
+                      <input type="number" className="input" value={pvlibParams.altitude} onChange={e => setPvlibParams({...pvlibParams, altitude: parseFloat(e.target.value)||0})} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600 }}>GCR (Tracker):</label>
+                      <input type="number" step="0.01" className="input" value={pvlibParams.gcr ?? ''} onChange={e => setPvlibParams({...pvlibParams, gcr: parseFloat(e.target.value)||0})} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, gridColumn: 'span 2' }}>
+                      <label style={{ fontSize: 12, fontWeight: 600 }}>Fuso Horário:</label>
+                      <input type="text" className="input" value={pvlibParams.tz} onChange={e => setPvlibParams({...pvlibParams, tz: e.target.value})} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Module Selector */}
+                <div style={{ background: 'rgba(14, 165, 233, 0.05)', padding: '16px', borderRadius: '8px', borderLeft: '4px solid #0ea5e9' }}>
+                  <h4 style={{ margin: '0 0 12px 0', color: '#0ea5e9', fontSize: '14px' }}>Módulos da Usina</h4>
+                  <p style={{ fontSize: 12, color: '#64748b', marginBottom: 12 }}>Selecione os módulos presentes na usina (buscados do Cadastro). A topologia exata será obtida do Infos Usina.</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '150px', overflowY: 'auto' }}>
+                    {equipamentos.modulos.length === 0 && <span style={{ fontSize: 12, color: '#94a3b8' }}>Nenhum módulo cadastrado.</span>}
+                    {equipamentos.modulos.map(m => (
+                      <label key={m.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: 13, cursor: 'pointer' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={(pvlibParams.selected_modulos || []).includes(m.id)}
+                          onChange={e => {
+                            const sel = pvlibParams.selected_modulos || [];
+                            if (e.target.checked) setPvlibParams({...pvlibParams, selected_modulos: [...sel, m.id]});
+                            else setPvlibParams({...pvlibParams, selected_modulos: sel.filter(id => id !== m.id)});
+                          }}
+                        />
+                        {m.nome} ({m.potencia}W)
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Inverter Selector */}
+                <div style={{ background: 'rgba(14, 165, 233, 0.05)', padding: '16px', borderRadius: '8px', borderLeft: '4px solid #0ea5e9' }}>
+                  <h4 style={{ margin: '0 0 12px 0', color: '#0ea5e9', fontSize: '14px' }}>Inversores da Usina</h4>
+                  <p style={{ fontSize: 12, color: '#64748b', marginBottom: 12 }}>Selecione os inversores presentes na usina.</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '150px', overflowY: 'auto' }}>
+                    {equipamentos.inversores.length === 0 && <span style={{ fontSize: 12, color: '#94a3b8' }}>Nenhum inversor cadastrado.</span>}
+                    {equipamentos.inversores.map(m => (
+                      <label key={m.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: 13, cursor: 'pointer' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={(pvlibParams.selected_inversores || []).includes(m.id)}
+                          onChange={e => {
+                            const sel = pvlibParams.selected_inversores || [];
+                            if (e.target.checked) setPvlibParams({...pvlibParams, selected_inversores: [...sel, m.id]});
+                            else setPvlibParams({...pvlibParams, selected_inversores: sel.filter(id => id !== m.id)});
+                          }}
+                        />
+                        {m.nome} ({(m.paco/1000).toFixed(1)}kW)
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Losses */}
+                <div style={{ background: 'rgba(14, 165, 233, 0.05)', padding: '16px', borderRadius: '8px', borderLeft: '4px solid #0ea5e9' }}>
+                  <h4 style={{ margin: '0 0 12px 0', color: '#0ea5e9', fontSize: '14px' }}>Perdas e Fatores de Correção</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600 }}>Ohm Loss DC (%):</label>
+                      <input type="number" step="0.001" className="input" value={pvlibParams.loss_ohm_dc} onChange={e => setPvlibParams({...pvlibParams, loss_ohm_dc: parseFloat(e.target.value)||0})} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600 }}>Perda Cabeamento BT CA (%):</label>
+                      <input type="number" step="0.001" className="input" value={pvlibParams.loss_ohm_ac} onChange={e => setPvlibParams({...pvlibParams, loss_ohm_ac: parseFloat(e.target.value)||0})} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600 }}>Mismatch (%):</label>
+                      <input type="number" step="0.1" className="input" value={pvlibParams.mismatch || 0} onChange={e => setPvlibParams({...pvlibParams, mismatch: parseFloat(e.target.value)||0})} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600 }}>LID (%):</label>
+                      <input type="number" step="0.1" className="input" value={pvlibParams.lid || 0} onChange={e => setPvlibParams({...pvlibParams, lid: parseFloat(e.target.value)||0})} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, gridColumn: 'span 2' }}>
+                      <label style={{ fontSize: 12, fontWeight: 600 }}>Perdas Auxiliares (kW):</label>
+                      <input type="number" step="0.1" className="input" value={pvlibParams.aux_loss || 0} onChange={e => setPvlibParams({...pvlibParams, aux_loss: parseFloat(e.target.value)||0})} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Transformer & MV Losses */}
+                <div style={{ background: 'rgba(234, 179, 8, 0.05)', padding: '16px', borderRadius: '8px', borderLeft: '4px solid #eab308', marginTop: '16px' }}>
+                  <h4 style={{ margin: '0 0 12px 0', color: '#eab308', fontSize: '14px' }}>Transformador e Média Tensão</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600 }}>Potência Nominal Trafo (kVA):</label>
+                      <input type="number" step="1" className="input" value={pvlibParams.trafo_pnom || 0} onChange={e => setPvlibParams({...pvlibParams, trafo_pnom: parseFloat(e.target.value)||0})} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600 }}>Perdas de Ferro (%):</label>
+                      <input type="number" step="0.001" className="input" value={pvlibParams.trafo_iron_loss || 0} onChange={e => setPvlibParams({...pvlibParams, trafo_iron_loss: parseFloat(e.target.value)||0})} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600 }}>Perdas de Cobre (%):</label>
+                      <input type="number" step="0.001" className="input" value={pvlibParams.trafo_copper_loss || 0} onChange={e => setPvlibParams({...pvlibParams, trafo_copper_loss: parseFloat(e.target.value)||0})} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600 }}>Perda Cabeamento MT CA (%):</label>
+                      <input type="number" step="0.001" className="input" value={pvlibParams.loss_ohm_ac_mt || 0} onChange={e => setPvlibParams({...pvlibParams, loss_ohm_ac_mt: parseFloat(e.target.value)||0})} />
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
+                <button 
+                  className="btn"
+                  style={{ background: '#0ea5e9', color: '#fff', border: 'none', padding: '10px 24px', fontWeight: 600, cursor: 'pointer' }}
+                  onClick={() => {
+                    const updatedNodes = nodes.map(n => {
+                      if (n.id === 'pvlib') {
+                        return { ...n, data: { ...n.data, pvlibParams } }
+                      }
+                      return n
+                    })
+                    setNodes(updatedNodes)
+                    saveNodeConfig(updatedNodes)
+                    setToast({ message: 'Parâmetros PVLib salvos com sucesso.', type: 'success' })
+                    setSelectedNodeId(null);
+                  }}
+                >
+                  Salvar
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Painel lateral de Instruções */}
+          {selectedNodeId === 'pvlib' && showPvlibInstructions && (
+            <div style={{
+              background: 'var(--bg-card)', padding: '24px', borderRadius: '8px',
+              width: '360px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+              display: 'flex', flexDirection: 'column'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
+                <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '16px' }}>Instruções</h3>
+                <button onClick={() => setShowPvlibInstructions(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'var(--text-muted)' }}>✕</button>
+              </div>
+              <ul style={{ margin: '0 0 24px 0', paddingLeft: '20px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                <li style={{ marginBottom: '6px' }}><strong>Latitude / Longitude:</strong> Coordenadas da usina usadas para calcular a posição solar exata.</li>
+                <li style={{ marginBottom: '6px' }}><strong>Altitude (m):</strong> Afeta a pressão atmosférica e a atenuação da luz solar (Massa de Ar) usada pelo modelo DIRINT.</li>
+                <li style={{ marginBottom: '6px' }}><strong>GCR:</strong> Razão de Cobertura do Solo. Usado pelo rastreador virtual do PVLib para simular sombreamento (backtracking).</li>
+                <li style={{ marginBottom: '6px' }}><strong>Fuso Horário:</strong> Crucial para converter os timestamps do banco para hora solar verdadeira. Um fuso errado desloca o sol e distorce a separação DIRINT.</li>
+                <li style={{ marginBottom: '6px' }}><strong>Módulos / Inversores:</strong> Selecione os equipamentos da usina para carregar a matriz PAN/OND e aplicar as curvas de eficiência e perdas IAM/Shunt.</li>
+                <li style={{ marginBottom: '6px' }}><strong>Ohm Loss DC / AC (%):</strong> Perda fracional de resistência ôhmica nos cabeamentos DC das strings e cabos AC até o medidor.</li>
+                <li style={{ marginBottom: '6px' }}><strong>Mismatch (%):</strong> Perda estimada pela dispersão natural das características elétricas (I-V) entre módulos na mesma string.</li>
+                <li style={{ marginBottom: '6px' }}><strong>LID (%):</strong> Degradação Induzida por Luz inicial. Fator fixo de perda abatido da potência bruta.</li>
+                <li style={{ marginBottom: '6px' }}><strong>Perdas Aux. (kW):</strong> Consumo fixo contínuo dos inversores e transformadores (refrigeração/eletrônica).</li>
+              </ul>
+            </div>
+          )}
+
+          {/* Painel lateral de Informações */}
+          {selectedNodeId === 'pvlib' && showPvlibParamsInfo && (
+            <div style={{
+              background: 'var(--bg-card)', padding: '24px', borderRadius: '8px',
+              width: '360px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+              display: 'flex', flexDirection: 'column'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
+                <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '16px' }}>Informações</h3>
+                <button onClick={() => setShowPvlibParamsInfo(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'var(--text-muted)' }}>✕</button>
+              </div>
+              <h5 style={{ margin: '0 0 12px 0', color: '#0ea5e9', fontSize: '14px' }}>Divergências PVSyst x PVLib</h5>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                <strong>1. Separação DIRINT:</strong> O PVLib tende a superestimar luz Direta no meio da manhã/tarde, gerando menos perdas óticas globais.<br/><br/>
+                <strong>2. Integração IAM Difuso:</strong> O PVLib usa Marion (toda a abóbada), resultando num fator difuso mais otimista que a aproximação padrão do PVSyst.<br/><br/>
+                <strong>3. Resistência Shunt:</strong> A queda exponencial da Shunt sob baixa luz é frequentemente mais agressiva na caixa-preta do PVSyst do que nas equações do DeSoto/PVLib.
+              </p>
+            </div>
+          )}
           </div>
         </>
       )}
@@ -2968,7 +3348,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                       if (col.key.toLowerCase().includes('sujidade') && typeof val === 'number') {
                         formattedVal += '%';
                       }
-                      if ((col.key === 'epi' || col.key === 'epi_corrigido') && typeof val === 'number') {
+                      if ((col.key === 'epi' || col.key === 'epi_corrigido' || col.key === 'epi_pvlib') && typeof val === 'number') {
                         formattedVal = (val * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
                       }
                       if (col.key === 'fator_ajuste' && typeof val === 'number') {
@@ -2999,7 +3379,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                         }
                       }
                       
-                      if ((col.key === 'epi' || col.key === 'epi_corrigido') && typeof val === 'number') {
+                      if ((col.key === 'epi' || col.key === 'epi_corrigido' || col.key === 'epi_pvlib') && typeof val === 'number') {
                         const epiColor = getEpiColor(val);
                         cellBackground = epiColor.bg;
                         cellColor = epiColor.text;
@@ -3071,7 +3451,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                       if (col.key.toLowerCase().includes('sujidade') && typeof val === 'number') {
                         formattedVal += '%';
                       }
-                      if ((col.key === 'epi' || col.key === 'epi_corrigido') && typeof val === 'number') {
+                      if ((col.key === 'epi' || col.key === 'epi_corrigido' || col.key === 'epi_pvlib') && typeof val === 'number') {
                         formattedVal = (val * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
                       }
                       if (col.key === 'fator_ajuste' && typeof val === 'number') {
@@ -3080,7 +3460,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                       let cellBackground = isOutput ? theme.bgTotal : 'transparent';
                       let cellColor = isOutput ? theme.color : 'var(--text-primary)';
                       
-                      if ((col.key === 'epi' || col.key === 'epi_corrigido') && typeof val === 'number') {
+                      if ((col.key === 'epi' || col.key === 'epi_corrigido' || col.key === 'epi_pvlib') && typeof val === 'number') {
                         const epiColor = getEpiColor(val);
                         cellBackground = epiColor.bg;
                         cellColor = epiColor.text;

@@ -437,6 +437,10 @@ export async function exportTableToPng(elementRef, filename = 'export.png', opti
 
   } catch (error) {
     console.error('Erro ao exportar PNG:', error)
-    alert('Ocorreu um erro ao gerar o PNG. Verifique o console.')
+    if (error && error.message && error.message.toLowerCase().includes('canvas')) {
+      alert('Ocorreu um erro ao gerar o PNG. A tabela empilhada pode ser muito grande para o limite de tamanho de imagem do navegador. Por favor, tente exportar como PDF ou selecione menos dias.')
+    } else {
+      alert(`Ocorreu um erro ao gerar o PNG: ${error ? error.message : 'Erro Desconhecido'}\n\nSe a tabela for muito grande, tente exportar como PDF.`)
+    }
   }
 }

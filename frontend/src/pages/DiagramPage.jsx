@@ -37,8 +37,9 @@ const getLayoutedElements = (nodes, edges, direction = 'TB') => {
   return { layoutedNodes: nodes, layoutedEdges: edges }
 }
 
-export default function DiagramTab() {
+export default function DiagramTab({ usina: usinaProp }) {
   const { usinaAtual } = useUsina()
+  const activeUsina = usinaProp || usinaAtual
   const [data, setData] = useState(null)
   
   const [nodes, setNodes, onNodesChange] = useNodesState([])
@@ -51,16 +52,16 @@ export default function DiagramTab() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (!usinaAtual) return
+    if (!activeUsina) return
     setLoading(true)
-    fetchMappingData(usinaAtual).then(res => {
+    fetchMappingData(activeUsina).then(res => {
       setData(res)
       setExpandedNodes(new Set(['ROOT'])) // zera state pro Root
     }).catch(err => {
       console.error(err)
       alert("Erro ao carregar mapa: " + err.message)
     }).finally(() => setLoading(false))
-  }, [usinaAtual])
+  }, [activeUsina])
 
   useEffect(() => {
     if (!data) return
@@ -131,7 +132,7 @@ export default function DiagramTab() {
 
     addNode(
       'ROOT', 
-      <div style={{lineHeight:'1.2', fontWeight: 700}}>{usinaAtual}</div>, 
+      <div style={{lineHeight:'1.2', fontWeight: 700}}>{activeUsina}</div>, 
       null, 
       { background: '#0f172a', color: 'white', fontWeight: 'bold', fontSize: 13, border: 'none', borderRadius: 8 }
     )
@@ -215,7 +216,7 @@ export default function DiagramTab() {
     setNodes(layoutedNodes)
     setEdges(layoutedEdges)
 
-  }, [data, usinaAtual, direction, expandedNodes, setNodes, setEdges])
+  }, [data, activeUsina, direction, expandedNodes, setNodes, setEdges])
 
   const onNodeClick = useCallback((event, node) => {
       if (node.type === 'leaf') return;
@@ -245,7 +246,7 @@ export default function DiagramTab() {
   const onNodeMouseLeave = useCallback(() => setTooltip(null), [])
   const onPaneClick = useCallback(() => setTooltip(null), [])
 
-  if (!usinaAtual) {
+  if (!activeUsina) {
     return <div style={{ padding: 20 }}>Selecione uma usina no menu superior para visualizar o seu Diagrama.</div>
   }
 
@@ -328,6 +329,11 @@ export default function DiagramTab() {
       <div style={{ flex: 1, position: 'relative', background: 'var(--bg-secondary)', height: '100%', width: '100%', minHeight: 500 }}>
         {loading ? (
              <div style={{ padding: 40, textAlign: 'center', color: '#475569' }}>Construindo malha hierárquica...</div>
+        ) : nodes.length === 0 ? (
+             <div style={{ padding: 40, textAlign: 'center', color: '#ef4444' }}>
+                Nenhum nó gerado. usinaProp: {String(usinaProp)}, usinaAtual: {String(usinaAtual)}, 
+                data: {data ? Object.keys(data).length + ' chaves' : 'null'}
+             </div>
         ) : (
             <ReactFlow
               nodes={nodes}

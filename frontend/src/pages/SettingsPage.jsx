@@ -6,6 +6,8 @@ import { fetchAuthUsers, createAuthUser, updateAuthUser, deleteAuthUser } from '
 import { useAuth } from '../hooks/AuthContext'
 import UsinasTab from '../components/Settings/UsinasTab'
 import FiltrosTab from '../components/Settings/FiltrosTab'
+import ModulosTab from '../components/Settings/ModulosTab'
+import InversoresTab from '../components/Settings/InversoresTab'
 
 // ── Linha de elemento ─────────────────────────────────────────────────────────
 const MAX_COLORS = 5
@@ -835,6 +837,8 @@ const TABS = [
   { id: 'usinas',    icon: '🏭', label: 'Usinas' },
   { id: 'elementos', icon: '📊', label: 'Elementos' },
   { id: 'filtros',   icon: '🎛️', label: 'Filtros' },
+  { id: 'modulos',   icon: '☀️', label: 'Módulos' },
+  { id: 'inversores',icon: '⚡', label: 'Inversores' },
   { id: 'usuarios',  icon: '👥', label: 'Usuários' },
 ]
 
@@ -892,6 +896,8 @@ export default function SettingsPage() {
         {activeTab === 'elementos' && <ElementosTab readOnly={readOnly} />}
         {activeTab === 'usinas'    && <UsinasTab readOnly={readOnly} />}
         {activeTab === 'filtros'   && <FiltrosTab readOnly={readOnly} />}
+        {activeTab === 'modulos'   && <ModulosTab readOnly={readOnly} />}
+        {activeTab === 'inversores'&& <InversoresTab readOnly={readOnly} />}
         {activeTab === 'usuarios'  && <UsuariosTab readOnly={readOnly} />}
       </div>
     </div>

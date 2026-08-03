@@ -7,6 +7,7 @@ from utils.config import DATA_DIR
 from utils.logger import logger
 from services.parquet_service import _parquet_path, list_available_dates
 from services.filter_settings_service import load_filter_settings
+from services.pvlib_service import run_pvlib_simulation
 
 def get_processed_path(date: str, usina: str) -> str:
     processed_dir = os.path.join(DATA_DIR, usina, "processed")
@@ -36,7 +37,7 @@ def run_flow_processing(usina: str, dates_str: str = None, progress_callback=Non
         nodes = []
         for node_id, cfg in node_configs.items():
             # Detecta o tipo do nó para marcar aggregator corretamente
-            NON_AGGREGATOR_TYPES = {"geff", "tcel", "curtailment", "pvsyst"}
+            NON_AGGREGATOR_TYPES = {"geff", "tcel", "curtailment", "pvsyst", "pvlib"}
             node_type = node_id if node_id in NON_AGGREGATOR_TYPES else "box"
             is_aggregator = node_type not in NON_AGGREGATOR_TYPES
             node_data = dict(cfg)  # copia todos os campos de config
@@ -501,6 +502,8 @@ def run_flow_processing(usina: str, dates_str: str = None, progress_callback=Non
                 logger.warning(f"[CURTAILMENT] potencia_ppc ou referencia_ppc ausentes para {curtailment_id} em {date}")
                 processed_df[curtailment_id] = 1
 
+
+
         # --- Pré-processa EPI (Variáveis do PVSyst) ---
         epi_node = next((n for n in nodes if n.get("id") == "epi"), None)
         if epi_node:
@@ -663,23 +666,44 @@ def run_flow_processing(usina: str, dates_str: str = None, progress_callback=Non
                 # Aplica filtro de Dados Válidos 
                 processed_df["Potência CC Média Strings OK_válida"] = media_strings_ok.where(simult_flag == 1, np.nan)
                 
+                # --- Extrair Margem de Perda CC do Tracker ---
+                margem_perda_cc = 0.0
+                tracker_node = next((n for n in nodes if n.get("id") == "tracker"), None)
+                if tracker_node:
+                    considerar_ganhos = tracker_node.get("data", {}).get("trackerParams", {}).get("considerar_ganhos", False)
+                    margem_perda_cc = float(tracker_node.get("data", {}).get("trackerParams", {}).get("margem_perda_cc", 0.0)) / 100.0
+                    if considerar_ganhos:
+                        margem_perda_cc = 0.0
+
                 # --- Calcula a perda (Strings Perdida Não OK) ---
                 total_loss_series = pd.Series(0.0, index=processed_df.index)
                 for base, group in tracker_groups.items():
                     erro_alvo_col = f"tracker_{base}_erro_alvo"
                     travado_col = f"tracker_{base}_travado"
+                    tracker_loss_series = pd.Series(0.0, index=processed_df.index)
                     if erro_alvo_col in processed_df.columns and travado_col in processed_df.columns:
                         mask_nao_ok = (processed_df[erro_alvo_col] == 1) | (processed_df[travado_col] == 1)
-                        for st_col in group["cc_strings"]:
-                            if st_col in raw_df.columns:
-                                st_data = raw_df[st_col]
-                                # Considerar apenas se a string tiver valor válido maior que zero (ignorando falhas elétricas)
-                                valid_string_mask = (st_data.notna()) & (st_data > 0)
-                                diff = media_strings_ok - st_data
-                                diff_clamped = diff.clip(lower=0)
-                                mask_final = mask_nao_ok & valid_string_mask
-                                loss_for_string = diff_clamped.where(mask_final, 0).fillna(0)
-                                total_loss_series += loss_for_string
+                        if "cc_strings" in group and group["cc_strings"]:
+                            for st_col in group["cc_strings"]:
+                                if st_col in raw_df.columns:
+                                    st_data = raw_df[st_col]
+                                    # Considerar apenas se a string tiver valor válido maior que zero (ignorando falhas elétricas)
+                                    valid_string_mask = (st_data.notna()) & (st_data > 0)
+                                    diff = media_strings_ok - st_data
+                                    diff_clamped = diff if considerar_ganhos else diff.clip(lower=0)
+                                    
+                                    mask_final = mask_nao_ok & valid_string_mask
+                                    if margem_perda_cc > 0:
+                                        pct_diff = diff / media_strings_ok
+                                        mask_threshold = pct_diff > margem_perda_cc
+                                        mask_final = mask_final & mask_threshold
+
+                                    loss_for_string = diff_clamped.where(mask_final, 0).fillna(0)
+                                    tracker_loss_series += loss_for_string
+                    
+                    processed_df[f"tracker_{base}_perda"] = tracker_loss_series
+                    processed_df[f"tracker_{base}_perda_válida"] = tracker_loss_series.where(simult_flag == 1, np.nan)
+                    total_loss_series += tracker_loss_series
                                 
                 total_loss_series = total_loss_series / 1000000
                 processed_df["Potência CC Strings Perdida Não OK"] = total_loss_series
@@ -732,6 +756,18 @@ def run_flow_processing(usina: str, dates_str: str = None, progress_callback=Non
                     recuperavel_valida = np.minimum(perdida_valida, vaga_valida.clip(lower=0))
                     processed_df["Potência CA Recuperável_válida"] = recuperavel_valida
 
+            # --- Remove as versões não-_válida do pvlib para não poluir o banco ---
+            cols_to_drop = [c for c in processed_df.columns if c in ["pvlib_E_Grid", "pvlib_EArray", "pvlib_OhmLoss_DC"]]
+            if cols_to_drop:
+                processed_df = processed_df.drop(columns=cols_to_drop)
+
+            # --- Depois processa o Bloco PVLib (agora que as _válida existem) ---
+            pvlib_nodes = [n for n in nodes if n.get("type") == "pvlib" or n.get("id") == "pvlib"]
+            for pvlib_node in pvlib_nodes:
+                pvlib_res = run_pvlib_simulation(processed_df, pvlib_node, usina, date, nodes)
+                if pvlib_res:
+                    for col_name, ser in pvlib_res.items():
+                        processed_df[col_name] = ser
 
         # Salvar o dia processado
         if not processed_df.empty:
@@ -791,7 +827,7 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
     if isinstance(flow_config, dict) and "nodeConfigs" in flow_config:
         node_configs = flow_config["nodeConfigs"]
         nodes = []
-        NON_AGGREGATOR_TYPES = {"geff", "tcel", "curtailment", "pvsyst"}
+        NON_AGGREGATOR_TYPES = {"geff", "tcel", "curtailment", "pvsyst", "pvlib"}
         for node_id, cfg in node_configs.items():
             node_type = node_id if node_id in NON_AGGREGATOR_TYPES else "box"
             node_data = dict(cfg)
@@ -825,7 +861,7 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
     column_definitions = []
     
     # Ordem desejada para as colunas
-    group_order = ["gpoa", "grear", "geff", "tamb", "tmod", "tcel", "sujidade", "tracker", "potencia_ppc", "curtailment", "energia_pmi", "pvsyst", "epi"]
+    group_order = ["gpoa", "grear", "geff", "tamb", "tmod", "tcel", "sujidade", "tracker", "potencia_ppc", "curtailment", "energia_pmi", "pvsyst", "epi", "pvlib"]
 
     for group in group_order:
         # Achar o nó correspondente
@@ -936,6 +972,19 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                     "label": "Energia Esperada Ajustada (Válido)",
                     "type": "special",
                     "node_id": "pvsyst_ajustada"
+                })
+            elif group == "pvlib":
+                column_definitions.append({
+                    "key": "pvlib_E_Grid_válida",
+                    "label": "Energia Esperada PVLib (Válido)",
+                    "type": "special",
+                    "node_id": "pvlib"
+                })
+                column_definitions.append({
+                    "key": "epi_pvlib",
+                    "label": "EPI PVLib",
+                    "type": "special",
+                    "node_id": "pvlib_epi"
                 })
             elif group == "epi":
                 # Bloco morto, epi é tratado como aggregator
@@ -1266,7 +1315,7 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                         if raw_sum is not None and not pd.isna(raw_sum):
                             if col["node_id"] in ["potencia_ppc", "referencia_ppc", "energia_pmi", "perdida_tracker", "recuperavel"]:
                                 val = raw_sum / 0.06
-                            elif col["node_id"] in ["pvsyst", "pvsyst_ajustada"]:
+                            elif col["node_id"] in ["pvsyst", "pvsyst_ajustada", "pvlib"]:
                                 val = raw_sum / 60.0
                             else:
                                 val = raw_sum / 60000.0
@@ -1287,6 +1336,13 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
             val_pvsyst = row_data["E_Grid_Ajustada_válida"]
             if val_pmi != "-" and val_pvsyst != "-" and val_pvsyst != 0:
                 row_data["epi"] = val_pmi / val_pvsyst
+
+        # Calcula o EPI PVLib (Energia PMI (Válido) / Energia PVLib (Válido))
+        if "Energia PMI_válida" in row_data and "pvlib_E_Grid_válida" in row_data:
+            val_pmi = row_data["Energia PMI_válida"]
+            val_pvlib = row_data["pvlib_E_Grid_válida"]
+            if val_pmi != "-" and val_pvlib != "-" and val_pvlib != 0:
+                row_data["epi_pvlib"] = val_pmi / val_pvlib
 
         # Calcula o Fator de Ajuste (geff_válida / GlobInc_válida)
         if "GlobInc_válida" in row_data and "geff_válida" in row_data:

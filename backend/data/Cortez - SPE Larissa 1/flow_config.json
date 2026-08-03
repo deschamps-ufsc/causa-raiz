@@ -79,7 +79,8 @@
         "tolerance": 10,
         "tol_pontos_vento": 10,
         "tol_pontos_travado": 10,
-        "inverter_sinal": true
+        "inverter_sinal": true,
+        "margem_perda_cc": 10
       }
     },
     "tamb": {
@@ -195,6 +196,33 @@
         "potencia_ppc": true,
         "referencia_ppc": true
       }
+    },
+    "pvlib": {
+      "pvlibParams": {
+        "latitude": -11.1006,
+        "longitude": -41.2715,
+        "altitude": 1015,
+        "tz": "America/Sao_Paulo",
+        "selected_modulos": [
+          "1785690696329",
+          "1785690700147"
+        ],
+        "selected_inversores": [
+          "1785624391332"
+        ],
+        "loss_ohm_dc": 1.23,
+        "loss_ohm_ac": 0.02,
+        "soiling": 2,
+        "gcr": 0.34,
+        "mismatch": 1,
+        "lid": 1,
+        "aux_loss": 14,
+        "trafo_pnom": 52800,
+        "trafo_iron_loss": 0.1,
+        "trafo_copper_loss": 0.9,
+        "loss_ohm_ac_mt": 0.81
+      },
+      "type": "pvlib"
     },
     "pvsyst": {
       "type": "pvsyst"

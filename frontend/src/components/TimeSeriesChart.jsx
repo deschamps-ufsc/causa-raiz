@@ -1397,6 +1397,12 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, cha
         }
 
         // Linha
+        const fillPercent = seriesFills[name]
+        if (fillPercent !== undefined) {
+          ctx.fillStyle = isHidden ? '#e2e8f0' : hexToRgba(getColor(name), fillPercent / 100)
+          ctx.fillRect(x, y + 1 * scale, LINE_W, 8 * scale)
+        }
+        
         ctx.strokeStyle = color
         ctx.lineWidth   = lw
         ctx.setLineDash(dash === 'dash' ? [4 * scale, 3 * scale] : dash === 'dot' ? [2 * scale, 2 * scale] : [])
@@ -1828,6 +1834,11 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, cha
               const dash     = getDash(name)
               const w        = Math.min(getWidth(name), 2.5)
               const dashArr  = dash === 'dash' ? '4,3' : dash === 'dot' ? '2,2' : 'none'
+              
+              const fillPercent = seriesFills[name]
+              const hasFill = fillPercent !== undefined
+              const fillColor = hasFill ? hexToRgba(color, fillPercent / 100) : 'transparent'
+
               return (
                 <div
                   key={name}
@@ -1843,7 +1854,10 @@ export default memo(function TimeSeriesChart({ data, usina, seriesDict = {}, cha
                   onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
-                  <svg width="22" height="10" style={{ flexShrink: 0 }}>
+                  <svg width="22" height="14" style={{ flexShrink: 0 }}>
+                    {hasFill && (
+                      <rect x="1" y="6" width="20" height="8" fill={isHidden ? '#e2e8f0' : fillColor} />
+                    )}
                     <line x1="1" y1="5" x2="21" y2="5"
                       stroke={isHidden ? '#94a3b8' : color}
                       strokeWidth={w}

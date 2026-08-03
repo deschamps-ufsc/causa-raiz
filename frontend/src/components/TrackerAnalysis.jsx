@@ -38,6 +38,7 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
     perdas: false,
     kwp: true,
     energia: true,
+    perda_energia: true,
     yield: true,
     desvio: true,
     desvioMax: true
@@ -210,7 +211,7 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
         if (lvl === 1) type = 'stringbox'
         if (lvl === 2) type = 'tracker'
         const node = { label, values: {}, children: new Map(), isLeaf: false, level: lvl, type }
-        for (let c of cols) node.values[c] = { diff_alvo_sum: 0, diff_atual_sum: 0, count_alvo: 0, count_atual: 0, pts_fora_alvo: 0, pts_fora_atual: 0, pts_erro_alvo: 0, pts_vento: 0, pts_travado: 0, sum_diff_erro_alvo: 0, sum_diff_vento: 0, sum_diff_travado: 0, serieName: '', serie_alvo: '', serie_atual: '', energia: null, kwp: null, yield: null, count_trackers: 0 }
+        for (let c of cols) node.values[c] = { diff_alvo_sum: 0, diff_atual_sum: 0, count_alvo: 0, count_atual: 0, pts_fora_alvo: 0, pts_fora_atual: 0, pts_erro_alvo: 0, pts_vento: 0, pts_travado: 0, sum_diff_erro_alvo: 0, sum_diff_vento: 0, sum_diff_travado: 0, serieName: '', serie_alvo: '', serie_atual: '', energia: null, perda_energia: null, kwp: null, yield: null, count_trackers: 0 }
         map.set(label, node)
       }
       return map.get(label)
@@ -266,6 +267,9 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
           }
           if (r.energia !== undefined && r.energia !== null) {
               node.values[c].energia = (node.values[c].energia || 0) + r.energia
+          }
+          if (r.perda_energia !== undefined && r.perda_energia !== null) {
+              node.values[c].perda_energia = (node.values[c].perda_energia || 0) + r.perda_energia
           }
           if (r.kwp !== undefined && r.kwp !== null) {
               node.values[c].kwp = (node.values[c].kwp || 0) + r.kwp
@@ -791,6 +795,22 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
               Energia
             </button>
             <button
+              onClick={() => toggleCol('perda_energia')}
+              style={{
+                padding: '4px 8px',
+                borderRadius: 6,
+                fontSize: 13,
+                fontWeight: visCols.perda_energia ? 600 : 500,
+                cursor: 'pointer',
+                border: 'none',
+                color: visCols.perda_energia ? '#ea580c' : '#64748b',
+                background: visCols.perda_energia ? '#fff7ed' : 'transparent',
+                transition: 'all 0.2s'
+              }}
+            >
+              Perda Energia
+            </button>
+            <button
               onClick={() => toggleCol('yield')}
               style={{
                 padding: '4px 8px',
@@ -917,7 +937,7 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                   <div style={{ color: '#ffffff', fontWeight: 600, fontSize: 11 }}>Tracker</div>
                 </td>
                 {pivotData.cols.map(c => {
-                  const numSubCols = [showAlvo && visCols.serie, showAlvo && visCols.diff, showAlvo && visCols.pts, showAtual && visCols.serie, showAtual && visCols.diff, showAtual && visCols.pts].filter(Boolean).length + ((showAlvo || showAtual) && visCols.status ? 1 : 0) + ((showAlvo || showAtual) && visCols.perdas ? 1 : 0) + ((showAlvo || showAtual) && visCols.kwp ? 1 : 0) + ((showAlvo || showAtual) && visCols.energia ? 1 : 0) + ((showAlvo || showAtual) && visCols.yield ? 1 : 0) + ((showAlvo || showAtual) && visCols.desvio ? 1 : 0) + ((showAlvo || showAtual) && visCols.desvioMax ? 1 : 0)
+                  const numSubCols = [showAlvo && visCols.serie, showAlvo && visCols.diff, showAlvo && visCols.pts, showAtual && visCols.serie, showAtual && visCols.diff, showAtual && visCols.pts].filter(Boolean).length + ((showAlvo || showAtual) && visCols.status ? 1 : 0) + ((showAlvo || showAtual) && visCols.perdas ? 1 : 0) + ((showAlvo || showAtual) && visCols.kwp ? 1 : 0) + ((showAlvo || showAtual) && visCols.energia ? 1 : 0) + ((showAlvo || showAtual) && visCols.perda_energia ? 1 : 0) + ((showAlvo || showAtual) && visCols.yield ? 1 : 0) + ((showAlvo || showAtual) && visCols.desvio ? 1 : 0) + ((showAlvo || showAtual) && visCols.desvioMax ? 1 : 0)
                   if (numSubCols === 0) return null
                   return (
                   <td key={c} colSpan={numSubCols} style={{ ...hdCell, textAlign: 'center', borderBottom: '1px solid #475569', borderLeft: '3px solid #0f172a' }}>
@@ -942,6 +962,7 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                     {(showAlvo || showAtual) && visCols.perdas && <td style={{...subHd, borderLeft: bL()}}>Gatilho Perdas</td>}
                     {(showAlvo || showAtual) && visCols.kwp && <td style={{...subHd, textTransform: 'none', borderLeft: bL()}}>kWp</td>}
                     {(showAlvo || showAtual) && visCols.energia && <td style={{...subHd, textTransform: 'none', borderLeft: bL()}}>Energia (kWh)</td>}
+                    {(showAlvo || showAtual) && visCols.perda_energia && <td style={{...subHd, textTransform: 'none', borderLeft: bL()}}>Perda Energia (kWh)</td>}
                     {(showAlvo || showAtual) && visCols.yield && <td style={{...subHd, textTransform: 'none', borderLeft: bL()}}>Yield (kWh/kWp)</td>}
                     {(showAlvo || showAtual) && visCols.desvio && <td style={{...subHd, textTransform: 'none', borderLeft: bL()}}>Desvio Média</td>}
                     {(showAlvo || showAtual) && visCols.desvioMax && <td style={{...subHd, textTransform: 'none', borderLeft: bL()}}>Desvio Máx</td>}
@@ -1002,6 +1023,7 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                           {(showAlvo || showAtual) && visCols.perdas && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
                           {(showAlvo || showAtual) && visCols.kwp && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
                           {(showAlvo || showAtual) && visCols.energia && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
+                          {(showAlvo || showAtual) && visCols.perda_energia && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
                           {(showAlvo || showAtual) && visCols.yield && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
                           {(showAlvo || showAtual) && visCols.desvio && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
                           {(showAlvo || showAtual) && visCols.desvioMax && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
@@ -1042,6 +1064,7 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                                        {visCols.perdas && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
                                        {visCols.kwp && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
                                        {visCols.energia && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
+                                       {visCols.perda_energia && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
                                        {visCols.yield && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
                                        {visCols.desvio && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
                                        {visCols.desvioMax && <td style={{...cell, borderLeft: bL(), background: cBg}}>-</td>}
@@ -1092,7 +1115,7 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                                          onClick={() => {
                                             if (rowVals.serie_alvo || rowVals.serie_atual) {
                                                 const targetDate = selectedDates.length > 0 ? selectedDates[0] : (dates ? dates.split(',')[0].trim() : '');
-                                                openChart(targetDate, rowVals.serie_alvo, rowVals.serie_atual, { label, bg, color }, `${c} - ${n.displayLabel}`, totalPerdas > 0 ? perdasLabel : null)
+                                                openChart(targetDate, rowVals.serie_alvo, rowVals.serie_atual, { label, bg, color }, `${c} - ${n.path.split('|').join(' - ')}`, totalPerdas > 0 ? perdasLabel : null)
                                             }
                                          }}
                                          style={{...cell, borderLeft: bL(), background: bg, color, fontWeight: 700, textAlign: 'center', whiteSpace: 'nowrap', cursor: (rowVals.serie_alvo || rowVals.serie_atual) ? 'pointer' : 'default'}}
@@ -1114,6 +1137,11 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                                      {visCols.energia && (
                                        <td style={{...cell, borderLeft: bL(), background: cBg, color: '#1e293b', textAlign: 'center', whiteSpace: 'nowrap', fontWeight: 600}}>
                                          {rowVals.energia != null ? (rowVals.energia / 1000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '-'}
+                                       </td>
+                                     )}
+                                     {visCols.perda_energia && (
+                                       <td style={{...cell, borderLeft: bL(), background: cBg, color: '#be123c', textAlign: 'center', whiteSpace: 'nowrap', fontWeight: 600}}>
+                                         {rowVals.perda_energia != null ? (rowVals.perda_energia).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '-'}
                                        </td>
                                      )}
                                      {visCols.yield && (
@@ -1416,6 +1444,27 @@ export default function TrackerAnalysis({ usina, dates, activeFilters = [] }) {
                                       onRelayout={handleChartRelayout}
                                       revision={chartRevision}
                                   />
+                              </div>
+                          )}
+                          {chartData.strings_loss && Object.keys(chartData.strings_loss).length > 0 && (
+                              <div style={{ padding: '16px 24px', borderTop: '1px solid #e2e8f0', display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center', background: '#f8fafc', borderRadius: '0 0 8px 8px' }}>
+                                  <div style={{ width: '100%', textAlign: 'center', fontWeight: 600, color: '#475569', fontSize: 13, marginBottom: 4 }}>Perdas de Energia por String</div>
+                                  {Object.entries(chartData.strings_loss).map(([stName, stLoss]) => {
+                                      let shortName = stName.split('.').pop()
+                                      if (shortName.includes('Ent_')) {
+                                          shortName = 'STR ' + shortName.split('Ent_')[1]
+                                      } else if (shortName.includes('String_')) {
+                                          shortName = 'STR ' + shortName.split('String_')[1]
+                                      } else if (shortName.includes('STR_')) {
+                                          shortName = 'STR ' + shortName.split('STR_')[1]
+                                      }
+                                      return (
+                                          <div key={stName} style={{ background: '#fff1f2', border: '1px solid #fecdd3', borderRadius: 16, padding: '4px 12px', fontSize: 13, color: '#be123c', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                                              <span style={{ fontWeight: 700 }}>{shortName}</span>
+                                              <span>{stLoss.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kWh</span>
+                                          </div>
+                                      )
+                                  })}
                               </div>
                           )}
                       </div>

@@ -104,6 +104,10 @@ def list_series_for_dates(dates_str: str, usina: str) -> list[dict]:
             elemento = "PVSyst"
             info["mapeada"] = True
             
+        if base_col.startswith("pvlib_"):
+            elemento = "PVLib"
+            info["mapeada"] = True
+            
         # Preencher elemento para séries sintéticas
         if not elemento:
             col_lower = col.lower()

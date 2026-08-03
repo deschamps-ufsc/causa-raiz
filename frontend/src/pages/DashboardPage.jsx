@@ -7,12 +7,12 @@ import { useUsina } from '../hooks/UsinaContext'
 import { useChartSettings } from '../hooks/ChartSettingsContext'
 import SeriesSelector from '../components/SeriesSelector'
 import TimeSeriesChart from '../components/TimeSeriesChart'
+import AnaliseIncertezasView from '../components/AnaliseIncertezasView'
 import DataTable from '../components/DataTable'
 import Heatmap from '../components/Heatmap'
 import HeatmapYield from '../components/HeatmapYield'
 import RankingTab from '../components/RankingTab'
 import TrackerAnalysis from '../components/TrackerAnalysis'
-import DiagramTab from '../pages/DiagramPage'
 import { SkeletonChart, SkeletonList, ErrorState, EmptyState } from '../components/StateComponents'
 import SharedColorPicker from '../components/SharedColorPicker'
 import { useAuth } from '../hooks/AuthContext'
@@ -77,20 +77,15 @@ const RootCauseSVGIcon = () => (
   </svg>
 )
 
-const TABS = [
-  { id: 'chart',   icon: '📈', label: 'Gráfico' },
-  { id: 'table',   icon: '📋', label: 'Tabela' },
-  { id: 'diagram', icon: '🕸️', label: 'Diagrama' },
-  { id: 'desempenho', icon: '📊', label: 'Desempenho' },
-  { id: 'heatmap', icon: <RootCauseSVGIcon />, label: 'Análise de Causa Raiz' },
-  { id: 'mapa', icon: '🗺️', label: 'Mapa' }
-]
+// TABS removido: navegação principal movida para o App.jsx
 
 export default function DashboardPage() {
   const location = useLocation()
   const initialDate = location.state?.date || ''
   const { usinaAtual, setUsinaAtual } = useUsina()
-  const [usinas, setUsinas] = useState([])
+  // const [usinas, setUsinas] = useState([]) // Usinas state is now managed in App.jsx
+
+  const view = new URLSearchParams(location.search).get('view') || 'dashboard'
 
   const [selectedDates, setSelectedDates] = useState(initialDate ? [initialDate] : [])
   const [selectedSeries, setSelectedSeries] = useState([])
@@ -108,7 +103,7 @@ export default function DashboardPage() {
   const [filterColors, setFilterColors] = useState({})
   const [colorPickerFilter, setColorPickerFilter] = useState(null)
   
-  const [activeTab, setActiveTab] = useState('chart')
+  const [dashboardTab, setDashboardTab] = useState('chart')
   const [desempenhoTab, setDesempenhoTab] = useState('config')
   const [causaRaizTab, setCausaRaizTab] = useState('integralizacao')
   const [elementos, setElementos] = useState([])
@@ -156,7 +151,7 @@ export default function DashboardPage() {
 
   // ── VISUALIZAÇÕES LOGIC ──────────────────────────────────────────
   useEffect(() => {
-    fetchUsinas().then(setUsinas).catch(() => {})
+  // fetchUsinas().then(setUsinas).catch(() => {}) // Removido, fetch é no App.jsx agora
   }, [])
 
   useEffect(() => {
@@ -527,6 +522,35 @@ export default function DashboardPage() {
               </div>
               {isDataOpen && (
                 <>
+                  {/* Seletor de Campanha */}
+                  {usinaAtual && (
+                    <div style={{ marginBottom: 12, padding: '0 4px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-primary)', padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>🎯</span>
+                        <select
+                          value={campanhaAtual || ''}
+                          onChange={e => setCampanhaAtual(e.target.value || null)}
+                          style={{
+                            background: 'transparent', border: 'none', color: 'var(--text-primary)',
+                            fontSize: 13, fontWeight: 600, outline: 'none', cursor: 'pointer',
+                            fontFamily: 'inherit', flex: 1,
+                          }}
+                        >
+                          <option value="">Todos os dias</option>
+                          {campanhas.map(c => <option key={c.nome} value={c.nome}>{c.nome} ({c.dias.length} d)</option>)}
+                        </select>
+                        {campanhaAtual && (
+                          <button 
+                            onClick={() => handleDeleteCampanha(campanhaAtual)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: '#ef4444' }}
+                            title="Excluir campanha"
+                          >
+                            🗑️
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   {filteredDates.length > 0 && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12, padding: '0 4px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -767,49 +791,119 @@ export default function DashboardPage() {
 
       {/* ── ÁREA PRINCIPAL ──────────────────────────────────────── */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg-primary)' }}>
-        {/* Barra superior: Abas + info + sub-barra de visualizações */}
-        <div style={{
-          borderBottom: '1px solid var(--border)',
-          background: 'var(--bg-card)', flexShrink: 0,
-        }}>
-          {/* Linha 1: abas + seletor de usina */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div className="tabs" style={{ flex: '0 0 auto', padding: '6px' }}>
-                {TABS.map((tab) => (
-                  <button 
-                    key={tab.id} 
-                    className={`tab ${activeTab === tab.id ? 'active' : ''}`} 
-                    onClick={() => setActiveTab(tab.id)}
-                    style={{ fontSize: 14, padding: '10px 18px', gap: 8 }}
+        {/* Conteúdo das abas — todos os painéis permanecem montados, visibilidade controlada por display:none */}
+
+        {/* ── Desempenho ───────────────────────────────────────── */}
+        <div style={{ display: view === 'desempenho' ? 'flex' : 'none', flex: 1, flexDirection: 'column', height: '100%', overflow: 'hidden', padding: '10px 20px 20px 20px' }}>
+          <div style={{ display: 'flex', gap: 2, marginBottom: 8, borderBottom: '2px solid #e2e8f0', flexShrink: 0 }}>
+            {[
+              { id: 'config', icon: '⚙️', label: 'Fluxograma' },
+              { id: 'validacao', icon: '📊', label: 'Resultados' },
+              { id: 'incertezas', icon: <img src="/incertezas_icon.png" alt="Incertezas" style={{ width: 16, height: 16, objectFit: 'contain' }} />, label: 'Incertezas' },
+            ].map(tab => {
+              const isActive = desempenhoTab === tab.id
+              return (
+                <button key={tab.id} onClick={() => setDesempenhoTab(tab.id)}
+                  style={{ padding: '7px 18px', fontSize: 13, fontWeight: 600,
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: isActive ? '#0f172a' : '#94a3b8',
+                    borderBottom: isActive ? '2px solid #0f172a' : '2px solid transparent',
+                    marginBottom: -2, transition: 'color 0.15s', display: 'flex', alignItems: 'center', gap: 6,
+                  }}
+                >
+                  <span style={{ fontSize: 14 }}>{tab.icon}</span>
+                  <span>{tab.label}</span>
+                </button>
+              )
+            })}
+          </div>
+          {/* Sub-abas de Desempenho — sempre montadas, cada uma com scroll independente */}
+          <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+            <div style={{ display: desempenhoTab === 'config' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'auto' }}>
+              <FluxogramaView elementos={elementos} selectedDates={selectedDates} showTitle={false} mode="config" />
+            </div>
+            <div style={{ display: desempenhoTab === 'validacao' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'auto' }}>
+              <FluxogramaView elementos={elementos} selectedDates={selectedDates} showTitle={false} mode="validacao" />
+            </div>
+            <div style={{ display: desempenhoTab === 'incertezas' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'auto' }}>
+              <AnaliseIncertezasView usinaAtual={usinaAtual} selectedDates={selectedDates} />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Análise de Causa Raiz ────────────────────────────── */}
+        <div style={{ display: view === 'causa-raiz' ? 'flex' : 'none', flex: 1, flexDirection: 'column', height: '100%', overflow: 'hidden', padding: '10px 20px 20px 20px' }}>
+          <div style={{ display: 'flex', gap: 2, marginBottom: 8, borderBottom: '2px solid #e2e8f0', flexShrink: 0 }}>
+            {[
+              { id: 'integralizacao', icon: '🌡️', label: 'Integralização' },
+              { id: 'ranking', icon: '🏆', label: 'Ranking' },
+              { id: 'trackers', icon: <TrackerSVGIcon />, label: 'Trackers' },
+              { id: 'mapa', icon: '🗺️', label: 'Mapa' },
+            ].map(tab => {
+              const isActive = causaRaizTab === tab.id
+              return (
+                <button key={tab.id} onClick={() => setCausaRaizTab(tab.id)}
+                  style={{ padding: '7px 18px', fontSize: 13, fontWeight: 600,
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: isActive ? '#0f172a' : '#94a3b8',
+                    borderBottom: isActive ? '2px solid #0f172a' : '2px solid transparent',
+                    marginBottom: -2, transition: 'color 0.15s', display: 'flex', alignItems: 'center', gap: 6,
+                  }}
+                >
+                  <span style={{ fontSize: 14 }}>{tab.icon}</span>
+                  <span>{tab.label}</span>
+                </button>
+              )
+            })}
+          </div>
+          {/* Sub-abas de Causa Raiz — sempre montadas, cada uma com scroll independente */}
+          <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+            <div style={{ display: causaRaizTab === 'integralizacao' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'auto' }}>
+              <HeatmapYield usina={usinaAtual} dates={selectedDates.join(',')} activeFilters={activeFilters} />
+            </div>
+            <div style={{ display: causaRaizTab === 'ranking' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'auto' }}>
+              <RankingTab usina={usinaAtual} dates={selectedDates.join(',')} activeFilters={activeFilters} />
+            </div>
+            <div style={{ display: causaRaizTab === 'trackers' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'auto' }}>
+              <TrackerAnalysis usina={usinaAtual} dates={selectedDates.join(',')} activeFilters={activeFilters} />
+            </div>
+            <div style={{ display: causaRaizTab === 'mapa' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'auto' }}>
+              <MapaView usina={usinaAtual} dates={selectedDates.join(',')} activeFilters={activeFilters} />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Gráfico + Tabela ─────────────────────────────────── */}
+        <div style={{ display: view === 'dashboard' ? 'flex' : 'none', flex: 1, overflow: 'hidden', padding: '10px 20px 20px 20px', flexDirection: 'column' }}>
+
+          {/* Cabeçalho do Dashboard: Abas + Controles */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 8, borderBottom: '2px solid #e2e8f0', flexShrink: 0 }}>
+            {/* Abas */}
+            <div style={{ display: 'flex', gap: 2 }}>
+              {[
+                { id: 'chart', icon: '📈', label: 'Gráfico' },
+                { id: 'table', icon: '📋', label: 'Tabela' }
+              ].map(tab => {
+                const isActive = dashboardTab === tab.id
+                return (
+                  <button key={tab.id} onClick={() => setDashboardTab(tab.id)}
+                    style={{ padding: '7px 18px', fontSize: 13, fontWeight: 600,
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      color: isActive ? '#0f172a' : '#94a3b8',
+                      borderBottom: isActive ? '2px solid #0f172a' : '2px solid transparent',
+                      marginBottom: -2, transition: 'color 0.15s', display: 'flex', alignItems: 'center', gap: 6,
+                    }}
                   >
-                    <span style={{ fontSize: 18, display: 'flex', alignItems: 'center' }}>{tab.icon}</span>
+                    <span style={{ fontSize: 14 }}>{tab.icon}</span>
                     <span>{tab.label}</span>
                   </button>
-                ))}
-              </div>
-
-              {/* Toggle Secondary Toolbar */}
-              {(activeTab === 'chart' || activeTab === 'table') && (
-                <button 
-                  onClick={() => setIsSecondaryToolbarOpen(!isSecondaryToolbarOpen)}
-                  style={{
-                    background: 'transparent', border: 'none', cursor: 'pointer',
-                    color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    padding: '4px', borderRadius: '50%',
-                    transform: isSecondaryToolbarOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
-                    transition: 'transform 0.2s',
-                  }}
-                  title={isSecondaryToolbarOpen ? "Ocultar Controles" : "Mostrar Controles"}
-                >
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                  </svg>
-                </button>
-              )}
+                )
+              })}
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {/* Controles à direita */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 6 }}>
+              {/* Badges de Dados */}
               {filteredData && (
                 <div style={{ display: 'flex', gap: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
                   <span className="badge badge-amber">
@@ -819,125 +913,143 @@ export default function DashboardPage() {
                   <span className="badge badge-gray">{filteredData.total_pontos.toLocaleString('pt-BR')} pts</span>
                 </div>
               )}
-              {/* Seletor de usina */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-secondary)', padding: '4px 10px', borderRadius: 8, border: '1px solid var(--border)' }}>
-                <span style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>🏭 Usina:</span>
-                <select
-                  value={usinaAtual || ''}
-                  onChange={e => {
-                    setUsinaAtual(e.target.value);
-                    setCampanhaAtual(null); // Reset campaign when usina changes
-                  }}
-                  style={{
-                    background: 'transparent', border: 'none', color: 'var(--text-primary)',
-                    fontSize: 13, fontWeight: 600, outline: 'none', cursor: 'pointer',
-                    fontFamily: 'inherit', maxWidth: 180,
-                  }}
-                >
-                  <option value="">-- Selecionar --</option>
-                  {usinas.map(u => <option key={u} value={u}>{u}</option>)}
-                </select>
-              </div>
-              
-              {/* Seletor de Campanha */}
-              {usinaAtual && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-secondary)', padding: '4px 10px', borderRadius: 8, border: '1px solid var(--border)' }}>
-                  <span style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>🎯 Campanha:</span>
-                  <select
-                    value={campanhaAtual || ''}
-                    onChange={e => setCampanhaAtual(e.target.value || null)}
-                    style={{
-                      background: 'transparent', border: 'none', color: 'var(--text-primary)',
-                      fontSize: 13, fontWeight: 600, outline: 'none', cursor: 'pointer',
-                      fontFamily: 'inherit', maxWidth: 180,
-                    }}
-                  >
-                    <option value="">Todos os dias</option>
-                    {campanhas.map(c => <option key={c.nome} value={c.nome}>{c.nome} ({c.dias.length} d)</option>)}
-                  </select>
-                  {campanhaAtual && (
-                    <button 
-                      onClick={() => handleDeleteCampanha(campanhaAtual)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: '#ef4444', marginLeft: 4 }}
-                      title="Excluir campanha"
-                    >
-                      🗑️
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
 
-          {/* Linha 2: botões de Carregar/Salvar — só nas abas Gráfico e Tabela */}
-          {(activeTab === 'chart' || activeTab === 'table') && isSecondaryToolbarOpen && (
-            <div style={{ padding: '0 20px 12px', display: 'flex', gap: '12px' }}>
+              {/* Botão Nova Visualização */}
               <div style={{ position: 'relative', display: 'flex' }}>
                 <button
-                  className="btn btn-sm"
-                  style={{ 
-                    background: 'var(--bg-card)', border: '1px solid var(--border)', 
-                    padding: '6px 12px', fontSize: 13, display: 'flex', alignItems: 'center', 
-                    gap: 8, color: 'var(--text-primary)', borderRadius: 6, cursor: 'pointer',
-                    height: '100%'
-                  }}
+                  className="btn btn-secondary"
+                  style={{ height: 32, boxSizing: 'border-box', padding: '0 12px', flexShrink: 0, fontWeight: 600, background: '#f8fafc', color: '#1e293b', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '6px', cursor: 'pointer', fontSize: 13 }}
                   onClick={() => setIsVisDropdownOpen(!isVisDropdownOpen)}
                   title="Gerenciar Visualizações"
                 >
-                  📄 {loadedVisualization ? loadedVisualization.name : 'Nova Visualização'} <span style={{ fontSize: 10 }}>▼</span>
+                  <span style={{ fontSize: 14 }}>📄</span> 
+                  <span style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {loadedVisualization ? loadedVisualization.nome : 'Nova Visualização'}
+                  </span>
+                  ▾
                 </button>
-
                 {isVisDropdownOpen && (
                   <>
                     <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setIsVisDropdownOpen(false)} />
                     <div style={{
-                      position: 'absolute', top: '100%', left: 0, marginTop: 4, zIndex: 50,
+                      position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 50,
                       background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: 6, minWidth: 200,
-                    display: 'flex', flexDirection: 'column', gap: 2
-                  }}>
-                    <button 
-                      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'transparent', border: 'none', textAlign: 'left', cursor: 'pointer', fontSize: 13, borderRadius: 4, color: 'var(--text-primary)' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                      onClick={() => { setIsSaveModalOpen(true); setIsVisDropdownOpen(false); }}
-                    >
-                      💾 Salvar alterações
-                    </button>
-                    <button 
-                      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'transparent', border: 'none', textAlign: 'left', cursor: 'pointer', fontSize: 13, borderRadius: 4, color: 'var(--text-primary)' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                      onClick={() => { setIsLoadModalOpen(true); setIsVisDropdownOpen(false); }}
-                    >
-                      📁 Abrir visualização
-                    </button>
-                    <button 
-                      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'transparent', border: 'none', textAlign: 'left', cursor: 'pointer', fontSize: 13, borderRadius: 4, color: 'var(--text-primary)' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                      onClick={() => { 
-                        setLoadedVisualization(null);
-                        setSelectedSeries([]);
-                        setActiveFilters([]);
-                        setVisibleFilters([]);
-                        clear();
-                        setIsVisDropdownOpen(false); 
-                      }}
-                    >
-                      ➕ Nova visualização
-                    </button>
-                  </div>
-                </>
-              )}
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: 6, minWidth: 200,
+                      display: 'flex', flexDirection: 'column', gap: 2
+                    }}>
+                      <button 
+                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'transparent', border: 'none', textAlign: 'left', cursor: 'pointer', fontSize: 13, borderRadius: 4, color: 'var(--text-primary)' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        onClick={() => { setIsSaveModalOpen(true); setIsVisDropdownOpen(false); }}
+                      >
+                        💾 Salvar alterações
+                      </button>
+                      <button 
+                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'transparent', border: 'none', textAlign: 'left', cursor: 'pointer', fontSize: 13, borderRadius: 4, color: 'var(--text-primary)' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        onClick={() => { setIsLoadModalOpen(true); setIsVisDropdownOpen(false); }}
+                      >
+                        📁 Abrir visualização
+                      </button>
+                      <button 
+                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'transparent', border: 'none', textAlign: 'left', cursor: 'pointer', fontSize: 13, borderRadius: 4, color: 'var(--text-primary)' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        onClick={() => { 
+                          setLoadedVisualization(null);
+                          setSelectedSeries([]);
+                          setActiveFilters([]);
+                          setVisibleFilters([]);
+                          clear();
+                          setIsVisDropdownOpen(false); 
+                        }}
+                      >
+                        ➕ Nova visualização
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
 
-              {/* Botão de Exportar para Excel/PDF - apenas na Tabela */}
-              {activeTab === 'table' && filteredData && (
+              {/* Controles de Gráfico */}
+              {dashboardTab === 'chart' && (
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button
+                    className={`btn btn-sm ${showEixosMenu ? 'btn-active' : ''}`}
+                    style={{
+                      background: showEixosMenu ? 'var(--bg-secondary)' : 'var(--bg-card)',
+                      border: '1px solid var(--border)',
+                      padding: '4px 10px', fontSize: 13, display: 'flex', alignItems: 'center',
+                      gap: 6, color: 'var(--text-primary)', borderRadius: 6, cursor: 'pointer',
+                      boxShadow: showEixosMenu ? 'inset 0 2px 4px rgba(0,0,0,0.05)' : 'none', height: 32
+                    }}
+                    onClick={() => setShowEixosMenu(!showEixosMenu)}
+                  >
+                    <span style={{ fontSize: 13 }}>{showEixosMenu ? '🛠️' : '🔧'}</span> Eixos
+                  </button>
+                  <button
+                    className={`btn btn-sm ${showSeriesMenu ? 'btn-active' : ''}`}
+                    style={{
+                      background: showSeriesMenu ? 'var(--bg-secondary)' : 'var(--bg-card)',
+                      border: '1px solid var(--border)',
+                      padding: '4px 10px', fontSize: 13, display: 'flex', alignItems: 'center',
+                      gap: 6, color: 'var(--text-primary)', borderRadius: 6, cursor: 'pointer',
+                      boxShadow: showSeriesMenu ? 'inset 0 2px 4px rgba(0,0,0,0.05)' : 'none', height: 32
+                    }}
+                    onClick={() => setShowSeriesMenu(!showSeriesMenu)}
+                  >
+                    <span style={{ fontSize: 13 }}>{showSeriesMenu ? '📊' : '📈'}</span> Séries
+                  </button>
+
+                  {/* Bloco Legenda */}
+                  <div style={{
+                    backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)',
+                    borderRadius: '6px', padding: '4px 8px', marginLeft: 4, height: 32, boxSizing: 'border-box',
+                    display: 'flex', alignItems: 'center', gap: 6,
+                  }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>Legenda</span>
+                    <div style={{ 
+                      width: 22, height: 22, 
+                      border: '1.5px solid #475569', borderRadius: 4, 
+                      overflow: 'hidden', background: '#ffffff',
+                      display: 'flex', flexDirection: 'column',
+                      flexShrink: 0
+                    }}>
+                      <div 
+                        onClick={() => setChartConfig(p => ({...p, legendPosition: (p.legendPosition || 'right') === 'top' ? 'none' : 'top'}))}
+                        title="Horizontal Acima"
+                        style={{ height: '28%', background: (chartConfig.legendPosition || 'right') === 'top' ? '#3b82f6' : '#e2e8f0', cursor: 'pointer', transition: 'background 0.2s' }} 
+                      />
+                      <div style={{ display: 'flex', flex: 1, borderTop: '1.5px solid #475569', borderBottom: '1.5px solid #475569' }}>
+                        <div 
+                          onClick={() => setChartConfig(p => ({...p, legendPosition: (p.legendPosition || 'right') === 'left' ? 'none' : 'left'}))}
+                          title="Vertical Esquerda"
+                          style={{ flex: 1, background: (chartConfig.legendPosition || 'right') === 'left' ? '#3b82f6' : '#e2e8f0', cursor: 'pointer', borderRight: '1.5px solid #475569', transition: 'background 0.2s' }} 
+                        />
+                        <div 
+                          onClick={() => setChartConfig(p => ({...p, legendPosition: (p.legendPosition || 'right') === 'right' ? 'none' : 'right'}))}
+                          title="Vertical Direita"
+                          style={{ flex: 1, background: (chartConfig.legendPosition || 'right') === 'right' ? '#3b82f6' : '#e2e8f0', cursor: 'pointer', transition: 'background 0.2s' }} 
+                        />
+                      </div>
+                      <div 
+                        onClick={() => setChartConfig(p => ({...p, legendPosition: (p.legendPosition || 'right') === 'bottom' ? 'none' : 'bottom'}))}
+                        title="Horizontal Abaixo"
+                        style={{ height: '28%', background: (chartConfig.legendPosition || 'right') === 'bottom' ? '#3b82f6' : '#e2e8f0', cursor: 'pointer', transition: 'background 0.2s' }} 
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Botão de Exportar - Tabela */}
+              {dashboardTab === 'table' && filteredData && (
                 <div style={{ position: 'relative', display: 'flex' }}>
                   <button
                     className="btn btn-secondary"
-                    style={{ height: 34, boxSizing: 'border-box', padding: '0 16px', flexShrink: 0, fontWeight: 600, background: '#e2e8f0', color: '#1e293b', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '6px', cursor: 'pointer' }}
+                    style={{ height: 32, boxSizing: 'border-box', padding: '0 12px', flexShrink: 0, fontWeight: 600, background: '#e2e8f0', color: '#1e293b', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '6px', cursor: 'pointer', fontSize: 13 }}
                     onClick={() => setShowTableExportMenu(!showTableExportMenu)}
                     title="Opções de Exportação"
                   >
@@ -1017,190 +1129,11 @@ export default function DashboardPage() {
                   )}
                 </div>
               )}
-
-              {activeTab === 'chart' && (
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button
-                    className={`btn btn-sm ${showEixosMenu ? 'btn-active' : ''}`}
-                    style={{
-                      background: showEixosMenu ? 'var(--bg-secondary)' : 'var(--bg-card)',
-                      border: '1px solid var(--border)',
-                      padding: '6px 12px', fontSize: 13, display: 'flex', alignItems: 'center',
-                      gap: 8, color: 'var(--text-primary)', borderRadius: 6, cursor: 'pointer',
-                      boxShadow: showEixosMenu ? 'inset 0 2px 4px rgba(0,0,0,0.05)' : 'none'
-                    }}
-                    onClick={() => setShowEixosMenu(!showEixosMenu)}
-                  >
-                    <span style={{ fontSize: 14 }}>{showEixosMenu ? '🛠️' : '🔧'}</span> Eixos
-                  </button>
-                  <button
-                    className={`btn btn-sm ${showSeriesMenu ? 'btn-active' : ''}`}
-                    style={{
-                      background: showSeriesMenu ? 'var(--bg-secondary)' : 'var(--bg-card)',
-                      border: '1px solid var(--border)',
-                      padding: '6px 12px', fontSize: 13, display: 'flex', alignItems: 'center',
-                      gap: 8, color: 'var(--text-primary)', borderRadius: 6, cursor: 'pointer',
-                      boxShadow: showSeriesMenu ? 'inset 0 2px 4px rgba(0,0,0,0.05)' : 'none'
-                    }}
-                    onClick={() => setShowSeriesMenu(!showSeriesMenu)}
-                  >
-                    <span style={{ fontSize: 14 }}>{showSeriesMenu ? '📊' : '📈'}</span> Séries
-                  </button>
-
-                  {/* Bloco Legenda */}
-                  <div style={{
-                    backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)',
-                    borderRadius: '6px', padding: '6px 12px', marginLeft: 'auto',
-                    display: 'flex', alignItems: 'center', gap: 8,
-                  }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Legenda</span>
-                    <div style={{ 
-                      width: 26, height: 26, 
-                      border: '1.5px solid #475569', borderRadius: 6, 
-                      overflow: 'hidden', background: '#ffffff',
-                      display: 'flex', flexDirection: 'column',
-                      flexShrink: 0
-                    }}>
-                      <div 
-                        onClick={() => setChartConfig(p => ({...p, legendPosition: (p.legendPosition || 'right') === 'top' ? 'none' : 'top'}))}
-                        title="Horizontal Acima"
-                        style={{ 
-                          height: '28%', background: (chartConfig.legendPosition || 'right') === 'top' ? '#3b82f6' : '#e2e8f0', 
-                          cursor: 'pointer', transition: 'background 0.2s'
-                        }} 
-                      />
-                      
-                      <div style={{ display: 'flex', flex: 1, borderTop: '1.5px solid #475569', borderBottom: '1.5px solid #475569' }}>
-                        <div 
-                          onClick={() => setChartConfig(p => ({...p, legendPosition: (p.legendPosition || 'right') === 'left' ? 'none' : 'left'}))}
-                          title="Vertical Esquerda"
-                          style={{ 
-                            flex: 1, background: (chartConfig.legendPosition || 'right') === 'left' ? '#3b82f6' : '#e2e8f0', 
-                            cursor: 'pointer', borderRight: '1.5px solid #475569', transition: 'background 0.2s'
-                          }} 
-                        />
-                        <div 
-                          onClick={() => setChartConfig(p => ({...p, legendPosition: (p.legendPosition || 'right') === 'right' ? 'none' : 'right'}))}
-                          title="Vertical Direita"
-                          style={{ 
-                            flex: 1, background: (chartConfig.legendPosition || 'right') === 'right' ? '#3b82f6' : '#e2e8f0', 
-                            cursor: 'pointer', transition: 'background 0.2s'
-                          }} 
-                        />
-                      </div>
-
-                      <div 
-                        onClick={() => setChartConfig(p => ({...p, legendPosition: (p.legendPosition || 'right') === 'bottom' ? 'none' : 'bottom'}))}
-                        title="Horizontal Abaixo"
-                        style={{ 
-                          height: '28%', background: (chartConfig.legendPosition || 'right') === 'bottom' ? '#3b82f6' : '#e2e8f0', 
-                          cursor: 'pointer', transition: 'background 0.2s'
-                        }} 
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Conteúdo das abas — todos os painéis permanecem montados, visibilidade controlada por display:none */}
-
-        {/* ── Diagrama ─────────────────────────────────────────── */}
-        <div style={{ display: activeTab === 'diagram' ? 'flex' : 'none', flex: 1, flexDirection: 'column', height: '100%', overflow: 'hidden', padding: 20 }}>
-          <div style={{ paddingBottom: '12px', borderBottom: '1px solid var(--border)', marginBottom: '0px', flexShrink: 0 }}>
-            <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              🕸️ Diagrama
-            </h2>
-          </div>
-          <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
-            <DiagramTab />
-          </div>
-        </div>
-
-        {/* ── Desempenho ───────────────────────────────────────── */}
-        <div style={{ display: activeTab === 'desempenho' ? 'flex' : 'none', flex: 1, flexDirection: 'column', height: '100%', overflow: 'hidden', padding: '10px 20px 20px 20px' }}>
-          <div style={{ display: 'flex', gap: 2, marginBottom: 8, borderBottom: '2px solid #e2e8f0', flexShrink: 0 }}>
-            {[
-              { id: 'config', icon: '🔀', label: 'Fluxograma' },
-              { id: 'validacao', icon: '✅', label: 'Resultados' },
-            ].map(tab => {
-              const isActive = desempenhoTab === tab.id
-              return (
-                <button key={tab.id} onClick={() => setDesempenhoTab(tab.id)}
-                  style={{ padding: '7px 18px', fontSize: 13, fontWeight: 600,
-                    background: 'none', border: 'none', cursor: 'pointer',
-                    color: isActive ? '#0f172a' : '#94a3b8',
-                    borderBottom: isActive ? '2px solid #0f172a' : '2px solid transparent',
-                    marginBottom: -2, transition: 'color 0.15s', display: 'flex', alignItems: 'center', gap: 6,
-                  }}
-                >
-                  <span style={{ fontSize: 14 }}>{tab.icon}</span>
-                  <span>{tab.label}</span>
-                </button>
-              )
-            })}
-          </div>
-          {/* Sub-abas de Desempenho — sempre montadas, cada uma com scroll independente */}
-          <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-            <div style={{ display: desempenhoTab === 'config' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'auto' }}>
-              <FluxogramaView elementos={elementos} selectedDates={selectedDates} showTitle={false} mode="config" />
-            </div>
-            <div style={{ display: desempenhoTab === 'validacao' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'auto' }}>
-              <FluxogramaView elementos={elementos} selectedDates={selectedDates} showTitle={false} mode="validacao" />
             </div>
           </div>
-        </div>
-
-        {/* ── Análise de Causa Raiz ────────────────────────────── */}
-        <div style={{ display: activeTab === 'heatmap' ? 'flex' : 'none', flex: 1, flexDirection: 'column', height: '100%', overflow: 'hidden', padding: '10px 20px 20px 20px' }}>
-          <div style={{ display: 'flex', gap: 2, marginBottom: 8, borderBottom: '2px solid #e2e8f0', flexShrink: 0 }}>
-            {[
-              { id: 'integralizacao', icon: '🌡️', label: 'Integralização' },
-              { id: 'ranking', icon: '🏆', label: 'Ranking' },
-              { id: 'trackers', icon: <TrackerSVGIcon />, label: 'Trackers' },
-            ].map(tab => {
-              const isActive = causaRaizTab === tab.id
-              return (
-                <button key={tab.id} onClick={() => setCausaRaizTab(tab.id)}
-                  style={{ padding: '7px 18px', fontSize: 13, fontWeight: 600,
-                    background: 'none', border: 'none', cursor: 'pointer',
-                    color: isActive ? '#0f172a' : '#94a3b8',
-                    borderBottom: isActive ? '2px solid #0f172a' : '2px solid transparent',
-                    marginBottom: -2, transition: 'color 0.15s', display: 'flex', alignItems: 'center', gap: 6,
-                  }}
-                >
-                  <span style={{ fontSize: 14 }}>{tab.icon}</span>
-                  <span>{tab.label}</span>
-                </button>
-              )
-            })}
-          </div>
-          {/* Sub-abas de Causa Raiz — sempre montadas, cada uma com scroll independente */}
-          <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-            <div style={{ display: causaRaizTab === 'integralizacao' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'auto' }}>
-              <HeatmapYield usina={usinaAtual} dates={selectedDates.join(',')} activeFilters={activeFilters} />
-            </div>
-            <div style={{ display: causaRaizTab === 'ranking' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'auto' }}>
-              <RankingTab usina={usinaAtual} dates={selectedDates.join(',')} activeFilters={activeFilters} />
-            </div>
-            <div style={{ display: causaRaizTab === 'trackers' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'auto' }}>
-              <TrackerAnalysis usina={usinaAtual} dates={selectedDates.join(',')} activeFilters={activeFilters} />
-            </div>
-          </div>
-        </div>
-
-        {/* ── Mapa ─────────────────────────────────────────────── */}
-        <div style={{ display: activeTab === 'mapa' ? 'flex' : 'none', flex: 1, flexDirection: 'column', height: '100%', overflow: 'hidden', padding: '10px 20px 20px 20px' }}>
-          <MapaView usina={usinaAtual} dates={selectedDates.join(',')} activeFilters={activeFilters} />
-        </div>
-
-        {/* ── Gráfico + Tabela ─────────────────────────────────── */}
-        <div style={{ display: (activeTab === 'chart' || activeTab === 'table') ? 'flex' : 'none', flex: 1, overflow: 'auto', padding: 20, flexDirection: 'column' }}>
 
           {/* Chart */}
-          {activeTab === 'chart' && (
+          {dashboardTab === 'chart' && (
             <>
               {dataLoading && <SkeletonChart />}
               {dataError && !dataLoading && <ErrorState message={dataError} onRetry={handleVisualize} />}
@@ -1231,7 +1164,7 @@ export default function DashboardPage() {
           )}
 
           {/* Table */}
-          {activeTab === 'table' && (
+          {dashboardTab === 'table' && (
             <>
               {dataLoading && <SkeletonChart />}
               {dataError && !dataLoading && <ErrorState message={dataError} onRetry={handleVisualize} />}

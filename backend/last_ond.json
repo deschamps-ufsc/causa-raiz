@@ -1,0 +1,294 @@
+{
+  "\ufeffPVObject_": {
+    "\ufeffPVObject_": "pvGInverter",
+    "Comment": "Sungrow\tSG1100UD\tManufacturer 2023",
+    "Version": 6.86,
+    "ParObj1": 2019,
+    "Flags": "$001C1063",
+    "PVObject_Commercial": {
+      "PVObject_Commercial": "pvCommercial",
+      "Flags": "$0041",
+      "Manufacturer": "Sungrow",
+      "Model": "SG1100UD",
+      "DataSource": "Manufacturer 2023",
+      "YearBeg": 2019,
+      "Width": 2.25,
+      "Height": 2.35,
+      "Depth": 1.16,
+      "Weight": 2700.0,
+      "NPieces": 100,
+      "PriceDate": "26/11/15 14:00",
+      "Currency": "CNY"
+    },
+    "End of PVObject pvCommercial": null,
+    "Transfo": "Without",
+    "Converter": {
+      "Converter": "TConverter",
+      "PNomConv": 1100.0,
+      "PMaxOUT": 1265.0,
+      "VOutConv": 630.0,
+      "VMppMin": 895,
+      "VMPPMax": 1500,
+      "VmppNom": 1100.0,
+      "VAbsMax": 1500,
+      "PSeuil": 5500.0,
+      "EfficMax": 99.0,
+      "EfficEuro": 98.7,
+      "FResNorm": 3.0,
+      "ModeOper": "MPPT",
+      "CompPMax": "Lim",
+      "CompVMax": "Lim",
+      "MonoTri": "Tri",
+      "ModeAffEnum": "Efficf_POut",
+      "UnitAffEnum": "kW",
+      "IDCMax": 0.0,
+      "INomAC": 1008.0,
+      "IMaxAC": 1159.0,
+      "TPNom": 45.0,
+      "TPMax": 22.0,
+      "TPLim1": 50.0,
+      "TPLimAbs": 60.0,
+      "PLim1": 770.0,
+      "PLimAbs": 110.0,
+      "PInEffMax": 948694.6,
+      "PThreshEff": 5673.4,
+      "HasdefaultPThresh": "False",
+      "ProfilPIO": {
+        "ProfilPIO": "TCubicProfile",
+        "NPtsMax": 11,
+        "NPtsEff": 8,
+        "LastCompile": "$8085",
+        "Mode": 1,
+        "Point_1": [
+          12500,
+          0
+        ],
+        "Point_2": [
+          75000,
+          69250
+        ],
+        "Point_3": [
+          125000,
+          119172
+        ],
+        "Point_4": [
+          250000,
+          243901
+        ],
+        "Point_5": [
+          500000,
+          493021
+        ],
+        "Point_6": [
+          750000,
+          741691
+        ],
+        "Point_7": [
+          1500000,
+          1485000
+        ],
+        "Point_8": [
+          2500000,
+          2469779
+        ],
+        "Point_9": [
+          0,
+          0
+        ],
+        "Point_10": [
+          0,
+          0
+        ],
+        "Point_11": [
+          0,
+          0
+        ]
+      },
+      "End of TCubicProfile": null,
+      "VNomEff": [
+        895.0,
+        1100.0,
+        1300.0,
+        ""
+      ],
+      "EfficMaxV": [
+        99.02,
+        98.94,
+        98.85,
+        ""
+      ],
+      "EfficEuroV": [
+        98.73,
+        98.575,
+        98.494,
+        ""
+      ],
+      "ProfilPIOV1": {
+        "ProfilPIOV1": "TCubicProfile",
+        "NPtsMax": 11,
+        "NPtsEff": 9,
+        "LastCompile": "$8089",
+        "Mode": 1,
+        "Point_1": [
+          5500.0,
+          0.0
+        ],
+        "Point_2": [
+          60382.1,
+          59089.9
+        ],
+        "Point_3": [
+          115452.0,
+          113904.9
+        ],
+        "Point_4": [
+          225915.8,
+          223476.0
+        ],
+        "Point_5": [
+          281125.9,
+          278258.4
+        ],
+        "Point_6": [
+          336336.0,
+          333039.9
+        ],
+        "Point_7": [
+          558631.3,
+          552151.1
+        ],
+        "Point_8": [
+          837008.2,
+          826043.4
+        ],
+        "Point_9": [
+          1117136.1,
+          1099932.2
+        ],
+        "Point_10": [
+          0.0,
+          0.0
+        ],
+        "Point_11": [
+          0.0,
+          0.0
+        ]
+      },
+      "ProfilPIOV2": {
+        "ProfilPIOV2": "TCubicProfile",
+        "NPtsMax": 11,
+        "NPtsEff": 9,
+        "LastCompile": "$8089",
+        "Mode": 1,
+        "Point_1": [
+          5500.0,
+          0.0
+        ],
+        "Point_2": [
+          61277.1,
+          59022.1
+        ],
+        "Point_3": [
+          116108.6,
+          113879.4
+        ],
+        "Point_4": [
+          226117.6,
+          223472.0
+        ],
+        "Point_5": [
+          281405.7,
+          278254.0
+        ],
+        "Point_6": [
+          336604.4,
+          333036.4
+        ],
+        "Point_7": [
+          559192.5,
+          552146.7
+        ],
+        "Point_8": [
+          837599.2,
+          826040.3
+        ],
+        "Point_9": [
+          1118720.5,
+          1099926.0
+        ],
+        "Point_10": [
+          0.0,
+          0.0
+        ],
+        "Point_11": [
+          0.0,
+          0.0
+        ]
+      },
+      "ProfilPIOV3": {
+        "ProfilPIOV3": "TCubicProfile",
+        "NPtsMax": 11,
+        "NPtsEff": 9,
+        "LastCompile": "$8089",
+        "Mode": 1,
+        "Point_1": [
+          5500.0,
+          0.0
+        ],
+        "Point_2": [
+          61508.3,
+          59004.9
+        ],
+        "Point_3": [
+          116302.7,
+          113871.9
+        ],
+        "Point_4": [
+          226229.8,
+          223469.8
+        ],
+        "Point_5": [
+          281573.9,
+          278251.3
+        ],
+        "Point_6": [
+          336906.9,
+          333032.4
+        ],
+        "Point_7": [
+          559642.4,
+          552143.2
+        ],
+        "Point_8": [
+          838275.7,
+          826036.8
+        ],
+        "Point_9": [
+          1119060.6,
+          1099924.7
+        ],
+        "Point_10": [
+          0.0,
+          0.0
+        ],
+        "Point_11": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "End of TConverter": null,
+    "NbInputs": 5,
+    "NbMPPT": 1,
+    "TanPhiMin": -0.75,
+    "TanPhiMax": 0.75,
+    "NbMSInterne": 2,
+    "MasterSlave": "No_M_S",
+    "IsolSurvey": "Yes",
+    "DC_Switch": "Yes",
+    "AC_Switch": "Yes",
+    "DiscAdjust": "Yes",
+    "MS_Thresh": 0.8,
+    "Night_Loss": 30.0
+  }
+}

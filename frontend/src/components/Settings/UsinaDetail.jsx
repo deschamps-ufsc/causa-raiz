@@ -12,6 +12,7 @@ import SeriesMapImport from '../SeriesMapImport'
 import DriveImportModal from './DriveImportModal'
 import DeleteSeriesModal from './DeleteSeriesModal'
 import Toast from '../Toast'
+import DiagramTab from '../../pages/DiagramPage'
 
 const TABS = [
   { id: 'dados',     label: '📤 Dados Diários' },
@@ -19,6 +20,7 @@ const TABS = [
   { id: 'infos',    label: '⚡ Infos Usina' },
   { id: 'mapa',     label: '🗺️ Mapa de Strings' },
   { id: 'sintetica', label: '🧪 Séries Sintéticas' },
+  { id: 'diagrama', label: '🕸️ Diagrama' },
 ]
 
 const tdStyle = {
@@ -923,6 +925,18 @@ export default function UsinaDetail({ usina, usinaObj }) {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ── TAB 6: Diagrama ────────────────────────────────────────────── */}
+        {activeTab === 'diagrama' && (
+          <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 200px)', minHeight: 600, overflow: 'hidden' }}>
+            <div className="card" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <div className="card-title">🕸️ Diagrama da Usina</div>
+              <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+                <DiagramTab usina={usina} />
+              </div>
+            </div>
           </div>
         )}
       </div>

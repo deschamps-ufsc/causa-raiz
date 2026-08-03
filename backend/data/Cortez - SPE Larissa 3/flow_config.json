@@ -79,7 +79,8 @@
         "tolerance": 10,
         "tol_pontos_vento": 10,
         "tol_pontos_travado": 10,
-        "inverter_sinal": true
+        "inverter_sinal": true,
+        "margem_perda_cc": 10
       }
     },
     "tamb": {

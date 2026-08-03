@@ -188,13 +188,15 @@ def get_elementos(usina: str = Query(None, description="Usina para derivar os el
         from services.mapping_service import load_mapping
         mapping = load_mapping(usina)
         if mapping:
-            elementos = sorted({
+            elementos = {
                 v.get("elemento") for v in mapping.values()
-                if v.get("elemento") and v.get("elemento") != "nan"
-            })
+                if v.get("elemento") and str(v.get("elemento")).lower() != "nan"
+            }
+            # Adicionar elementos dinâmicos criados pelo backend
+            elementos.update(["PVLib", "PVSyst", "Filtro", "Potência CA PPC", "Energia PMI"])
             if elementos:
-                return elementos
-    return ELEMENTOS_VALIDOS
+                return sorted(list(elementos))
+    return sorted(list(set(ELEMENTOS_VALIDOS).union({"PVLib", "PVSyst", "Filtro", "Potência CA PPC", "Energia PMI"})))
 
 
 # ── Mapeamento Mapeamento de Séries: Importar Excel ────────────────────────────────────────

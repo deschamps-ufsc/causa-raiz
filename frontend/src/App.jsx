@@ -1,9 +1,19 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from './hooks/AuthContext'
+import { useUsina } from './hooks/UsinaContext'
+import { fetchUsinas } from './services/api'
 
 export default function App() {
   const { user, isAdmin, isAnalystOrAdmin, logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const { usinaAtual, setUsinaAtual } = useUsina()
+  const [usinas, setUsinas] = useState([])
+
+  useEffect(() => {
+    fetchUsinas().then(setUsinas).catch(() => {})
+  }, [])
 
   const handleLogout = () => {
     logout()
@@ -36,13 +46,35 @@ export default function App() {
         </NavLink>
 
         <div className="navbar-links" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          {/* Links de navegação */}
+          {/* Links de navegação principais (filtram via search params) */}
           <NavLink
-            to="/dashboard"
-            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            to="/dashboard?view=dashboard"
+            className={() => {
+              const view = new URLSearchParams(location.search).get('view') || 'dashboard'
+              return `nav-link ${view === 'dashboard' && location.pathname === '/dashboard' ? 'active' : ''}`
+            }}
           >
             📊 Dashboard
           </NavLink>
+          <NavLink
+            to="/dashboard?view=desempenho"
+            className={() => {
+              const view = new URLSearchParams(location.search).get('view')
+              return `nav-link ${view === 'desempenho' && location.pathname === '/dashboard' ? 'active' : ''}`
+            }}
+          >
+            📈 Desempenho
+          </NavLink>
+          <NavLink
+            to="/dashboard?view=causa-raiz"
+            className={() => {
+              const view = new URLSearchParams(location.search).get('view')
+              return `nav-link ${view === 'causa-raiz' && location.pathname === '/dashboard' ? 'active' : ''}`
+            }}
+          >
+            🔍 Análise de Causa Raiz
+          </NavLink>
+          
           {isAnalystOrAdmin && (
             <NavLink
               to="/settings"
@@ -51,6 +83,26 @@ export default function App() {
               📋 Cadastro
             </NavLink>
           )}
+
+          {/* Divider */}
+          <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.15)' }} />
+
+          {/* Seletor de usina no canto superior direito */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,0.15)', padding: '4px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)' }}>
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', whiteSpace: 'nowrap' }}>🏭 Usina:</span>
+            <select
+              value={usinaAtual || ''}
+              onChange={e => setUsinaAtual(e.target.value)}
+              style={{
+                background: 'transparent', border: 'none', color: '#fff',
+                fontSize: 13, fontWeight: 600, outline: 'none', cursor: 'pointer',
+                fontFamily: 'inherit', maxWidth: 180,
+              }}
+            >
+              <option value="" style={{ color: '#000' }}>-- Selecionar --</option>
+              {usinas.map(u => <option key={u} value={u} style={{ color: '#000' }}>{u}</option>)}
+            </select>
+          </div>
 
           {/* Divider */}
           <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.15)' }} />

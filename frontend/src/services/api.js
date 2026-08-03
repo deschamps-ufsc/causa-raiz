@@ -66,6 +66,22 @@ export const fetchFilterSettings = () =>
 export const saveFilterSettings = (settings) =>
   api.put('/settings/filters', settings).then(r => r.data)
 
+export const importPanFile = (file) => {
+  const form = new FormData()
+  form.append('file', file)
+  return api.post('/settings/import-pan', form, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }).then(r => r.data)
+}
+
+export const importOndFile = (file) => {
+  const form = new FormData()
+  form.append('file', file)
+  return api.post('/settings/import-ond', form, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }).then(r => r.data)
+}
+
 // ── Usinas ────────────────────────────────────────────────────
 export const fetchUsinas = () =>
   api.get('/usinas').then((r) => r.data)
