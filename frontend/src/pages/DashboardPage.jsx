@@ -8,6 +8,7 @@ import { useChartSettings } from '../hooks/ChartSettingsContext'
 import SeriesSelector from '../components/SeriesSelector'
 import TimeSeriesChart from '../components/TimeSeriesChart'
 import AnaliseIncertezasView from '../components/AnaliseIncertezasView'
+import CapacityTestView from '../components/CapacityTestView'
 import DataTable from '../components/DataTable'
 import Heatmap from '../components/Heatmap'
 import HeatmapYield from '../components/HeatmapYield'
@@ -121,6 +122,22 @@ export default function DashboardPage() {
   const [showTableExportMenu, setShowTableExportMenu] = useState(false)
   
   const { user } = useAuth()
+  
+  const [capacityTestDailyResults, setCapacityTestDailyResults] = useState(null)
+
+  useEffect(() => {
+    if (usinaAtual) {
+      fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/capacity-test/results?usina=${usinaAtual}`)
+        .then(res => res.json())
+        .then(data => {
+          setCapacityTestDailyResults(Object.keys(data).length > 0 ? data : null);
+        })
+        .catch(err => {
+          console.error("Erro ao carregar capacity test results:", err);
+          setCapacityTestDailyResults(null);
+        });
+    }
+  }, [usinaAtual]);
   
   // ── ESTADO DAS VISUALIZAÇÕES ──────────────────────────
   const [chartConfig, setChartConfig] = useState({
@@ -255,7 +272,7 @@ export default function DashboardPage() {
   }, [series])
 
   useEffect(() => {
-    if (pendingLoadVis && filterSeries.length > 0) {
+    if (pendingLoadVis && !seriesLoading && series !== null) {
       const vis = pendingLoadVis
       setPendingLoadVis(null)
 
@@ -276,7 +293,7 @@ export default function DashboardPage() {
         })
       }
     }
-  }, [pendingLoadVis, filterSeries, usinaAtual, query])
+  }, [pendingLoadVis, series, seriesLoading, filterSeries, usinaAtual, query])
 
   useEffect(() => {
     fetchElementos(usinaAtual)
@@ -800,6 +817,7 @@ export default function DashboardPage() {
               { id: 'config', icon: '⚙️', label: 'Fluxograma' },
               { id: 'validacao', icon: '📊', label: 'Resultados' },
               { id: 'incertezas', icon: <img src="/incertezas_icon.png" alt="Incertezas" style={{ width: 16, height: 16, objectFit: 'contain' }} />, label: 'Incertezas' },
+              { id: 'capacity', icon: '🔋', label: 'Capacity Test' },
             ].map(tab => {
               const isActive = desempenhoTab === tab.id
               return (
@@ -820,13 +838,16 @@ export default function DashboardPage() {
           {/* Sub-abas de Desempenho — sempre montadas, cada uma com scroll independente */}
           <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' }}>
             <div style={{ display: desempenhoTab === 'config' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'auto' }}>
-              <FluxogramaView elementos={elementos} selectedDates={selectedDates} showTitle={false} mode="config" />
+              <FluxogramaView elementos={elementos} selectedDates={selectedDates} showTitle={false} mode="config" capacityTestDailyResults={capacityTestDailyResults} />
             </div>
             <div style={{ display: desempenhoTab === 'validacao' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'auto' }}>
-              <FluxogramaView elementos={elementos} selectedDates={selectedDates} showTitle={false} mode="validacao" />
+              <FluxogramaView elementos={elementos} selectedDates={selectedDates} showTitle={false} mode="validacao" capacityTestDailyResults={capacityTestDailyResults} />
             </div>
             <div style={{ display: desempenhoTab === 'incertezas' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'auto' }}>
               <AnaliseIncertezasView usinaAtual={usinaAtual} selectedDates={selectedDates} />
+            </div>
+            <div style={{ display: desempenhoTab === 'capacity' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'auto' }}>
+              <CapacityTestView usinaAtual={usinaAtual} selectedDates={selectedDates} setCapacityTestDailyResults={setCapacityTestDailyResults} />
             </div>
           </div>
         </div>

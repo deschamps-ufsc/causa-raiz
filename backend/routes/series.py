@@ -50,7 +50,7 @@ def get_dates_summary(usina: str = Query(..., description="Nome da usina")):
     
     result = []
     for fname in sorted(os.listdir(usina_dir)):
-        if fname.endswith(".parquet") and fname != "pvsyst_data.parquet":
+        if fname.endswith(".parquet") and fname not in ["pvsyst_data.parquet", "pvsyst_tmy.parquet"]:
             date = fname.replace(".parquet", "")
             path = os.path.join(usina_dir, fname)
             try:

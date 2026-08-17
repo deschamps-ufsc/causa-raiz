@@ -67,36 +67,36 @@ export default function LoginPage() {
       }}>
 
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{ marginBottom: 4, display: 'flex', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', marginBottom: 20 }}>
+          <div style={{ marginBottom: 0, display: 'flex', justifyContent: 'center' }}>
             <img
               src="/logo_plataforma_transparent.png"
               alt="Plataforma"
-              style={{ height: 180 }}
+              style={{ height: 140 }}
               onError={e => { e.target.style.display = 'none' }}
             />
           </div>
           <h1 style={{
             margin: 0, fontSize: 24, fontWeight: 700,
-            color: '#e6edf3', letterSpacing: -0.3, lineHeight: 1.3,
+            color: '#e6edf3', letterSpacing: -0.3, lineHeight: 1.1,
           }}>
             Análise de Desempenho de
           </h1>
           <h1 style={{
-            margin: '2px 0 0', fontSize: 28, fontWeight: 800,
+            margin: '-2px 0 0', fontSize: 28, fontWeight: 800,
             background: 'linear-gradient(135deg, #f59e0b, #f97316)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
             letterSpacing: -0.5,
           }}>
             Usinas Fotovoltaicas
           </h1>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 8 }}>
             <span style={{ fontSize: 12, color: '#8b949e', opacity: 0.8 }}>
               por
             </span>
-            <img src="/logo_ufsc_white.png" alt="Fotovoltaica UFSC" style={{ height: 42 }} />
+            <img src="/logo_ufsc_white.png" alt="Fotovoltaica UFSC" style={{ height: 38 }} />
           </div>
-          <div style={{ width: 40, height: 1, background: 'rgba(245,158,11,0.5)', margin: '12px auto 0' }} />
+          <div style={{ width: 40, height: 1, background: 'rgba(245,158,11,0.5)', margin: '8px auto 0' }} />
         </div>
 
         {/* Form */}

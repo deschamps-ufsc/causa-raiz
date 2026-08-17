@@ -15,24 +15,26 @@ export async function exportTableToPdf(elementRef, filename = 'export.pdf', opti
 
     // Expandir o container e todos os seus pais para exibir todo o conteúdo sem cortes (clipping)
     const ancestors = []
-    let currentParent = elementRef.parentElement
-    while (currentParent) {
-      ancestors.push({
-        element: currentParent,
-        styles: {
-          overflow: currentParent.style.overflow,
-          overflowX: currentParent.style.overflowX,
-          overflowY: currentParent.style.overflowY,
-          height: currentParent.style.height,
-          maxHeight: currentParent.style.maxHeight
-        }
-      })
-      currentParent.style.overflow = 'visible'
-      currentParent.style.overflowX = 'visible'
-      currentParent.style.overflowY = 'visible'
-      currentParent.style.height = 'auto'
-      currentParent.style.maxHeight = 'none'
-      currentParent = currentParent.parentElement
+    if (!options.skipAncestorExpansion) {
+      let currentParent = elementRef.parentElement
+      while (currentParent) {
+        ancestors.push({
+          element: currentParent,
+          styles: {
+            overflow: currentParent.style.overflow,
+            overflowX: currentParent.style.overflowX,
+            overflowY: currentParent.style.overflowY,
+            height: currentParent.style.height,
+            maxHeight: currentParent.style.maxHeight
+          }
+        })
+        currentParent.style.overflow = 'visible'
+        currentParent.style.overflowX = 'visible'
+        currentParent.style.overflowY = 'visible'
+        currentParent.style.height = 'auto'
+        currentParent.style.maxHeight = 'none'
+        currentParent = currentParent.parentElement
+      }
     }
 
     const currentScrollWidth = elementRef.scrollWidth + 'px'
@@ -354,24 +356,26 @@ export async function exportTableToPng(elementRef, filename = 'export.png', opti
     window.scrollTo(0, 0)
 
     const ancestors = []
-    let currentParent = elementRef.parentElement
-    while (currentParent) {
-      ancestors.push({
-        element: currentParent,
-        styles: {
-          overflow: currentParent.style.overflow,
-          overflowX: currentParent.style.overflowX,
-          overflowY: currentParent.style.overflowY,
-          height: currentParent.style.height,
-          maxHeight: currentParent.style.maxHeight
-        }
-      })
-      currentParent.style.overflow = 'visible'
-      currentParent.style.overflowX = 'visible'
-      currentParent.style.overflowY = 'visible'
-      currentParent.style.height = 'auto'
-      currentParent.style.maxHeight = 'none'
-      currentParent = currentParent.parentElement
+    if (!options.skipAncestorExpansion) {
+      let currentParent = elementRef.parentElement
+      while (currentParent) {
+        ancestors.push({
+          element: currentParent,
+          styles: {
+            overflow: currentParent.style.overflow,
+            overflowX: currentParent.style.overflowX,
+            overflowY: currentParent.style.overflowY,
+            height: currentParent.style.height,
+            maxHeight: currentParent.style.maxHeight
+          }
+        })
+        currentParent.style.overflow = 'visible'
+        currentParent.style.overflowX = 'visible'
+        currentParent.style.overflowY = 'visible'
+        currentParent.style.height = 'auto'
+        currentParent.style.maxHeight = 'none'
+        currentParent = currentParent.parentElement
+      }
     }
 
     const currentScrollWidth = elementRef.scrollWidth + 'px'

@@ -46,12 +46,21 @@ def _md5_of_bytes(content: bytes) -> str:
 
 
 def _parse_timestamp_col(series: pd.Series) -> pd.Series:
-    """Converte uma coluna de timestamps usando dayfirst=True (formato DD/MM/YYYY)."""
-    return pd.to_datetime(
-        series.astype(str).str.strip(),
-        dayfirst=TIMESTAMP_DAYFIRST,
-        errors="coerce",
-    )
+    """
+    Converte uma coluna de timestamps de forma robusta.
+    Tenta primeiro o padrão ISO8601 (comum no banco de dados) para
+    evitar que dayfirst=True inverta meses e dias em strings YYYY-MM-DD.
+    Usa dayfirst=True como fallback para arquivos Excel com DD/MM/YYYY.
+    """
+    if pd.api.types.is_datetime64_any_dtype(series):
+        return series
+    
+    s = series.astype(str).str.strip()
+    res = pd.to_datetime(s, format='ISO8601', errors='coerce')
+    mask = res.isna()
+    if mask.any():
+        res[mask] = pd.to_datetime(s[mask], dayfirst=TIMESTAMP_DAYFIRST, errors='coerce')
+    return res
 
 
 def preview_file_date(content: bytes, filename: str) -> str | None:
@@ -154,11 +163,7 @@ def process_excel(content: bytes, original_filename: str, usina: str, skip_unmap
         ts_col = df.columns[cols_lower.index('time')]
         tag_col = df.columns[cols_lower.index('meter_name')]
         
-        df[ts_col] = pd.to_datetime(
-            df[ts_col].astype(str).str.strip(), 
-            dayfirst=TIMESTAMP_DAYFIRST,
-            errors='coerce'
-        )
+        df[ts_col] = _parse_timestamp_col(df[ts_col])
         
         id_vars = [ts_col, tag_col]
         value_vars = [c for c in df.columns if c not in id_vars]
@@ -178,11 +183,7 @@ def process_excel(content: bytes, original_filename: str, usina: str, skip_unmap
         ts_col = df.columns[TIMESTAMP_COL_INDEX]
         logger.info(f"[EXCEL] Coluna de timestamp detectada: '{ts_col}'")
 
-        df[ts_col] = pd.to_datetime(
-            df[ts_col].astype(str).str.strip(),
-            dayfirst=TIMESTAMP_DAYFIRST,
-            errors="coerce",
-        )
+        df[ts_col] = _parse_timestamp_col(df[ts_col])
 
         # Renomear para nome padronizado
         df = df.rename(columns={ts_col: "timestamp"})
@@ -205,14 +206,19 @@ def process_excel(content: bytes, original_filename: str, usina: str, skip_unmap
             else:
                 df[col] = pd.to_numeric(df[col], errors='coerce')
 
-    # 1. Agrupa por minuto (eliminando duplicatas reais)
+    # ── Detectar data do arquivo ──────────────────────────────────────────────
+    detected_date = df["timestamp"].dt.date.iloc[0].isoformat()  # "2025-12-04"
+    parquet_path = os.path.join(usina_dir, f"{detected_date}.parquet")
+    
+    # ── Garantir grade de 24 horas por dia (1 minuto) ──
     df.set_index("timestamp", inplace=True)
     df = df.resample('1min').mean()
     
-    # 2. Preenchimento de buracos (Forward Fill) em cima da grade de minutos perfeita
-    df = df.ffill()
+    full_idx = pd.date_range(f"{detected_date} 00:00:00", f"{detected_date} 23:59:00", freq='1min')
+    df = df.reindex(full_idx)
+    df.index.name = "timestamp"
     
-    # 3. Voltar a coluna timestamp
+    df = df.ffill().where(df.bfill().notna())
     df.reset_index(inplace=True)
 
     if skip_unmapped:
@@ -221,10 +227,6 @@ def process_excel(content: bytes, original_filename: str, usina: str, skip_unmap
         cols_to_keep = [c for c in df.columns if c in mapping or c == "timestamp"]
         df = df[cols_to_keep]
         logger.info(f"[PROCESS] Séries após filtro de mapeamento: {len(df.columns) - 1}")
-
-    # ── Detectar data do arquivo ──────────────────────────────────────────────
-    detected_date = df["timestamp"].dt.date.iloc[0].isoformat()  # "2025-12-04"
-    parquet_path = os.path.join(usina_dir, f"{detected_date}.parquet")
 
     # ── Salvar como Parquet ───────────────────────────────────────────────────
     logger.info(f"[PARQUET] Salvando em '{parquet_path}'...")
@@ -245,15 +247,17 @@ def process_excel(content: bytes, original_filename: str, usina: str, skip_unmap
         "parquet_path": parquet_path,
         "cached": False,
     }
+    
+    cache = _load_cache()
     cache[cache_key] = {k: v for k, v in result.items() if k != "cached"}
     _save_cache(cache)
 
     return result
 
 
-def process_raw_file(content: bytes, filename: str, usina: str, skip_unmapped: bool = False, override_date: str | None = None, progress_callback=None) -> dict:
+def process_raw_file(content, filename: str, usina: str, skip_unmapped: bool = False, override_date: str | None = None, progress_callback=None) -> list:
     """
-    Processa um arquivo bruto (CSV ou Excel), converte formato longo para largo,
+    Processa um arquivo bruto (CSV ou Excel) ou DataFrame, converte formato longo para largo,
     e faz merge (append de colunas) caso o parquet do dia já exista.
     
     Se override_date for fornecida (YYYY-MM-DD), usa essa data para nomear o arquivo
@@ -266,21 +270,25 @@ def process_raw_file(content: bytes, filename: str, usina: str, skip_unmapped: b
     
     import io
     
-    # Detecção de CSV vs Excel
-    if filename.lower().endswith('.csv'):
-        # Tenta ler com separador vírgula
-        try:
-            df = pd.read_csv(io.BytesIO(content), on_bad_lines='skip')
-            if len(df.columns) <= 1:
-                raise ValueError("Possivelmente separador é ;")
-        except Exception:
-            # Fallback para ponto-e-vírgula se der erro
-            df = pd.read_csv(io.BytesIO(content), sep=';', on_bad_lines='skip')
+    if isinstance(content, pd.DataFrame):
+        df = content.copy()
+        logger.info(f"[PROCESS] DataFrame recebido diretamente: {df.shape[0]} linhas × {df.shape[1]} colunas")
     else:
-        df = pd.read_excel(io.BytesIO(content), engine="openpyxl", parse_dates=False)
+        # Detecção de CSV vs Excel
+        if filename.lower().endswith('.csv'):
+            # Tenta ler com separador vírgula
+            try:
+                df = pd.read_csv(io.BytesIO(content), on_bad_lines='skip')
+                if len(df.columns) <= 1:
+                    raise ValueError("Possivelmente separador é ;")
+            except Exception:
+                # Fallback para ponto-e-vírgula se der erro
+                df = pd.read_csv(io.BytesIO(content), sep=';', on_bad_lines='skip')
+        else:
+            df = pd.read_excel(io.BytesIO(content), engine="openpyxl", parse_dates=False)
+            
+        logger.info(f"[PROCESS] Lido: {df.shape[0]} linhas × {df.shape[1]} colunas")
         
-    logger.info(f"[PROCESS] Lido: {df.shape[0]} linhas × {df.shape[1]} colunas")
-    
     # Converte colunas para minúsculo para facilitar a busca
     cols_lower = [str(c).lower().strip() for c in df.columns]
     
@@ -295,12 +303,8 @@ def process_raw_file(content: bytes, filename: str, usina: str, skip_unmapped: b
         tag_col = df.columns[cols_lower.index('tag')]
         val_col = df.columns[cols_lower.index('value')]
         
-        # Parse timestamp - dayfirst=True garante formato DD/MM/YYYY
-        df[ts_col] = pd.to_datetime(
-            df[ts_col].astype(str).str.strip(), 
-            dayfirst=TIMESTAMP_DAYFIRST,
-            errors='coerce'
-        )
+        # Parse timestamp
+        df[ts_col] = _parse_timestamp_col(df[ts_col])
         
         # Pivot
         df = df.drop_duplicates(subset=[ts_col, tag_col], keep='last')
@@ -314,11 +318,10 @@ def process_raw_file(content: bytes, filename: str, usina: str, skip_unmapped: b
         tag_col = df.columns[cols_lower.index('meter_name')]
         
         # Parse timestamp
-        df[ts_col] = pd.to_datetime(
-            df[ts_col].astype(str).str.strip(), 
-            dayfirst=TIMESTAMP_DAYFIRST,
-            errors='coerce'
-        )
+        if pd.api.types.is_datetime64_any_dtype(df[ts_col]):
+            logger.info(f"[PROCESS] Coluna de tempo já é datetime, pulando conversão.")
+        else:
+            df[ts_col] = _parse_timestamp_col(df[ts_col])
         
         # Melt das colunas de valores (tudo que não é time nem meter_name)
         id_vars = [ts_col, tag_col]
@@ -339,13 +342,25 @@ def process_raw_file(content: bytes, filename: str, usina: str, skip_unmapped: b
         
     else:
         logger.info(f"[PROCESS] Formato largo detectado.")
-        ts_col = df.columns[TIMESTAMP_COL_INDEX]
-        # dayfirst=True garante que DD/MM/YYYY seja interpretado corretamente
-        df[ts_col] = pd.to_datetime(
-            df[ts_col].astype(str).str.strip(),
-            dayfirst=TIMESTAMP_DAYFIRST,
-            errors='coerce'
-        )
+        
+        # Tenta achar a coluna de timestamp pelo nome
+        ts_col = None
+        for c in df.columns:
+            if str(c).lower().strip() in ['timestamp', 'data_hora', 'time', 'date', 'datetime']:
+                ts_col = c
+                break
+                
+        # Fallback para o índice 0
+        if not ts_col:
+            ts_col = df.columns[TIMESTAMP_COL_INDEX]
+            
+        logger.info(f"[PROCESS] Coluna de tempo selecionada: {ts_col}")
+        
+        # Verifica se já é datetime (ex: vindo direto do PostgreSQL)
+        if pd.api.types.is_datetime64_any_dtype(df[ts_col]):
+            logger.info(f"[PROCESS] Coluna de tempo já é datetime, pulando conversão.")
+        else:
+            df[ts_col] = _parse_timestamp_col(df[ts_col])
         df = df.rename(columns={ts_col: "timestamp"})
         
     # Garante que as colunas não tenham espaços extras (comum em CSVs do SCADA)
@@ -369,8 +384,7 @@ def process_raw_file(content: bytes, filename: str, usina: str, skip_unmapped: b
                 s = s.replace('', np.nan)
                 
                 converted = pd.to_numeric(s, errors='coerce')
-                
-                # DEBUG LOGGING: Identify values that became NaN after conversion
+        # DEBUG LOGGING: Identify values that became NaN after conversion
                 nan_mask = converted.isna() & df[col].notna() & (df[col].astype(str).str.strip() != '')
                 if nan_mask.any():
                     bad_vals = df[col][nan_mask].unique()
@@ -380,15 +394,7 @@ def process_raw_file(content: bytes, filename: str, usina: str, skip_unmapped: b
             else:
                 df[col] = pd.to_numeric(df[col], errors='coerce')
 
-    # 1. Agrupa por minuto (eliminando duplicatas reais)
-    df.set_index("timestamp", inplace=True)
-    df = df.resample('1min').mean()
-    
-    # 2. Preenchimento de buracos (Forward Fill) em cima da grade de minutos perfeita
-    df = df.ffill()
-    
-    # 3. Voltar a coluna timestamp
-    df.reset_index(inplace=True)
+    # Removemos o resample global daqui para fazê-lo de forma isolada por dia.
     if skip_unmapped:
         from services.mapping_service import load_mapping
         mapping = load_mapping(usina)
@@ -399,77 +405,98 @@ def process_raw_file(content: bytes, filename: str, usina: str, skip_unmapped: b
     if df.empty:
         raise ValueError(f"O arquivo {filename} não contém dados de timestamp válidos.")
         
-    # Identificar a data: usa a data confirmada pelo usuário se fornecida
-    detected_date = df["timestamp"].dt.date.iloc[0].isoformat()
-    
-    if override_date and override_date != detected_date:
-        logger.info(f"[PROCESS] Data override: detectada={detected_date}, confirmada={override_date}")
-        from datetime import datetime, timedelta
-        # Recalcula os timestamps usando a override_date mas mantendo hora/minuto/segundo
+    logger.info(f"[PROCESS] Dataset span before grouping: min={df['timestamp'].min()} max={df['timestamp'].max()}")
+        
+    # Extraímos a data para separar o dataframe em dias (importante para arquivos ou banco de dados que contêm múltiplos dias)
+    if override_date:
+        logger.info(f"[PROCESS] Data override fornecida: {override_date}")
+        from datetime import datetime
         try:
             target_date = datetime.strptime(override_date, "%Y-%m-%d").date()
             df["timestamp"] = df["timestamp"].apply(
                 lambda ts: ts.replace(year=target_date.year, month=target_date.month, day=target_date.day)
                 if pd.notnull(ts) else ts
             )
-            detected_date = override_date
         except Exception as e:
-            logger.warning(f"[PROCESS] Não foi possível aplicar override_date: {e}. Usando data detectada.")
-    
-    parquet_path = os.path.join(usina_dir, f"{detected_date}.parquet")
-    
-    # Séries efetivamente importadas (antes do merge)
-    imported_series_count = len(df.columns) - 1
-    
-    if progress_callback:
-        import time
-        # Emite progresso de "série em série" (em lotes) para a barra de progresso no frontend
-        batch_size = max(1, imported_series_count // 50)
-        for i in range(1, imported_series_count + 1):
-            if i % batch_size == 0 or i == imported_series_count:
-                progress_callback(i, imported_series_count)
-                time.sleep(0.02) # Leve delay para suavizar a animação
-    
-    # ── Merge com o Parquet existente (caso exista) ──
-    if os.path.exists(parquet_path):
-        logger.info(f"[PROCESS] Arquivo parquet já existe para {detected_date}. Fazendo merge das séries...")
-        existing_table = pq.read_table(parquet_path)
-        existing_df = existing_table.to_pandas()
-        
-        # Remove do parquet existente as séries que estão sendo importadas agora (substituição)
-        overlapping_cols = [c for c in df.columns if c in existing_df.columns and c != 'timestamp']
-        if overlapping_cols:
-            existing_df = existing_df.drop(columns=overlapping_cols)
+            logger.warning(f"[PROCESS] Não foi possível aplicar override_date: {e}")
             
-        # Merge: Outer Join no timestamp
-        df = pd.merge(existing_df, df, on='timestamp', how='outer')
-        df = df.sort_values('timestamp').reset_index(drop=True)
-        
-        # Faz um ffill novamente após o merge para preencher os buracos nos timestamps
-        # recém-adicionados onde as colunas antigas não tinham correspondência.
-        # Aplica resample novamente para higienizar caso o parquet antigo contivesse segundos exatos.
-        df.set_index("timestamp", inplace=True)
-        df = df.resample('1min').mean()
-        df = df.ffill()
-        df.reset_index(inplace=True)
-        
-    # ── Salvar no Parquet final ──
-    logger.info(f"[PARQUET] Salvando em '{parquet_path}'...")
-    table = pa.Table.from_pandas(df, preserve_index=False)
-    pq.write_table(
-        table,
-        parquet_path,
-        compression="snappy"
-    )
+    df['date_only'] = df['timestamp'].dt.date
+    results = []
     
-    series_count = len(df.columns) - 1 # Remove o timestamp
-    logger.info(f"[PARQUET] Salvo! {series_count} séries totais no dia {detected_date} ({imported_series_count} processadas agora)")
-    
-    return {
-        "date": detected_date,
-        "series_count": series_count, # Total de séries do dia (após merge)
-        "imported_series_count": imported_series_count, # Séries processadas/importadas *neste* arquivo
-        "parquet_path": parquet_path,
-        "filename": filename
-    }
+    # Processa cada dia separadamente
+    for date_val, group_df in df.groupby('date_only'):
+        detected_date = date_val.isoformat()
+        group_df = group_df.drop(columns=['date_only'])
+        
+        parquet_path = os.path.join(usina_dir, f"{detected_date}.parquet")
+        
+        # Séries efetivamente importadas (antes do merge)
+        imported_series_count = len(group_df.columns) - 1
+        
+        if progress_callback:
+            import time
+            batch_size = max(1, imported_series_count // 50)
+            for i in range(1, imported_series_count + 1):
+                if i % batch_size == 0 or i == imported_series_count:
+                    progress_callback(i, imported_series_count)
+                    time.sleep(0.01)
+                    
+        # ── Merge com o Parquet existente (caso exista) ──
+        if os.path.exists(parquet_path):
+            logger.info(f"[PROCESS] Arquivo parquet já existe para {detected_date}. Fazendo merge das séries...")
+            existing_table = pq.read_table(parquet_path)
+            existing_df = existing_table.to_pandas()
+            
+            # Remove do parquet existente as séries que estão sendo importadas agora (substituição)
+            overlapping_cols = [c for c in group_df.columns if c in existing_df.columns and c != 'timestamp']
+            if overlapping_cols:
+                existing_df = existing_df.drop(columns=overlapping_cols)
+                
+            # Merge: Outer Join no timestamp
+            group_df = pd.merge(existing_df, group_df, on='timestamp', how='outer')
+            group_df = group_df.sort_values('timestamp').reset_index(drop=True)
+            
+        # ── Garantir grade de 24 horas por dia (1 minuto) ──
+        # Isso garante que se não houver dados de madrugada, teremos NaNs em vez de
+        # "pular" o horário e fazer o gráfico conectar pontos do dia 1 com o dia 2.
+        group_df.set_index("timestamp", inplace=True)
+        group_df = group_df.resample('1min').mean()
+        
+        full_idx = pd.date_range(f"{detected_date} 00:00:00", f"{detected_date} 23:59:00", freq='1min')
+        group_df = group_df.reindex(full_idx)
+        group_df.index.name = "timestamp"
+        
+        # Preenchimento de pequenos buracos internos APENAS
+        group_df = group_df.ffill().where(group_df.bfill().notna())
+        group_df.reset_index(inplace=True)
+        
+        # ── Salvar no Parquet final ──
+        logger.info(f"[PARQUET] Salvando em '{parquet_path}'...")
+        table = pa.Table.from_pandas(group_df, preserve_index=False)
+        pq.write_table(
+            table,
+            parquet_path,
+            compression="snappy"
+        )
+
+        final_series_count = len(group_df.columns) - 1
+        logger.info(f"[PARQUET] Salvo! {final_series_count} séries, data={detected_date}")
+
+        # ── Salvar no cache ──
+        cache = _load_cache()
+        cache_key = f"{usina}_{detected_date}"
+        
+        res = {
+            "date": detected_date,
+            "series_count": final_series_count,
+            "imported_series_count": imported_series_count,
+            "parquet_path": parquet_path,
+            "cached": False,
+        }
+        cache[cache_key] = {k: v for k, v in res.items() if k != "cached"}
+        _save_cache(cache)
+        
+        results.append(res)
+        
+    return results
 

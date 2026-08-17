@@ -1,0 +1,21 @@
+{
+  "batch_c3eac49d": {
+    "nome": "Potência CC String",
+    "formula": "S1*S2",
+    "criado_em": "2026-08-07T23:25:34.408185",
+    "series": [
+      {
+        "nome_sintetico": "CTG_TR1_INV_Ppv1",
+        "serie_1": "CTG_TR1_INV_Upv1",
+        "serie_2": "CTG_TR1_INV_Ipv1",
+        "serie_3": null
+      },
+      {
+        "nome_sintetico": "CTG_TR1_INV_Ppv4",
+        "serie_1": "CTG_TR1_INV_Upv4",
+        "serie_2": "CTG_TR1_INV_Ipv4",
+        "serie_3": null
+      }
+    ]
+  }
+}

@@ -1,0 +1,173 @@
+{
+  "CTG_CR1X_Pyr_1M_TR1_POAc_MS80_Avg": {
+    "elemento": "Irradiação",
+    "skid": "CTG",
+    "inversor": "INV01",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": "\"CTG_CR1X_Pyr_1M\"",
+    "string": null
+  },
+  "CTG_CR1X_Pyr_1M_TR1_POAy_MS80": {
+    "elemento": "Tracker",
+    "skid": "CTG",
+    "inversor": "INV01",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": "\"CTG_CR1X_Pyr_1M\"",
+    "string": null
+  },
+  "CTG_CR1X_Pyr_1M_TR1_RPOAc_MS80_Avg": {
+    "elemento": "Irradiação",
+    "skid": "CTG",
+    "inversor": "INV01",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": "\"CTG_CR1X_Pyr_1M\"",
+    "string": null
+  },
+  "CTG_CR1X_Pyr_1M_TR4_RPOAInTe_MS80": {
+    "elemento": "Temperatura",
+    "skid": "CTG",
+    "inversor": "INV04",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": "\"CTG_CR1X_Pyr_1M\"",
+    "string": null
+  },
+  "CTG_CR1X_Tmod_1M_TR1_TmN_Avg": {
+    "elemento": "Temperatura",
+    "skid": "CTG",
+    "inversor": "INV01",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": "\"CTG_CR1X_Tmod_1M\"",
+    "string": null
+  },
+  "CTG_CR1X_Tmod_1M_TR1_TmS_Avg": {
+    "elemento": "Temperatura",
+    "skid": "CTG",
+    "inversor": "INV01",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": "\"CTG_CR1X_Tmod_1M\"",
+    "string": null
+  },
+  "CTG_TR1_INV_Upv1": {
+    "elemento": "Tensão CC Inv",
+    "skid": "CTG",
+    "inversor": "INV01",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": "\"CTG_TR1_INV\"",
+    "string": null
+  },
+  "CTG_TR1_INV_Upv4": {
+    "elemento": "Tensão CC Inv",
+    "skid": "CTG",
+    "inversor": "INV01",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": "\"CTG_TR1_INV\"",
+    "string": null
+  },
+  "CTG_TR1_INV_Ipv1": {
+    "elemento": "Corrente CC String",
+    "skid": "CTG",
+    "inversor": "INV01",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": "\"CTG_TR1_INV\"",
+    "string": null
+  },
+  "CTG_TR1_INV_Ipv4": {
+    "elemento": "Corrente CC String",
+    "skid": "CTG",
+    "inversor": "INV01",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": "\"CTG_TR1_INV\"",
+    "string": null
+  },
+  "CTG_TR1_INV_Pac": {
+    "elemento": "Energia PMI",
+    "skid": "CTG",
+    "inversor": "INV01",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": "\"CTG_TR1_INV\"",
+    "string": null
+  },
+  "CTG_TR1_INV_Ppv1": {
+    "elemento": "Potência CC String",
+    "skid": "CTG",
+    "inversor": "INV01",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "CTG_TR1_INV_Ppv4": {
+    "elemento": "Potência CC String",
+    "skid": "CTG",
+    "inversor": "INV01",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SHELL_HP_Weatherstation_Humidity-PVMET500": {
+    "elemento": "Velocidade do Vento",
+    "skid": "CTG",
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": "\"SHELL_HP_Weatherstation\"",
+    "string": null
+  },
+  "SHELL_HP_Weatherstation_Temperature-PVMET500": {
+    "elemento": "Temperatura",
+    "skid": "CTG",
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": "\"SHELL_HP_Weatherstation\"",
+    "string": null
+  },
+  "SHELL_HP_Weatherstation_Rain-PVMET500": {
+    "elemento": "Velocidade do Vento",
+    "skid": "CTG",
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": "\"SHELL_HP_Weatherstation\"",
+    "string": null
+  },
+  "SHELL_HP_Weatherstation_Wind direction-PVMET500": {
+    "elemento": "Velocidade do Vento",
+    "skid": "CTG",
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": "\"SHELL_HP_Weatherstation\"",
+    "string": null
+  },
+  "SHELL_HP_Weatherstation_Pressure-PVMET500": {
+    "elemento": "Velocidade do Vento",
+    "skid": "CTG",
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": "\"SHELL_HP_Weatherstation\"",
+    "string": null
+  },
+  "SHELL_HP_Weatherstation_Wind speed-PVMET500": {
+    "elemento": "Velocidade do Vento",
+    "skid": "CTG",
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": "\"SHELL_HP_Weatherstation\"",
+    "string": null
+  }
+}

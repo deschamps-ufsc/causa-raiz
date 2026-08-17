@@ -167,7 +167,9 @@
       "outputFilter": "",
       "operation": "sum",
       "energiaPmiParams": {
-        "multiplier": 0.012
+        "multiplier": 0.012,
+        "inputType": "energy_5min",
+        "outputUnit": "MW"
       }
     },
     "geff": {
@@ -199,9 +201,9 @@
     },
     "pvlib": {
       "pvlibParams": {
-        "latitude": -11.1006,
-        "longitude": -41.2715,
-        "altitude": 1015,
+        "latitude": -23.55,
+        "longitude": -46.63,
+        "altitude": 1000,
         "tz": "America/Sao_Paulo",
         "selected_modulos": [
           "1785690696329",
@@ -212,15 +214,16 @@
         ],
         "loss_ohm_dc": 1.23,
         "loss_ohm_ac": 0.02,
-        "soiling": 2,
-        "gcr": 0.34,
-        "mismatch": 1,
-        "lid": 1,
-        "aux_loss": 14,
+        "loss_ohm_ac_mt": 0.81,
         "trafo_pnom": 52800,
         "trafo_iron_loss": 0.1,
         "trafo_copper_loss": 0.9,
-        "loss_ohm_ac_mt": 0.81
+        "soiling": 2,
+        "gcr": 0.34,
+        "axis_tilt": -1.4,
+        "mismatch": 1,
+        "lid": 1,
+        "aux_loss": 14
       },
       "type": "pvlib"
     },
@@ -234,7 +237,8 @@
         "energiaVar": "E_Grid",
         "irradianciaVar": "GlobInc",
         "ohmVar": "OhmLoss",
-        "earrayVar": "EArray"
+        "earrayVar": "EArray",
+        "toleranciaWcpr": "4"
       }
     }
   }

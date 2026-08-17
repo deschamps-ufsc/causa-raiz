@@ -1,34 +1,30 @@
 {
-  "\ufeffPVObject_": {
-    "\ufeffPVObject_": "pvModule",
-    "Version": "7.2.4",
-    "Flags": "$00900043",
+  "PVObject_": {
+    "PVObject_": "pvModule",
+    "Version": 8.1,
+    "Flags": "$00900343",
     "PVObject_Commercial": {
       "PVObject_Commercial": "pvCommercial",
-      "Comment": "http//en.longi-solar.com   (China)",
-      "Flags": "$0041",
-      "Manufacturer": "Longi Solar",
-      "Model": "LR7-72HGD-620M",
-      "DataSource": "T\u00fcV S\u00fcD",
-      "YearBeg": 2023,
+      "Comment": 0.0,
+      "Flags": "$41",
+      "Manufacturer": "JA Solar",
+      "Model": "JAM72D40-575/GB",
+      "DataSource": "TUV SUD",
       "Width": 1.134,
-      "Height": 2.382,
+      "Height": 2.278,
       "Depth": 0.03,
-      "Weight": 33.5,
+      "Weight": 31.2,
       "NPieces": 100,
-      "PriceDate": "08/01/20 10:31",
+      "PriceDate": "26/07/22 17:12",
       "Remarks, Count": {
-        "Remarks, Count": 4,
-        "Str_1": "Frame: Aluminum",
-        "Str_2": "Structure: Tempered AR glass",
-        "Str_3": [
-          "Connections: Doubleglass",
-          " Jbox IP 68",
-          " MC4 or mateable"
-        ],
-        "Str_4": "Half cut."
+        "Remarks, Count": 5,
+        "Str_1": "Frame: X",
+        "Str_2": "Structure: X",
+        "Str_3": "Connections: 0.050",
+        "Str_4": 1.0,
+        "Str_5": 30.0
       },
-      "End of Remarks": "Half cut."
+      "End of Remarks": 30.0
     },
     "End of PVObject pvCommercial": null,
     "Technol": "mtSiMono",
@@ -36,40 +32,40 @@
     "NCelP": 2,
     "NDiode": 3,
     "SubModuleLayout": "slTwinHalfCells",
-    "FrontSurface": "fsARCoating",
+    "FrontSurface": "fsNormalGlass",
     "GRef": 1000,
     "TRef": 25.0,
-    "PNom": 620.0,
+    "PNom": 575.0,
     "PNomTolLow": 0.0,
     "PNomTolUp": 3.0,
     "BifacialityFactor": 0.8,
-    "Isc": 14.85,
-    "Voc": 52.77,
-    "Imp": 13.99,
-    "Vmp": 44.33,
-    "muISC": 6.98,
-    "muVocSpec": -124.0,
-    "muPmpReq": -0.28,
-    "RShunt": 500,
-    "Rp_0": 72000,
-    "Rp_Exp": 5.6,
-    "RSerie": 0.201,
-    "Gamma": 1.033,
+    "Isc": 14.3,
+    "Voc": 51.15,
+    "Imp": 13.42,
+    "Vmp": 42.85,
+    "muISC": 6.4,
+    "muVocSpec": -125.0,
+    "muPmpReq": -0.304,
+    "RShunt": 350,
+    "Rp_0": 3500,
+    "Rp_Exp": 5.5,
+    "RSerie": 0.21,
+    "Gamma": 1.013,
     "muGamma": -0.0002,
     "VMaxIEC": 1500,
     "VMaxUL": 1500,
     "Absorb": 0.9,
     "ARev": 3.2,
-    "BRev": 3.2,
+    "BRev": -11998.8,
     "RDiode": 0.01,
     "VRevDiode": -0.7,
+    "IMaxDiode": 25.0,
     "AirMassRef": 1.5,
-    "CellArea": 174.5,
     "SandiaAMCorr": 50.0,
-    "RelEffic800": 0.52,
-    "RelEffic600": 0.6,
-    "RelEffic400": 0.41,
-    "RelEffic200": -1.19,
+    "RelEffic800": 0.5,
+    "RelEffic600": 0.44,
+    "RelEffic400": 0.36,
+    "RelEffic200": -1.94,
     "PVObject_IAM": {
       "PVObject_IAM": "pvIAM",
       "Flags": "$00",
@@ -78,39 +74,39 @@
         "IAMProfile": "TCubicProfile",
         "NPtsMax": 9,
         "NPtsEff": 9,
-        "LastCompile": "$B18D",
+        "LastCompile": "$8D",
         "Mode": 3,
         "Point_1": [
           0.0,
           1.0
         ],
         "Point_2": [
-          40.0,
+          30.0,
           1.0
         ],
         "Point_3": [
-          50.0,
-          1.0
-        ],
-        "Point_4": [
           60.0,
           1.0
         ],
+        "Point_4": [
+          65.0,
+          0.985
+        ],
         "Point_5": [
           70.0,
-          0.99
+          0.967
         ],
         "Point_6": [
           75.0,
-          0.97
+          0.929
         ],
         "Point_7": [
           80.0,
-          0.91
+          0.882
         ],
         "Point_8": [
           85.0,
-          0.81
+          0.744
         ],
         "Point_9": [
           90.0,
@@ -121,61 +117,67 @@
     },
     "End of PVObject pvIAM": null,
     "OperPoints, list of": {
-      "OperPoints, list of": "7 tOperPoint",
+      "OperPoints, list of": "13 tOperPoint",
       "Point_1": [
         "False",
         100,
-        25.0,
-        -6.81,
+        15.0,
+        -2.95,
         0.0,
         0.0,
         0.0,
-        0.0
+        0.0,
+        57.5
       ],
       "Point_2": [
         "False",
         200,
-        25.0,
-        -1.19,
+        15.0,
+        0.98,
         0.0,
         0.0,
         0.0,
-        0.0
+        0.0,
+        119.65
       ],
       "Point_3": [
         "False",
         400,
-        25.0,
-        0.41,
+        15.0,
+        3.28,
         0.0,
         0.0,
         0.0,
-        0.0
+        0.0,
+        244.76
       ],
       "Point_4": [
         "False",
         600,
-        25.0,
-        0.6,
+        15.0,
+        3.42,
         0.0,
         0.0,
         0.0,
-        0.0
+        0.0,
+        367.63
       ],
       "Point_5": [
         "False",
         800,
-        25.0,
-        0.52,
+        15.0,
+        3.49,
         0.0,
         0.0,
         0.0,
-        0.0
+        0.0,
+        490.51
       ],
       "Point_6": [
         "False",
         1000,
-        25.0,
+        15.0,
+        0.0,
         0.0,
         0.0,
         0.0,
@@ -184,13 +186,80 @@
       ],
       "Point_7": [
         "False",
+        100,
+        25.0,
+        -5.73,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        54.23
+      ],
+      "Point_8": [
+        "False",
+        200,
+        25.0,
+        -1.94,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        112.82
+      ],
+      "Point_9": [
+        "False",
+        400,
+        25.0,
+        0.36,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        230.94
+      ],
+      "Point_10": [
+        "False",
+        600,
+        25.0,
+        0.44,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        346.69
+      ],
+      "Point_11": [
+        "False",
+        800,
+        25.0,
+        0.5,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        462.53
+      ],
+      "Point_12": [
+        "True",
+        1000,
+        25.0,
+        0.0,
+        51.15,
+        14.3,
+        13.42,
+        42.85,
+        575.05
+      ],
+      "Point_13": [
+        "False",
         1100,
         25.0,
-        -0.18,
+        -0.29,
         0.0,
         0.0,
         0.0,
-        0.0
+        0.0,
+        630.98
       ]
     },
     "End of List OperPoints": null

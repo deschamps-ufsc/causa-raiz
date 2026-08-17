@@ -201,6 +201,29 @@
         "referencia_ppc": true
       }
     },
+    "pvlib": {
+      "pvlibParams": {
+        "latitude": 0,
+        "longitude": 0,
+        "altitude": 0,
+        "tz": "America/Sao_Paulo",
+        "selected_modulos": [],
+        "selected_inversores": [],
+        "loss_ohm_dc": 0,
+        "loss_ohm_ac": 0,
+        "loss_ohm_ac_mt": 0,
+        "trafo_pnom": 0,
+        "trafo_iron_loss": 0,
+        "trafo_copper_loss": 0,
+        "soiling": 2,
+        "gcr": 0,
+        "axis_tilt": 0,
+        "mismatch": 0,
+        "lid": 0,
+        "aux_loss": 0
+      },
+      "type": "pvlib"
+    },
     "pvsyst": {
       "type": "pvsyst"
     },

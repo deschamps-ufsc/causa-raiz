@@ -227,6 +227,19 @@ function FilterRow({ setting, index, updateFilterSetting, removeFilterRule, reor
           onBlur={e => isEditing && !readOnly && (e.target.style.borderColor = '#e2e8f0')}
         />
       </td>
+      <td style={{ padding: '10px 12px' }}>
+        <input 
+          type="number" 
+          step="0.00001"
+          value={setting.adjustment_factor ?? ''} 
+          onChange={e => handleNumChange('adjustment_factor', e.target.value)} 
+          disabled={readOnly || !isEditing}
+          placeholder={isEditing ? "1.0" : ""}
+          style={{ ...inputStyle, textAlign: 'right', opacity: (readOnly || !isEditing) ? 0.7 : 1, cursor: isEditing ? 'text' : 'default' }} 
+          onFocus={e => isEditing && !readOnly && (e.target.style.borderColor = '#f59e0b')}
+          onBlur={e => isEditing && !readOnly && (e.target.style.borderColor = '#e2e8f0')}
+        />
+      </td>
 
       {/* Ações */}
       <td style={{ padding: '10px 12px', textAlign: 'center' }}>
@@ -389,6 +402,7 @@ export default function FiltrosTab({ readOnly = false }) {
               <p style={{ marginBottom: 12 }}><strong>Tempo Mín.:</strong> Trabalha em conjunto com a Variação Mín. Define por quantos minutos o dado precisa ficar "travado" antes de ser deletado. Se deixar vazio, deleta imediatamente.</p>
               <p style={{ marginBottom: 12 }}><strong>Variação Máx. (Picos/Anomalias):</strong> Usado para detectar <em>Saltos ou Quedas Bruscas</em>. Se a variação for MAIOR que esse valor, o dado é excluído.</p>
               <p style={{ marginBottom: 12 }}><strong>Janela Med.:</strong> Trabalha em conjunto com a Variação Máx. Se preenchido (ex: 11 minutos), a variação passa a ser calculada contra a <em>Mediana Móvel</em> da janela. Isso protege saltos legítimos do sensor (degraus/rampas) e corta apenas picos temporários e anomalias rápidas.</p>
+              <p style={{ marginBottom: 12 }}><strong>Fator de Ajuste:</strong> Multiplica todos os dados da série por uma constante (ex: 1,1) antes de aplicar os limites. Se vazio, os dados não são alterados.</p>
             </div>
             <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end' }}>
               <button onClick={() => setShowHelp(false)} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#3b82f6', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>Entendi</button>
@@ -402,13 +416,14 @@ export default function FiltrosTab({ readOnly = false }) {
         <colgroup>
           <col style={{ width: '15%' }} />
           <col style={{ width: '13%' }} />
-          <col style={{ width: '8%' }} />
-          <col style={{ width: '8%' }} />
-          <col style={{ width: '8%' }} />
-          <col style={{ width: '8%' }} />
-          <col style={{ width: '8%' }} />
-          <col style={{ width: '8%' }} />
-          <col style={{ width: '8%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '7%' }} />
           <col style={{ width: '8%' }} />
           <col style={{ width: '8%' }} />
         </colgroup>
@@ -425,6 +440,7 @@ export default function FiltrosTab({ readOnly = false }) {
               ['Tempo Mín.', 'right'],
               ['Variação Máx.', 'right'],
               ['Janela Med.', 'right'],
+              ['Fator de Ajuste', 'right'],
               ['Ações', 'center'],
             ].map(([label, align]) => (
               <th key={label} style={{ padding: '8px 12px 8px', textAlign: align, fontWeight: 700,
@@ -438,7 +454,7 @@ export default function FiltrosTab({ readOnly = false }) {
         <tbody>
           {filterSettings.length === 0 ? (
             <tr>
-              <td colSpan="11" style={{ padding: '32px', textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
+              <td colSpan="12" style={{ padding: '32px', textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
                 Nenhum filtro configurado. Adicione um elemento abaixo.
               </td>
             </tr>

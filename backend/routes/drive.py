@@ -86,12 +86,13 @@ def import_drive_data(req: DriveImportRequest):
             content, filename = download_file(file_id)
             
             # 2. Processamento do arquivo (identificando formato largo ou longo) e merge
-            result = process_raw_file(
+            results = process_raw_file(
                 content, filename, req.usina.strip(),
                 req.skip_unmapped,
                 override_date=req.override_date
             )
-            total_series += result.get("imported_series_count", result.get("series_count", 0))
+            for r in results:
+                total_series += r.get("imported_series_count", r.get("series_count", 0))
             
         return {"status": "success", "total_series": total_series, "message": "Arquivos importados e unificados com sucesso."}
     except Exception as e:
@@ -140,15 +141,15 @@ def import_drive_data_stream(req: DriveImportRequest):
                         "progress": curr, "total": tot
                     })
                     
-                result = process_raw_file(
+                results = process_raw_file(
                     content, filename, req.usina.strip(),
                     req.skip_unmapped,
                     override_date=req.override_date,
                     progress_callback=on_progress
                 )
                 
-                imported = result.get("imported_series_count", result.get("series_count", 0))
-                total_series += imported
+                for r in results:
+                    total_series += r.get("imported_series_count", r.get("series_count", 0))
                 
             q.put({
                 "status": "success", 

@@ -852,25 +852,6 @@ export default function SettingsPage() {
       {/* Centered container */}
       <div style={{ maxWidth: 1400, margin: '0 auto' }}>
 
-        {/* Header */}
-        <div style={{ marginBottom: 26, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{
-            width: 40, height: 40, borderRadius: 10,
-            background: 'linear-gradient(135deg, #0f172a, #334155)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(15,23,42,0.25)',
-          }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#0f172a', letterSpacing: -0.3 }}>
-              Cadastro
-            </h1>
-          </div>
-        </div>
-
         {/* Tabs */}
         <div style={{ display: 'flex', gap: 2, marginBottom: 20, borderBottom: '2px solid #e2e8f0' }}>
           {TABS.map(tab => {

@@ -18,9 +18,44 @@ import {
 import '@xyflow/react/dist/style.css'
 import SingleSeriesDropdown, { formatSeriesName } from './SingleSeriesDropdown'
 import { useUsina } from '../hooks/UsinaContext'
-import api, { fetchMappingData, fetchFlowConfig, saveFlowConfig, runFlow, checkFlowStatus, fetchFlowIntegrals } from '../services/api'
+import api, { fetchMappingData, fetchFlowConfig, saveFlowConfig, runFlow, checkFlowStatus, startFlowIntegrals, getFlowIntegralsStatus, fetchDetailedUsinas, fetchFluxogramaChart } from '../services/api'
 import { useChartSettings } from '../hooks/ChartSettingsContext'
 import { exportTableToPdf, exportTableToPng } from '../utils/exportPdf'
+import PlotWrapper from 'react-plotly.js'
+const Plot = PlotWrapper.default || PlotWrapper
+
+const getFillData = (timestamps, values) => {
+    if (!timestamps || !values) return { x: [], y: [] };
+    const fillX = [];
+    const fillY = [];
+    let inBlock = false;
+    for (let i = 0; i < values.length; i++) {
+        const val = values[i];
+        const isValid = val !== null && val !== undefined && !Number.isNaN(val);
+        if (isValid) {
+            if (!inBlock) {
+                fillX.push(timestamps[i]);
+                fillY.push(0);
+                inBlock = true;
+            }
+            fillX.push(timestamps[i]);
+            fillY.push(val);
+        } else {
+            if (inBlock) {
+                fillX.push(timestamps[i - 1]);
+                fillY.push(0);
+                inBlock = false;
+            }
+            fillX.push(timestamps[i]);
+            fillY.push(null);
+        }
+    }
+    if (inBlock && timestamps.length > 0) {
+        fillX.push(timestamps[timestamps.length - 1]);
+        fillY.push(0);
+    }
+    return { x: fillX, y: fillY };
+};
 
 // ── CUSTOM EDGES ─────────────────────────────────────────────────────────
 
@@ -442,24 +477,29 @@ const initialEdges = [
 
 // ── COMPONENT ─────────────────────────────────────────────────────────
 
-const getEpiColor = (val) => {
-  if (val < 0.97) {
-    return { bg: '#fee2e2', text: '#991b1b' }; // Vermelho
-  } else if (val >= 1.0) {
-    return { bg: '#dcfce7', text: '#166534' }; // Verde
+const getGradientColor = (val, target, tol) => {
+  if (isNaN(tol) || tol === null || tol === undefined) tol = 0.03;
+
+  if (val < target - tol) {
+    return { bg: '#fee2e2', text: '#991b1b' }; // Vermelho Claro (Abaixo lim. inferior)
+  } else if (val > target + tol) {
+    return { bg: '#dbeafe', text: '#1e3a8a' }; // Azul Claro (Acima lim. superior)
   } else {
-    // Interpolação entre 0.97 (Amarelo) e 1.0 (Verde)
-    const t = (val - 0.97) / 0.03;
+    // Calcula a distância relativa da meta (0 = exato na meta, 1 = no limite da tolerância)
+    const d = Math.abs(val - target);
+    let t = d / tol;
+    if (isNaN(t)) t = 0;
+    const safeT = Math.max(0, Math.min(1, t));
     
-    // Fundo: #fef08a (254, 240, 138) para #dcfce7 (220, 252, 231)
-    const bgR = Math.round(254 + (220 - 254) * t);
-    const bgG = Math.round(240 + (252 - 240) * t);
-    const bgB = Math.round(138 + (231 - 138) * t);
+    // Gradiente Fundo: Verde Médio (#bbf7d0 -> 187, 247, 208) para Amarelo Claro (#fef9c3 -> 254, 249, 195)
+    const bgR = Math.round(187 + (254 - 187) * safeT);
+    const bgG = Math.round(247 + (249 - 247) * safeT);
+    const bgB = Math.round(208 + (195 - 208) * safeT);
     
-    // Texto: #854d0e (133, 77, 14) para #166534 (22, 101, 52)
-    const textR = Math.round(133 + (22 - 133) * t);
-    const textG = Math.round(77 + (101 - 77) * t);
-    const textB = Math.round(14 + (52 - 14) * t);
+    // Gradiente Texto: Verde Escuro (#166534 -> 22, 101, 52) para Amarelo Escuro (#854d0e -> 133, 77, 14)
+    const textR = Math.round(22 + (133 - 22) * safeT);
+    const textG = Math.round(101 + (77 - 101) * safeT);
+    const textB = Math.round(52 + (14 - 52) * safeT);
 
     return { 
       bg: `rgb(${bgR}, ${bgG}, ${bgB})`, 
@@ -468,7 +508,242 @@ const getEpiColor = (val) => {
   }
 };
 
-export default function FluxogramaView({ elementos = [], selectedDates = [], showTitle = true, mode = 'all' }) {
+const getEpiColor = (val, tol = 0.03) => {
+  return getGradientColor(val, 1.0, tol);
+};
+
+const getPrWcprColor = (val, prPrev, tol) => {
+  return getGradientColor(val, prPrev, tol);
+};
+
+const calculateAggregation = (rowsToAggregate, columns, potenciaInstalada, gammaPmpp, bifacialidade) => {
+  const totals = {};
+  if (!rowsToAggregate || rowsToAggregate.length === 0 || !columns) return totals;
+
+  columns.forEach(col => {
+    const isAverageCol = col.key.toLowerCase().startsWith('tamb') || 
+                         col.key.toLowerCase().startsWith('tmod') || 
+                         col.key.toLowerCase().startsWith('tcel') ||
+                         col.key.toLowerCase().startsWith('sujidade') ||
+                         col.key === 'tarrwtd' ||
+                         col.key === 'pr_prevista' ||
+                         col.key === 'pr_prevista_bifacial' ||
+                         col.key === 'cap_medido' ||
+                         col.key === 'cap_simulado' ||
+                         col.key === 'astm_ratio' ||
+                         col.key === 'astm_ratio_adaptive';
+    const isPercentageString = col.key.toLowerCase().startsWith('tracker') || col.key.toLowerCase().startsWith('curtailment');
+
+    let sum = 0;
+    let count = 0;
+    let hasNumber = false;
+
+    let sumErrors = 0;
+    let sumValidPoints = 0;
+    let hasPercentageData = false;
+
+    rowsToAggregate.forEach(row => {
+      const val = row[col.key];
+      if (isPercentageString && typeof val === 'string') {
+        const match = val.match(/^(\d+)\s*\(([\d.]+)%\)$/);
+        if (match) {
+          const errors = parseInt(match[1], 10);
+          const perc = parseFloat(match[2]);
+          const valid = perc > 0 ? (errors / (perc / 100)) : 0;
+          sumErrors += errors;
+          sumValidPoints += valid;
+          hasPercentageData = true;
+        }
+      } else if (typeof val === 'number') {
+        sum += val;
+        count++;
+        hasNumber = true;
+      }
+    });
+
+    if (['cap_ratio', 'cap_ratio_adaptive', 'astm_ratio', 'astm_ratio_adaptive'].includes(col.key)) {
+      let sumMed = 0;
+      let sumSim = 0;
+      let hasNum = false;
+      const medidoKey = col.key === 'cap_ratio' ? 'cap_medido' : 
+                        col.key === 'cap_ratio_adaptive' ? 'cap_medido_adaptive' : 
+                        col.key === 'astm_ratio' ? 'astm_medido' : 'astm_medido_adaptive';
+      const simuladoKey = col.key === 'cap_ratio' ? 'cap_simulado' : 
+                          col.key === 'cap_ratio_adaptive' ? 'cap_simulado_adaptive' : 
+                          col.key === 'astm_ratio' ? 'astm_simulado' : 'astm_simulado_adaptive';
+
+      rowsToAggregate.forEach(row => {
+         if (typeof row[medidoKey] === 'number' && typeof row[simuladoKey] === 'number') {
+             sumMed += row[medidoKey];
+             sumSim += row[simuladoKey];
+             hasNum = true;
+         }
+      });
+      if (hasNum && sumSim !== 0) {
+          totals[col.key] = (sumMed / sumSim) * 100;
+      } else {
+          totals[col.key] = '-';
+      }
+      return; // Skip normal aggregation for capacity ratios
+    }
+    
+    if (isPercentageString && hasPercentageData) {
+      const overallPerc = sumValidPoints > 0 ? (sumErrors / sumValidPoints) * 100 : 0;
+      totals[col.key] = `${Math.round(sumErrors)} (${overallPerc.toFixed(1)}%)`;
+    } else if (hasNumber) {
+      totals[col.key] = isAverageCol ? (sum / count) : sum;
+    } else {
+      totals[col.key] = '-';
+    }
+  });
+  
+  if (totals['Energia PMI_válida'] && totals['E_Grid_Ajustada_válida']) {
+    const totPmi = totals['Energia PMI_válida'];
+    const totPvsyst = totals['E_Grid_Ajustada_válida'];
+    if (typeof totPmi === 'number' && typeof totPvsyst === 'number' && totPvsyst !== 0) {
+      totals['epi'] = totPmi / totPvsyst;
+    }
+  }
+  
+  if (totals['Energia PMI Corrigida_válida'] && totals['E_Grid_Ajustada_válida']) {
+    const totPmiCorr = totals['Energia PMI Corrigida_válida'];
+    const totPvsyst = totals['E_Grid_Ajustada_válida'];
+    if (typeof totPmiCorr === 'number' && typeof totPvsyst === 'number' && totPvsyst !== 0) {
+      totals['epi_corrigido'] = totPmiCorr / totPvsyst;
+    }
+  }
+  
+  if (totals['Energia PMI_válida'] && totals['pvlib_E_Grid_válida']) {
+    const totPmi = totals['Energia PMI_válida'];
+    const totPvlib = totals['pvlib_E_Grid_válida'];
+    if (typeof totPmi === 'number' && typeof totPvlib === 'number' && totPvlib !== 0) {
+      totals['epi_pvlib'] = totPmi / totPvlib;
+    }
+  }
+  
+
+  if (totals['GlobInc_válida'] && totals['geff_válida']) {
+    const totGlob = totals['GlobInc_válida'];
+    const totGeff = totals['geff_válida'];
+    if (typeof totGeff === 'number' && typeof totGlob === 'number' && totGeff !== 0) {
+      totals['fator_ajuste'] = totGeff / totGlob;
+    }
+  }
+  
+  if (totals['Energia PMI_válida'] && (totals['gpoa_válida'] || totals['GlobInc_válida']) && potenciaInstalada) {
+    const totPmi = totals['Energia PMI_válida'];
+    const totGpoa = totals['gpoa_válida'] || totals['GlobInc_válida'];
+    if (typeof totPmi === 'number' && typeof totGpoa === 'number' && totGpoa !== 0) {
+      totals['pr_medida'] = totPmi / (totGpoa * potenciaInstalada);
+    }
+  }
+
+  if (totals['Energia PMI_válida'] && totals['gpoa_válida'] && totals['grear_válida'] && potenciaInstalada) {
+    const totPmi = totals['Energia PMI_válida'];
+    const totGpoa = totals['gpoa_válida'];
+    const totGrear = totals['grear_válida'];
+    const syntheticGeff = totGpoa + (totGrear * bifacialidade);
+    if (typeof totPmi === 'number' && typeof syntheticGeff === 'number' && syntheticGeff !== 0) {
+      totals['pr_medida_bifacial'] = totPmi / (syntheticGeff * potenciaInstalada);
+    }
+  }
+
+  if (totals['E_Grid_Ajustada_válida'] && (totals['gpoa_válida'] || totals['GlobInc_válida']) && potenciaInstalada) {
+    const totEsp = totals['E_Grid_Ajustada_válida'];
+    const totGpoa = totals['gpoa_válida'] || totals['GlobInc_válida'];
+    if (typeof totEsp === 'number' && typeof totGpoa === 'number' && totGpoa !== 0) {
+      totals['pr_esperada'] = totEsp / (totGpoa * potenciaInstalada);
+    }
+  }
+
+  if (totals['E_Grid_Ajustada_válida'] && totals['gpoa_válida'] && totals['grear_válida'] && potenciaInstalada) {
+    const totEsp = totals['E_Grid_Ajustada_válida'];
+    const totGpoa = totals['gpoa_válida'];
+    const totGrear = totals['grear_válida'];
+    const syntheticGeff = totGpoa + (totGrear * bifacialidade);
+    if (typeof totEsp === 'number' && typeof syntheticGeff === 'number' && syntheticGeff !== 0) {
+      totals['pr_esperada_bifacial'] = totEsp / (syntheticGeff * potenciaInstalada);
+    }
+  }
+  
+  if (totals['Energia PMI_válida'] && (totals['gpoa_válida'] || totals['GlobInc_válida']) && potenciaInstalada) {
+    let sumEnergia = 0;
+    let sumGpoaCorr = 0;
+    let hasValidWcpr = false;
+    
+    rowsToAggregate.forEach(row => {
+      const energia = row['Energia PMI_válida'];
+      const gpoa = row['gpoa_válida'] || row['GlobInc_válida'];
+      const tcel = row['tcel_válida'];
+      const tref = row['tarrwtd'];
+      if (typeof energia === 'number' && typeof gpoa === 'number' && typeof tcel === 'number' && typeof tref === 'number') {
+        sumEnergia += energia;
+        sumGpoaCorr += gpoa * (1 + (gammaPmpp / 100) * (tcel - tref));
+        hasValidWcpr = true;
+      }
+    });
+    
+    if (hasValidWcpr && sumGpoaCorr > 0) {
+      totals['wcpr'] = sumEnergia / (sumGpoaCorr * potenciaInstalada);
+    }
+  }
+
+  if (totals['Energia PMI_válida'] && totals['gpoa_válida'] && totals['grear_válida'] && potenciaInstalada) {
+    let sumEnergiaBifacial = 0;
+    let sumGeffCorr = 0;
+    let hasValidWcprBifacial = false;
+    
+    rowsToAggregate.forEach(row => {
+      const energia = row['Energia PMI_válida'];
+      const gpoa = row['gpoa_válida'];
+      const grear = row['grear_válida'];
+      const tcel = row['tcel_válida'];
+      const tref = row['tarrwtd'];
+      if (typeof energia === 'number' && typeof gpoa === 'number' && typeof grear === 'number' && typeof tcel === 'number' && typeof tref === 'number') {
+        const syntheticGeff = gpoa + (grear * bifacialidade);
+        sumEnergiaBifacial += energia;
+        sumGeffCorr += syntheticGeff * (1 + (gammaPmpp / 100) * (tcel - tref));
+        hasValidWcprBifacial = true;
+      }
+    });
+    
+    if (hasValidWcprBifacial && sumGeffCorr > 0) {
+      totals['wcpr_bifacial'] = sumEnergiaBifacial / (sumGeffCorr * potenciaInstalada);
+    }
+  }
+  
+  let sumTambG = 0, sumGTamb = 0;
+  let sumTmodG = 0, sumGTmod = 0;
+  let sumTcelG = 0, sumGTcel = 0;
+  let sumTambValidaG = 0, sumGTambValida = 0;
+  let sumTmodValidaG = 0, sumGTmodValida = 0;
+  let sumTcelValidaG = 0, sumGTcelValida = 0;
+
+  rowsToAggregate.forEach(row => {
+    const g = row['gpoa'] || row['GlobInc'] || 0;
+    const gValida = row['gpoa_válida'] || row['GlobInc_válida'] || 0;
+    
+    if (typeof row['tamb'] === 'number') { sumTambG += row['tamb'] * g; sumGTamb += g; }
+    if (typeof row['tmod'] === 'number') { sumTmodG += row['tmod'] * g; sumGTmod += g; }
+    if (typeof row['tcel'] === 'number') { sumTcelG += row['tcel'] * g; sumGTcel += g; }
+    
+    if (typeof row['tamb_válida'] === 'number') { sumTambValidaG += row['tamb_válida'] * gValida; sumGTambValida += gValida; }
+    if (typeof row['tmod_válida'] === 'number') { sumTmodValidaG += row['tmod_válida'] * gValida; sumGTmodValida += gValida; }
+    if (typeof row['tcel_válida'] === 'number') { sumTcelValidaG += row['tcel_válida'] * gValida; sumGTcelValida += gValida; }
+  });
+
+  if (sumGTamb > 0 && totals['tamb'] !== undefined) totals['tamb'] = sumTambG / sumGTamb;
+  if (sumGTmod > 0 && totals['tmod'] !== undefined) totals['tmod'] = sumTmodG / sumGTmod;
+  if (sumGTcel > 0 && totals['tcel'] !== undefined) totals['tcel'] = sumTcelG / sumGTcel;
+  
+  if (sumGTambValida > 0 && totals['tamb_válida'] !== undefined) totals['tamb_válida'] = sumTambValidaG / sumGTambValida;
+  if (sumGTmodValida > 0 && totals['tmod_válida'] !== undefined) totals['tmod_válida'] = sumTmodValidaG / sumGTmodValida;
+  if (sumGTcelValida > 0 && totals['tcel_válida'] !== undefined) totals['tcel_válida'] = sumTcelValidaG / sumGTcelValida;
+  
+  return totals;
+};
+
+export default function FluxogramaView({ elementos = [], selectedDates = [], showTitle = true, mode = 'all', capacityTestDailyResults = null }) {
   const { usinaAtual } = useUsina()
   const { filterSettings } = useChartSettings()
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
@@ -478,20 +753,50 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
   const [inputsList, setInputsList] = useState([{ series: '', filter: '', sensors: [] }])
   const [operation, setOperation] = useState('sum')
   const [outputFilter, setOutputFilter] = useState('')
+  const [isExporting, setIsExporting] = useState(false)
+  const [exportProgress, setExportProgress] = useState(0)
+  const [pvsystUploadProgress, setPvsystUploadProgress] = useState(0)
+  const [tmyUploadProgress, setTmyUploadProgress] = useState(0)
   const [geffParams, setGeffParams] = useState({ beta: 1, SSF: 0, MLF: 0 })
   const [pvlibParams, setPvlibParams] = useState({
     latitude: 0, longitude: 0, altitude: 0, tz: 'America/Sao_Paulo',
     selected_modulos: [], selected_inversores: [],
     loss_ohm_dc: 1.5, loss_ohm_ac: 1.0, loss_ohm_ac_mt: 0, trafo_pnom: 0, trafo_iron_loss: 0, trafo_copper_loss: 0, soiling: 2.0
   })
-  const [simultParams, setSimultParams] = useState({ geff: true, tamb: true, tcel: true, energia_pmi: true, curtailment: false })
+  const [simultParams, setSimultParams] = useState({ geff: true, tamb: true, tcel: true, energia_pmi: true, curtailment: false, horario_valido_enabled: false, horario_start: "06:00", horario_end: "19:00" })
   const [trackerParams, setTrackerParams] = useState({ latitude: -23.55, longitude: -46.63, gcr: 0.3, max_angle: 60, tolerance: 10, tol_pontos_vento: 0, tol_pontos_travado: 0, margem_perda_cc: 0 })
   const [curtailmentParams, setCurtailmentParams] = useState({ refMin: 52.8, refMargin: 3, diffMargin: 5, resolutionMode: '1min' })
   const [soilParams, setSoilParams] = useState({ startTime: '', endTime: '', trimPercent: '' })
-  const [energiaPmiParams, setEnergiaPmiParams] = useState({ multiplier: 0.012 })
+  const [energiaPmiParams, setEnergiaPmiParams] = useState({ 
+    multiplier: 0.012, 
+    inputType: 'energy_5min', 
+    outputUnit: 'MW' 
+  })
   const [allSeries, setAllSeries] = useState([])
-  const [epiParams, setEpiParams] = useState({ energiaVar: '', irradianciaVar: '', ohmVar: '', earrayVar: '' })
+  const [epiParams, setEpiParams] = useState({ energiaVar: '', irradianciaVar: '', ohmVar: '', earrayVar: '', tolerancia: 3, toleranciaPr: 5, toleranciaWcpr: 5 })
   
+  const [epiTol, setEpiTol] = useState(0.03);
+  const [prTol, setPrTol] = useState(0.05);
+  const [wcprTol, setWcprTol] = useState(0.05);
+
+  useEffect(() => {
+    const epiNode = nodes.find(n => n.id === 'epi');
+    if (epiNode && epiNode.data && epiNode.data.epiParams) {
+      const { tolerancia, toleranciaPr, toleranciaWcpr } = epiNode.data.epiParams;
+      if (tolerancia !== undefined && tolerancia !== null && tolerancia !== '') {
+        const parsed = parseFloat(String(tolerancia).replace(',', '.'));
+        if (!isNaN(parsed)) setEpiTol(parsed / 100);
+      }
+      if (toleranciaPr !== undefined && toleranciaPr !== null && toleranciaPr !== '') {
+        const parsed = parseFloat(String(toleranciaPr).replace(',', '.'));
+        if (!isNaN(parsed)) setPrTol(parsed / 100);
+      }
+      if (toleranciaWcpr !== undefined && toleranciaWcpr !== null && toleranciaWcpr !== '') {
+        const parsed = parseFloat(String(toleranciaWcpr).replace(',', '.'));
+        if (!isNaN(parsed)) setWcprTol(parsed / 100);
+      }
+    }
+  }, [nodes]);
   const [equipamentos, setEquipamentos] = useState({ modulos: [], inversores: [] })
 
   // --- Processamento ---
@@ -504,21 +809,126 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
   const [toast, setToast] = useState(null)
   
   const pvsystFileInputRef = useRef(null)
+  const tmyFileInputRef = useRef(null)
   const [pvsystColumns, setPvsystColumns] = useState([])
   const [isLoadingPvsystColumns, setIsLoadingPvsystColumns] = useState(false)
 
   // Estados para Tabela de Integrais Diárias
-  const [integralsData, setIntegralsData] = useState({ columns: [], rows: [] })
+  const [rawIntegralsData, setRawIntegralsData] = useState({ columns: [], rows: [] })
+  
+  // Estados para Popup de Gráficos Diários
+  const [chartModalDate, setChartModalDate] = useState(null)
+  const [popupChartData, setPopupChartData] = useState(null)
+  const [chartLoading, setChartLoading] = useState(false)
+  const [chartError, setChartError] = useState(null)
+  const [chartXRange, setChartXRange] = useState(['00:00', '23:59'])
+  const [chartRevision, setChartRevision] = useState(0)
+  const [showChartExportMenu, setShowChartExportMenu] = useState(false)
+  const popupChartRef = useRef(null)
+  
+  const integralsData = useMemo(() => {
+    if (!rawIntegralsData?.rows || !capacityTestDailyResults) return rawIntegralsData;
+    
+    const newColumns = [
+      { key: 'cap_ratio', label: 'Daily Capacity\nRatio (%) — Fixed RC', type: 'output', node_id: 'capacity_test', isCapacity: true },
+      { key: 'cap_ratio_adaptive', label: 'Daily Capacity\nRatio (%) — Adaptive RC', type: 'output', node_id: 'capacity_test', isCapacity: true }
+    ];
+
+    // Determine the ASTM window dynamically from the first valid daily result if available
+    let currentAstmWindow = 5; // default
+    if (capacityTestDailyResults) {
+      const firstDate = Object.keys(capacityTestDailyResults)[0];
+      if (firstDate && capacityTestDailyResults[firstDate]?.astmWindow) {
+        currentAstmWindow = capacityTestDailyResults[firstDate].astmWindow;
+      }
+    }
+    
+    newColumns.push({ 
+      key: 'astm_ratio', 
+      label: `ASTM Capacity\nRatio (%) — Fixed RC - ${currentAstmWindow} dias`, 
+      type: 'output', 
+      node_id: 'capacity_test', 
+      isCapacity: true 
+    });
+    
+    newColumns.push({ 
+      key: 'astm_ratio_adaptive', 
+      label: `ASTM Capacity\nRatio (%) — Adaptive RC - ${currentAstmWindow} dias`, 
+      type: 'output', 
+      node_id: 'capacity_test', 
+      isCapacity: true 
+    });
+    
+    let insertIdx = rawIntegralsData.columns.findIndex(c => c.type === 'validation');
+    if (insertIdx === -1) {
+      const tarrwtdIdx = rawIntegralsData.columns.findIndex(c => c.key === 'tarrwtd');
+      insertIdx = tarrwtdIdx !== -1 ? tarrwtdIdx + 1 : rawIntegralsData.columns.length;
+    }
+
+    const mergedColumns = [
+      ...rawIntegralsData.columns.slice(0, insertIdx),
+      ...newColumns,
+      ...rawIntegralsData.columns.slice(insertIdx)
+    ];
+    
+    const newRows = rawIntegralsData.rows.map(row => {
+      const daily = capacityTestDailyResults[row.date];
+      if (daily) {
+        return {
+          ...row,
+          cap_medido: daily.pMedido,
+          cap_simulado: daily.pSimulado,
+          cap_ratio: daily.ratio,
+          cap_medido_adaptive: daily.pMedidoAdaptive,
+          cap_simulado_adaptive: daily.pSimuladoAdaptive,
+          cap_ratio_adaptive: daily.ratioAdaptive,
+          astm_medido: daily.astmPMedido,
+          astm_simulado: daily.astmPSimulado,
+          astm_ratio: daily.astmRatio,
+          astm_medido_adaptive: daily.astmPMedidoAdaptive,
+          astm_simulado_adaptive: daily.astmPSimuladoAdaptive,
+          astm_ratio_adaptive: daily.astmRatioAdaptive
+        };
+      }
+      return row;
+    });
+    
+    return { columns: mergedColumns, rows: newRows };
+  }, [rawIntegralsData, capacityTestDailyResults]);
   const [isLoadingIntegrals, setIsLoadingIntegrals] = useState(false)
+  const [integralsProgress, setIntegralsProgress] = useState(0)
   const [integralsError, setIntegralsError] = useState(null)
+  const [potenciaInstalada, setPotenciaInstalada] = useState(null)
+
+  useEffect(() => {
+    if (!usinaAtual) {
+      setPotenciaInstalada(null)
+      return
+    }
+    fetchDetailedUsinas()
+      .then(usinas => {
+        const u = usinas.find(x => x.nome === usinaAtual)
+        if (u && u.total_mwp) {
+          setPotenciaInstalada(u.total_mwp * 1000)
+        } else {
+          setPotenciaInstalada(null)
+        }
+      })
+      .catch(console.error)
+  }, [usinaAtual])
   const tableRef = useRef(null)
+  const graficosPrincipaisRef = useRef(null)
   const [showPdfMenu, setShowPdfMenu] = useState(false)
   const [showInputs, setShowInputs] = useState(true)
   const [showMeasured, setShowMeasured] = useState(true)
   const [showValid, setShowValid] = useState(true)
   const [showResults, setShowResults] = useState(true)
+  const [showPR, setShowPR] = useState(true)
   const [showValidation, setShowValidation] = useState(true)
   const [showValidInfo, setShowValidInfo] = useState(false)
+  const [showOnlyValidDays, setShowOnlyValidDays] = useState(false)
+  const [aggregationMode, setAggregationMode] = useState('daily');
+  const [chartSeries, setChartSeries] = useState([]);
   const [visibleVars, setVisibleVars] = useState({
     gpoa: true,
     grear: true,
@@ -538,7 +948,16 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
     perdida_tracker: true,
     recuperavel: true,
     pvsyst: true,
-    epi: true
+    epi: true,
+    pr_medida: true,
+    pr_medida_bifacial: true,
+    pr_esperada: true,
+    pr_esperada_bifacial: true,
+    pr_prevista: true,
+    pr_prevista_bifacial: true,
+    wcpr: true,
+    wcpr_bifacial: true,
+    tarrwtd: true
   })
 
   const availableIrradianceSensors = useMemo(() => {
@@ -558,10 +977,34 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [nodes]);
 
+  const gammaPmpp = useMemo(() => {
+    const pvlibNode = nodes.find(n => n.id === 'pvlib');
+    if (!pvlibNode || !pvlibNode.data?.pvlibParams?.selected_modulos || !equipamentos?.modulos) return -0.35;
+    
+    const selectedMods = pvlibNode.data.pvlibParams.selected_modulos;
+    const mods = equipamentos.modulos.filter(m => selectedMods.includes(m.id));
+    
+    if (mods.length === 0) return -0.35;
+    
+    const sum = mods.reduce((acc, curr) => acc + (typeof curr.gamma === 'number' ? curr.gamma : -0.35), 0);
+    return sum / mods.length;
+  }, [nodes, equipamentos]);
+
+  const bifacialidade = useMemo(() => {
+    const geffNode = nodes.find(n => n.id === 'geff');
+    return geffNode?.data?.beta ?? 1.0;
+  }, [nodes]);
+
   useEffect(() => {
     if (selectedNodeId === 'pvlib' && usinaAtual) {
       if (selectedBlock?.pvlibParams) {
         setPvlibParams(selectedBlock.pvlibParams);
+      } else {
+        setPvlibParams({
+          latitude: '', longitude: '', altitude: '', gcr: '', axis_tilt: 0, tz: 'America/Sao_Paulo',
+          selected_modulos: [], selected_inversores: [],
+          loss_ohm_dc: 0, loss_bt_ca: 0, loss_aux_kw: 0, mismatch: 0, lid: 0
+        });
       }
     }
   }, [selectedNodeId, usinaAtual]);
@@ -570,6 +1013,10 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
     if (selectedNodeId === 'epi' && usinaAtual) {
       if (selectedBlock?.epiParams) {
         setEpiParams(selectedBlock.epiParams);
+      } else {
+        setEpiParams({
+          energiaVar: '', irradianciaVar: '', ohmVar: '', earrayVar: ''
+        });
       }
       
       setIsLoadingPvsystColumns(true);
@@ -599,43 +1046,190 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
     formData.append('file', file);
     formData.append('usina', usinaAtual);
     
-    setToast({ message: 'Enviando arquivo PVSyst...', type: 'info' });
+    setToast({ message: 'Iniciando envio do arquivo PVSyst...', type: 'info' });
+    setPvsystUploadProgress(1); // Set to 1 to show the bar immediately
     try {
       const res = await api.post(`/upload/pvsyst`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       const data = res.data;
+      const taskId = data.task_id;
       
-      setToast({ message: 'Upload do PVSyst concluído!', type: 'success' });
-      setPvsystColumns(data.columns || []);
+      let completed = false;
+      while (!completed) {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        const statusRes = await api.get(`/upload/status/${taskId}`);
+        const statusData = statusRes.data;
+        
+        if (statusData.status === 'COMPLETED') {
+          completed = true;
+          setPvsystUploadProgress(100);
+          setToast({ message: 'Upload do PVSyst concluído!', type: 'success' });
+          setPvsystColumns(statusData.columns || []);
+          setTimeout(() => setPvsystUploadProgress(0), 2000);
+        } else if (statusData.status === 'FAILED') {
+          completed = true;
+          setPvsystUploadProgress(0);
+          setToast({ message: `Erro no upload: ${statusData.message}`, type: 'error' });
+        } else {
+          setPvsystUploadProgress(statusData.progress);
+        }
+      }
     } catch (err) {
+      setPvsystUploadProgress(0);
       setToast({ message: err.message, type: 'error' });
     }
     e.target.value = '';
   }
 
+  const handleTmyUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (!usinaAtual) {
+      setToast({ message: 'Selecione uma usina primeiro', type: 'error' });
+      return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('usina', usinaAtual);
+    
+    setToast({ message: 'Iniciando envio do arquivo TMY...', type: 'info' });
+    setTmyUploadProgress(1); // Set to 1 to show the bar immediately
+    try {
+      const res = await api.post(`/upload/pvsyst/tmy`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      const taskId = res.data.task_id;
+      
+      let completed = false;
+      while (!completed) {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        const statusRes = await api.get(`/upload/status/${taskId}`);
+        const statusData = statusRes.data;
+        
+        if (statusData.status === 'COMPLETED') {
+          completed = true;
+          setTmyUploadProgress(100);
+          setToast({ message: 'Upload do TMY concluído!', type: 'success' });
+          setTimeout(() => setTmyUploadProgress(0), 2000);
+          loadIntegrals(usinaAtual);
+        } else if (statusData.status === 'FAILED') {
+          completed = true;
+          setTmyUploadProgress(0);
+          setToast({ message: `Erro no upload: ${statusData.message}`, type: 'error' });
+        } else {
+          setTmyUploadProgress(statusData.progress);
+        }
+      }
+    } catch (err) {
+      setTmyUploadProgress(0);
+      setToast({ message: err.message, type: 'error' });
+    }
+    e.target.value = '';
+  }
+
+  const loadConfig = (usina) => {
+    if (!usina) return
+    fetchFlowConfig(usina)
+      .then(config => {
+        const nodeConfigs = config?.nodeConfigs
+        if (!nodeConfigs) {
+          setNodes(initialNodes)
+          return
+        }
+
+        // Aplica apenas os campos per-usina por cima do layout padrão
+        setNodes(initialNodes.map(node => {
+          const cfg = nodeConfigs[node.id]
+          if (!cfg) return node
+          return { ...node, data: { ...node.data, ...cfg } }
+        }))
+      })
+      .catch(() => {})
+  }
+
   const loadIntegrals = (usina) => {
     if (!usina) return
+    loadConfig(usina)
     setIsLoadingIntegrals(true)
+    setIntegralsProgress(0)
     setIntegralsError(null)
-    fetchFlowIntegrals(usina)
+    
+    startFlowIntegrals(usina)
       .then(res => {
-        setIntegralsData(res || { columns: [], rows: [] })
+        const taskId = res.task_id;
+        if (!taskId) throw new Error("Falha ao iniciar processamento de integrais.");
+        
+        const intervalId = setInterval(() => {
+          getFlowIntegralsStatus(usina, taskId)
+            .then(statusRes => {
+              if (statusRes.status === 'processing') {
+                setIntegralsProgress(statusRes.progress || 0);
+              } else if (statusRes.status === 'done') {
+                clearInterval(intervalId);
+                setIntegralsProgress(100);
+                
+                let finalData = statusRes.result || { columns: [], rows: [] };
+                if (finalData.columns) {
+                  let prevCol = finalData.columns.find(c => c.key === 'pr_prevista');
+                  let prevBifiCol = finalData.columns.find(c => c.key === 'pr_prevista_bifacial');
+                  let tarrCol = finalData.columns.find(c => c.key === 'tarrwtd');
+                  let wcprCol = finalData.columns.find(c => c.key === 'wcpr');
+                  let wcprBifacialCol = finalData.columns.find(c => c.key === 'wcpr_bifacial');
+                  finalData.columns = finalData.columns.filter(c => 
+                    !['pr_medida', 'pr_medida_bifacial', 'pr_esperada', 'pr_esperada_bifacial', 'pr_prevista', 'pr_prevista_bifacial', 'wcpr', 'wcpr_bifacial', 'tarrwtd'].includes(c.key)
+                  );
+
+                  if (!prevCol) prevCol = { key: 'pr_prevista', label: 'PR Prevista', type: 'special', node_id: 'pvsyst_tmy' };
+                  if (!prevBifiCol) prevBifiCol = { key: 'pr_prevista_bifacial', label: 'PR Prevista\n(Bifacial)', type: 'special', node_id: 'pvsyst_tmy' };
+                  if (!tarrCol) tarrCol = { key: 'tarrwtd', label: 'TArrWtd', type: 'special', node_id: 'pvsyst_tmy' };
+                  if (!wcprCol) wcprCol = { key: 'wcpr', label: 'WCPR', type: 'output', node_id: 'epi' };
+                  if (!wcprBifacialCol) wcprBifacialCol = { key: 'wcpr_bifacial', label: 'WCPR\n(Bifacial)', type: 'output', node_id: 'epi' };
+
+                  const epiPvlibIdx = finalData.columns.findIndex(c => c.key === 'epi_pvlib');
+                  const prCol = { key: 'pr_medida', label: 'PR Medida', type: 'output', node_id: 'epi' };
+                  const prBifacialCol = { key: 'pr_medida_bifacial', label: 'PR Medida\n(Bifacial)', type: 'output', node_id: 'epi' };
+                  const prEspCol = { key: 'pr_esperada', label: 'PR Esperada', type: 'output', node_id: 'epi' };
+                  const prEspBifacialCol = { key: 'pr_esperada_bifacial', label: 'PR Esperada\n(Bifacial)', type: 'output', node_id: 'epi' };
+                  
+                  if (!finalData.columns.some(c => c.key === 'pr_esperada')) {
+                    const orderedCols = [prEspCol, prCol, wcprCol, prevCol, prEspBifacialCol, prBifacialCol, wcprBifacialCol, prevBifiCol, tarrCol];
+                    if (epiPvlibIdx !== -1) {
+                      finalData.columns.splice(epiPvlibIdx + 1, 0, ...orderedCols);
+                    } else {
+                      finalData.columns.push(...orderedCols);
+                    }
+                  }
+                }
+                setRawIntegralsData(finalData);
+                setIsLoadingIntegrals(false);
+              } else if (statusRes.status === 'error') {
+                clearInterval(intervalId);
+                throw new Error(statusRes.error || "Erro no processamento.");
+              }
+            })
+            .catch(err => {
+              clearInterval(intervalId);
+              console.error("Erro ao verificar status das integrais:", err);
+              setIntegralsError(err.message || "Erro ao carregar dados de integrais.");
+              setIsLoadingIntegrals(false);
+            });
+        }, 500);
       })
       .catch(err => {
-        console.error("Erro ao carregar integrais:", err)
-        setIntegralsError(err.message || "Erro ao carregar dados de integrais.")
-      })
-      .finally(() => {
-        setIsLoadingIntegrals(false)
-      })
+        console.error("Erro ao iniciar integrais:", err);
+        setIntegralsError(err.message || "Erro ao carregar dados de integrais.");
+        setIsLoadingIntegrals(false);
+      });
   }
 
   useEffect(() => {
     if (usinaAtual) {
       loadIntegrals(usinaAtual)
     } else {
-      setIntegralsData({ columns: [], rows: [] })
+      setRawIntegralsData({ columns: [], rows: [] })
     }
   }, [usinaAtual])
 
@@ -653,89 +1247,422 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
     return Math.max(300, maxBottom + 20)
   }, [nodes])
 
-  const totalsRow = useMemo(() => {
-    if (!integralsData.rows || integralsData.rows.length === 0 || !integralsData.columns) return null
-    const totals = { date: 'Total' }
-    integralsData.columns.forEach(col => {
-      const isAverageCol = col.key.toLowerCase().startsWith('tamb') || 
-                           col.key.toLowerCase().startsWith('tmod') || 
-                           col.key.toLowerCase().startsWith('tcel') ||
-                           col.key.toLowerCase().startsWith('sujidade');
-      const isPercentageString = col.key.toLowerCase().startsWith('tracker') || col.key.toLowerCase().startsWith('curtailment');
-
-      let sum = 0
-      let count = 0
-      let hasNumber = false
-
-      let sumErrors = 0
-      let sumValidPoints = 0
-      let hasPercentageData = false
-
-      integralsData.rows
-        .filter(row => selectedDates.includes(row.date))
-        .forEach(row => {
-        const val = row[col.key]
-        if (isPercentageString && typeof val === 'string') {
-          const match = val.match(/^(\d+)\s*\(([\d.]+)%\)$/);
-          if (match) {
-            const errors = parseInt(match[1], 10);
-            const perc = parseFloat(match[2]);
-            const valid = perc > 0 ? (errors / (perc / 100)) : 0;
-            sumErrors += errors;
-            sumValidPoints += valid;
-            hasPercentageData = true;
-          }
-        } else if (typeof val === 'number') {
-          sum += val
-          count++
-          hasNumber = true
-        }
-      })
+  const addChartSeries = () => {
+    if (!integralsData?.columns || integralsData.columns.length === 0) return;
+    
+    // Default to the first numeric column available
+    const firstCol = integralsData.columns.find(c => c.key !== 'date' && c.key !== 'val_validacao') || integralsData.columns[0];
+    
+    setChartSeries(prev => {
+      const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+      const nextColor = colors[prev.length % colors.length];
       
-      if (isPercentageString && hasPercentageData) {
-        const overallPerc = sumValidPoints > 0 ? (sumErrors / sumValidPoints) * 100 : 0;
-        totals[col.key] = `${Math.round(sumErrors)} (${overallPerc.toFixed(1)}%)`;
-      } else if (hasNumber) {
-        totals[col.key] = isAverageCol ? (sum / count) : sum
-      } else {
-        totals[col.key] = '-'
-      }
-    })
+      return [...prev, {
+        id: Math.random().toString(36).substr(2, 9),
+        columnKey: firstCol.key,
+        type: 'bar',
+        axis: 'left',
+        color: nextColor,
+        inheritColor: false,
+        showTolerance: false
+      }];
+    });
+  };
+
+  const removeChartSeries = (id) => {
+    setChartSeries(prev => prev.filter(s => s.id !== id));
+  };
+
+  const updateChartSeries = (id, field, value) => {
+    setChartSeries(prev => prev.map(s => s.id === id ? { ...s, [field]: value } : s));
+  };
+
+
+  const displayRows = useMemo(() => {
+    if (!integralsData.rows || integralsData.rows.length === 0) return [];
     
-    // Calcula EPI e Fator de Ajuste corretos para a linha de totais
-    if (totals['Energia PMI_válida'] && totals['E_Grid_Ajustada_válida']) {
-      const totPmi = totals['Energia PMI_válida'];
-      const totPvsyst = totals['E_Grid_Ajustada_válida'];
-      if (typeof totPmi === 'number' && typeof totPvsyst === 'number' && totPvsyst !== 0) {
-        totals['epi'] = totPmi / totPvsyst;
-      }
+    const allSelectedRows = integralsData.rows.filter(row => selectedDates.includes(row.date));
+
+    if (aggregationMode === 'daily') {
+       let dailyRows = allSelectedRows.filter(row => {
+         if (!showOnlyValidDays) return true;
+         return row['val_validacao'] === 'Dia Válido';
+       });
+       
+       return dailyRows.map(r => {
+         const row = { ...r };
+         if (potenciaInstalada) {
+             const energiaPmi = row['Energia PMI_válida'];
+             const gpoa = row['gpoa_válida'] || row['GlobInc_válida'];
+             if (typeof energiaPmi === 'number' && typeof gpoa === 'number' && gpoa > 0) {
+                 row['pr_medida'] = energiaPmi / (gpoa * potenciaInstalada);
+             }
+             
+             const gpoa_val = row['gpoa_válida'];
+             const grear_val = row['grear_válida'];
+             if (typeof energiaPmi === 'number' && typeof gpoa_val === 'number' && typeof grear_val === 'number') {
+                 const syntheticGeff = gpoa_val + (grear_val * bifacialidade);
+                 if (syntheticGeff > 0) {
+                     row['pr_medida_bifacial'] = energiaPmi / (syntheticGeff * potenciaInstalada);
+                 }
+             }
+             
+             const energiaEsp = row['E_Grid_Ajustada_válida'];
+             if (typeof energiaEsp === 'number' && typeof gpoa === 'number' && gpoa > 0) {
+                 row['pr_esperada'] = energiaEsp / (gpoa * potenciaInstalada);
+             }
+             if (typeof energiaEsp === 'number' && typeof gpoa_val === 'number' && typeof grear_val === 'number') {
+                 const syntheticGeff = gpoa_val + (grear_val * bifacialidade);
+                 if (syntheticGeff > 0) {
+                     row['pr_esperada_bifacial'] = energiaEsp / (syntheticGeff * potenciaInstalada);
+                 }
+             }
+             
+             const tcel = row['tcel_válida'];
+             const tref = row['tarrwtd'];
+             if (typeof energiaPmi === 'number' && typeof gpoa === 'number' && typeof tcel === 'number' && typeof tref === 'number' && gpoa > 0) {
+                 const gpoa_corr = gpoa * (1 + (gammaPmpp / 100) * (tcel - tref));
+                 if (gpoa_corr > 0) {
+                     row['wcpr'] = energiaPmi / (gpoa_corr * potenciaInstalada);
+                 }
+             }
+             if (typeof energiaPmi === 'number' && typeof gpoa_val === 'number' && typeof grear_val === 'number' && typeof tcel === 'number' && typeof tref === 'number') {
+                 const syntheticGeff = gpoa_val + (grear_val * bifacialidade);
+                 if (syntheticGeff > 0) {
+                     const geff_corr = syntheticGeff * (1 + (gammaPmpp / 100) * (tcel - tref));
+                     if (geff_corr > 0) {
+                         row['wcpr_bifacial'] = energiaPmi / (geff_corr * potenciaInstalada);
+                     }
+                 }
+             }
+         }
+         
+         const totGlob = row['GlobInc_válida'];
+         const totGeff = row['geff_válida'];
+         if (typeof totGeff === 'number' && typeof totGlob === 'number' && totGeff !== 0) {
+             row['fator_ajuste'] = totGeff / totGlob;
+         }
+         
+         return row;
+       });
+    } else {
+       const groupedByMonth = {};
+       allSelectedRows.forEach(row => {
+         const monthKey = row.date.substring(0, 7);
+         if (!groupedByMonth[monthKey]) groupedByMonth[monthKey] = [];
+         groupedByMonth[monthKey].push(row);
+       });
+       
+       const monthlyRows = Object.keys(groupedByMonth).map(monthKey => {
+         const rowsForMonth = groupedByMonth[monthKey];
+         const totalDays = rowsForMonth.length;
+         const validDays = rowsForMonth.filter(r => r.val_validacao === 'Dia Válido').length;
+         
+         const rowsToAggregate = showOnlyValidDays 
+            ? rowsForMonth.filter(r => r.val_validacao === 'Dia Válido') 
+            : rowsForMonth;
+
+         const aggregatedRow = calculateAggregation(rowsToAggregate, integralsData.columns, potenciaInstalada, gammaPmpp, bifacialidade);
+         
+         const [year, month] = monthKey.split('-');
+         aggregatedRow.date = `${month}/${year}`;
+         aggregatedRow.val_validacao = `${validDays}/${totalDays} Válidos`;
+         
+         return aggregatedRow;
+       });
+       
+       return monthlyRows.sort((a,b) => {
+         const [mA, yA] = a.date.split('/');
+         const [mB, yB] = b.date.split('/');
+         const dateA = new Date(yA, parseInt(mA)-1);
+         const dateB = new Date(yB, parseInt(mB)-1);
+         return dateA - dateB;
+       });
     }
+  }, [integralsData, selectedDates, showOnlyValidDays, aggregationMode, potenciaInstalada, gammaPmpp, bifacialidade]);
+
+  const getConditionalColor = (colKey, val, tol, fallbackColor, prPrevistaVal) => {
+    if (['epi', 'epi_corrigido', 'epi_pvlib', 'cap_ratio', 'astm_ratio', 'cap_ratio_adaptive', 'astm_ratio_adaptive'].includes(colKey) && typeof val === 'number') {
+       const rawVal = val / 100;
+       return getEpiColor(rawVal, tol).bg;
+    }
+    if ((colKey === 'pr_medida' || colKey === 'pr_medida_bifacial' || colKey === 'wcpr' || colKey === 'wcpr_bifacial') && typeof val === 'number' && typeof prPrevistaVal === 'number') {
+       return getPrWcprColor(val / 100, prPrevistaVal / 100, tol).bg;
+    }
+    return fallbackColor;
+  };
+
+  const generateChartDataAndShapes = (seriesArray) => {
+    if (!displayRows || displayRows.length === 0 || seriesArray.length === 0) return { traces: [], shapes: [] };
     
-    if (totals['Energia PMI Corrigida_válida'] && totals['E_Grid_Ajustada_válida']) {
-      const totPmiCorr = totals['Energia PMI Corrigida_válida'];
-      const totPvsyst = totals['E_Grid_Ajustada_válida'];
-      if (typeof totPmiCorr === 'number' && typeof totPvsyst === 'number' && totPvsyst !== 0) {
-        totals['epi_corrigido'] = totPmiCorr / totPvsyst;
+    const xValues = displayRows.map(row => row.date);
+    const traces = [];
+    const shapes = [];
+
+    seriesArray.forEach(series => {
+      const colDef = integralsData?.columns?.find(c => c.key === series.columnKey);
+      
+      const yValues = displayRows.map(row => {
+        const val = row[series.columnKey];
+        if (typeof val === 'number') {
+          if (['epi', 'epi_corrigido', 'epi_pvlib', 'pr_medida', 'pr_medida_bifacial', 'pr_esperada', 'pr_esperada_bifacial', 'pr_prevista', 'pr_prevista_bifacial', 'wcpr', 'wcpr_bifacial', 'fator_ajuste'].includes(series.columnKey)) {
+             return val * 100; // Transform to percentage for better dual-axis scaling
+          }
+        }
+        return val;
+      });
+
+      let markerColor = series.color;
+      
+      if (series.inheritColor) {
+        markerColor = yValues.map((y, idx) => {
+          let prPrevistaVal = displayRows[idx].pr_prevista;
+          if (series.columnKey === 'pr_medida_bifacial' || series.columnKey === 'wcpr_bifacial') prPrevistaVal = displayRows[idx].pr_prevista_bifacial;
+          if (typeof prPrevistaVal === 'number') prPrevistaVal *= 100;
+          
+          let specificTol = epiTol;
+          if (series.columnKey === 'pr_medida' || series.columnKey === 'pr_medida_bifacial') specificTol = prTol;
+          else if (series.columnKey === 'wcpr' || series.columnKey === 'wcpr_bifacial') specificTol = wcprTol;
+          
+          return getConditionalColor(series.columnKey, y, specificTol, series.color, prPrevistaVal);
+        });
       }
-    }
+
+      traces.push({
+        x: xValues,
+        y: yValues,
+        type: series.type === 'bar' ? 'bar' : 'scatter',
+        mode: series.type === 'line' ? 'lines+markers' : undefined,
+        name: colDef ? colDef.label : series.columnKey,
+        yaxis: series.axis === 'right' ? 'y2' : 'y1',
+        marker: { color: markerColor },
+        line: { color: series.color, width: 2 }
+      });
+
+      // Add tolerance traces for dynamic targets (PR)
+      if (series.showTolerance && (series.columnKey === 'pr_medida' || series.columnKey === 'pr_medida_bifacial' || series.columnKey === 'wcpr' || series.columnKey === 'wcpr_bifacial')) {
+        const specificTol = (series.columnKey === 'pr_medida' || series.columnKey === 'pr_medida_bifacial') ? prTol : wcprTol;
+        
+        const prevKey = (series.columnKey === 'pr_medida_bifacial' || series.columnKey === 'wcpr_bifacial') ? 'pr_prevista_bifacial' : 'pr_prevista';
+        const yUpper = displayRows.map(row => {
+          return typeof row[prevKey] === 'number' ? (row[prevKey] * 100) + (specificTol * 100) : null;
+        });
+        const yLower = displayRows.map(row => {
+          return typeof row[prevKey] === 'number' ? (row[prevKey] * 100) - (specificTol * 100) : null;
+        });
+
+        traces.push({
+          x: xValues,
+          y: yUpper,
+          type: 'scatter',
+          mode: 'lines',
+          name: `Lim. Sup. (${colDef ? colDef.label : series.columnKey})`,
+          yaxis: series.axis === 'right' ? 'y2' : 'y1',
+          line: { color: series.color, width: 2, dash: 'dot' },
+          showlegend: false,
+          hoverinfo: 'skip'
+        });
+
+        traces.push({
+          x: xValues,
+          y: yLower,
+          type: 'scatter',
+          mode: 'lines',
+          name: `Lim. Inf. (${colDef ? colDef.label : series.columnKey})`,
+          yaxis: series.axis === 'right' ? 'y2' : 'y1',
+          line: { color: series.color, width: 2, dash: 'dot' },
+          showlegend: false,
+          hoverinfo: 'skip'
+        });
+      }
+
+      // Shapes are used for static bounds (EPI)
+      if (series.showTolerance && ['epi', 'epi_corrigido', 'epi_pvlib', 'cap_ratio', 'astm_ratio', 'cap_ratio_adaptive', 'astm_ratio_adaptive'].includes(series.columnKey)) {
+        const yRef = series.axis === 'right' ? 'y2' : 'y1';
+        const lowerLimit = 100 * (1 - epiTol);
+        const upperLimit = 100 * (1 + epiTol);
+        
+        shapes.push({
+          type: 'line',
+          xref: 'paper',
+          x0: 0,
+          x1: 1,
+          yref: yRef,
+          y0: lowerLimit,
+          y1: lowerLimit,
+          line: { color: series.color, width: 2, dash: 'dot' }
+        });
+        
+        shapes.push({
+          type: 'line',
+          xref: 'paper',
+          x0: 0,
+          x1: 1,
+          yref: yRef,
+          y0: upperLimit,
+          y1: upperLimit,
+          line: { color: series.color, width: 2, dash: 'dot' }
+        });
+
+        // Linha da Meta (100%)
+        shapes.push({
+          type: 'line',
+          xref: 'paper',
+          x0: 0,
+          x1: 1,
+          yref: yRef,
+          y0: 100,
+          y1: 100,
+          line: { color: 'rgba(128,128,128,0.5)', width: 1, dash: 'dot' }
+        });
+      }
+    });
     
-    if (totals['Energia PMI_válida'] && totals['pvlib_E_Grid_válida']) {
-      const totPmi = totals['Energia PMI_válida'];
-      const totPvlib = totals['pvlib_E_Grid_válida'];
-      if (typeof totPmi === 'number' && typeof totPvlib === 'number' && totPvlib !== 0) {
-        totals['epi_pvlib'] = totPmi / totPvlib;
+    let maxTol = -Infinity;
+    let minTol = Infinity;
+
+    traces.forEach(t => {
+      if (t.name && (t.name.includes('Lim. Sup.') || t.name.includes('Lim. Inf.'))) {
+        t.y.forEach(val => {
+          if (val !== null && val !== undefined) {
+            maxTol = Math.max(maxTol, val);
+            minTol = Math.min(minTol, val);
+          }
+        });
       }
-    }
-    if (totals['GlobInc_válida'] && totals['geff_válida']) {
-      const totGlob = totals['GlobInc_válida'];
-      const totGeff = totals['geff_válida'];
-      if (typeof totGeff === 'number' && typeof totGlob === 'number' && totGlob !== 0) {
-        totals['fator_ajuste'] = totGeff / totGlob;
+    });
+
+    shapes.forEach(s => {
+      if (s.y0 !== undefined) {
+        maxTol = Math.max(maxTol, s.y0, s.y1);
+        minTol = Math.min(minTol, s.y0, s.y1);
       }
+    });
+
+    let yAxisRange = [80, 120];
+    if (maxTol !== -Infinity && minTol !== Infinity) {
+      let upper = Math.ceil((maxTol + 5) / 5) * 5;
+      let lower = Math.floor((minTol - 5) / 5) * 5;
+      yAxisRange = [lower, upper];
     }
+
+    return { traces, shapes, yAxisRange };
+  };
+
+  const chartData = useMemo(() => {
+    return generateChartDataAndShapes(chartSeries).traces;
+  }, [displayRows, chartSeries, integralsData, epiTol, prTol, wcprTol]);
+
+  const chartShapes = useMemo(() => {
+    return generateChartDataAndShapes(chartSeries).shapes;
+  }, [displayRows, chartSeries, integralsData, epiTol, prTol, wcprTol]);
+
+  const fixedEpiChart = useMemo(() => {
+    return generateChartDataAndShapes([{ columnKey: 'epi_pvlib', type: 'bar', axis: 'left', color: '#3b82f6', inheritColor: true, showTolerance: true }]);
+  }, [displayRows, integralsData, epiTol, prTol, wcprTol]);
+
+  const fixedEpiNormalChart = useMemo(() => {
+    return generateChartDataAndShapes([{ columnKey: 'epi', type: 'bar', axis: 'left', color: '#3b82f6', inheritColor: true, showTolerance: true }]);
+  }, [displayRows, integralsData, epiTol, prTol, wcprTol]);
+
+  const fixedCapRatioChart = useMemo(() => {
+    return generateChartDataAndShapes([{ columnKey: 'cap_ratio', type: 'bar', axis: 'left', color: '#3b82f6', inheritColor: true, showTolerance: true }]);
+  }, [displayRows, integralsData, epiTol, prTol, wcprTol]);
+
+  const fixedAstmRatioChart = useMemo(() => {
+    return generateChartDataAndShapes([{ columnKey: 'astm_ratio', type: 'bar', axis: 'left', color: '#3b82f6', inheritColor: true, showTolerance: true }]);
+  }, [displayRows, integralsData, epiTol, prTol, wcprTol]);
+
+  const adaptiveCapRatioChart = useMemo(() => {
+    return generateChartDataAndShapes([{ columnKey: 'cap_ratio_adaptive', type: 'bar', axis: 'left', color: '#1d4ed8', inheritColor: true, showTolerance: true }]);
+  }, [displayRows, integralsData, epiTol, prTol, wcprTol]);
+
+  const adaptiveAstmRatioChart = useMemo(() => {
+    return generateChartDataAndShapes([{ columnKey: 'astm_ratio_adaptive', type: 'bar', axis: 'left', color: '#1d4ed8', inheritColor: true, showTolerance: true }]);
+  }, [displayRows, integralsData, epiTol, prTol, wcprTol]);
+
+  const fixedPrChart = useMemo(() => {
+    return generateChartDataAndShapes([
+      { columnKey: 'pr_medida', type: 'bar', axis: 'left', color: '#3b82f6', inheritColor: true, showTolerance: true },
+      { columnKey: 'pr_prevista', type: 'line', axis: 'left', color: '#ca8a04', inheritColor: false, showTolerance: false }
+    ]);
+  }, [displayRows, integralsData, epiTol, prTol, wcprTol]);
+
+  const fixedPrBifacialChart = useMemo(() => {
+    return generateChartDataAndShapes([
+      { columnKey: 'pr_medida_bifacial', type: 'bar', axis: 'left', color: '#0ea5e9', inheritColor: true, showTolerance: true },
+      { columnKey: 'pr_prevista_bifacial', type: 'line', axis: 'left', color: '#ca8a04', inheritColor: false, showTolerance: false }
+    ]);
+  }, [displayRows, integralsData, epiTol, prTol, wcprTol]);
+
+  const fixedWcprChart = useMemo(() => {
+    return generateChartDataAndShapes([
+      { columnKey: 'wcpr', type: 'bar', axis: 'left', color: '#3b82f6', inheritColor: true, showTolerance: true },
+      { columnKey: 'pr_prevista', type: 'line', axis: 'left', color: '#ca8a04', inheritColor: false, showTolerance: false }
+    ]);
+  }, [displayRows, integralsData, epiTol, prTol, wcprTol]);
+
+  const fixedWcprBifacialChart = useMemo(() => {
+    return generateChartDataAndShapes([
+      { columnKey: 'wcpr_bifacial', type: 'bar', axis: 'left', color: '#0ea5e9', inheritColor: true, showTolerance: true },
+      { columnKey: 'pr_prevista_bifacial', type: 'line', axis: 'left', color: '#ca8a04', inheritColor: false, showTolerance: false }
+    ]);
+  }, [displayRows, integralsData, epiTol, prTol, wcprTol]);
+
+  const renderFixedChartUI = (title, chartObj, color) => {
+    if (!chartObj || chartObj.traces.length === 0) return null;
     
-    return totals
-  }, [integralsData, selectedDates])
+    return (
+      <div style={{ marginBottom: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--bg-secondary)', padding: '8px 16px', borderRadius: '8px 8px 0 0', border: '1px solid var(--border)', borderBottom: 'none' }}>
+          <div style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '600' }}>
+            {title}
+          </div>
+        </div>
+        <div style={{ width: '100%', height: '300px', background: 'var(--bg-card)', borderRadius: '0 0 8px 8px', border: '1px solid var(--border)', overflow: 'hidden', padding: '10px' }}>
+          <Plot
+            data={chartObj.traces}
+            layout={{
+              autosize: true,
+              margin: { l: 60, r: 60, t: 30, b: 60 },
+              paper_bgcolor: 'transparent',
+              plot_bgcolor: 'transparent',
+              font: { color: 'var(--text-secondary)', size: 11 },
+              xaxis: { 
+                type: 'category', 
+                gridcolor: 'rgba(128,128,128,0.1)', 
+                zerolinecolor: 'rgba(128,128,128,0.2)',
+                range: chartObj.traces && chartObj.traces[0] ? [-0.5, chartObj.traces[0].x.length - 0.5] : undefined
+              },
+              yaxis: { title: 'Eixo Esquerdo', gridcolor: 'rgba(128,128,128,0.1)', zerolinecolor: 'rgba(128,128,128,0.2)', range: chartObj.yAxisRange || [80, 120] },
+              shapes: chartObj.shapes,
+              barmode: 'group',
+              showlegend: false
+            }}
+            useResizeHandler={true}
+            style={{ width: '100%', height: '100%' }}
+            config={{ responsive: true, displayModeBar: true, displaylogo: false, modeBarButtonsToRemove: ['select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d'] }}
+          />
+        </div>
+      </div>
+    );
+  };
+
+  const totalsRow = useMemo(() => {
+    if (!integralsData.rows || integralsData.rows.length === 0 || !integralsData.columns) return null;
+    
+    const baseRows = integralsData.rows
+      .filter(row => selectedDates.includes(row.date))
+      .filter(row => {
+        if (!showOnlyValidDays) return true;
+        return row['val_validacao'] === 'Dia Válido';
+      });
+
+    const totals = calculateAggregation(baseRows, integralsData.columns, potenciaInstalada, gammaPmpp, bifacialidade);
+    totals.date = 'Total';
+    
+    return totals;
+  }, [integralsData, selectedDates, showOnlyValidDays, potenciaInstalada, gammaPmpp, bifacialidade]);
 
   const visibleColumns = useMemo(() => {
     if (!integralsData.columns) return []
@@ -752,7 +1679,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
 
       // 1.5. Filtro de Exibir Dados Medidos, Válidos e Resultados
       if (col.type === 'output' || col.type === 'special') {
-        const isResultColumn = ['fator_ajuste', 'epi', 'globinc', 'energia_esperada', 'energia_esperada_ajustada', 'energia_pmi', 'e_grid', 'perdida', 'recuperável', 'pmi corrigida'].some(k => col.key.toLowerCase().includes(k)) || col.key.toLowerCase().startsWith('pvsyst');
+        const isResultColumn = ['pr_medida', 'pr_medida_bifacial', 'pr_esperada', 'pr_esperada_bifacial', 'pr_prevista', 'pr_prevista_bifacial', 'wcpr', 'wcpr_bifacial', 'tarrwtd', 'fator_ajuste', 'epi', 'globinc', 'energia_esperada', 'energia_esperada_ajustada', 'energia_pmi', 'e_grid', 'perdida', 'recuperável', 'pmi corrigida'].some(k => col.key.toLowerCase().includes(k)) || col.key.toLowerCase().startsWith('pvsyst');
         
         if (isResultColumn) {
           if (!showResults) return false;
@@ -788,10 +1715,19 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
       if (colKey.startsWith('fator_ajuste') || colKey.startsWith('globinc')) return visibleVars.pvsyst;
       if (colKey.startsWith('e_grid') || colKey.startsWith('pvsyst')) return visibleVars.pvsyst;
       if (colKey.startsWith('epi')) return visibleVars.epi;
+      if (colKey === 'pr_medida') return visibleVars.pr_medida;
+      if (colKey === 'pr_medida_bifacial') return visibleVars.pr_medida_bifacial;
+      if (colKey === 'pr_esperada') return visibleVars.pr_esperada;
+      if (colKey === 'pr_esperada_bifacial') return visibleVars.pr_esperada_bifacial;
+      if (colKey === 'pr_prevista') return visibleVars.pr_prevista;
+      if (colKey === 'pr_prevista_bifacial') return visibleVars.pr_prevista_bifacial;
+      if (colKey === 'wcpr') return visibleVars.wcpr;
+      if (colKey === 'wcpr_bifacial') return visibleVars.wcpr_bifacial;
+      if (colKey === 'tarrwtd') return visibleVars.tarrwtd;
 
       return true;
     });
-  }, [integralsData.columns, showInputs, showMeasured, showValid, showResults, showValidation, visibleVars]);
+  }, [integralsData.columns, showInputs, showMeasured, showValid, showResults, showPR, showValidation, visibleVars]);
 
   const headerGroups = useMemo(() => {
     const groups = [];
@@ -876,7 +1812,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
   ]
 
   // Persiste apenas os campos per-usina no flow_config.json
-  const saveNodeConfig = (nodesArr) => {
+  const saveNodeConfig = async (nodesArr) => {
     if (!usinaAtual) return
     const nodeConfigs = {}
     nodesArr.forEach(n => {
@@ -891,32 +1827,32 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
 
       if (Object.keys(cfg).length > 0) nodeConfigs[n.id] = cfg
     })
-    saveFlowConfig(usinaAtual, { nodeConfigs })
+    
+    try {
+      await saveFlowConfig(usinaAtual, { nodeConfigs })
+      window.dispatchEvent(new Event('fluxograma_config_changed'))
+    } catch (e) {
+      console.error("Erro ao salvar config do fluxograma:", e)
+    }
   }
 
   useEffect(() => {
     // Sempre começa do layout padrão — garante que qualquer usina (com ou sem config) veja o mesmo canvas
     setNodes(initialNodes)
     setEdges(initialEdges)
-
-    if (!usinaAtual) return
-
-    fetchFlowConfig(usinaAtual)
-      .then(config => {
-        const nodeConfigs = config?.nodeConfigs
-        if (!nodeConfigs) return // Sem config salva → mantém initialNodes limpos
-
-        // Aplica apenas os campos per-usina por cima do layout padrão
-        setNodes(initialNodes.map(node => {
-          const cfg = nodeConfigs[node.id]
-          if (!cfg) return node
-          return { ...node, data: { ...node.data, ...cfg } }
-        }))
-      })
-      .catch(() => {
-        // Em caso de erro, mantém o initialNodes já definido acima
-      })
+    setSelectedNodeId(null) // Fecha qualquer modal aberto ao trocar de usina
+    if (usinaAtual) {
+      loadConfig(usinaAtual)
+    }
   }, [usinaAtual, setNodes, setEdges])
+
+  useEffect(() => {
+    const handleConfigChange = () => {
+      if (usinaAtual) loadConfig(usinaAtual)
+    }
+    window.addEventListener('fluxograma_config_changed', handleConfigChange)
+    return () => window.removeEventListener('fluxograma_config_changed', handleConfigChange)
+  }, [usinaAtual])
 
   const handleRunFlow = async () => {
     if (!usinaAtual) return
@@ -1054,6 +1990,13 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
         bgCell: 'rgba(51, 65, 85, 0.02)',
         bgTotal: 'rgba(51, 65, 85, 0.08)'
       };
+    } else if (key.startsWith('cap_') || key.startsWith('astm_')) {
+      return {
+        color: '#8b5cf6', // Violeta (Capacity Test)
+        bgHeader: 'rgba(139, 92, 246, 0.05)',
+        bgCell: 'rgba(139, 92, 246, 0.02)',
+        bgTotal: 'rgba(139, 92, 246, 0.08)'
+      };
     }
     return {
       color: 'var(--text-primary)',
@@ -1108,6 +2051,30 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
         <div style={{ lineHeight: '1.2' }}>
           EPI<br/>
           Corrigido
+        </div>
+      );
+    }
+    if (label.toLowerCase() === 'pr medida') {
+      return (
+        <div style={{ lineHeight: '1.2' }}>
+          PR<br/>
+          Medida
+        </div>
+      );
+    }
+    if (label.toLowerCase() === 'pr esperada') {
+      return (
+        <div style={{ lineHeight: '1.2' }}>
+          PR<br/>
+          Esperada
+        </div>
+      );
+    }
+    if (label.toLowerCase() === 'pr prevista') {
+      return (
+        <div style={{ lineHeight: '1.2' }}>
+          PR<br/>
+          Prevista
         </div>
       );
     }
@@ -1285,6 +2252,45 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
     }
   };
 
+  const openChartPopup = async (date) => {
+    setChartModalDate(date)
+    setChartXRange(['00:00', '23:59'])
+    setChartRevision(0)
+    setChartLoading(true)
+    setChartError(null)
+    try {
+      const data = await fetchFluxogramaChart(usinaAtual, date)
+      setPopupChartData(data)
+    } catch (err) {
+      console.error(err)
+      setChartError(err.message || String(err))
+    } finally {
+      setChartLoading(false)
+    }
+  }
+
+  const updateChartXRange = (newRange) => {
+    setChartXRange(newRange)
+    setChartRevision(r => r + 1)
+  }
+
+  const handleChartRelayout = (eventData) => {
+    if (eventData['xaxis.range[0]'] && eventData['xaxis.range[1]']) {
+      const minDate = new Date(eventData['xaxis.range[0]'])
+      const maxDate = new Date(eventData['xaxis.range[1]'])
+      const toHHMM = (d) => {
+        const hh = String(d.getHours()).padStart(2, '0')
+        const mm = String(d.getMinutes()).padStart(2, '0')
+        return `${hh}:${mm}`
+      }
+      setChartXRange([toHHMM(minDate), toHHMM(maxDate)])
+      setChartRevision(r => r + 1)
+    } else if (eventData['xaxis.autorange']) {
+      setChartXRange(['00:00', '23:59'])
+      setChartRevision(r => r + 1)
+    }
+  }
+
   return (
     <div style={{ 
       display: 'flex', 
@@ -1365,7 +2371,10 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                   energia_pmi: node.data.simultParams?.energia_pmi ?? true,
                   curtailment: node.data.simultParams?.curtailment ?? false,
                   potencia_ppc: node.data.simultParams?.potencia_ppc ?? true,
-                  referencia_ppc: node.data.simultParams?.referencia_ppc ?? true
+                  referencia_ppc: node.data.simultParams?.referencia_ppc ?? true,
+                  horario_valido_enabled: node.data.simultParams?.horario_valido_enabled ?? false,
+                  horario_start: node.data.simultParams?.horario_start ?? "06:00",
+                  horario_end: node.data.simultParams?.horario_end ?? "19:00"
                 })
               } else if (node.id === 'curtailment') {
                 setCurtailmentParams({
@@ -1385,7 +2394,9 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                 setOutputFilter(node.data.outputFilter || '')
                 if (node.id === 'energia_pmi') {
                   setEnergiaPmiParams({
-                    multiplier: node.data.energiaPmiParams?.multiplier ?? 0.012
+                    multiplier: node.data.energiaPmiParams?.multiplier ?? 0.012,
+                    inputType: node.data.energiaPmiParams?.inputType || 'energy_5min',
+                    outputUnit: node.data.energiaPmiParams?.outputUnit || 'MW'
                   })
                 }
                 if (node.id === 'tracker') {
@@ -1815,17 +2826,47 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
 
               {selectedNodeId === 'energia_pmi' && (
                 <div style={{ marginTop: '20px', padding: '12px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Fator de Conversão (Multiplicador):</label>
-                    <input 
-                      type="number" step="0.001" className="input" 
-                      style={{ width: '100px', padding: '6px', borderRadius: '4px', border: '1px solid var(--border)' }} 
-                      value={energiaPmiParams.multiplier} 
-                      onChange={e => setEnergiaPmiParams({ ...energiaPmiParams, multiplier: parseFloat(e.target.value) || 0 })}
-                    />
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Resolução da Entrada Bruta:</label>
+                      <select 
+                        className="select" 
+                        style={{ width: '220px', padding: '6px', borderRadius: '4px', border: '1px solid var(--border)' }}
+                        value={energiaPmiParams.inputType || 'energy_5min'}
+                        onChange={e => setEnergiaPmiParams({ ...energiaPmiParams, inputType: e.target.value })}
+                      >
+                        <option value="energy_5min">Energia (kWh) a cada 5 min</option>
+                        <option value="power_1min">Potência (kW) a cada 1 min</option>
+                      </select>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Unidade da Série Processada:</label>
+                      <select 
+                        className="select" 
+                        style={{ width: '220px', padding: '6px', borderRadius: '4px', border: '1px solid var(--border)' }}
+                        value={energiaPmiParams.outputUnit || 'MW'}
+                        onChange={e => setEnergiaPmiParams({ ...energiaPmiParams, outputUnit: e.target.value })}
+                      >
+                        <option value="MW">MegaWatts (MW)</option>
+                        <option value="kW">KiloWatts (kW)</option>
+                      </select>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Fator de Conversão (Multiplicador):</label>
+                      <input 
+                        type="number" step="0.001" className="input" 
+                        style={{ width: '120px', padding: '6px', borderRadius: '4px', border: '1px solid var(--border)' }} 
+                        value={energiaPmiParams.multiplier} 
+                        onChange={e => setEnergiaPmiParams({ ...energiaPmiParams, multiplier: parseFloat(e.target.value) || 0 })}
+                      />
+                    </div>
                   </div>
-                  <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8, marginBottom: 0 }}>
-                    Usado para converter energia (kWh) em potência média (kW). Ex: (12 / 1000) = 0.012
+                  
+                  <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 12, marginBottom: 0 }}>
+                    Usado para converter os dados originais na unidade selecionada acima.
                   </p>
                 </div>
               )}
@@ -2366,6 +3407,26 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
 
                       <h4 style={{ margin: '10px 0 5px 0', fontSize: 13, color: '#475569', fontWeight: 600 }}>Avaliação de Blocos (Agrupamento Final)</h4>
                       {renderCard('energia_pmi', 'Forçar cortes em blocos de 5 min (Energia PMI)', 'blue')}
+
+                      <h4 style={{ margin: '10px 0 5px 0', fontSize: 13, color: '#475569', fontWeight: 600 }}>Filtro de Horário</h4>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: simultParams.horario_valido_enabled ? '#f0fdf4' : '#fff', border: `2px solid ${simultParams.horario_valido_enabled ? '#4ade80' : '#ccc'}`, borderRadius: '8px', padding: '10px 14px', transition: 'all 0.2s', opacity: simultParams.horario_valido_enabled ? 1 : 0.6 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }} onClick={() => setSimultParams({...simultParams, horario_valido_enabled: !simultParams.horario_valido_enabled})}>
+                          <input type="checkbox" checked={simultParams.horario_valido_enabled} readOnly style={{ width: 16, height: 16, cursor: 'pointer' }} />
+                          <span style={{ fontSize: 13, fontWeight: simultParams.horario_valido_enabled ? 600 : 400, color: '#334155' }}>Habilitar filtro de Horário Válido</span>
+                        </div>
+                        {simultParams.horario_valido_enabled && (
+                          <div style={{ display: 'flex', gap: 16, marginTop: 8, alignItems: 'center' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                              <label style={{ fontSize: 12, color: '#475569', fontWeight: 500 }}>Horário Inicial</label>
+                              <input type="time" value={simultParams.horario_start} onChange={(e) => setSimultParams({...simultParams, horario_start: e.target.value})} style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }} />
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                              <label style={{ fontSize: 12, color: '#475569', fontWeight: 500 }}>Horário Final</label>
+                              <input type="time" value={simultParams.horario_end} onChange={(e) => setSimultParams({...simultParams, horario_end: e.target.value})} style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }} />
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </>
                   )
                 })()}
@@ -2486,6 +3547,10 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                       <label style={{ fontSize: 12, fontWeight: 600 }}>GCR (Tracker):</label>
                       <input type="number" step="0.01" className="input" value={pvlibParams.gcr ?? ''} onChange={e => setPvlibParams({...pvlibParams, gcr: parseFloat(e.target.value)||0})} />
                     </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600 }}>Declive Terreno (°):</label>
+                      <input type="number" step="0.01" className="input" value={pvlibParams.axis_tilt ?? 0} onChange={e => setPvlibParams({...pvlibParams, axis_tilt: parseFloat(e.target.value)||0})} />
+                    </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, gridColumn: 'span 2' }}>
                       <label style={{ fontSize: 12, fontWeight: 600 }}>Fuso Horário:</label>
                       <input type="text" className="input" value={pvlibParams.tz} onChange={e => setPvlibParams({...pvlibParams, tz: e.target.value})} />
@@ -2563,6 +3628,45 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                       <label style={{ fontSize: 12, fontWeight: 600 }}>Perdas Auxiliares (kW):</label>
                       <input type="number" step="0.1" className="input" value={pvlibParams.aux_loss || 0} onChange={e => setPvlibParams({...pvlibParams, aux_loss: parseFloat(e.target.value)||0})} />
                     </div>
+                  </div>
+                </div>
+
+                {/* Soiling Configuration */}
+                <div style={{ background: 'rgba(236, 72, 153, 0.05)', padding: '16px', borderRadius: '8px', borderLeft: '4px solid #ec4899', marginTop: '16px' }}>
+                  <h4 style={{ margin: '0 0 12px 0', color: '#ec4899', fontSize: '14px' }}>Sujidade (Soiling)</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: 13, fontWeight: 500 }}>
+                        <input 
+                          type="radio" 
+                          name="soiling_mode"
+                          checked={!pvlibParams.use_fixed_soiling} 
+                          onChange={() => setPvlibParams({...pvlibParams, use_fixed_soiling: false})}
+                        />
+                        Usar Sujidade Medida (Calculada)
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: 13, fontWeight: 500 }}>
+                        <input 
+                          type="radio" 
+                          name="soiling_mode"
+                          checked={pvlibParams.use_fixed_soiling} 
+                          onChange={() => setPvlibParams({...pvlibParams, use_fixed_soiling: true, fixed_soiling_pct: pvlibParams.fixed_soiling_pct ?? 1.0})}
+                        />
+                        Definir Sujidade Fixa
+                      </label>
+                    </div>
+                    {pvlibParams.use_fixed_soiling && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: '200px', marginTop: '8px' }}>
+                        <label style={{ fontSize: 12, fontWeight: 600 }}>Sujidade Fixa (%):</label>
+                        <input 
+                          type="number" 
+                          step="0.01" 
+                          className="input" 
+                          value={pvlibParams.fixed_soiling_pct ?? 1.0} 
+                          onChange={e => setPvlibParams({...pvlibParams, fixed_soiling_pct: parseFloat(e.target.value) || 0})} 
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -2689,34 +3793,117 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
               </p>
               
               <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginTop: '10px' }}>
-                <button 
-                  onClick={() => {
-                    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-                    const url = `${baseUrl}/flow/${encodeURIComponent(usinaAtual)}/export-pvsyst`;
-                    window.open(url, '_blank');
-                  }} 
-                  className="btn"
-                  style={{ flex: 1, background: '#233772', color: '#fff', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '16px', height: 'auto' }}
-                >
-                  <span style={{ fontSize: '24px' }}>⬇️</span>
-                  <span>Baixar Arquivo de<br/>Importação</span>
-                </button>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <button 
+                    disabled={isExporting}
+                    onClick={async () => {
+                      if (isExporting) return;
+                      try {
+                        setIsExporting(true);
+                        setExportProgress(0);
+                        const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+                        
+                        // Inicia a exportação
+                        const startRes = await fetch(`${baseUrl}/flow/${encodeURIComponent(usinaAtual)}/export-pvsyst/start`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ dates: selectedDates })
+                        });
+                        
+                        if (!startRes.ok) throw new Error("Erro ao iniciar exportação");
+                        const startData = await startRes.json();
+                        const taskId = startData.task_id;
+                        
+                        // Polling para checar status
+                        const interval = setInterval(async () => {
+                          try {
+                            const statusRes = await fetch(`${baseUrl}/flow/${encodeURIComponent(usinaAtual)}/export-pvsyst/status/${taskId}`);
+                            if (!statusRes.ok) return;
+                            const statusData = await statusRes.json();
+                            
+                            setExportProgress(statusData.progress);
+                            
+                            if (statusData.status === 'done') {
+                              clearInterval(interval);
+                              // Faz o download
+                              window.location.href = `${baseUrl}/flow/${encodeURIComponent(usinaAtual)}/export-pvsyst/download/${taskId}`;
+                              setIsExporting(false);
+                            } else if (statusData.status === 'error') {
+                              clearInterval(interval);
+                              setToast({ type: 'error', message: statusData.error || 'Erro na exportação.' });
+                              setIsExporting(false);
+                            }
+                          } catch (e) {
+                            console.error("Polling error:", e);
+                          }
+                        }, 1000);
+                        
+                      } catch (e) {
+                          setIsExporting(false);
+                          setToast({ type: 'error', message: 'Falha ao iniciar exportação.' });
+                      }
+                    }} 
+                    className="btn"
+                    style={{ background: isExporting ? 'var(--bg-secondary)' : '#233772', color: isExporting ? 'var(--text-muted)' : '#fff', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '16px', height: '100%', cursor: isExporting ? 'wait' : 'pointer' }}
+                  >
+                    <span style={{ fontSize: '24px' }}>⬇️</span>
+                    <span>{isExporting ? 'Gerando...' : 'Baixar Arquivo de\nImportação'}</span>
+                  </button>
+                  
+                  {isExporting && (
+                    <div style={{ width: '100%', height: '6px', background: 'var(--border)', borderRadius: '3px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', background: '#4ade80', width: `${exportProgress}%`, transition: 'width 0.3s' }}></div>
+                    </div>
+                  )}
+                </div>
 
-                <input 
-                  type="file" 
-                  ref={pvsystFileInputRef} 
-                  style={{ display: 'none' }} 
-                  accept=".csv" 
-                  onChange={handlePvsystUpload} 
-                />
-                <button 
-                  onClick={() => pvsystFileInputRef.current?.click()} 
-                  className="btn"
-                  style={{ flex: 1, background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '16px', height: 'auto' }}
-                >
-                  <span style={{ fontSize: '24px' }}>⬆️</span>
-                  <span>Fazer Upload<br/>do Resultado</span>
-                </button>
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <input 
+                    type="file" 
+                    ref={pvsystFileInputRef} 
+                    style={{ display: 'none' }} 
+                    accept=".csv" 
+                    onChange={handlePvsystUpload} 
+                  />
+                  <button 
+                    onClick={() => pvsystFileInputRef.current?.click()} 
+                    className="btn"
+                    style={{ width: '100%', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '16px', height: '100%' }}
+                  >
+                    <span style={{ fontSize: '24px' }}>⬆️</span>
+                    <span>Fazer Upload<br/>do Resultado</span>
+                  </button>
+                  {pvsystUploadProgress > 0 && (
+                    <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '6px', background: 'var(--border)', borderRadius: '0 0 8px 8px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', background: '#4ade80', width: `${pvsystUploadProgress}%`, transition: 'width 0.3s' }}></div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '16px', marginTop: '16px' }}>
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <input 
+                    type="file" 
+                    ref={tmyFileInputRef} 
+                    style={{ display: 'none' }} 
+                    accept=".csv" 
+                    onChange={handleTmyUpload} 
+                  />
+                  <button 
+                    onClick={() => tmyFileInputRef.current?.click()} 
+                    className="btn"
+                    style={{ width: '100%', background: '#f59e0b', color: '#fff', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '16px', height: 'auto' }}
+                  >
+                    <span style={{ fontSize: '24px' }}>☀️</span>
+                    <span>Fazer Upload da<br/>Simulação TMY</span>
+                  </button>
+                  {tmyUploadProgress > 0 && (
+                    <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '6px', background: 'rgba(0,0,0,0.1)', borderRadius: '0 0 8px 8px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', background: '#4ade80', width: `${tmyUploadProgress}%`, transition: 'width 0.3s' }}></div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -2731,7 +3918,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
           <div style={{
             position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
             background: 'var(--bg-card)', padding: '24px', borderRadius: '8px', zIndex: 1001,
-            width: '500px', maxWidth: '90vw', boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+            width: '700px', maxWidth: '90vw', boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
             display: 'flex', flexDirection: 'column'
           }}>
             <h3 style={{ marginTop: 0, color: '#233772', borderBottom: '1px solid var(--border)', paddingBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -2792,6 +3979,48 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                       {pvsystColumns.map(col => <option key={col} value={col}>{col}</option>)}
                     </select>
                   </div>
+                  <div style={{ display: 'flex', gap: '16px' }}>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Tolerância EPI (%):</label>
+                      <input 
+                        type="text"
+                        value={epiParams.tolerancia !== undefined ? epiParams.tolerancia : 3}
+                        onChange={(e) => setEpiParams({ ...epiParams, tolerancia: e.target.value })}
+                        style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }}
+                      />
+                    </div>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Tolerância PR Medida (%):</label>
+                      <input 
+                        type="text"
+                        value={epiParams.toleranciaPr !== undefined ? epiParams.toleranciaPr : 5}
+                        onChange={(e) => setEpiParams({ ...epiParams, toleranciaPr: e.target.value })}
+                        style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }}
+                      />
+                    </div>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Tolerância PR Corrigida (%):</label>
+                      <input 
+                        type="text"
+                        value={epiParams.toleranciaWcpr !== undefined ? epiParams.toleranciaWcpr : 5}
+                        onChange={(e) => setEpiParams({ ...epiParams, toleranciaWcpr: e.target.value })}
+                        style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }}
+                      />
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Fator de Conversão de Energia:</label>
+                    <input 
+                      type="text"
+                      placeholder="Ex: 0,005"
+                      value={epiParams.fator_conversao !== undefined ? epiParams.fator_conversao : "1"}
+                      onChange={(e) => {
+                        let val = e.target.value;
+                        setEpiParams({ ...epiParams, fator_conversao: val });
+                      }}
+                      style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }}
+                    />
+                  </div>
                 </>
               )}
             </div>
@@ -2809,6 +4038,15 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                     return n;
                   });
                   setNodes(newNodes);
+                  const parsedTol = parseFloat(String(epiParams.tolerancia).replace(',', '.'));
+                  if (!isNaN(parsedTol)) setEpiTol(parsedTol / 100);
+                  
+                  const parsedPr = parseFloat(String(epiParams.toleranciaPr).replace(',', '.'));
+                  if (!isNaN(parsedPr)) setPrTol(parsedPr / 100);
+                  
+                  const parsedWcpr = parseFloat(String(epiParams.toleranciaWcpr).replace(',', '.'));
+                  if (!isNaN(parsedWcpr)) setWcprTol(parsedWcpr / 100);
+                  
                   saveNodeConfig(newNodes);
                   setSelectedNodeId(null);
                   setToast({ message: 'Variáveis do EPI salvas!', type: 'success' });
@@ -3004,6 +4242,23 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
             }}>
               <input 
                 type="checkbox" 
+                checked={showPR} 
+                onChange={(e) => setShowPR(e.target.checked)} 
+                style={{ 
+                  width: '16px', height: '16px', 
+                  accentColor: 'var(--amber)', cursor: 'pointer'
+                }} 
+              />
+              PR
+            </label>
+
+            <label style={{ 
+              display: 'flex', alignItems: 'center', gap: '8px', 
+              fontSize: '13px', cursor: 'pointer', userSelect: 'none', 
+              color: 'var(--text-primary)', fontWeight: '600'
+            }}>
+              <input 
+                type="checkbox" 
                 checked={showValidation} 
                 onChange={(e) => setShowValidation(e.target.checked)} 
                 style={{ 
@@ -3013,6 +4268,62 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
               />
               Validação
             </label>
+
+            <div style={{ width: '1px', height: '16px', backgroundColor: 'var(--border)' }} />
+
+            {/* Toggle para Dias Válidos */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '12px', fontWeight: '600', color: showOnlyValidDays ? 'var(--text-secondary)' : 'var(--text-primary)' }}>Todos os Dias</span>
+              <div 
+                onClick={() => setShowOnlyValidDays(!showOnlyValidDays)}
+                style={{ 
+                  width: '36px', height: '20px', 
+                  background: showOnlyValidDays ? 'var(--amber)' : 'rgba(255,255,255,0.1)', 
+                  borderRadius: '10px', 
+                  position: 'relative', 
+                  cursor: 'pointer',
+                  transition: 'background 0.2s'
+                }}
+              >
+                <div style={{
+                  width: '16px', height: '16px',
+                  background: 'white', borderRadius: '50%',
+                  position: 'absolute', top: '2px',
+                  left: showOnlyValidDays ? '18px' : '2px',
+                  transition: 'left 0.2s cubic-bezier(0.4, 0.0, 0.2, 1)',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+                }} />
+              </div>
+              <span style={{ fontSize: '12px', fontWeight: '600', color: showOnlyValidDays ? 'var(--amber)' : 'var(--text-secondary)' }}>Dias Válidos</span>
+            </div>
+
+            <div style={{ width: '1px', height: '16px', backgroundColor: 'var(--border)' }} />
+
+            {/* Toggle para Agrupamento (Diário / Mensal) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '12px', fontWeight: '600', color: aggregationMode === 'monthly' ? 'var(--text-secondary)' : 'var(--text-primary)' }}>Diário</span>
+              <div 
+                onClick={() => setAggregationMode(aggregationMode === 'daily' ? 'monthly' : 'daily')}
+                style={{ 
+                  width: '36px', height: '20px', 
+                  background: aggregationMode === 'monthly' ? 'var(--blue)' : 'rgba(255,255,255,0.1)', 
+                  borderRadius: '10px', 
+                  position: 'relative', 
+                  cursor: 'pointer',
+                  transition: 'background 0.2s'
+                }}
+              >
+                <div style={{
+                  width: '16px', height: '16px',
+                  background: 'white', borderRadius: '50%',
+                  position: 'absolute', top: '2px',
+                  left: aggregationMode === 'monthly' ? '18px' : '2px',
+                  transition: 'left 0.2s cubic-bezier(0.4, 0.0, 0.2, 1)',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+                }} />
+              </div>
+              <span style={{ fontSize: '12px', fontWeight: '600', color: aggregationMode === 'monthly' ? 'var(--blue)' : 'var(--text-secondary)' }}>Mensal</span>
+            </div>
 
             <div style={{ width: '1px', height: '16px', backgroundColor: 'var(--border)' }} />
 
@@ -3070,6 +4381,14 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                   <input type="checkbox" checked={visibleVars.tracker} onChange={() => setVisibleVars(prev => ({ ...prev, tracker: !prev.tracker }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
                   <span>Tracker Piranômetro</span>
                 </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--text-primary)', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={visibleVars.wcpr} onChange={() => setVisibleVars(prev => ({ ...prev, wcpr: !prev.wcpr }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  WCPR
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--text-primary)', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={visibleVars.wcpr_bifacial} onChange={() => setVisibleVars(prev => ({ ...prev, wcpr_bifacial: !prev.wcpr_bifacial }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  WCPR Bifacial
+                </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
                   <input type="checkbox" checked={visibleVars.potencia_ppc} onChange={() => setVisibleVars(prev => ({ ...prev, potencia_ppc: !prev.potencia_ppc }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
                   <span>Potência PPC</span>
@@ -3087,12 +4406,48 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                   <span>Referência PPC</span>
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.pr_medida} onChange={() => setVisibleVars(prev => ({ ...prev, pr_medida: !prev.pr_medida }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#334155' }}>PR Medida</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={visibleVars.pr_medida_bifacial} onChange={() => setVisibleVars(prev => ({ ...prev, pr_medida_bifacial: !prev.pr_medida_bifacial }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#334155' }}>PR Medida (Bifacial)</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.pr_prevista} onChange={() => setVisibleVars(prev => ({ ...prev, pr_prevista: !prev.pr_prevista }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#334155' }}>PR Prevista</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={visibleVars.pr_prevista_bifacial} onChange={() => setVisibleVars(prev => ({ ...prev, pr_prevista_bifacial: !prev.pr_prevista_bifacial }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#334155' }}>PR Prevista (Bifacial)</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
                   <input type="checkbox" checked={visibleVars.curtailment} onChange={() => setVisibleVars(prev => ({ ...prev, curtailment: !prev.curtailment }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
                   <span>Curtailment</span>
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
                   <input type="checkbox" checked={visibleVars.epi} onChange={() => setVisibleVars(prev => ({ ...prev, epi: !prev.epi }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
                   <span>EPI</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.pr_medida} onChange={() => setVisibleVars(prev => ({ ...prev, pr_medida: !prev.pr_medida }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>PR Medida</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.pr_esperada} onChange={() => setVisibleVars(prev => ({ ...prev, pr_esperada: !prev.pr_esperada }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>PR Esperada</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.pr_esperada_bifacial} onChange={() => setVisibleVars(prev => ({ ...prev, pr_esperada_bifacial: !prev.pr_esperada_bifacial }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>PR Esperada (Bifacial)</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.pr_prevista} onChange={() => setVisibleVars(prev => ({ ...prev, pr_prevista: !prev.pr_prevista }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>PR Prevista</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.tarrwtd} onChange={() => setVisibleVars(prev => ({ ...prev, tarrwtd: !prev.tarrwtd }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>TArrWtd</span>
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
                   <input type="checkbox" checked={visibleVars.perdida_tracker} onChange={() => setVisibleVars(prev => ({ ...prev, perdida_tracker: !prev.perdida_tracker }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
@@ -3162,8 +4517,21 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
         </div>
 
         {isLoadingIntegrals ? (
-          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
-            🔄 Calculando integrais das séries... Por favor, aguarde.
+          <div style={{ padding: '60px 40px', textAlign: 'center', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+            <div style={{ marginBottom: '16px', color: 'var(--text-primary)', fontSize: '15px', fontWeight: 600 }}>
+              Calculando integrais das séries... {integralsProgress}%
+            </div>
+            <div style={{ width: '100%', maxWidth: '400px', margin: '0 auto', background: 'var(--border)', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
+              <div style={{ 
+                width: `${integralsProgress}%`, 
+                background: 'var(--primary)', 
+                height: '100%', 
+                transition: 'width 0.3s ease' 
+              }} />
+            </div>
+            <div style={{ marginTop: '12px', color: 'var(--text-muted)', fontSize: '12px' }}>
+              Processando arquivos diários, por favor aguarde.
+            </div>
           </div>
         ) : integralsError ? (
           <div style={{ padding: '24px', background: 'rgba(239, 68, 68, 0.1)', borderLeft: '4px solid var(--red)', borderRadius: '6px', color: 'var(--red)', fontSize: '13px' }}>
@@ -3174,11 +4542,11 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
             📭 Nenhuma integral calculada. Por favor, certifique-se de processar o fluxograma primeiro para gerar os dados consolidados.
           </div>
         ) : (
-          <div ref={tableRef} style={{ width: '100%', overflowX: 'auto', borderRadius: '8px', border: '1px solid var(--border)' }}>
+          <div ref={tableRef} style={{ width: '100%', maxHeight: '70vh', overflow: 'auto', borderRadius: '8px', border: '1px solid var(--border)' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-              <thead>
+              <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--bg-secondary)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                 {/* LINHA 1 (Nível Superior) */}
-                <tr style={{ background: 'var(--bg-secondary)' }}>
+                <tr>
                   <th 
                     rowSpan={2} 
                     style={{ 
@@ -3260,11 +4628,11 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                             padding: '8px 8px', 
                             fontWeight: '700', 
                             fontSize: '12px', 
-                            color: isStyled ? theme.color : 'var(--text-primary)', 
+                            color: firstCol.label.includes('Bifacial') ? '#8B4513' : (isStyled ? theme.color : 'var(--text-primary)'), 
                             borderBottom: '2px solid var(--border)', 
                             textAlign: 'center',
-                            whiteSpace: (firstCol.label.startsWith('Sujidade (') || firstCol.label.includes('PVSyst') || firstCol.label.includes('Tracker Piranômetro')) ? 'normal' : 'nowrap',
-                            minWidth: (firstCol.label.startsWith('Sujidade (') || firstCol.label.includes('PVSyst') || firstCol.label.includes('Tracker Piranômetro')) ? '60px' : 'auto',
+                            whiteSpace: (firstCol.label.startsWith('Sujidade (') || firstCol.label.includes('PVSyst') || firstCol.label.includes('Tracker Piranômetro') || firstCol.isCapacity || firstCol.label.includes('Bifacial')) ? 'pre-wrap' : 'nowrap',
+                            minWidth: (firstCol.label.startsWith('Sujidade (') || firstCol.label.includes('PVSyst') || firstCol.label.includes('Tracker Piranômetro') || firstCol.isCapacity || firstCol.label.includes('Bifacial')) ? '60px' : 'auto',
                             background: isStyled ? theme.bgHeader : 'var(--bg-secondary)',
                             verticalAlign: 'middle'
                           }}
@@ -3310,17 +4678,17 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                 )}
               </thead>
               <tbody>
-                {integralsData.rows
-                  .filter(row => selectedDates.includes(row.date))
-                  .map((row, idx) => (
+                {displayRows.map((row, idx) => (
                   <tr 
                     key={row.date} 
                     style={{ 
                       background: idx % 2 === 0 ? 'var(--bg-card)' : 'rgba(0,0,0,0.01)',
-                      transition: 'background 0.15s'
+                      transition: 'background 0.15s',
+                      cursor: 'pointer'
                     }}
                     onMouseEnter={e => e.currentTarget.style.background = 'rgba(245, 158, 11, 0.04)'}
                     onMouseLeave={e => e.currentTarget.style.background = idx % 2 === 0 ? 'var(--bg-card)' : 'rgba(0,0,0,0.01)'}
+                    onClick={() => openChartPopup(row.date)}
                   >
                     <td style={{ 
                       padding: '6px 10px', 
@@ -3341,14 +4709,17 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                     {visibleColumns.map(col => {
                       const theme = getColumnTheme(col);
                       const isOutput = !col.label.includes('Entrada');
-                      const val = row[col.key];
+                      let val = row[col.key];
                       let formattedVal = typeof val === 'number' 
                         ? val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
                         : val;
                       if (col.key.toLowerCase().includes('sujidade') && typeof val === 'number') {
                         formattedVal += '%';
                       }
-                      if ((col.key === 'epi' || col.key === 'epi_corrigido' || col.key === 'epi_pvlib') && typeof val === 'number') {
+                      if ((col.key === 'cap_ratio' || col.key === 'astm_ratio' || col.key === 'cap_ratio_adaptive' || col.key === 'astm_ratio_adaptive') && typeof val === 'number') {
+                        formattedVal = val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+                      }
+                      if ((col.key === 'epi' || col.key === 'epi_corrigido' || col.key === 'epi_pvlib' || col.key === 'pr_medida' || col.key === 'pr_medida_bifacial' || col.key === 'pr_esperada' || col.key === 'pr_esperada_bifacial' || col.key === 'pr_prevista' || col.key === 'pr_prevista_bifacial' || col.key === 'wcpr' || col.key === 'wcpr_bifacial') && typeof val === 'number') {
                         formattedVal = (val * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
                       }
                       if (col.key === 'fator_ajuste' && typeof val === 'number') {
@@ -3380,9 +4751,21 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                       }
                       
                       if ((col.key === 'epi' || col.key === 'epi_corrigido' || col.key === 'epi_pvlib') && typeof val === 'number') {
-                        const epiColor = getEpiColor(val);
+                        const epiColor = getEpiColor(val, epiTol);
                         cellBackground = epiColor.bg;
                         cellColor = epiColor.text;
+                      } else if ((col.key === 'cap_ratio' || col.key === 'astm_ratio' || col.key === 'cap_ratio_adaptive' || col.key === 'astm_ratio_adaptive') && typeof val === 'number') {
+                        const epiColor = getEpiColor(val / 100, epiTol);
+                        cellBackground = epiColor.bg;
+                        cellColor = epiColor.text;
+                      }
+
+                      const targetPrevista = (col.key === 'pr_medida_bifacial' || col.key === 'wcpr_bifacial') ? row.pr_prevista_bifacial : row.pr_prevista;
+                      if ((col.key === 'pr_medida' || col.key === 'pr_medida_bifacial' || col.key === 'wcpr' || col.key === 'wcpr_bifacial') && typeof val === 'number' && typeof targetPrevista === 'number') {
+                        const tol = (col.key === 'pr_medida' || col.key === 'pr_medida_bifacial') ? prTol : wcprTol;
+                        const colors = getPrWcprColor(val, targetPrevista, tol);
+                        cellBackground = colors.bg;
+                        cellColor = colors.text;
                       }
                       
                       let displayContent = formattedVal;
@@ -3425,7 +4808,9 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                     })}
                   </tr>
                 ))}
-                {totalsRow && (
+              </tbody>
+              {totalsRow && (
+                <tfoot style={{ position: 'sticky', bottom: 0, zIndex: 10, boxShadow: '0 -2px 4px rgba(0,0,0,0.05)' }}>
                   <tr style={{ background: 'var(--bg-secondary)', fontWeight: 'bold', borderTop: '2px double var(--border)' }}>
                     <td style={{ 
                       padding: '8px 10px', 
@@ -3451,7 +4836,10 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                       if (col.key.toLowerCase().includes('sujidade') && typeof val === 'number') {
                         formattedVal += '%';
                       }
-                      if ((col.key === 'epi' || col.key === 'epi_corrigido' || col.key === 'epi_pvlib') && typeof val === 'number') {
+                      if ((col.key === 'cap_ratio' || col.key === 'astm_ratio' || col.key === 'cap_ratio_adaptive' || col.key === 'astm_ratio_adaptive') && typeof val === 'number') {
+                        formattedVal = val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+                      }
+                      if ((col.key === 'epi' || col.key === 'epi_corrigido' || col.key === 'epi_pvlib' || col.key === 'pr_medida' || col.key === 'pr_medida_bifacial' || col.key === 'pr_esperada' || col.key === 'pr_esperada_bifacial' || col.key === 'pr_prevista' || col.key === 'pr_prevista_bifacial' || col.key === 'wcpr' || col.key === 'wcpr_bifacial') && typeof val === 'number') {
                         formattedVal = (val * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
                       }
                       if (col.key === 'fator_ajuste' && typeof val === 'number') {
@@ -3461,7 +4849,11 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                       let cellColor = isOutput ? theme.color : 'var(--text-primary)';
                       
                       if ((col.key === 'epi' || col.key === 'epi_corrigido' || col.key === 'epi_pvlib') && typeof val === 'number') {
-                        const epiColor = getEpiColor(val);
+                        const epiColor = getEpiColor(val, epiTol);
+                        cellBackground = epiColor.bg;
+                        cellColor = epiColor.text;
+                      } else if ((col.key === 'cap_ratio' || col.key === 'astm_ratio' || col.key === 'cap_ratio_adaptive' || col.key === 'astm_ratio_adaptive') && typeof val === 'number') {
+                        const epiColor = getEpiColor(val / 100, epiTol);
                         cellBackground = epiColor.bg;
                         cellColor = epiColor.text;
                       }
@@ -3484,12 +4876,591 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                       );
                     })}
                   </tr>
+                </tfoot>
                 )}
-              </tbody>
             </table>
           </div>
         )}
+        
+        {/* GRÁFICOS PRINCIPAIS FIXOS */}
+        {integralsData?.rows?.length > 0 && (
+          <div style={{ marginTop: '8px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
+            <div ref={graficosPrincipaisRef} style={{ background: 'var(--bg-primary)', padding: '10px 0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '0 10px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                📈 Gráficos Principais
+              </h3>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', width: '280px', marginLeft: 'auto', marginRight: '24px' }}>
+                <div style={{ display: 'flex', height: '10px', width: '100%', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                  <div style={{ flex: '1', background: '#fee2e2', borderRight: '1px solid rgba(0,0,0,0.1)' }}></div>
+                  <div style={{ flex: '2', background: 'linear-gradient(to right, #fef9c3, #bbf7d0)', borderRight: '1px solid rgba(0,0,0,0.1)' }}></div>
+                  <div style={{ flex: '2', background: 'linear-gradient(to right, #bbf7d0, #fef9c3)', borderRight: '1px solid rgba(0,0,0,0.1)' }}></div>
+                  <div style={{ flex: '1', background: '#dbeafe' }}></div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginTop: '4px', fontSize: '10px', color: 'var(--text-secondary)', position: 'relative', height: '12px' }}>
+                  <span style={{ position: 'absolute', left: '16.66%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' }}>Tol. Mín</span>
+                  <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', fontWeight: 'bold' }}>Meta</span>
+                  <span style={{ position: 'absolute', left: '83.33%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' }}>Tol. Máx</span>
+                </div>
+              </div>
+
+              <div data-html2canvas-ignore="true" style={{ display: 'flex', gap: '8px' }}>
+                <button 
+                  onClick={() => exportTableToPng(graficosPrincipaisRef.current, 'graficos_principais.png', { skipAncestorExpansion: true })}
+                  style={{ 
+                    background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border)', 
+                    borderRadius: '6px', padding: '6px 12px', fontSize: '12px', fontWeight: '600',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                  }}
+                  title="Exportar os 3 gráficos principais para Imagem (PNG)"
+                >
+                  🖼️ PNG
+                </button>
+                <button 
+                  onClick={() => exportTableToPdf(graficosPrincipaisRef.current, 'graficos_principais.pdf', { usinaName: usinaAtual || 'N/D', forceOrientation: 'p', skipAncestorExpansion: true })}
+                  style={{ 
+                    background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border)', 
+                    borderRadius: '6px', padding: '6px 12px', fontSize: '12px', fontWeight: '600',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                  }}
+                  title="Exportar os 3 gráficos principais para PDF"
+                >
+                  📄 PDF
+                </button>
+              </div>
+            </div>
+            
+            <div>
+              {renderFixedChartUI("EPI - Energy Performance Index - PVSyst", fixedEpiNormalChart, "#3b82f6")}
+              {renderFixedChartUI("EPI - Energy Performance Index - PVLib", fixedEpiChart, "#3b82f6")}
+              {renderFixedChartUI("Daily Capacity Ratio (%) — Fixed RC", fixedCapRatioChart, "#3b82f6")}
+              {renderFixedChartUI("Daily Capacity Ratio (%) — Adaptive RC", adaptiveCapRatioChart, "#1d4ed8")}
+              {renderFixedChartUI(`ASTM Capacity Ratio (%) — Fixed RC - ${capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5} dias`, fixedAstmRatioChart, "#3b82f6")}
+              {renderFixedChartUI(`ASTM Capacity Ratio (%) — Adaptive RC - ${capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5} dias`, adaptiveAstmRatioChart, "#1d4ed8")}
+              {renderFixedChartUI("WCPR - Weather Corrected Performance Ratio - PR Corrigida por Temperatura", fixedWcprChart, "#3b82f6")}
+              {renderFixedChartUI("WCPR Bifacial - Weather Corrected Performance Ratio - PR Corrigida por Temperatura Bifacial", fixedWcprBifacialChart, "#0ea5e9")}
+              {renderFixedChartUI("Standard Performance Ratio - PR Simples", fixedPrChart, "#3b82f6")}
+              {renderFixedChartUI("Standard Performance Ratio Bifacial - PR Simples Bifacial", fixedPrBifacialChart, "#0ea5e9")}
+            </div>
+          </div>
+          </div>
+        )}
+
+        {/* GRÁFICO COMBINADO DE SÉRIES */}
+        {integralsData?.rows?.length > 0 && (
+          <div style={{ marginTop: '32px', borderTop: '1px solid var(--border)', paddingTop: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                📊 Gráfico Customizável
+              </h3>
+              <button 
+                onClick={addChartSeries}
+                style={{ 
+                  background: 'var(--blue)', color: 'white', border: 'none', 
+                  borderRadius: '6px', padding: '6px 12px', fontSize: '12px', fontWeight: '600',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
+                  boxShadow: '0 2px 4px rgba(37,99,235,0.2)'
+                }}
+              >
+                <span>+</span> Adicionar Série
+              </button>
+            </div>
+            
+            {/* Lista de Séries Configuradas */}
+            {chartSeries.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
+                {chartSeries.map(series => (
+                  <div key={series.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--bg-secondary)', padding: '10px 16px', borderRadius: '8px', border: '1px solid var(--border)', flexWrap: 'wrap' }}>
+                    <input 
+                      type="color" 
+                      value={series.color} 
+                      onChange={(e) => updateChartSeries(series.id, 'color', e.target.value)}
+                      style={{ width: '28px', height: '28px', padding: 0, border: 'none', borderRadius: '4px', cursor: 'pointer', background: 'transparent' }}
+                      title="Alterar cor da série"
+                    />
+                    
+                    <select 
+                      value={series.columnKey} 
+                      onChange={(e) => updateChartSeries(series.id, 'columnKey', e.target.value)}
+                      style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-primary)', padding: '6px 10px', borderRadius: '6px', fontSize: '13px', outline: 'none', minWidth: '200px' }}
+                    >
+                      {integralsData.columns
+                        .filter(col => col.key !== 'date' && col.key !== 'val_validacao')
+                        .map(col => (
+                        <option key={col.key} value={col.key}>{col.label}</option>
+                      ))}
+                    </select>
+
+                    <select 
+                      value={series.type} 
+                      onChange={(e) => updateChartSeries(series.id, 'type', e.target.value)}
+                      style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-primary)', padding: '6px 10px', borderRadius: '6px', fontSize: '13px', outline: 'none' }}
+                    >
+                      <option value="bar">Barra</option>
+                      <option value="line">Linha</option>
+                    </select>
+
+                    <select 
+                      value={series.axis} 
+                      onChange={(e) => updateChartSeries(series.id, 'axis', e.target.value)}
+                      style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-primary)', padding: '6px 10px', borderRadius: '6px', fontSize: '13px', outline: 'none' }}
+                    >
+                      <option value="left">Eixo Esquerdo</option>
+                      <option value="right">Eixo Direito (Secundário)</option>
+                    </select>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={series.inheritColor || false} 
+                          onChange={(e) => updateChartSeries(series.id, 'inheritColor', e.target.checked)} 
+                          style={{ accentColor: 'var(--blue)' }}
+                        />
+                        Herdar Cores
+                      </label>
+
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={series.showTolerance || false} 
+                          onChange={(e) => updateChartSeries(series.id, 'showTolerance', e.target.checked)} 
+                          style={{ accentColor: 'var(--amber)' }}
+                        />
+                        Limites de Tolerância
+                      </label>
+                    </div>
+
+                    <button 
+                      onClick={() => removeChartSeries(series.id)}
+                      style={{ background: 'transparent', border: 'none', color: 'var(--red)', cursor: 'pointer', padding: '6px', borderRadius: '6px', marginLeft: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      title="Remover série"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* Plotly Chart Area */}
+            {chartSeries.length > 0 ? (
+              <div style={{ width: '100%', height: '500px', background: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border)', overflow: 'hidden', padding: '10px' }}>
+                <Plot
+                  data={chartData}
+                  layout={{
+                    autosize: true,
+                    margin: { l: 60, r: 60, t: 30, b: 60 },
+                    paper_bgcolor: 'transparent',
+                    plot_bgcolor: 'transparent',
+                    font: { color: 'var(--text-secondary)', size: 11 },
+                    xaxis: { 
+                      type: 'category', // Ensures correct chronological ordering based on the array
+                      gridcolor: 'rgba(128,128,128,0.1)',
+                      zerolinecolor: 'rgba(128,128,128,0.2)',
+                      range: chartData && chartData[0] ? [-0.5, chartData[0].x.length - 0.5] : undefined
+                    },
+                    yaxis: { 
+                      title: 'Eixo Esquerdo',
+                      gridcolor: 'rgba(128,128,128,0.1)',
+                      zerolinecolor: 'rgba(128,128,128,0.2)'
+                    },
+                    yaxis2: {
+                      title: 'Eixo Direito',
+                      overlaying: 'y',
+                      side: 'right',
+                      gridcolor: 'rgba(128,128,128,0.05)',
+                      zerolinecolor: 'rgba(128,128,128,0.2)'
+                    },
+                    shapes: chartShapes,
+                    barmode: 'group',
+                    legend: { orientation: 'h', y: -0.2 }
+                  }}
+                  useResizeHandler={true}
+                  style={{ width: '100%', height: '100%' }}
+                  config={{ responsive: true, displayModeBar: true, displaylogo: false, modeBarButtonsToRemove: ['select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d'] }}
+                />
+              </div>
+            ) : (
+              <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px dashed var(--border)' }}>
+                Nenhuma série adicionada. Clique em "Adicionar Série" para gerar o gráfico combinado.
+              </div>
+            )}
+          </div>
+        )}
       </div>
+      )}
+
+      {/* Chart Popup Modal */}
+      {chartModalDate && (
+        <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+            background: 'rgba(0,0,0,0.5)', zIndex: 9999, 
+            display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+            <div style={{
+                background: '#fff', borderRadius: 8, padding: '12px 16px', width: '95%', maxWidth: 1640,
+                maxHeight: '90vh', overflowY: 'auto',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+            }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <h3 style={{ margin: 0, fontSize: '18px', color: 'var(--text-primary)' }}>
+                        Análise Diária
+                    </h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#64748b' }}>
+                            <span style={{ fontWeight: 600 }}>Eixo X:</span>
+                            <input
+                                type="time"
+                                value={chartXRange[0]}
+                                onChange={e => updateChartXRange([e.target.value, chartXRange[1]])}
+                                style={{ padding: '3px 6px', borderRadius: 4, border: '1px solid #cbd5e1', fontSize: 12, width: 90, background: '#f8fafc', color: '#334155' }}
+                            />
+                            <span>—</span>
+                            <input
+                                type="time"
+                                value={chartXRange[1]}
+                                onChange={e => updateChartXRange([chartXRange[0], e.target.value])}
+                                style={{ padding: '3px 6px', borderRadius: 4, border: '1px solid #cbd5e1', fontSize: 12, width: 90, background: '#f8fafc', color: '#334155' }}
+                            />
+                            <button
+                                onClick={() => updateChartXRange(['00:00', '23:59'])}
+                                title="Resetar para dia inteiro"
+                                style={{ padding: '3px 8px', borderRadius: 4, border: '1px solid #cbd5e1', background: '#f1f5f9', cursor: 'pointer', fontSize: 12, color: '#475569', lineHeight: 1 }}
+                            >↺</button>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <div style={{ position: 'relative' }} data-html2canvas-ignore="true">
+                                <button
+                                    className="btn btn-secondary"
+                                    onClick={() => setShowChartExportMenu(!showChartExportMenu)}
+                                    title="Exportar gráfico"
+                                    style={{ padding: '6px 12px', fontSize: 13, flexShrink: 0, fontWeight: 600, background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '6px' }}
+                                >
+                                    📥 Exportar
+                                </button>
+                                {showChartExportMenu && (
+                                    <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, padding: 8, zIndex: 50, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', display: 'flex', flexDirection: 'column', gap: 4, minWidth: 160 }}>
+                                        <button 
+                                            onClick={() => { setShowChartExportMenu(false); exportTableToPng(popupChartRef.current, `graficos_diarios_${chartModalDate}.png`, { skipAncestorExpansion: true }) }} 
+                                            style={{ padding: '6px 12px', fontSize: 13, cursor: 'pointer', border: '1px solid var(--border)', background: '#f8fafc', borderRadius: 4, textAlign: 'left', color: '#334155', fontWeight: 500 }}
+                                            onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
+                                            onMouseLeave={e => e.currentTarget.style.background = '#f8fafc'}
+                                        >
+                                            🖼️ Imagem (PNG)
+                                        </button>
+                                        <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', marginTop: 4, marginBottom: 2, textTransform: 'uppercase' }}>PDF</div>
+                                        <button 
+                                            onClick={() => { setShowChartExportMenu(false); exportTableToPdf(popupChartRef.current, `graficos_diarios_${chartModalDate}.pdf`, { usinaName: usinaAtual || 'N/D', forceOrientation: 'p', skipAncestorExpansion: true }) }} 
+                                            style={{ padding: '6px 12px', fontSize: 13, cursor: 'pointer', border: '1px solid var(--border)', background: '#f8fafc', borderRadius: 4, textAlign: 'left', color: '#334155', fontWeight: 500 }}
+                                            onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
+                                            onMouseLeave={e => e.currentTarget.style.background = '#f8fafc'}
+                                        >
+                                            📄 Retrato (Vertical)
+                                        </button>
+                                        <button 
+                                            onClick={() => { setShowChartExportMenu(false); exportTableToPdf(popupChartRef.current, `graficos_diarios_${chartModalDate}.pdf`, { usinaName: usinaAtual || 'N/D', forceOrientation: 'l', skipAncestorExpansion: true }) }} 
+                                            style={{ padding: '6px 12px', fontSize: 13, cursor: 'pointer', border: '1px solid var(--border)', background: '#f8fafc', borderRadius: 4, textAlign: 'left', color: '#334155', fontWeight: 500 }}
+                                            onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
+                                            onMouseLeave={e => e.currentTarget.style.background = '#f8fafc'}
+                                        >
+                                            🗎 Paisagem (Horizontal)
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                            {chartModalDate && (() => {
+                                const currentIndex = displayRows?.findIndex(r => r.date === chartModalDate) ?? -1;
+                                const prevDate = currentIndex > 0 ? displayRows[currentIndex - 1].date : null;
+                                const nextDate = currentIndex !== -1 && currentIndex < displayRows.length - 1 ? displayRows[currentIndex + 1].date : null;
+                                
+                                const rowData = displayRows?.find(r => r.date === chartModalDate);
+                                const validationCol = integralsData?.columns?.find(c => c.type === 'validation');
+                                let validationStatus = 'N/D';
+                                let badgeBg = '#94a3b8';
+                                let badgeColor = '#ffffff';
+                                if (validationCol && rowData) {
+                                    let status = rowData[validationCol.key];
+                                    if (typeof status === 'string' && status.includes('|')) {
+                                        status = status.substring(0, status.indexOf('|'));
+                                    }
+                                    if (status === 'OK' || status === 'Dia Válido') {
+                                        validationStatus = 'Válido';
+                                        badgeBg = '#84cc16';
+                                    } else if (status === 'OK_RESSALVA') {
+                                        validationStatus = 'Válido (Ressalva)';
+                                        badgeBg = '#bbf7d0';
+                                        badgeColor = '#166534';
+                                    } else if (status === 'NÃO_OK' || status === 'Dia Inválido') {
+                                        validationStatus = 'Inválido';
+                                        badgeBg = '#ef4444';
+                                    }
+                                }
+                                return (
+                                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }} data-html2canvas-ignore="true">
+                                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                                            <button 
+                                                disabled={!prevDate}
+                                                onClick={() => openChartPopup(prevDate)}
+                                                style={{ border: 'none', background: 'transparent', cursor: prevDate ? 'pointer' : 'not-allowed', opacity: prevDate ? 1 : 0.3, padding: '4px', display: 'flex', alignItems: 'center' }}
+                                                title="Dia Anterior"
+                                            >
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                                            </button>
+                                            
+                                            <div style={{ padding: '4px 12px', borderRadius: 16, background: '#e2e8f0', color: '#334155', fontWeight: 'bold', fontSize: 14 }}>
+                                                {chartModalDate.split('-').reverse().join('/')}
+                                            </div>
+
+                                            <button 
+                                                disabled={!nextDate}
+                                                onClick={() => openChartPopup(nextDate)}
+                                                style={{ border: 'none', background: 'transparent', cursor: nextDate ? 'pointer' : 'not-allowed', opacity: nextDate ? 1 : 0.3, padding: '4px', display: 'flex', alignItems: 'center' }}
+                                                title="Próximo Dia"
+                                            >
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                                            </button>
+                                        </div>
+                                        {validationStatus !== 'N/D' && (
+                                            <div style={{ padding: '4px 12px', borderRadius: 16, background: badgeBg, color: badgeColor, fontWeight: 'bold', fontSize: 14, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                                {validationStatus}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })()}
+                            <button data-html2canvas-ignore="true" onClick={() => setChartModalDate(null)} style={{ border: 'none', background: 'transparent', fontSize: 24, cursor: 'pointer', lineHeight: 1, padding: 0, marginTop: '-4px' }}>×</button>
+                        </div>
+                    </div>
+                </div>
+                <div ref={popupChartRef} style={{ background: '#fff', padding: '10px 0', position: 'relative' }}>
+                    {chartLoading && !popupChartData && <div style={{ padding: '60px', textAlign: 'center', color: '#64748b', fontSize: '16px' }}>Carregando dados do dia...</div>}
+                    {chartError && <div style={{ color: 'red', margin: '20px 0' }}>Erro: {chartError}</div>}
+                    {popupChartData && (() => {
+                        const rowData = displayRows.find(r => r.date === chartModalDate) || {};
+                        return (
+                            <div style={{ display: 'flex', gap: '20px', opacity: chartLoading ? 0.4 : 1, pointerEvents: chartLoading ? 'none' : 'auto', transition: 'opacity 0.2s ease-in-out' }}>
+                                <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px 16px' }}>
+                            {/* Gráfico 1: Ambientais (linha 1, col 1) */}
+                            <div style={{ width: '100%', height: 340, display: 'flex', flexDirection: 'column' }}>
+                                <h4 style={{ margin: '0 0 8px 0', fontSize: '15px', color: '#334155', flexShrink: 0 }}>Variáveis Ambientais</h4>
+                                <Plot
+                                    data={[
+                                        { ...getFillData(popupChartData.timestamps, popupChartData.gpoa), type: 'scatter', mode: 'lines', line: { width: 0 }, fill: 'tozeroy', fillcolor: 'rgba(250, 204, 21, 0.15)', showlegend: false, hoverinfo: 'skip' },
+                                        { x: popupChartData.timestamps, y: popupChartData.gpoa, type: 'scatter', mode: 'lines', name: 'GPOA (W/m²)', line: { color: '#facc15', width: 1 } },
+                                        { ...getFillData(popupChartData.timestamps, popupChartData.grear), type: 'scatter', mode: 'lines', line: { width: 0 }, fill: 'tozeroy', fillcolor: 'rgba(254, 215, 170, 0.3)', showlegend: false, hoverinfo: 'skip' },
+                                        { x: popupChartData.timestamps, y: popupChartData.grear, type: 'scatter', mode: 'lines', name: 'Grear (W/m²)', line: { color: '#fed7aa', width: 1 } },
+                                        { x: popupChartData.timestamps, y: popupChartData.geff, type: 'scatter', mode: 'lines', name: 'Geff (W/m²)', line: { color: '#f97316', width: 1 } },
+                                        { x: popupChartData.timestamps, y: popupChartData.tamb, type: 'scatter', mode: 'lines', name: 'Tamb (°C)', yaxis: 'y2', line: { color: '#cbd5e1', width: 1 } },
+                                        { x: popupChartData.timestamps, y: popupChartData.tmod, type: 'scatter', mode: 'lines', name: 'Tmod (°C)', yaxis: 'y2', line: { color: '#818cf8', width: 1 } },
+                                        { x: popupChartData.timestamps, y: popupChartData.tcel, type: 'scatter', mode: 'lines', name: 'Tcel (°C)', yaxis: 'y2', line: { color: '#312e81', width: 1 } },
+                                        {
+                                            ...getFillData(popupChartData.timestamps, popupChartData.dados_validos),
+                                            type: 'scatter', mode: 'lines', line: { color: 'transparent', width: 0, shape: 'hvh' },
+                                            fill: 'tozeroy', fillcolor: 'rgba(100, 116, 139, 0.3)',
+                                            name: 'Dados Válidos', xaxis: 'x2', yaxis: 'y3'
+                                        }
+                                    ]}
+                                    layout={{
+                                        font: { size: 10 },
+                                        legend: { orientation: 'h', y: 1.15, x: 0.5, xanchor: 'center', font: { size: 10 } },
+                                        margin: { t: 40, r: 50, b: 45, l: 50 },
+                                        xaxis: { 
+                                            type: 'date',
+                                            range: [`${chartModalDate} ${chartXRange[0]}:00`, `${chartModalDate} ${chartXRange[1]}:59`],
+                                            tickformat: '%H:%M',
+                                            dtick: 3600000
+                                        },
+                                        xaxis2: { anchor: 'y3', matches: 'x', showgrid: false, showticklabels: false, zeroline: false },
+                                        yaxis: { domain: [0, 0.90], title: 'W/m²' },
+                                        yaxis2: { domain: [0, 0.90], title: '°C', overlaying: 'y', side: 'right' },
+                                        yaxis3: { domain: [0.90, 0.95], showticklabels: false, range: [0, 1.2], fixedrange: true, zeroline: false, showgrid: false, showline: false },
+                                        hovermode: 'x unified'
+                                    }}
+                                    style={{ width: '100%', height: '100%' }}
+                                    useResizeHandler
+                                    config={{ displaylogo: false, modeBarButtonsToRemove: ['zoomIn2d', 'zoomOut2d', 'autoScale2d'] }}
+                                    onRelayout={handleChartRelayout}
+                                    revision={chartRevision}
+                                />
+                            </div>
+                            
+                            {/* Gráfico 2: Curtailment (linha 1, col 2) */}
+                            <div style={{ width: '100%', height: 340, display: 'flex', flexDirection: 'column' }}>
+                                <h4 style={{ margin: '0 0 8px 0', fontSize: '15px', color: '#334155', flexShrink: 0 }}>Curtailment</h4>
+                                <Plot
+                                    data={[
+                                        {
+                                            ...getFillData(popupChartData.timestamps, popupChartData.referencia_ppc_15min),
+                                            type: 'scatter', mode: 'lines', line: { color: 'transparent', width: 0, shape: 'hv' }, fill: 'tozeroy', fillcolor: 'rgba(106, 27, 154, 0.1)',
+                                            name: 'Referência PPC_15min'
+                                        },
+                                        {
+                                            ...getFillData(popupChartData.timestamps, popupChartData.potencia_ppc_15min),
+                                            type: 'scatter', mode: 'lines', line: { color: 'transparent', width: 0, shape: 'hv' }, fill: 'tozeroy', fillcolor: 'rgba(124, 179, 66, 0.2)',
+                                            name: 'Potência PPC_15min'
+                                        },
+                                        { x: popupChartData.timestamps, y: popupChartData.potencia_ppc, type: 'scatter', mode: 'lines', name: 'Potência PPC', line: { color: '#00838F', width: 1.5 } },
+                                        { x: popupChartData.timestamps, y: popupChartData.referencia_ppc, type: 'scatter', mode: 'lines', name: 'Referência PPC', line: { color: '#E53935', width: 1.5 } },
+                                        {
+                                            ...getFillData(popupChartData.timestamps, popupChartData.flag_curtailment),
+                                            type: 'scatter', mode: 'lines', line: { color: 'transparent', width: 0, shape: 'hvh' },
+                                            fill: 'tozeroy', fillcolor: 'rgba(5, 150, 105, 0.3)',
+                                            name: 'curtailment', xaxis: 'x2', yaxis: 'y2'
+                                        }
+                                    ]}
+                                    layout={{
+                                        font: { size: 10 },
+                                        legend: { orientation: 'h', y: 1.15, x: 0.5, xanchor: 'center', font: { size: 10 } },
+                                        margin: { t: 40, r: 50, b: 45, l: 50 },
+                                        xaxis: { 
+                                            type: 'date',
+                                            range: [`${chartModalDate} ${chartXRange[0]}:00`, `${chartModalDate} ${chartXRange[1]}:59`],
+                                            tickformat: '%H:%M',
+                                            dtick: 3600000
+                                        },
+                                        xaxis2: { anchor: 'y2', matches: 'x', showgrid: false, showticklabels: false, zeroline: false },
+                                        yaxis: { domain: [0, 0.90], title: 'kW' },
+                                        yaxis2: { domain: [0.90, 0.95], showticklabels: false, range: [0, 1.2], fixedrange: true, zeroline: false, showgrid: false, showline: false },
+                                        hovermode: 'x unified'
+                                    }}
+                                    style={{ width: '100%', height: '100%' }}
+                                    useResizeHandler
+                                    config={{ displaylogo: false, modeBarButtonsToRemove: ['zoomIn2d', 'zoomOut2d', 'autoScale2d'] }}
+                                    onRelayout={handleChartRelayout}
+                                    revision={chartRevision}
+                                />
+                            </div>
+
+                            {/* Gráfico 3: Energia (linha 2, col 1) */}
+                            <div style={{ width: '100%', height: 340, display: 'flex', flexDirection: 'column' }}>
+                                <h4 style={{ margin: '0 0 8px 0', fontSize: '15px', color: '#334155', flexShrink: 0 }}>PVSyst e Energia Gerada</h4>
+                                <Plot
+                                    data={[
+                                        {
+                                            ...getFillData(popupChartData.timestamps, popupChartData.energia_pmi_valida),
+                                            type: 'scatter', mode: 'lines', line: { color: 'transparent', width: 0 }, fill: 'tozeroy', fillcolor: 'rgba(2, 119, 189, 0.09)',
+                                            name: 'Energia PMI_válida'
+                                        },
+                                        { x: popupChartData.timestamps, y: popupChartData.energia_pmi, type: 'scatter', mode: 'lines', name: 'Energia PMI', line: { color: '#0277BD', width: 1 } },
+                                        { x: popupChartData.timestamps, y: popupChartData.e_grid_ajustada_corr, type: 'scatter', mode: 'lines', name: 'E_Grid_Ajustada_Corr_Unidade_válida', line: { color: '#D81B60', width: 1.5 } },
+                                        {
+                                            ...getFillData(popupChartData.timestamps, popupChartData.dados_validos),
+                                            type: 'scatter', mode: 'lines', line: { color: 'transparent', width: 0, shape: 'hvh' },
+                                            fill: 'tozeroy', fillcolor: 'rgba(100, 116, 139, 0.3)',
+                                            name: 'Dados Válidos', xaxis: 'x2', yaxis: 'y2'
+                                        }
+                                    ]}
+                                    layout={{
+                                        font: { size: 10 },
+                                        legend: { orientation: 'h', y: 1.15, x: 0.5, xanchor: 'center', font: { size: 10 } },
+                                        margin: { t: 40, r: 50, b: 45, l: 50 },
+                                        xaxis: { 
+                                            type: 'date',
+                                            range: [`${chartModalDate} ${chartXRange[0]}:00`, `${chartModalDate} ${chartXRange[1]}:59`],
+                                            tickformat: '%H:%M',
+                                            dtick: 3600000
+                                        },
+                                        xaxis2: { anchor: 'y2', matches: 'x', showgrid: false, showticklabels: false, zeroline: false },
+                                        yaxis: { domain: [0, 0.90], title: 'kW' },
+                                        yaxis2: { domain: [0.90, 0.95], showticklabels: false, range: [0, 1.2], fixedrange: true, zeroline: false, showgrid: false, showline: false },
+                                        hovermode: 'x unified'
+                                    }}
+                                    style={{ width: '100%', height: '100%' }}
+                                    useResizeHandler
+                                    config={{ displaylogo: false, modeBarButtonsToRemove: ['zoomIn2d', 'zoomOut2d', 'autoScale2d'] }}
+                                    onRelayout={handleChartRelayout}
+                                    revision={chartRevision}
+                                />
+                            </div>
+
+                            {/* Gráfico 4: Potência CC Strings Perdida (linha 2, col 2) */}
+                            <div style={{ width: '100%', height: 340, display: 'flex', flexDirection: 'column' }}>
+                                <h4 style={{ margin: '0 0 8px 0', fontSize: '15px', color: '#334155', flexShrink: 0 }}>Potência CC Strings Perdida</h4>
+                                <Plot
+                                    data={[
+                                        { ...getFillData(popupChartData.timestamps, popupChartData.potencia_ca_recuperavel), type: 'scatter', mode: 'lines', line: { width: 0 }, fill: 'tozeroy', fillcolor: 'rgba(123, 255, 25, 0.20)', showlegend: false, hoverinfo: 'skip' },
+                                        { x: popupChartData.timestamps, y: popupChartData.potencia_ca_recuperavel, type: 'scatter', mode: 'lines', name: 'Potência CA Recuperável', line: { color: '#7BFF19', width: 1 } },
+                                        { ...getFillData(popupChartData.timestamps, popupChartData.energia_pmi), type: 'scatter', mode: 'lines', line: { width: 0 }, fill: 'tozeroy', fillcolor: 'rgba(2, 119, 189, 0.09)', showlegend: false, hoverinfo: 'skip' },
+                                        { x: popupChartData.timestamps, y: popupChartData.energia_pmi, type: 'scatter', mode: 'lines', name: 'Energia PMI', line: { color: '#0277BD', width: 1 } },
+                                        { x: popupChartData.timestamps, y: popupChartData.potencia_ca_vaga, type: 'scatter', mode: 'lines', name: 'Potência CA Vaga', line: { color: '#8748AE', width: 1 } },
+                                        { x: popupChartData.timestamps, y: popupChartData.e_grid_ajustada_mw, type: 'scatter', mode: 'lines', name: 'E_Grid_Ajustada_MW', line: { color: '#1565C0', width: 2.5 } },
+                                        {
+                                            ...getFillData(popupChartData.timestamps, popupChartData.dados_validos),
+                                            type: 'scatter', mode: 'lines', line: { color: 'transparent', width: 0, shape: 'hvh' },
+                                            fill: 'tozeroy', fillcolor: 'rgba(100, 116, 139, 0.3)',
+                                            name: 'Dados Válidos', xaxis: 'x2', yaxis: 'y2'
+                                        }
+                                    ]}
+                                    layout={{
+                                        font: { size: 10 },
+                                        legend: { orientation: 'h', y: 1.15, x: 0.5, xanchor: 'center', font: { size: 10 }, itemwidth: 30 },
+                                        margin: { t: 40, r: 50, b: 45, l: 50 },
+                                        xaxis: { 
+                                            type: 'date',
+                                            range: [`${chartModalDate} ${chartXRange[0]}:00`, `${chartModalDate} ${chartXRange[1]}:59`],
+                                            tickformat: '%H:%M',
+                                            dtick: 3600000
+                                        },
+                                        xaxis2: { anchor: 'y2', matches: 'x', showgrid: false, showticklabels: false, zeroline: false },
+                                        yaxis: { domain: [0, 0.90], title: 'kW' },
+                                        yaxis2: { domain: [0.90, 0.95], showticklabels: false, range: [0, 1.2], fixedrange: true, zeroline: false, showgrid: false, showline: false },
+                                        hovermode: 'x unified'
+                                    }}
+                                    style={{ width: '100%', height: '100%' }}
+                                    useResizeHandler
+                                    config={{ displaylogo: false, modeBarButtonsToRemove: ['zoomIn2d', 'zoomOut2d', 'autoScale2d'] }}
+                                    onRelayout={handleChartRelayout}
+                                    revision={chartRevision}
+                                />
+                            </div>
+                        </div>
+                        {rowData && (
+                            <div style={{ width: '220px', display: 'flex', flexDirection: 'column', gap: '16px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0', flexShrink: 0 }}>
+                                <h4 style={{ margin: 0, fontSize: '15px', color: '#334155', borderBottom: '1px solid #cbd5e1', paddingBottom: '8px' }}>Métricas do Dia</h4>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Convencional</div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}><span>PR Esperada</span> <span style={{ fontWeight: 600 }}>{rowData.pr_esperada != null ? (rowData.pr_esperada * 100).toFixed(2) + '%' : '-'}</span></div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}><span>PR Medida</span> <span style={{ fontWeight: 600 }}>{rowData.pr_medida != null ? (rowData.pr_medida * 100).toFixed(2) + '%' : '-'}</span></div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}><span>WCPR</span> <span style={{ fontWeight: 600 }}>{rowData.wcpr != null ? (rowData.wcpr * 100).toFixed(2) + '%' : '-'}</span></div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}><span>PR Prevista</span> <span style={{ fontWeight: 600 }}>{rowData.pr_prevista != null ? (rowData.pr_prevista * 100).toFixed(2) + '%' : '-'}</span></div>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#8B4513', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bifacial</div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}><span>PR Esperada</span> <span style={{ fontWeight: 600, color: '#8B4513' }}>{rowData.pr_esperada_bifacial != null ? (rowData.pr_esperada_bifacial * 100).toFixed(2) + '%' : '-'}</span></div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}><span>PR Medida</span> <span style={{ fontWeight: 600, color: '#8B4513' }}>{rowData.pr_medida_bifacial != null ? (rowData.pr_medida_bifacial * 100).toFixed(2) + '%' : '-'}</span></div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}><span>WCPR</span> <span style={{ fontWeight: 600, color: '#8B4513' }}>{rowData.wcpr_bifacial != null ? (rowData.wcpr_bifacial * 100).toFixed(2) + '%' : '-'}</span></div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}><span>PR Prevista</span> <span style={{ fontWeight: 600, color: '#8B4513' }}>{rowData.pr_prevista_bifacial != null ? (rowData.pr_prevista_bifacial * 100).toFixed(2) + '%' : '-'}</span></div>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#0284c7', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Capacity Test</div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}><span>Cap. Ratio</span> <span style={{ fontWeight: 600 }}>{rowData.cap_ratio != null ? rowData.cap_ratio.toFixed(2) + '%' : '-'}</span></div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}><span>ASTM Ratio</span> <span style={{ fontWeight: 600 }}>{rowData.astm_ratio != null ? rowData.astm_ratio.toFixed(2) + '%' : '-'}</span></div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}><span>Cap. Adapt.</span> <span style={{ fontWeight: 600 }}>{rowData.cap_ratio_adaptive != null ? rowData.cap_ratio_adaptive.toFixed(2) + '%' : '-'}</span></div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}><span>ASTM Adapt.</span> <span style={{ fontWeight: 600 }}>{rowData.astm_ratio_adaptive != null ? rowData.astm_ratio_adaptive.toFixed(2) + '%' : '-'}</span></div>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#4338ca', textTransform: 'uppercase', letterSpacing: '0.5px' }}>EPI</div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}><span>EPI</span> <span style={{ fontWeight: 600 }}>{rowData.epi != null ? (rowData.epi * 100).toFixed(2) + '%' : '-'}</span></div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}><span>EPI Corrigido</span> <span style={{ fontWeight: 600 }}>{rowData.epi_corrigido != null ? (rowData.epi_corrigido * 100).toFixed(2) + '%' : '-'}</span></div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}><span>EPI PVLib</span> <span style={{ fontWeight: 600 }}>{rowData.epi_pvlib != null ? (rowData.epi_pvlib * 100).toFixed(2) + '%' : '-'}</span></div>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#ea580c', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Temperatura</div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}><span>Tcel Válida</span> <span style={{ fontWeight: 600 }}>{rowData.tcel_válida != null ? rowData.tcel_válida.toFixed(2) + ' °C' : '-'}</span></div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}><span>TArrWtd</span> <span style={{ fontWeight: 600 }}>{rowData.tarrwtd != null ? rowData.tarrwtd.toFixed(2) + ' °C' : '-'}</span></div>
+                                </div>
+                            </div>
+                        )}
+                        </div>
+                        );
+                    })()}
+                </div>
+            </div>
+        </div>
       )}
 
       {/* Toast Notification */}

@@ -10,6 +10,7 @@ import {
 import { ErrorState } from '../StateComponents'
 import SeriesMapImport from '../SeriesMapImport'
 import DriveImportModal from './DriveImportModal'
+import DatabaseImportModal from './DatabaseImportModal'
 import DeleteSeriesModal from './DeleteSeriesModal'
 import Toast from '../Toast'
 import DiagramTab from '../../pages/DiagramPage'
@@ -33,6 +34,7 @@ export default function UsinaDetail({ usina, usinaObj }) {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('dados')
   const [driveModalOpen, setDriveModalOpen] = useState(false)
+  const [databaseModalOpen, setDatabaseModalOpen] = useState(false)
   const [toast, setToast] = useState(null)
   
   // Reset states when the selected usina switches
@@ -331,6 +333,23 @@ export default function UsinaDetail({ usina, usinaObj }) {
                 <div style={{ fontSize: 48, opacity: 0.5, marginBottom: 12 }}>☁️</div>
                 <div style={{ fontWeight: 600, marginBottom: 6, color: 'var(--blue)' }}>Importar do Google Drive</div>
                 <span className="badge badge-gray">Arquivos .csv</span>
+              </div>
+
+              {/* Box Importar do Banco de Dados */}
+              <div
+                onClick={() => setDatabaseModalOpen(true)}
+                style={{
+                  flex: 1,
+                  border: `2px dashed var(--orange)`,
+                  background: 'rgba(249, 115, 22, 0.05)',
+                  cursor: 'pointer',
+                  textAlign: 'center', padding: '36px 24px', borderRadius: 8, transition: 'all 0.3s',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
+                }}
+              >
+                <div style={{ fontSize: 48, opacity: 0.5, marginBottom: 12 }}>🗄️</div>
+                <div style={{ fontWeight: 600, marginBottom: 6, color: 'var(--orange)' }}>Importar do PostgreSQL</div>
+                <span className="badge badge-gray">Conexão Direta</span>
               </div>
             </div>
 
@@ -940,6 +959,28 @@ export default function UsinaDetail({ usina, usinaObj }) {
           </div>
         )}
       </div>
+
+      {databaseModalOpen && (
+        <DatabaseImportModal
+          usina={usina}
+          onClose={() => setDatabaseModalOpen(false)}
+          onSuccess={(resultData) => {
+            setDatabaseModalOpen(false)
+            if (resultData.total_series > 0) {
+              setResult({ 
+                filename: 'Banco de Dados', 
+                date: resultData.start_date === resultData.end_date ? resultData.start_date : `${resultData.start_date} a ${resultData.end_date}`, 
+                series_count: resultData.total_series 
+              })
+            } else {
+              setResult(null)
+            }
+            fetchCacheStatus()
+            fetchDatesSummary()
+            if (resultData.msg) alert(resultData.msg)
+          }}
+        />
+      )}
       {dayToDelete && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,

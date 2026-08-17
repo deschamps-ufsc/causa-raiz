@@ -144,6 +144,9 @@ export const fetchMapaInstant = (usina, date, time, filters = [], variavel = 'po
 export const fetchTrackersInstant = (usina, date, time, filters = []) =>
   api.get('/heatmap/trackers/instant', { params: { usina, date, time, filters: filters?.join(',') || undefined } }).then((r) => r.data)
 
+export const fetchFluxogramaChart = (usina, date) =>
+  api.get(`/flow/${usina}/fluxograma-chart`, { params: { date } }).then((r) => r.data)
+
 
 // ── Upload de Excel diário ────────────────────────────────────
 export const uploadExcel = (usina, file, onProgress, skipUnmapped = false) => {
@@ -295,8 +298,14 @@ export const runFlow = (usina, dates) =>
 export const checkFlowStatus = (usina, taskId) =>
   api.get(`/flow/${encodeURIComponent(usina)}/status/${encodeURIComponent(taskId)}`).then((r) => r.data)
 
-export const fetchFlowIntegrals = (usina) =>
+export const fetchFlowIntegrals = (usina) => 
   api.get(`/flow/${encodeURIComponent(usina)}/integrals`, { timeout: 300000 }).then((r) => r.data)
+
+export const startFlowIntegrals = (usina) =>
+  api.post(`/flow/${encodeURIComponent(usina)}/integrals/start`).then((r) => r.data)
+
+export const getFlowIntegralsStatus = (usina, taskId) =>
+  api.get(`/flow/${encodeURIComponent(usina)}/integrals/status/${encodeURIComponent(taskId)}`).then((r) => r.data)
 
 // ============================================================================
 // ── CAMPANHAS (PERFORMANCE CAMPAIGNS)

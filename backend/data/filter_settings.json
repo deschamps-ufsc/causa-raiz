@@ -46,5 +46,32 @@
     "min_variation": 0.01,
     "min_time": 60,
     "median_window": 11
+  },
+  {
+    "name": "Irradiação_Qualidade_Travado",
+    "element": "Irradiação",
+    "min_value": 0,
+    "max_value": 1800,
+    "max_variation": null,
+    "min_variation": 0.01,
+    "min_time": 10
+  },
+  {
+    "name": "Energia_PMI_Zerada",
+    "element": "Energia PMI",
+    "min_value": 1,
+    "max_value": null,
+    "max_variation": null
+  },
+  {
+    "name": "Temperatura Ambiente_CTG",
+    "element": "Temperatura",
+    "min_value": null,
+    "max_value": null,
+    "max_variation": 5,
+    "min_variation": 0.01,
+    "min_time": 60,
+    "median_window": 11,
+    "adjustment_factor": 0.91448
   }
 ]

@@ -1,0 +1,102 @@
+[
+  {
+    "id": "cb991948-1af1-415f-a0ac-941d366256d0",
+    "created_at": "2026-08-10T14:11:26.151951",
+    "name": "Max chart 1",
+    "user": "deschamps.ufsc@gmail.com",
+    "selectedDates": [
+      "2026-08-10"
+    ],
+    "selectedSeries": [
+      "regatron_capacity_live_cell_id",
+      "regatron_capacity_live_current_a",
+      "regatron_capacity_live_cycle",
+      "regatron_capacity_live_elapsed_s",
+      "regatron_capacity_live_note",
+      "regatron_capacity_live_phase",
+      "regatron_capacity_live_phase_ah",
+      "regatron_capacity_live_phase_wh",
+      "regatron_capacity_live_power_w",
+      "regatron_capacity_live_pulse_number",
+      "regatron_capacity_live_soc_percent",
+      "regatron_capacity_live_target_v",
+      "regatron_capacity_live_test_type",
+      "regatron_capacity_live_voltage_raw_v",
+      "regatron_capacity_live_voltage_v"
+    ],
+    "activeFilters": [],
+    "visibleFilters": [],
+    "filterColors": {},
+    "chartConfig": {
+      "gridX": true,
+      "gridY1": true,
+      "gridY2": false,
+      "gridY3": false,
+      "gridY4": false,
+      "xGridSpacing": "",
+      "xLimits": {
+        "min": "11:13",
+        "max": "14:12"
+      },
+      "y1Limits": {
+        "min": 3,
+        "max": 4
+      },
+      "y2Limits": {
+        "min": -50,
+        "max": 50
+      },
+      "y3Limits": {
+        "min": "",
+        "max": ""
+      },
+      "y4Limits": {
+        "min": "",
+        "max": ""
+      },
+      "appliedRanges": {},
+      "seriesAxisMap": {
+        "regatron_capacity_live_cell_id": "hidden:y1",
+        "regatron_capacity_live_current_a": "y2",
+        "regatron_capacity_live_cycle": "hidden:y1",
+        "regatron_capacity_live_elapsed_s": "hidden:y1",
+        "regatron_capacity_live_note": "hidden:y1",
+        "regatron_capacity_live_phase": "hidden:y1",
+        "regatron_capacity_live_phase_ah": "hidden:y1",
+        "regatron_capacity_live_phase_wh": "hidden:y1",
+        "regatron_capacity_live_power_w": "hidden:y1",
+        "regatron_capacity_live_pulse_number": "hidden:y1",
+        "regatron_capacity_live_soc_percent": "hidden:y1",
+        "regatron_capacity_live_target_v": "hidden:y1",
+        "regatron_capacity_live_test_type": "hidden:y1",
+        "regatron_capacity_live_voltage_raw_v": "y1",
+        "regatron_capacity_live_voltage_v": "hidden:y1"
+      },
+      "seriesColors": {
+        "regatron_capacity_live_cell_id": "#C62828",
+        "regatron_capacity_live_current_a": "#EF6C00",
+        "regatron_capacity_live_cycle": "#F9A825",
+        "regatron_capacity_live_elapsed_s": "#F9CC00",
+        "regatron_capacity_live_note": "#7CB342",
+        "regatron_capacity_live_phase": "#2E7D32",
+        "regatron_capacity_live_phase_ah": "#00695C",
+        "regatron_capacity_live_phase_wh": "#0277BD",
+        "regatron_capacity_live_power_w": "#1565C0",
+        "regatron_capacity_live_pulse_number": "#283593",
+        "regatron_capacity_live_soc_percent": "#6A1B9A",
+        "regatron_capacity_live_target_v": "#D81B60",
+        "regatron_capacity_live_test_type": "#E53935",
+        "regatron_capacity_live_voltage_raw_v": "#00838F",
+        "regatron_capacity_live_voltage_v": "#F9A825"
+      },
+      "seriesWidths": {},
+      "seriesDashes": {},
+      "seriesFills": {
+        "regatron_capacity_live_current_a": 20,
+        "regatron_capacity_live_voltage_raw_v": 20
+      },
+      "legendPosition": "none"
+    },
+    "shared": false
+  }
+]

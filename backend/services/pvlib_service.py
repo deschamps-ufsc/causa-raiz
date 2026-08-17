@@ -138,42 +138,77 @@ def run_pvlib_simulation(processed_df: pd.DataFrame, pvlib_node: dict, usina: st
                 
             solpos = pvlib.solarposition.get_solarposition(times_for_pvlib, lat, lon)
             
-            trk = pvlib.tracking.singleaxis(solpos['apparent_zenith'], solpos['azimuth'], max_angle=max_angle, backtrack=True, gcr=gcr)
+            axis_tilt = float(params.get("axis_tilt", 0.0))
+            
+            trk = pvlib.tracking.singleaxis(
+                solpos['apparent_zenith'], 
+                solpos['azimuth'], 
+                axis_tilt=axis_tilt,
+                axis_azimuth=0,
+                max_angle=max_angle, 
+                backtrack=True, 
+                gcr=gcr
+            )
             
             surface_tilt = trk['surface_tilt']
             surface_azimuth = trk['surface_azimuth']
             aoi = trk['aoi']
             
-            dirint_res = pvlib.irradiance.gti_dirint(
-                poa_global=gpoa_eff.fillna(0).values,
-                aoi=aoi,
-                solar_zenith=solpos['apparent_zenith'],
-                solar_azimuth=solpos['azimuth'],
-                times=times_for_pvlib,
-                surface_tilt=surface_tilt,
-                surface_azimuth=surface_azimuth,
-                use_delta_kt_prime=False
-            )
-            
             dni_extra = pvlib.irradiance.get_extra_radiation(times_for_pvlib)
             
-            poa_comp = pvlib.irradiance.get_total_irradiance(
-                surface_tilt=surface_tilt,
-                surface_azimuth=surface_azimuth,
-                solar_zenith=solpos['apparent_zenith'],
-                solar_azimuth=solpos['azimuth'],
-                dni=dirint_res['dni'],
-                ghi=dirint_res['ghi'],
-                dhi=dirint_res['dhi'],
-                dni_extra=dni_extra,
-                model='haydavies'
-            )
+            # Solver iterativo para encontrar o GHI que resulta no Geff_válida (POA) pelo modelo de Erbs
+            # Usar pd.Series com index=times_for_pvlib (tz-aware) para evitar conflitos no pandas
+            ghi_est = pd.Series(gpoa_eff.fillna(0).values, index=times_for_pvlib)
+            gpoa_eff_tz = ghi_est.copy()
+            for _ in range(5):
+                erbs_res = pvlib.irradiance.erbs(ghi_est, solpos['apparent_zenith'], times_for_pvlib)
+                dni_est = erbs_res['dni'].fillna(0)
+                dhi_est = erbs_res['dhi'].fillna(0)
+                
+                poa_comp = pvlib.irradiance.get_total_irradiance(
+                    surface_tilt=surface_tilt,
+                    surface_azimuth=surface_azimuth,
+                    solar_zenith=solpos['apparent_zenith'],
+                    solar_azimuth=solpos['azimuth'],
+                    dni=dni_est,
+                    ghi=ghi_est,
+                    dhi=dhi_est,
+                    dni_extra=dni_extra,
+                    model='haydavies'
+                )
+                
+                poa_calc = poa_comp['poa_global']
+                ratio = gpoa_eff_tz / poa_calc.replace(0, np.nan)
+                ratio = ratio.fillna(1.0).clip(0.5, 2.0)
+                ghi_est = ghi_est * ratio
             
             poa_direct = poa_comp['poa_direct']
             poa_sky_diffuse = poa_comp['poa_sky_diffuse']
             poa_ground_diffuse = poa_comp['poa_ground_diffuse']
             
-            poa_total_modelo = poa_direct + poa_sky_diffuse + poa_ground_diffuse
+            # Ajuste de Sombreamento Difuso (Row-to-Row)
+            import pvlib.bifacial.utils as bifacial_utils
+            
+            vf_sky_unshaded = (1 + np.cos(np.radians(surface_tilt))) / 2
+            vf_sky_shaded = bifacial_utils.vf_row_sky_2d_integ(surface_tilt.values, gcr, 0.0, 1.0)
+            
+            sky_shade_factor = pd.Series(vf_sky_shaded / vf_sky_unshaded.values, index=surface_tilt.index)
+            sky_shade_factor = sky_shade_factor.fillna(1.0).clip(lower=0)
+            
+            # Cálculo rigoroso da fração de Albedo que sobrevive ao bloqueio das fileiras
+            vf_ground_unshaded = (1 - np.cos(np.radians(surface_tilt))) / 2
+            vf_ground_shaded = bifacial_utils.vf_row_ground_2d_integ(surface_tilt.values, gcr, 0.0, 1.0)
+            
+            # np.where para evitar divisão por zero quando o tracker está deitado (tilt = 0)
+            with np.errstate(divide='ignore', invalid='ignore'):
+                gf = np.where(vf_ground_unshaded.values > 1e-5, vf_ground_shaded / vf_ground_unshaded.values, 1.0)
+            ground_shade_factor = pd.Series(gf, index=surface_tilt.index).fillna(1.0).clip(lower=0)
+            
+            poa_sky_diffuse_shaded = poa_sky_diffuse * sky_shade_factor
+            poa_ground_diffuse_shaded = poa_ground_diffuse * ground_shade_factor
+            
+            # poa_total_unshaded: energia real sem as obstruções de Near Shadings
+            poa_total_unshaded = poa_direct + poa_sky_diffuse + poa_ground_diffuse
             
             # === PVSyst IAM Extraction ===
             mod_spec = list(modulos_specs.values())[0] if modulos_specs else {}
@@ -222,17 +257,21 @@ def run_pvlib_simulation(processed_df: pd.DataFrame, pvlib_node: dict, usina: st
                 iam_direct = pvlib.iam.ashrae(aoi, **iam_kwargs)
                 iam_function = functools.partial(pvlib.iam.ashrae, **iam_kwargs)
                 
-            # Calcular diffuse via integração numérica com a função IAM escolhida
-            iam_sky = pvlib.iam.marion_integrate(iam_function, surface_tilt, 'sky')
-            iam_ground = pvlib.iam.marion_integrate(iam_function, surface_tilt, 'ground')
+            # Fórmulas empíricas do PVSyst para ângulo efetivo (Tracker)
+            theta_eff_sky = 59.68 + 0.1388 * surface_tilt
+            theta_eff_ground = 90.0 - 0.5788 * surface_tilt
             
-            poa_iam_modelo = (poa_direct * iam_direct) + (poa_sky_diffuse * iam_sky) + (poa_ground_diffuse * iam_ground)
+            iam_sky = iam_function(theta_eff_sky)
+            iam_ground = iam_function(theta_eff_ground)
             
-            fator_iam = poa_iam_modelo / poa_total_modelo.replace(0, np.nan)
-            fator_iam = fator_iam.fillna(1.0).clip(0, 1.0)
+            # Ponderação do IAM usando poa_total_unshaded no divisor
+            # Isso aplica matematicamente tanto a perda Óptica (IAM) quanto a Perda de Sombra Mútua (Near Shadings)
+            poa_iam_modelo = (poa_direct * iam_direct) + (poa_sky_diffuse_shaded * iam_sky) + (poa_ground_diffuse_shaded * iam_ground)
+            fator_optical_total = poa_iam_modelo / poa_total_unshaded.replace(0, np.nan)
+            fator_optical_total = fator_optical_total.fillna(1.0).clip(0, 1.0)
             
             # Garante que usamos apenas os arrays para não dar conflito de timezone no index
-            gpoa_eff = gpoa_eff * fator_iam.values
+            gpoa_eff = gpoa_eff * fator_optical_total.values
             
         except Exception as err:
             logger.error(f"[PVLIB] Falha ao calcular fator IAM via DIRINT/Hay-Davies: {err}")
@@ -250,15 +289,21 @@ def run_pvlib_simulation(processed_df: pd.DataFrame, pvlib_node: dict, usina: st
         # Perdas Adicionais do Node
         mismatch = float(params.get("mismatch", 0.0)) / 100.0
         lid = float(params.get("lid", 0.0)) / 100.0
+        module_quality_loss = float(params.get("module_quality_loss", 0.0)) / 100.0
         aux_loss = float(params.get("aux_loss", 0.0)) # kW
         
-        # Puxa sujidade do node config e calcula o valor diário único (média interna)
+        # Puxa sujidade do node config ou usa valor fixo
         soiling_val = 0.0
-        suj_node = next((n for n in nodes if n.get("type") == "sujidade" or n.get("id") == "sujidade"), None)
-        if suj_node and "sujidade_válida" in processed_df.columns:
-            s_data = processed_df["sujidade_válida"].dropna()
-            if not s_data.empty:
-                cfg = suj_node.get("data", {})
+        
+        if params.get("use_fixed_soiling"):
+            soiling_pct = params.get("fixed_soiling_pct")
+            soiling_val = float(soiling_pct if soiling_pct is not None else 1.0) / 100.0
+        else:
+            suj_node = next((n for n in nodes if n.get("type") == "sujidade" or n.get("id") == "sujidade"), None)
+            if suj_node and "sujidade_válida" in processed_df.columns:
+                s_data = processed_df["sujidade_válida"].dropna()
+                if not s_data.empty:
+                    cfg = suj_node.get("data", {})
                 
                 # Aplica restrição de tempo
                 start_str = cfg.get("startTime")
@@ -294,12 +339,19 @@ def run_pvlib_simulation(processed_df: pd.DataFrame, pvlib_node: dict, usina: st
         
         total_p_ac = pd.Series(0.0, index=processed_df.index)
         total_p_dc = pd.Series(0.0, index=processed_df.index)
+        total_nominal_p_ac = 0.0
+        total_nominal_p_dc = 0.0
         
         for topo in topologies:
             inv_count = topo["count"]
             
             # Para cada string group neste inversor, calcula DC
             inv_total_p_dc = pd.Series(0.0, index=processed_df.index)
+            inv_nominal_p_dc = 0.0
+            
+            # Tensão média de entrada do MPPT para a curva do inversor
+            inv_v_in_sum = pd.Series(0.0, index=processed_df.index)
+            inv_v_weight = pd.Series(0.0, index=processed_df.index)
             
             for str_group in topo["strings"]:
                 wp = str_group["wp"]
@@ -345,16 +397,18 @@ def run_pvlib_simulation(processed_df: pd.DataFrame, pvlib_node: dict, usina: st
                         I_L_ref=IL_ref,
                         I_o_ref=Io_ref,
                         R_sh_ref=Rsh,
-                        R_sh_0=float(raw_pan.get('Rp_0', Rsh * 4)),
+                        R_sh_0=float(raw_pan.get('RShunt0', raw_pan.get('Rp_0', Rsh * 10.0))),
                         R_s=Rs,
                         cells_in_series=Ns,
-                        R_sh_exp=float(raw_pan.get('Rp_Exp', 5.5)),
+                        R_sh_exp=float(raw_pan.get('RShuntExp', raw_pan.get('Rp_Exp', 5.5))),
                         EgRef=1.121
                     )
                     
                     # Resolve o circuito equivalente para achar a máxima potência
                     sd_res = pvlib.pvsystem.singlediode(*params)
                     pdc_string_mod = sd_res['p_mp'].clip(lower=0)
+                    v_mp_hour = sd_res['v_mp']
+                    Vmp_stc = float(raw_pan.get('Vmp', mod_spec.get('vmp', 40.0)))
                 else:
                     # PVWatts DC model simplificado (fallback)
                     I_sc_ref = float(mod_spec.get("isc", 14.0))
@@ -363,12 +417,32 @@ def run_pvlib_simulation(processed_df: pd.DataFrame, pvlib_node: dict, usina: st
                     
                     pdc_string_mod = P_ref * (gpoa_eff / 1000.0) * (1 + gamma_pdc * (tcel - 25))
                     pdc_string_mod = pdc_string_mod.clip(lower=0)
+                    Vmp_stc = float(mod_spec.get('vmp', 40.0))
+                    v_mp_hour = pd.Series(Vmp_stc, index=gpoa_eff.index)
+                    
+                v_mp_hour = v_mp_hour.replace(0, Vmp_stc).fillna(Vmp_stc)
                 
-                # Total DC for this group of strings
-                inv_total_p_dc += pdc_string_mod * qtde * str_count
+                # Fator quadrático exato: f_loss = loss_stc * (P / P_stc) * (V_stc / V_op)^2
+                if wp > 0:
+                    loss_dc_group_frac = loss_ohm_dc * (pdc_string_mod / wp) * (Vmp_stc / v_mp_hour)**2
+                else:
+                    loss_dc_group_frac = loss_ohm_dc
+                    
+                p_dc_net = (pdc_string_mod * qtde * str_count) * (1 - loss_dc_group_frac)
                 
-            # Aplica perda ohmica DC, mismatch e LID
-            inv_total_p_dc = inv_total_p_dc * (1 - loss_ohm_dc) * (1 - mismatch) * (1 - lid)
+                # Total DC for this group of strings (já descontando Ohmic Loss)
+                inv_total_p_dc += p_dc_net
+                inv_nominal_p_dc += wp * qtde * str_count
+                
+                # Acumula tensão ponderada
+                v_in_str = v_mp_hour * qtde
+                inv_v_in_sum += v_in_str * p_dc_net
+                inv_v_weight += p_dc_net
+                
+            # Aplica mismatch, LID e Module Quality Loss (perdas constantes)
+            inv_total_p_dc = inv_total_p_dc * (1 - mismatch) * (1 - lid) * (1 - module_quality_loss)
+            
+            inv_v_in_avg = inv_v_in_sum / inv_v_weight.replace(0, np.nan)
             
             # Inverter AC model
             raw_ond = inv_spec.get("raw_data")
@@ -376,42 +450,67 @@ def run_pvlib_simulation(processed_df: pd.DataFrame, pvlib_node: dict, usina: st
                 unit = raw_ond.get("UnitAffEnum", "")
                 mult = 1000.0 if unit == "kW" else 1.0
                 pac0_ond = float(raw_ond.get("PNomConv", inv_spec.get("paco", 250000))) * (mult if raw_ond.get("PNomConv") else 1.0)
+                total_nominal_p_ac += pac0_ond * inv_count
                 
-                # Tenta extrair a curva detalhada do inversor do OND
+                # Extrai as curvas de eficiência e suas respectivas voltagens
                 converter = raw_ond.get("Converter", {})
-                # Usamos a curva nominal (V2) ou qualquer outra disponível
-                profil = converter.get("ProfilPIO") or converter.get("ProfilPIOV2") or converter.get("ProfilPIOV1") or converter.get("ProfilPIOV3")
                 
-                if profil and isinstance(profil, dict):
+                def make_interp(profil_dict):
+                    if not profil_dict or not isinstance(profil_dict, dict):
+                        return None
                     pdc_pts = []
                     pac_pts = []
-                    for pt_key, pt_val in profil.items():
+                    for pt_key, pt_val in profil_dict.items():
                         if pt_key.startswith("Point_") and isinstance(pt_val, list) and len(pt_val) >= 2:
                             pdc_val, pac_val = float(pt_val[0]), float(pt_val[1])
-                            # Adiciona o ponto se não for um preenchimento com zero no final
                             if pdc_val > 0 or len(pdc_pts) == 0:
                                 pdc_pts.append(pdc_val * mult)
                                 pac_pts.append(pac_val * mult)
-                    
                     if len(pdc_pts) > 2:
-                        # Ordena os pontos pelo Pdc
                         pts = sorted(zip(pdc_pts, pac_pts))
                         pdc_arr = np.array([p[0] for p in pts])
                         pac_arr = np.array([p[1] for p in pts])
-                        
                         from scipy.interpolate import interp1d
-                        interp_func = interp1d(pdc_arr, pac_arr, bounds_error=False, fill_value=(0, pac_arr.max()))
-                        
-                        pac_inv = pd.Series(interp_func(inv_total_p_dc.values), index=inv_total_p_dc.index)
-                        pac_inv = pac_inv.clip(upper=pac0_ond)
-                    else:
-                        # Fallback se a curva estiver vazia
-                        pdc0_ond = float(raw_ond.get("PMaxOUT", inv_spec.get("pdco", 256000))) * (mult if raw_ond.get("PMaxOUT") else 1.0)
-                        eta_inv = float(raw_ond.get("EfficEuro", raw_ond.get("EfficMax", 98.0))) / 100.0
-                        pac_inv = pvlib.inverter.pvwatts(inv_total_p_dc, pdc0_ond, eta_inv)
-                        pac_inv = pac_inv.clip(upper=pac0_ond)
+                        return interp1d(pdc_arr, pac_arr, bounds_error=False, fill_value=(0, pac_arr.max()))
+                    return None
+
+                v1 = float(converter.get("VMppMin", converter.get("VMppMinPIO", 0)))
+                v2 = float(converter.get("VmppNom", converter.get("VNomPIO", 0)))
+                v3 = float(converter.get("VMPPMax", converter.get("VMppMaxPIO", 0)))
+                
+                f1 = make_interp(converter.get("ProfilPIOV1"))
+                f2 = make_interp(converter.get("ProfilPIOV2") or converter.get("ProfilPIO"))
+                f3 = make_interp(converter.get("ProfilPIOV3"))
+                
+                pac_1 = pd.Series(f1(inv_total_p_dc.values), index=inv_total_p_dc.index) if f1 else None
+                pac_2 = pd.Series(f2(inv_total_p_dc.values), index=inv_total_p_dc.index) if f2 else None
+                pac_3 = pd.Series(f3(inv_total_p_dc.values), index=inv_total_p_dc.index) if f3 else None
+                
+                if f1 and f2 and f3 and v1 < v2 < v3:
+                    # Interpola entre as curvas baseado na tensão real do array
+                    pac_inv = pd.Series(0.0, index=inv_total_p_dc.index)
+                    v_in = inv_v_in_avg.fillna(v2)
+                    
+                    mask1 = v_in <= v1
+                    pac_inv[mask1] = pac_1[mask1]
+                    
+                    mask2 = (v_in > v1) & (v_in <= v2)
+                    frac2 = (v_in[mask2] - v1) / (v2 - v1)
+                    pac_inv[mask2] = pac_1[mask2] + frac2 * (pac_2[mask2] - pac_1[mask2])
+                    
+                    mask3 = (v_in > v2) & (v_in <= v3)
+                    frac3 = (v_in[mask3] - v2) / (v3 - v2)
+                    pac_inv[mask3] = pac_2[mask3] + frac3 * (pac_3[mask3] - pac_2[mask3])
+                    
+                    mask4 = v_in > v3
+                    pac_inv[mask4] = pac_3[mask4]
+                    
+                    pac_inv = pac_inv.clip(upper=pac0_ond)
+                elif f2:
+                    # Usa a curva única nominal
+                    pac_inv = pac_2.clip(upper=pac0_ond)
                 else:
-                    # Fallback se não encontrar os perfis
+                    # Fallback (sem curvas ProfilPIO)
                     pdc0_ond = float(raw_ond.get("PMaxOUT", inv_spec.get("pdco", 256000))) * (mult if raw_ond.get("PMaxOUT") else 1.0)
                     eta_inv = float(raw_ond.get("EfficEuro", raw_ond.get("EfficMax", 98.0))) / 100.0
                     pac_inv = pvlib.inverter.pvwatts(inv_total_p_dc, pdc0_ond, eta_inv)
@@ -419,23 +518,33 @@ def run_pvlib_simulation(processed_df: pd.DataFrame, pvlib_node: dict, usina: st
             else:
                 pdc0 = float(inv_spec.get("pdco", 256000))
                 pac0 = float(inv_spec.get("paco", 250000))
+                total_nominal_p_ac += pac0 * inv_count
                 eta_inv_nom = pac0 / pdc0 if pdc0 > 0 else 0.98
                 pac_inv = pvlib.inverter.pvwatts(inv_total_p_dc, pdc0, eta_inv_nom)
             
             # Multiplica pelo numero de inversores iguais
             total_p_ac += (pac_inv * inv_count)
             total_p_dc += (inv_total_p_dc * inv_count)
+            total_nominal_p_dc += (inv_nominal_p_dc * inv_count)
             
-        # Aplica perda ohmica AC BT (Baixa Tensão)
-        total_p_ac = total_p_ac * (1 - loss_ohm_ac)
+        # Aplica perda ohmica AC BT (Quadrática I^2*R)
+        if total_nominal_p_ac > 0:
+            loss_ac_dynamic = loss_ohm_ac * (total_p_ac / total_nominal_p_ac)
+        else:
+            loss_ac_dynamic = loss_ohm_ac
+        total_p_ac = total_p_ac * (1 - loss_ac_dynamic)
         
         # Aplica perdas do Transformador
         if trafo_pnom > 0:
             from pvlib.transformer import simple_efficiency
             total_p_ac = simple_efficiency(total_p_ac, trafo_iron_loss, trafo_copper_loss, trafo_pnom)
             
-        # Aplica perda ohmica AC MT (Média Tensão)
-        total_p_ac = total_p_ac * (1 - loss_ohm_ac_mt)
+        # Aplica perda ohmica AC MT (Quadrática I^2*R)
+        if total_nominal_p_ac > 0:
+            loss_ac_mt_dynamic = loss_ohm_ac_mt * (total_p_ac / total_nominal_p_ac)
+        else:
+            loss_ac_mt_dynamic = loss_ohm_ac_mt
+        total_p_ac = total_p_ac * (1 - loss_ac_mt_dynamic)
         
         # Subtrai consumo auxiliar (constante) da usina
         total_p_ac = total_p_ac - (aux_loss * 1000.0)
@@ -448,12 +557,16 @@ def run_pvlib_simulation(processed_df: pd.DataFrame, pvlib_node: dict, usina: st
             # Caso total_p_dc não seja serie ainda
             pass
             
-        # Retorna o dicionário de colunas para serem inseridas no df
-        # Convertendo W para kW
+        # Approximation for the UI column using global totals
+        if total_nominal_p_dc > 0:
+            global_loss_dc_dyn = loss_ohm_dc * (total_p_dc / total_nominal_p_dc)
+        else:
+            global_loss_dc_dyn = loss_ohm_dc
+            
         return {
             "pvlib_E_Grid_válida": total_p_ac / 1000.0,
             "pvlib_EArray_válida": total_p_dc / 1000.0 if isinstance(total_p_dc, pd.Series) else total_p_dc,
-            "pvlib_OhmLoss_DC_válida": total_p_dc * (loss_ohm_dc / (1 - loss_ohm_dc)) / 1000.0 if loss_ohm_dc < 1 else 0
+            "pvlib_OhmLoss_DC_válida": total_p_dc * (global_loss_dc_dyn / (1 - global_loss_dc_dyn)) / 1000.0 if loss_ohm_dc < 1 else 0
         }
     except Exception as ex:
         logger.error(f"[PVLIB] Erro na simulacao: {ex}")

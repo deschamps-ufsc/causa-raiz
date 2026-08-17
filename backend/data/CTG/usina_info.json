@@ -1,0 +1,20 @@
+{
+  "CTG|INV01|1": {
+    "skid": "CTG",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "1",
+    "qtde_modulos": 15,
+    "wp": 575.0,
+    "kwp": 8.625
+  },
+  "CTG|INV01|4": {
+    "skid": "CTG",
+    "inversor": "INV01",
+    "stringbox": "",
+    "string": "4",
+    "qtde_modulos": 15,
+    "wp": 575.0,
+    "kwp": 8.625
+  }
+}

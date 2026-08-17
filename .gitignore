@@ -6,3 +6,9 @@ node_modules/
 backend/users.json
 backend/client_secret.json
 backend/token.json
+*.csv
+*.parquet
+backend/data/*/processed/*.parquet
+backend/data/*/pvsyst_data.parquet
+backend/data/*/pvsyst_tmy.parquet
+backend/data/*/pvsyst_raw.csv

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from './hooks/AuthContext'
 import { useUsina } from './hooks/UsinaContext'
@@ -10,6 +10,18 @@ export default function App() {
   const location = useLocation()
   const { usinaAtual, setUsinaAtual } = useUsina()
   const [usinas, setUsinas] = useState([])
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const userMenuRef = useRef(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setIsUserMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   useEffect(() => {
     fetchUsinas().then(setUsinas).catch(() => {})
@@ -72,7 +84,7 @@ export default function App() {
               return `nav-link ${view === 'causa-raiz' && location.pathname === '/dashboard' ? 'active' : ''}`
             }}
           >
-            🔍 Análise de Causa Raiz
+            🔍 Causa Raiz
           </NavLink>
           
           {isAnalystOrAdmin && (
@@ -108,41 +120,72 @@ export default function App() {
           <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.15)' }} />
 
           {/* Usuário logado + logout */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div ref={userMenuRef} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
             {/* Avatar */}
-            <div style={{
-              width: 30, height: 30, borderRadius: '50%',
-              background: 'linear-gradient(135deg, #f59e0b, #f97316)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 11, fontWeight: 800, color: '#0d1117',
-              flexShrink: 0, cursor: 'default',
-            }} title={`${user?.name || user?.email} (${user?.role})`}>
+            <div 
+              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+              style={{
+                width: 32, height: 32, borderRadius: '50%',
+                background: 'linear-gradient(135deg, #f59e0b, #f97316)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 12, fontWeight: 800, color: '#0d1117',
+                flexShrink: 0, cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                transition: 'transform 0.1s',
+              }} 
+              onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.05)' }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)' }}
+              title={`${user?.name || user?.email} (${user?.role})`}>
               {initials}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: '#e6edf3', lineHeight: 1, whiteSpace: 'nowrap' }}>
-                {user?.name || user?.email}
-              </span>
-              <span style={{ fontSize: 10, color: '#8b949e', lineHeight: 1, textTransform: 'uppercase', letterSpacing: 0.4 }}>
-                {user?.role === 'admin' ? 'Admin' : user?.role === 'analyst' ? 'Analista' : 'Usuário'}
-              </span>
-            </div>
-            {/* Logout */}
-            <button
-              id="btn-logout"
-              onClick={handleLogout}
-              title="Sair"
-              style={{
-                background: 'rgba(220,38,38,0.15)', border: '1px solid rgba(220,38,38,0.3)',
-                borderRadius: 6, color: '#fca5a5', fontSize: 11, fontWeight: 600,
-                padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit',
-                transition: 'all 0.15s',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(220,38,38,0.3)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(220,38,38,0.15)' }}
-            >
-              Sair
-            </button>
+            
+            {/* Dropdown Menu */}
+            {isUserMenuOpen && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                marginTop: '10px',
+                background: '#161b22', 
+                border: '1px solid #30363d',
+                borderRadius: '8px',
+                padding: '12px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+                minWidth: '160px',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+                zIndex: 50
+              }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '0 4px' }}>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: '#e6edf3', lineHeight: 1.2, whiteSpace: 'nowrap' }}>
+                    {user?.name || user?.email}
+                  </span>
+                  <span style={{ fontSize: 11, color: '#8b949e', lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    {user?.role === 'admin' ? 'Admin' : user?.role === 'analyst' ? 'Analista' : 'Usuário'}
+                  </span>
+                </div>
+                
+                <div style={{ width: '100%', height: 1, background: '#30363d' }} />
+                
+                <button
+                  id="btn-logout"
+                  onClick={handleLogout}
+                  title="Sair"
+                  style={{
+                    background: 'rgba(220,38,38,0.15)', border: '1px solid rgba(220,38,38,0.3)',
+                    borderRadius: 6, color: '#fca5a5', fontSize: 13, fontWeight: 600,
+                    padding: '8px 10px', cursor: 'pointer', fontFamily: 'inherit',
+                    transition: 'all 0.15s',
+                    width: '100%',
+                    textAlign: 'center'
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(220,38,38,0.3)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(220,38,38,0.15)' }}
+                >
+                  Sair
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </nav>

@@ -225,206 +225,6 @@
     "shared": true
   },
   {
-    "id": "e4fb18a5-4141-478b-8fa3-f565c6f503b6",
-    "created_at": "2026-07-29T11:35:21.162948",
-    "name": "Curtailment",
-    "user": "deschamps.ufsc@gmail.com",
-    "selectedDates": [
-      "2026-06-10",
-      "2026-06-11",
-      "2026-06-12",
-      "2026-06-15",
-      "2026-06-16"
-    ],
-    "selectedSeries": [
-      "Potência PPC_15min",
-      "potencia_ppc",
-      "referencia_ppc",
-      "Referência PPC_15min"
-    ],
-    "activeFilters": [],
-    "visibleFilters": [
-      "curtailment"
-    ],
-    "filterColors": {
-      "Tracker Piranômetro": "#f97316",
-      "Simultaneidade": "#ef4444",
-      "curtailment": "#059669",
-      "Dados Válidos": "#7c3aed"
-    },
-    "chartConfig": {
-      "gridX": true,
-      "gridY1": true,
-      "gridY2": false,
-      "gridY3": false,
-      "gridY4": false,
-      "xGridSpacing": "",
-      "xLimits": {
-        "min": "",
-        "max": ""
-      },
-      "y1Limits": {
-        "min": "",
-        "max": ""
-      },
-      "y2Limits": {
-        "min": "",
-        "max": ""
-      },
-      "y3Limits": {
-        "min": "",
-        "max": ""
-      },
-      "y4Limits": {
-        "min": "",
-        "max": ""
-      },
-      "appliedRanges": {},
-      "seriesAxisMap": {
-        "Potência PPC_15min": "y1",
-        "potencia_ppc": "y1",
-        "Referência PPC_15min": "y1",
-        "referencia_ppc": "y1"
-      },
-      "seriesColors": {
-        "Potência PPC_15min": "#7CB342",
-        "potencia_ppc": "#00838F",
-        "Referência PPC_15min": "#6A1B9A",
-        "referencia_ppc": "#E53935"
-      },
-      "seriesWidths": {
-        "Potência PPC_15min": 0.5,
-        "potencia_ppc": 1.5,
-        "Referência PPC_15min": 0.5,
-        "referencia_ppc": 1.5
-      },
-      "seriesDashes": {
-        "Potência PPC_15min": "solid",
-        "potencia_ppc": "solid",
-        "Referência PPC_15min": "solid",
-        "referencia_ppc": "solid"
-      },
-      "seriesFills": {
-        "Potência PPC_15min": 19,
-        "Referência PPC_15min": 6
-      },
-      "legendPosition": "top"
-    },
-    "shared": true
-  },
-  {
-    "id": "c8d97280-89bd-4aa0-ba38-3d4db3731b12",
-    "created_at": "2026-07-29T11:57:36.055771",
-    "name": "PVSyst e Energia Gerada",
-    "user": "deschamps.ufsc@gmail.com",
-    "selectedDates": [
-      "2026-06-10",
-      "2026-06-11",
-      "2026-06-12",
-      "2026-06-15",
-      "2026-06-16"
-    ],
-    "selectedSeries": [
-      "Energia PMI_válida",
-      "Energia PMI",
-      "E_Grid_Ajustada_MW_válida"
-    ],
-    "activeFilters": [],
-    "visibleFilters": [
-      "Dados Válidos"
-    ],
-    "filterColors": {
-      "Tracker Piranômetro": "#f97316",
-      "Simultaneidade": "#ef4444",
-      "curtailment": "#059669",
-      "Dados Válidos": "#7c3aed"
-    },
-    "chartConfig": {
-      "gridX": true,
-      "gridY1": true,
-      "gridY2": false,
-      "gridY3": false,
-      "gridY4": false,
-      "xGridSpacing": "",
-      "xLimits": {
-        "min": "",
-        "max": "23:59"
-      },
-      "y1Limits": {
-        "min": 0,
-        "max": "50"
-      },
-      "y2Limits": {
-        "min": 0,
-        "max": 48
-      },
-      "y3Limits": {
-        "min": "",
-        "max": ""
-      },
-      "y4Limits": {
-        "min": "",
-        "max": ""
-      },
-      "appliedRanges": {
-        "y1": [
-          0,
-          50
-        ]
-      },
-      "seriesAxisMap": {
-        "E_Grid": "y1",
-        "GlobEff": "y2",
-        "GlobInc": "y2",
-        "PR": "y4",
-        "TArrWtd": "y3",
-        "E_Grid_válida": "y1",
-        "GlobInc_válida": "y2",
-        "Energia PMI_válida": "y1",
-        "Energia PMI": "y1",
-        "E_Grid_Ajustada_MW_válida": "y1",
-        "geff": "hidden:y1",
-        "geff_válida": "hidden:y1"
-      },
-      "seriesColors": {
-        "E_Grid": "#2E7D32",
-        "GlobEff": "#EF6C00",
-        "GlobInc": "#F9A825",
-        "PR": "#C62828",
-        "TArrWtd": "#0277BD",
-        "E_Grid_válida": "#2E7D32",
-        "GlobInc_válida": "#F9A825",
-        "Energia PMI_válida": "#0277BD",
-        "Energia PMI": "#0277BD",
-        "E_Grid_Ajustada_MW_válida": "#E04880",
-        "geff": "#EF6C00",
-        "geff_válida": "#EF6C00"
-      },
-      "seriesWidths": {
-        "PR": 0.5,
-        "Energia PMI_válida": 1,
-        "Energia PMI": 1,
-        "geff": 1,
-        "geff_válida": 1,
-        "E_Grid_Ajustada_MW_válida": 1.5
-      },
-      "seriesDashes": {
-        "PR": "dot",
-        "Energia PMI_válida": "solid",
-        "Energia PMI": "solid",
-        "geff": "solid",
-        "geff_válida": "solid",
-        "E_Grid_Ajustada_MW_válida": "solid"
-      },
-      "seriesFills": {
-        "GlobInc_válida": 20,
-        "Energia PMI_válida": 9
-      },
-      "legendPosition": "top"
-    },
-    "shared": true
-  },
-  {
     "id": "b609549a-247c-4770-94da-577a2ab43b48",
     "created_at": "2026-07-29T12:06:56.663637",
     "name": "Potência CC Strings Perdida",
@@ -612,6 +412,205 @@
       "seriesDashes": {},
       "seriesFills": {},
       "legendPosition": "right"
+    },
+    "shared": true
+  },
+  {
+    "id": "c8d97280-89bd-4aa0-ba38-3d4db3731b12",
+    "created_at": "2026-08-07T14:46:50.045470",
+    "name": "PVSyst e Energia Gerada",
+    "user": "deschamps.ufsc@gmail.com",
+    "selectedDates": [
+      "2026-06-10",
+      "2026-06-11",
+      "2026-06-12",
+      "2026-06-15",
+      "2026-06-16"
+    ],
+    "selectedSeries": [
+      "Energia PMI",
+      "Energia PMI_válida",
+      "E_Grid_Ajustada_Corr_Unidade_válida"
+    ],
+    "activeFilters": [],
+    "visibleFilters": [
+      "Dados Válidos"
+    ],
+    "filterColors": {
+      "Tracker Piranômetro": "#f97316",
+      "Simultaneidade": "#ef4444",
+      "curtailment": "#059669",
+      "Dados Válidos": "#7c3aed"
+    },
+    "chartConfig": {
+      "gridX": true,
+      "gridY1": true,
+      "gridY2": false,
+      "gridY3": false,
+      "gridY4": false,
+      "xGridSpacing": "",
+      "xLimits": {
+        "min": "",
+        "max": "23:59"
+      },
+      "y1Limits": {
+        "min": 0,
+        "max": 48
+      },
+      "y2Limits": {
+        "min": "",
+        "max": ""
+      },
+      "y3Limits": {
+        "min": "",
+        "max": ""
+      },
+      "y4Limits": {
+        "min": "",
+        "max": ""
+      },
+      "appliedRanges": {},
+      "seriesAxisMap": {
+        "E_Grid": "y1",
+        "GlobEff": "y2",
+        "GlobInc": "y2",
+        "PR": "y4",
+        "TArrWtd": "y3",
+        "E_Grid_válida": "y1",
+        "GlobInc_válida": "y2",
+        "Energia PMI_válida": "y1",
+        "Energia PMI": "y1",
+        "E_Grid_Ajustada_MW_válida": "y1",
+        "geff": "hidden:y1",
+        "geff_válida": "hidden:y1",
+        "E_Grid_Ajustada_Corr_Unidade_válida": "y1"
+      },
+      "seriesColors": {
+        "E_Grid": "#2E7D32",
+        "GlobEff": "#EF6C00",
+        "GlobInc": "#F9A825",
+        "PR": "#C62828",
+        "TArrWtd": "#0277BD",
+        "E_Grid_válida": "#2E7D32",
+        "GlobInc_válida": "#F9A825",
+        "Energia PMI_válida": "#0277BD",
+        "Energia PMI": "#0277BD",
+        "E_Grid_Ajustada_MW_válida": "#E04880",
+        "geff": "#EF6C00",
+        "geff_válida": "#EF6C00",
+        "E_Grid_Ajustada_Corr_Unidade_válida": "#D81B60"
+      },
+      "seriesWidths": {
+        "PR": 0.5,
+        "Energia PMI_válida": 1,
+        "Energia PMI": 1,
+        "geff": 1,
+        "geff_válida": 1,
+        "E_Grid_Ajustada_MW_válida": 1.5
+      },
+      "seriesDashes": {
+        "PR": "dot",
+        "Energia PMI_válida": "solid",
+        "Energia PMI": "solid",
+        "geff": "solid",
+        "geff_válida": "solid",
+        "E_Grid_Ajustada_MW_válida": "solid"
+      },
+      "seriesFills": {
+        "GlobInc_válida": 20,
+        "Energia PMI_válida": 9
+      },
+      "legendPosition": "top"
+    },
+    "shared": true
+  },
+  {
+    "id": "e4fb18a5-4141-478b-8fa3-f565c6f503b6",
+    "created_at": "2026-08-14T15:37:32.222824",
+    "name": "Curtailment",
+    "user": "deschamps.ufsc@gmail.com",
+    "selectedDates": [
+      "2026-06-09",
+      "2026-06-10",
+      "2026-06-11",
+      "2026-06-12",
+      "2026-06-15",
+      "2026-06-16",
+      "2026-06-17"
+    ],
+    "selectedSeries": [
+      "Potência PPC_15min",
+      "potencia_ppc",
+      "referencia_ppc",
+      "Referência PPC_15min"
+    ],
+    "activeFilters": [],
+    "visibleFilters": [
+      "curtailment"
+    ],
+    "filterColors": {
+      "Tracker Piranômetro": "#f97316",
+      "Simultaneidade": "#ef4444",
+      "curtailment": "#059669",
+      "Dados Válidos": "#7c3aed"
+    },
+    "chartConfig": {
+      "gridX": true,
+      "gridY1": true,
+      "gridY2": false,
+      "gridY3": false,
+      "gridY4": false,
+      "xGridSpacing": "",
+      "xLimits": {
+        "min": "00:00",
+        "max": "23:59"
+      },
+      "y1Limits": {
+        "min": -3,
+        "max": 56
+      },
+      "y2Limits": {
+        "min": "",
+        "max": ""
+      },
+      "y3Limits": {
+        "min": "",
+        "max": ""
+      },
+      "y4Limits": {
+        "min": "",
+        "max": ""
+      },
+      "appliedRanges": {},
+      "seriesAxisMap": {
+        "Potência PPC_15min": "y1",
+        "potencia_ppc": "y1",
+        "Referência PPC_15min": "y1",
+        "referencia_ppc": "y1"
+      },
+      "seriesColors": {
+        "Potência PPC_15min": "#7CB342",
+        "potencia_ppc": "#00838F",
+        "Referência PPC_15min": "#6A1B9A",
+        "referencia_ppc": "#E53935"
+      },
+      "seriesWidths": {
+        "Potência PPC_15min": 0.5,
+        "potencia_ppc": 1.5,
+        "Referência PPC_15min": 0.5,
+        "referencia_ppc": 1.5
+      },
+      "seriesDashes": {
+        "Potência PPC_15min": "solid",
+        "potencia_ppc": "solid",
+        "Referência PPC_15min": "solid",
+        "referencia_ppc": "solid"
+      },
+      "seriesFills": {
+        "Potência PPC_15min": 20,
+        "Referência PPC_15min": 10
+      },
+      "legendPosition": "top"
     },
     "shared": true
   }

@@ -2,6 +2,7 @@ import os
 import json
 import pandas as pd
 import numpy as np
+import pyarrow.parquet as pq
 from typing import List, Dict, Any
 from utils.config import DATA_DIR
 from utils.logger import logger
@@ -285,6 +286,11 @@ def run_flow_processing(usina: str, dates_str: str = None, progress_callback=Non
                 
                 if filter_name and filter_name in filter_map:
                     f_def = filter_map[filter_name]
+                    adj = f_def.get("adjustment_factor")
+                    if adj is not None and adj != 1.0 and adj != 1:
+                        s_data = s_data * adj
+                        s_data_semTR = s_data_semTR * adj
+
                     if f_def.get("min_value") is not None:
                         if f_def.get("min_action") == "substituir":
                             s_data[s_data < f_def["min_value"]] = f_def["min_value"]
@@ -356,6 +362,11 @@ def run_flow_processing(usina: str, dates_str: str = None, progress_callback=Non
                 out_filter_name = agg.get("data", {}).get("outputFilter")
                 if out_filter_name and out_filter_name in filter_map:
                     f_def = filter_map[out_filter_name]
+                    adj = f_def.get("adjustment_factor")
+                    if adj is not None and adj != 1.0 and adj != 1:
+                        agg_result = agg_result * adj
+                        agg_result_semTR = agg_result_semTR * adj
+
                     if f_def.get("min_value") is not None:
                         if f_def.get("min_action") == "substituir":
                             agg_result[agg_result < f_def["min_value"]] = f_def["min_value"]
@@ -512,6 +523,11 @@ def run_flow_processing(usina: str, dates_str: str = None, progress_callback=Non
             irrad_var = epi_params.get("irradianciaVar")
             ohm_var = epi_params.get("ohmVar")
             earray_var = epi_params.get("earrayVar")
+            fator_conversao_str = epi_params.get("fator_conversao", "1")
+            try:
+                fator_conversao = float(str(fator_conversao_str).replace(',', '.'))
+            except ValueError:
+                fator_conversao = 1.0
             
             vars_to_load = [v for v in [energia_var, irrad_var, ohm_var, earray_var] if v]
             if vars_to_load:
@@ -544,12 +560,18 @@ def run_flow_processing(usina: str, dates_str: str = None, progress_callback=Non
                                 
                             for v in vars_to_load:
                                 if v in df_pvsyst_day.columns:
+                                    val_series = df_pvsyst_day[v]
+                                    
+                                    # Aplica o fator de conversão nas variáveis de energia (não na irradiância)
+                                    if v in [energia_var, ohm_var, earray_var] and fator_conversao != 1.0:
+                                        val_series = val_series * fator_conversao
+                                        
                                     if v == ohm_var:
-                                        processed_df["OhmLoss"] = df_pvsyst_day[v]
+                                        processed_df["OhmLoss"] = val_series
                                     elif v == earray_var:
-                                        processed_df["EArray"] = df_pvsyst_day[v]
+                                        processed_df["EArray"] = val_series
                                     else:
-                                        processed_df[v] = df_pvsyst_day[v]
+                                        processed_df[v] = val_series
                     except Exception as e:
                         logger.warning(f"[EPI] Erro ao carregar PVSyst para {date}: {e}")
 
@@ -566,6 +588,10 @@ def run_flow_processing(usina: str, dates_str: str = None, progress_callback=Non
             check_potencia_ppc = params.get("potencia_ppc", False) # Desativado conforme pedido
             check_energia_pmi = params.get("energia_pmi", True)
             check_curtailment = params.get("curtailment", False)
+            
+            horario_valido_enabled = params.get("horario_valido_enabled", False)
+            horario_start = params.get("horario_start", "06:00")
+            horario_end = params.get("horario_end", "19:00")
             
             valid_mask = pd.Series(True, index=processed_df.index)
             
@@ -589,6 +615,20 @@ def run_flow_processing(usina: str, dates_str: str = None, progress_callback=Non
                     valid_mask = valid_mask & tcel_data.notna()
                 else:
                     valid_mask = False
+                    
+            if horario_valido_enabled:
+                import datetime
+                try:
+                    t_start = datetime.datetime.strptime(horario_start, "%H:%M").time()
+                    t_end = datetime.datetime.strptime(horario_end, "%H:%M").time()
+                    if isinstance(processed_df.index, pd.DatetimeIndex):
+                        horario_mask = (processed_df.index.time >= t_start) & (processed_df.index.time <= t_end)
+                        valid_mask = valid_mask & horario_mask
+                        processed_df["Horário Válido"] = horario_mask.astype(int)
+                    else:
+                        processed_df["Horário Válido"] = 1
+                except Exception as e:
+                    print(f"Erro ao processar Horário Válido: {e}")
                     
             # check_potencia_ppc removido da lógica de simultaneidade conforme pedido
                     
@@ -624,6 +664,19 @@ def run_flow_processing(usina: str, dates_str: str = None, progress_callback=Non
                 # ponto invalidado pelo Curtailment também derrube o bloco inteiro de 5 min
                 if check_energia_pmi and isinstance(valid_mask, pd.Series):
                     valid_mask = valid_mask.groupby(pd.Grouper(freq='5min')).transform('min').astype(bool)
+            
+            # --- VALIDAÇÃO DO TRACKER PIRANÔMETRO ---
+            # Verifica se a usina tem rastreador analisando se há colunas de erro do tracker geradas no fluxo
+            has_tracker = any(c.startswith("flag_tracker_erro") for c in processed_df.columns)
+            if has_tracker:
+                tracker_flag = processed_df.get("Tracker Piranômetro")
+                if tracker_flag is not None:
+                    # O tracker só é válido se a flag for exatamente 1
+                    valid_mask = valid_mask & (tracker_flag == 1)
+                    
+                    # Se a energia_pmi estiver ativa, garantimos a sincronia do bloco de 5 min
+                    if check_energia_pmi and isinstance(valid_mask, pd.Series):
+                        valid_mask = valid_mask.groupby(pd.Grouper(freq='5min')).transform('min').astype(bool)
             
             if isinstance(valid_mask, bool):
                 processed_df[out_name] = int(valid_mask)
@@ -723,10 +776,20 @@ def run_flow_processing(usina: str, dates_str: str = None, progress_callback=Non
             if "gpoa_válida" in processed_df.columns:
                 processed_df["gpoa_válida_15min"] = processed_df.groupby(pd.Grouper(freq="15min"))["gpoa_válida"].transform("mean")
 
-            # --- Cria série E_Grid_Ajustada_válida ---
+            # --- Busca configuração de unidade do Energia PMI ---
+            pmi_output_unit = "MW"
+            for n in nodes:
+                if n.get("id") == "energia_pmi" or n.get("type") == "energia_pmi":
+                    pmi_output_unit = n.get("data", {}).get("energiaPmiParams", {}).get("outputUnit", "MW")
+                    break
+
+            # --- Cria série E_Grid_Ajustada_válida e a versão com correção de unidade ---
             if "E_Grid_válida" in processed_df.columns and "GlobInc_válida" in processed_df.columns and "geff_válida" in processed_df.columns:
                 processed_df["E_Grid_Ajustada_válida"] = processed_df["E_Grid_válida"] * (processed_df["geff_válida"] / processed_df["GlobInc_válida"].replace(0, np.nan))
-                processed_df["E_Grid_Ajustada_MW_válida"] = processed_df["E_Grid_Ajustada_válida"] / 1000.0
+                
+                # Aplica fator de correção se a série do PMI for em MW (padrão)
+                fator_unidade = 1000.0 if pmi_output_unit == "MW" else 1.0
+                processed_df["E_Grid_Ajustada_Corr_Unidade_válida"] = processed_df["E_Grid_Ajustada_válida"] / fator_unidade
 
             # --- Cria série Ajuste Potência CC String -> E_Grid ---
             if "E_Grid" in processed_df.columns and "EArray" in processed_df.columns and "OhmLoss" in processed_df.columns:
@@ -744,10 +807,10 @@ def run_flow_processing(usina: str, dates_str: str = None, progress_callback=Non
 
             # --- Cria a série Potência CA Vaga_válida e Recuperável_válida ---
             energia_pmi_valida = processed_df.get("Energia PMI_válida")
-            egrid_mw_valida = processed_df.get("E_Grid_Ajustada_MW_válida")
+            egrid_corr_valida = processed_df.get("E_Grid_Ajustada_Corr_Unidade_válida")
             
-            if energia_pmi_valida is not None and egrid_mw_valida is not None:
-                vaga_valida = (egrid_mw_valida - energia_pmi_valida).clip(lower=0)
+            if energia_pmi_valida is not None and egrid_corr_valida is not None:
+                vaga_valida = (egrid_corr_valida - energia_pmi_valida).clip(lower=0)
                 processed_df["Potência CA Vaga_válida"] = vaga_valida
                 
                 if "Potência CC Strings Perdida Não OK Corrigida_válida" in processed_df.columns:
@@ -810,10 +873,11 @@ def check_3_hours_consecutive(series: pd.Series, threshold: float = 600, require
         return f"NÃO_OK|{stats_str}"
 
 
-def get_flow_integrals(usina: str) -> Dict[str, Any]:
+def get_flow_integrals(usina: str, progress_callback=None) -> Dict[str, Any]:
     """
     Calcula a integral (soma acumulada diária) para cada variável de entrada e saída
     do fluxograma, agrupado por dia.
+    progress_callback(atual, total)
     """
     logger.info(f"[FLOW] Calculando integrais diárias para usina: {usina}")
     flow_path = os.path.join(DATA_DIR, usina, "flow_config.json")
@@ -875,6 +939,10 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
             inputs = node.get("data", {}).get("inputs", [])
             agg_label = aggregator_label_map.get(group, node.get("data", {}).get("label", group))
             
+            if group == "energia_pmi":
+                input_type = node.get("data", {}).get("energiaPmiParams", {}).get("inputType", "energy_5min")
+                output_unit = node.get("data", {}).get("energiaPmiParams", {}).get("outputUnit", "MW")
+            
             for idx, inp in enumerate(inputs):
                 if isinstance(inp, str):
                     series_name = inp
@@ -894,7 +962,8 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                     "type": "input",
                     "node_id": group,
                     "series": series_name,
-                    "filter": filter_name
+                    "filter": filter_name,
+                    "input_type": input_type if group == "energia_pmi" else None
                 })
             
             # Depois o output do agregador
@@ -905,7 +974,8 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                 "key": "Energia PMI" if group == "energia_pmi" else group,
                 "label": f"{agg_label} (Dia completo)" if (is_sujidade_restricted or is_sujidade_trimmed) else agg_label,
                 "type": "output",
-                "node_id": group
+                "node_id": group,
+                "output_unit": output_unit if group == "energia_pmi" else None
             })
             if group.lower() not in ["sujidade", "tracker", "curtailment", "epi", "pvsyst"]:
                 val_key = "Energia PMI_válida" if group == "energia_pmi" else f"{group}_válida"
@@ -913,7 +983,8 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                     "key": val_key,
                     "label": f"{agg_label} (Válido)",
                     "type": "output",
-                    "node_id": group
+                    "node_id": group,
+                    "output_unit": output_unit if group == "energia_pmi" else None
                 })
             
             if is_sujidade_restricted:
@@ -966,6 +1037,25 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                     "type": "special",
                     "node_id": "pvsyst"
                 })
+                # Adiciona TMY
+                column_definitions.append({
+                    "key": "pr_prevista",
+                    "label": "PR Prevista",
+                    "type": "special",
+                    "node_id": "pvsyst_tmy"
+                })
+                column_definitions.append({
+                    "key": "pr_prevista_bifacial",
+                    "label": "PR Prevista (Bifacial)",
+                    "type": "special",
+                    "node_id": "pvsyst_tmy"
+                })
+                column_definitions.append({
+                    "key": "tarrwtd",
+                    "label": "TArrWtd",
+                    "type": "special",
+                    "node_id": "pvsyst_tmy"
+                })
                 # Adiciona Energia Esperada Ajustada (Válido)
                 column_definitions.append({
                     "key": "E_Grid_Ajustada_válida",
@@ -996,7 +1086,8 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                     "key": "Energia PMI" if group == "energia_pmi" else group,
                     "label": node_label,
                     "type": "special",
-                    "node_id": group
+                    "node_id": group,
+                    "output_unit": output_unit if group == "energia_pmi" else None
                 })
                 if group.lower() not in ["sujidade", "tracker", "curtailment"]:
                     val_key = "Energia PMI_válida" if group == "energia_pmi" else f"{group}_válida"
@@ -1004,7 +1095,8 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                         "key": val_key,
                         "label": f"{node_label} (Válido)",
                         "type": "special",
-                        "node_id": group
+                        "node_id": group,
+                        "output_unit": output_unit if group == "energia_pmi" else None
                     })
 
         # Adiciona colunas extras logo após o EPI ser processado no loop
@@ -1052,16 +1144,45 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
             "node_id": "validacao"
         })
 
+    # Carrega dados TMY se disponíveis
+    tmy_path = os.path.join(DATA_DIR, usina.strip(), "pvsyst_tmy.parquet")
+    tmy_df = None
+    if os.path.exists(tmy_path):
+        try:
+            tmy_df = pd.read_parquet(tmy_path)
+            tmy_df = tmy_df.set_index('month')
+        except Exception as e:
+            logger.warning(f"Erro ao ler pvsyst_tmy.parquet: {e}")
+
+    # Pré-calcular colunas necessárias do arquivo bruto para evitar carregar o arquivo inteiro na memória
+    needed_raw_cols = set(["timestamp"])
+    for col in column_definitions:
+        if col["type"] == "input":
+            series_name = col.get("series")
+            if series_name and not series_name.startswith("agg_"):
+                needed_raw_cols.add(series_name)
+
     # Agora vamos calcular as linhas dia a dia
     rows = []
     
-    for date in sorted(available_dates):
+    total_dates = len(available_dates)
+    for i, date in enumerate(sorted(available_dates)):
+        if progress_callback:
+            progress_callback(i, total_dates)
+            
         raw_path = _parquet_path(date, usina)
         processed_path = get_processed_path(date, usina)
         
         if not os.path.exists(raw_path): continue
         
-        raw_df = pd.read_parquet(raw_path)
+        try:
+            pf = pq.ParquetFile(raw_path)
+            avail_cols = pf.schema.names
+            cols_to_read = [c for c in needed_raw_cols if c in avail_cols]
+            raw_df = pf.read(columns=cols_to_read).to_pandas()
+        except Exception as e:
+            logger.error(f"Erro ao otimizar leitura do parquet {raw_path}: {e}")
+            raw_df = pd.read_parquet(raw_path)
         if "timestamp" in raw_df.columns:
             raw_df.set_index("timestamp", inplace=True)
             
@@ -1138,6 +1259,10 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                     # Aplicar filtro
                     if filter_name and filter_name in filter_map:
                         f_def = filter_map[filter_name]
+                        adj = f_def.get("adjustment_factor")
+                        if adj is not None and adj != 1.0 and adj != 1:
+                            s_data = s_data * adj
+
                         if f_def.get("min_value") is not None:
                             s_data[s_data < f_def["min_value"]] = np.nan
                         if f_def.get("max_value") is not None:
@@ -1211,7 +1336,11 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                             if col["node_id"] in ["potencia_ppc", "referencia_ppc"]:
                                 val = raw_sum / 0.06
                             elif col["node_id"] == "energia_pmi":
-                                val = raw_sum / 5.0
+                                itype = col.get("input_type", "energy_5min")
+                                if itype == "power_1min":
+                                    val = raw_sum / 60.0
+                                else:
+                                    val = raw_sum / 5.0
                             else:
                                 val = raw_sum / 60000.0
                         else:
@@ -1313,7 +1442,13 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                         # Calcular integral (soma) e converter de 1-min para base horária / kW
                         raw_sum = s_data.sum(min_count=1)
                         if raw_sum is not None and not pd.isna(raw_sum):
-                            if col["node_id"] in ["potencia_ppc", "referencia_ppc", "energia_pmi", "perdida_tracker", "recuperavel"]:
+                            if col["node_id"] == "energia_pmi":
+                                ounit = col.get("output_unit", "MW")
+                                if ounit == "kW":
+                                    val = raw_sum / 60.0
+                                else:
+                                    val = raw_sum / 0.06
+                            elif col["node_id"] in ["potencia_ppc", "referencia_ppc", "perdida_tracker", "recuperavel"]:
                                 val = raw_sum / 0.06
                             elif col["node_id"] in ["pvsyst", "pvsyst_ajustada", "pvlib"]:
                                 val = raw_sum / 60.0
@@ -1329,6 +1464,37 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                 row_data[col_key] = val
             else:
                 row_data[col_key] = float(val)
+                
+        # Injeta TMY
+        if tmy_df is not None:
+            month_num = pd.to_datetime(date).month
+            if month_num in tmy_df.index:
+                t_row = tmy_df.loc[month_num]
+                # Pega PR Ratio
+                if 'PR Ratio' in t_row and not pd.isna(t_row['PR Ratio']):
+                    row_data["pr_prevista"] = float(t_row['PR Ratio'])
+                else:
+                    row_data["pr_prevista"] = "-"
+                    
+                # Pega PRBifi
+                if 'PRBifi' in t_row and not pd.isna(t_row['PRBifi']):
+                    row_data["pr_prevista_bifacial"] = float(t_row['PRBifi'])
+                else:
+                    row_data["pr_prevista_bifacial"] = "-"
+                    
+                # Pega TArrWtd
+                if 'TArrWtd' in t_row and not pd.isna(t_row['TArrWtd']):
+                    row_data["tarrwtd"] = float(t_row['TArrWtd'])
+                else:
+                    row_data["tarrwtd"] = "-"
+            else:
+                row_data["pr_prevista"] = "-"
+                row_data["pr_prevista_bifacial"] = "-"
+                row_data["tarrwtd"] = "-"
+        else:
+            row_data["pr_prevista"] = "-"
+            row_data["pr_prevista_bifacial"] = "-"
+            row_data["tarrwtd"] = "-"
                 
         # Calcula o EPI (Energia PMI (Válido) / Energia Esperada Ajustada (Válido))
         if "Energia PMI_válida" in row_data and "E_Grid_Ajustada_válida" in row_data:
@@ -1367,6 +1533,9 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
                 
         rows.append(row_data)
 
+    if progress_callback:
+        progress_callback(total_dates, total_dates)
+
     return {
         "columns": [
             {
@@ -1380,18 +1549,173 @@ def get_flow_integrals(usina: str) -> Dict[str, Any]:
         "rows": rows
     }
 
-def export_pvsyst_xlsx(usina: str) -> bytes:
-    """Gera um XLSX com Timestamp, Geff, Tamb e Tcel multiplicados pelo filtro de Simultaneidade."""
+import pyarrow.parquet as pq
+import uuid
+from datetime import datetime
+
+# Dict for tracking export tasks in background
+EXPORT_TASKS = {}
+
+def start_export_pvsyst_task(usina: str, selected_dates: list = None) -> str:
+    task_id = str(uuid.uuid4())
+    EXPORT_TASKS[task_id] = {"progress": 0, "status": "processing", "file_path": None, "error": None}
+    return task_id
+
+# Dict for tracking integrals tasks in background
+INTEGRALS_TASKS = {}
+
+def start_integrals_task(usina: str) -> str:
+    task_id = str(uuid.uuid4())
+    INTEGRALS_TASKS[task_id] = {"progress": 0, "status": "processing", "result": None, "error": None}
+    return task_id
+
+def run_integrals_background(task_id: str, usina: str):
+    def on_progress(current, total):
+        if total > 0:
+            INTEGRALS_TASKS[task_id]["progress"] = int((current / total) * 100)
+            
+    try:
+        result = get_flow_integrals(usina, progress_callback=on_progress)
+        INTEGRALS_TASKS[task_id]["progress"] = 100
+        INTEGRALS_TASKS[task_id]["status"] = "done"
+        INTEGRALS_TASKS[task_id]["result"] = result
+    except Exception as e:
+        logger.error(f"[INTEGRALS] Erro na task {task_id}: {e}")
+        INTEGRALS_TASKS[task_id]["status"] = "error"
+        INTEGRALS_TASKS[task_id]["error"] = str(e)
+
+def run_export_pvsyst_background(task_id: str, usina: str, selected_dates: list = None):
+    try:
+        import io
+        processed_dir = os.path.join(DATA_DIR, usina, "processed")
+        if not os.path.exists(processed_dir):
+            EXPORT_TASKS[task_id] = {"progress": 100, "status": "error", "error": "Diretório não encontrado", "file_path": None}
+            return
+            
+        dfs = []
+        
+        if selected_dates:
+            files_to_load = [f"{d}.parquet" for d in selected_dates]
+        else:
+            files_to_load = [f for f in os.listdir(processed_dir) if f.endswith(".parquet")]
+            
+        total_files = len(files_to_load)
+        if total_files == 0:
+            EXPORT_TASKS[task_id] = {"progress": 100, "status": "error", "error": "Nenhum dado encontrado", "file_path": None}
+            return
+
+        for i, f in enumerate(sorted(files_to_load)):
+            fpath = os.path.join(processed_dir, f)
+            if os.path.exists(fpath):
+                try:
+                    # Mem optimization: Read only the required columns for PVSyst
+                    schema = pq.read_schema(fpath)
+                    all_cols = schema.names
+                    
+                    geff_cols = [c for c in all_cols if c.lower() == 'geff']
+                    tamb_cols = [c for c in all_cols if c.lower() == 'tamb']
+                    tcel_cols = [c for c in all_cols if c.lower() == 'tcel']
+                    valid_cols = [c for c in all_cols if c.lower() == 'dados válidos']
+                    
+                    cols_to_read = ['timestamp']
+                    cols_to_read.extend(geff_cols)
+                    cols_to_read.extend(tamb_cols)
+                    cols_to_read.extend(tcel_cols)
+                    cols_to_read.extend(valid_cols)
+                    
+                    # Deduplicate safely preserving order
+                    seen = set()
+                    final_cols = [c for c in cols_to_read if not (c in seen or seen.add(c)) and c in all_cols]
+                    
+                    df = pd.read_parquet(fpath, columns=final_cols)
+                    dfs.append(df)
+                except Exception as e:
+                    logger.error(f"[FLOW EXPORT] Erro ao ler {f}: {e}")
+            
+            # Progress up to 50% during file loading
+            EXPORT_TASKS[task_id]["progress"] = int(((i + 1) / total_files) * 50)
+                    
+        if not dfs:
+            EXPORT_TASKS[task_id] = {"progress": 100, "status": "error", "error": "Falha ao ler arquivos", "file_path": None}
+            return
+            
+        EXPORT_TASKS[task_id]["progress"] = 55
+        full_df = pd.concat(dfs, ignore_index=True)
+        cols = full_df.columns
+        
+        EXPORT_TASKS[task_id]["progress"] = 65
+        
+        geff_col = next((c for c in cols if c.lower() == 'geff'), None)
+        tamb_col = next((c for c in cols if c.lower() == 'tamb'), None)
+        tcel_col = next((c for c in cols if c.lower() == 'tcel'), None)
+        valid_col = next((c for c in cols if c.lower() == 'dados válidos'), None)
+        
+        output_df = pd.DataFrame()
+        if 'timestamp' in cols:
+            output_df['Timestamp'] = pd.to_datetime(full_df['timestamp'])
+        elif full_df.index.name == 'timestamp':
+            output_df['Timestamp'] = pd.to_datetime(full_df.index)
+            
+        if 'Timestamp' in output_df.columns:
+            output_df['Year'] = output_df['Timestamp'].dt.year
+            output_df['Month'] = output_df['Timestamp'].dt.month
+            output_df['Date'] = output_df['Timestamp'].dt.day
+            output_df['Hour'] = output_df['Timestamp'].dt.hour
+            output_df['Minute'] = output_df['Timestamp'].dt.minute
+            
+        EXPORT_TASKS[task_id]["progress"] = 75
+            
+        if valid_col and geff_col and tamb_col and tcel_col:
+            mask = full_df[valid_col].fillna(0).astype(int)
+            output_df['Geff'] = full_df[geff_col].where(mask == 1, np.nan)
+            output_df['Tamb'] = full_df[tamb_col].where(mask == 1, np.nan)
+            output_df['Tcel'] = full_df[tcel_col].where(mask == 1, np.nan)
+        else:
+            logger.warning(f"[FLOW EXPORT] Faltam colunas para exportação completa.")
+            if geff_col: output_df['Geff'] = full_df[geff_col]
+            if tamb_col: output_df['Tamb'] = full_df[tamb_col]
+            if tcel_col: output_df['Tcel'] = full_df[tcel_col]
+            
+        EXPORT_TASKS[task_id]["progress"] = 85
+            
+        # Remove timezone so it exports cleanly if it is tz-aware
+        if 'Timestamp' in output_df.columns and pd.api.types.is_datetime64tz_dtype(output_df['Timestamp']):
+            output_df['Timestamp'] = output_df['Timestamp'].dt.tz_localize(None)
+            
+        # Format Timestamp as string 'DD/MM/YYYY HH:MM' for excel parsing identical to image
+        if 'Timestamp' in output_df.columns:
+            output_df['Timestamp'] = output_df['Timestamp'].dt.strftime('%d/%m/%Y %H:%M')
+
+        EXPORT_TASKS[task_id]["progress"] = 90
+        
+        temp_file = os.path.join(processed_dir, f"export_pvsyst_{task_id}.csv")
+        output_df.to_csv(temp_file, index=False, sep=';', decimal=',')
+        
+        EXPORT_TASKS[task_id] = {"progress": 100, "status": "done", "file_path": temp_file, "error": None}
+        
+    except Exception as e:
+        logger.error(f"[FLOW EXPORT TASK] Erro fatal na exportacao: {e}")
+        EXPORT_TASKS[task_id] = {"progress": 100, "status": "error", "error": str(e), "file_path": None}
+
+def export_pvsyst_csv(usina: str, selected_dates: list = None) -> bytes:
+    """Gera um CSV com Timestamp, Year, Month, Date, Hour, Minute, Geff, Tamb e Tcel multiplicados pelo filtro de Simultaneidade."""
     import io
     processed_dir = os.path.join(DATA_DIR, usina, "processed")
     if not os.path.exists(processed_dir):
         return b""
         
     dfs = []
-    for f in sorted(os.listdir(processed_dir)):
-        if f.endswith(".parquet"):
+    
+    if selected_dates:
+        files_to_load = [f"{d}.parquet" for d in selected_dates]
+    else:
+        files_to_load = [f for f in os.listdir(processed_dir) if f.endswith(".parquet")]
+
+    for f in sorted(files_to_load):
+        fpath = os.path.join(processed_dir, f)
+        if os.path.exists(fpath):
             try:
-                df = pd.read_parquet(os.path.join(processed_dir, f))
+                df = pd.read_parquet(fpath)
                 dfs.append(df)
             except Exception as e:
                 logger.error(f"[FLOW EXPORT] Erro ao ler {f}: {e}")
@@ -1409,9 +1733,16 @@ def export_pvsyst_xlsx(usina: str) -> bytes:
     
     output_df = pd.DataFrame()
     if 'timestamp' in cols:
-        output_df['Timestamp'] = full_df['timestamp']
+        output_df['Timestamp'] = pd.to_datetime(full_df['timestamp'])
     elif full_df.index.name == 'timestamp':
-        output_df['Timestamp'] = full_df.index
+        output_df['Timestamp'] = pd.to_datetime(full_df.index)
+        
+    if 'Timestamp' in output_df.columns:
+        output_df['Year'] = output_df['Timestamp'].dt.year
+        output_df['Month'] = output_df['Timestamp'].dt.month
+        output_df['Date'] = output_df['Timestamp'].dt.day
+        output_df['Hour'] = output_df['Timestamp'].dt.hour
+        output_df['Minute'] = output_df['Timestamp'].dt.minute
         
     if valid_col and geff_col and tamb_col and tcel_col:
         mask = full_df[valid_col].fillna(0).astype(int)
@@ -1424,12 +1755,15 @@ def export_pvsyst_xlsx(usina: str) -> bytes:
         if tamb_col: output_df['Tamb'] = full_df[tamb_col]
         if tcel_col: output_df['Tcel'] = full_df[tcel_col]
         
-    # Remove timezone so Excel can save it, if it is tz-aware
-    if pd.api.types.is_datetime64tz_dtype(output_df['Timestamp']):
+    # Remove timezone so it exports cleanly if it is tz-aware
+    if 'Timestamp' in output_df.columns and pd.api.types.is_datetime64tz_dtype(output_df['Timestamp']):
         output_df['Timestamp'] = output_df['Timestamp'].dt.tz_localize(None)
+        
+    # Format Timestamp as string 'DD/MM/YYYY HH:MM' for excel parsing identical to image
+    if 'Timestamp' in output_df.columns:
+        output_df['Timestamp'] = output_df['Timestamp'].dt.strftime('%d/%m/%Y %H:%M')
 
-    excel_buffer = io.BytesIO()
-    with pd.ExcelWriter(excel_buffer, engine="openpyxl") as writer:
-        output_df.to_excel(writer, index=False, sheet_name="PVSyst Export")
-    return excel_buffer.getvalue()
+    csv_buffer = io.BytesIO()
+    output_df.to_csv(csv_buffer, index=False, sep=';', decimal=',')
+    return csv_buffer.getvalue()
 

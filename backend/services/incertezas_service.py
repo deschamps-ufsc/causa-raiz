@@ -3,6 +3,7 @@ import numpy as np
 import os
 import json
 import logging
+import copy
 from typing import Dict, List, Any
 
 from utils.config import DATA_DIR
@@ -34,10 +35,11 @@ def run_uncertainty_simulations(usina: str, dates: List[str], uncertainties: Dic
     if not dfs:
         raise ValueError(f"Nenhum dado processado encontrado para a usina {usina} no período selecionado.")
 
-    # Busca o nó pvlib para enviar à simulação
     pvlib_node = next((n for n in nodes if n.get("type") == "pvlib" or n.get("id") == "pvlib"), None)
     if not pvlib_node:
         raise ValueError("Nó PVLib não encontrado na configuração fornecida.")
+        
+    use_fixed_soiling = pvlib_node.get("data", {}).get("pvlibParams", {}).get("use_fixed_soiling", False)
 
     # Variáveis alvo e colunas no dataframe
     targets = {
@@ -116,33 +118,48 @@ def run_uncertainty_simulations(usina: str, dates: List[str], uncertainties: Dic
             if isinstance(col_names, str):
                 col_names = [col_names]
                 
-            actual_cols = [c for c in col_names if c in df_day.columns]
+            if var_key == "sujidade" and use_fixed_soiling:
+                actual_cols = ["dummy"]
+            else:
+                actual_cols = [c for c in col_names if c in df_day.columns]
+                
             if not actual_cols:
                 continue
                 
             for scenario, multiplier in [("min", 1.0 - (u_pct/100.0)), ("max", 1.0 + (u_pct/100.0))]:
                 df_perturbed = df_day.copy()
-                for c in actual_cols:
-                    if var_key == "tmod":
-                        delta = -u_pct if scenario == "min" else u_pct
-                        df_perturbed[c] = df_perturbed[c] + delta
-                    elif var_key == "sujidade":
-                        is_efficiency = df_day[c].mean() > 50
-                        delta = -u_pct if scenario == "min" else u_pct
-                        if is_efficiency:
-                            # A perda é 100 - eficiência
-                            loss = 100.0 - df_perturbed[c]
-                            new_loss = (loss + delta).clip(lower=0)
-                            df_perturbed[c] = 100.0 - new_loss
+                pvlib_node_perturbed = copy.deepcopy(pvlib_node)
+                
+                if var_key == "sujidade" and use_fixed_soiling:
+                    delta = -u_pct if scenario == "min" else u_pct
+                    raw_val = pvlib_node_perturbed.get("data", {}).get("pvlibParams", {}).get("fixed_soiling_pct")
+                    base_val = float(raw_val if raw_val is not None else 1.0)
+                    if "pvlibParams" not in pvlib_node_perturbed["data"]:
+                        pvlib_node_perturbed["data"]["pvlibParams"] = {}
+                    pvlib_node_perturbed["data"]["pvlibParams"]["fixed_soiling_pct"] = max(0.0, base_val + delta)
+                else:
+                    for c in actual_cols:
+                        if c == "dummy": continue
+                        if var_key == "tmod":
+                            delta = -u_pct if scenario == "min" else u_pct
+                            df_perturbed[c] = df_perturbed[c] + delta
+                        elif var_key == "sujidade":
+                            is_efficiency = df_day[c].mean() > 50
+                            delta = -u_pct if scenario == "min" else u_pct
+                            if is_efficiency:
+                                # A perda é 100 - eficiência
+                                loss = 100.0 - df_perturbed[c]
+                                new_loss = (loss + delta).clip(lower=0)
+                                df_perturbed[c] = 100.0 - new_loss
+                            else:
+                                df_perturbed[c] = (df_perturbed[c] + delta).clip(lower=0)
                         else:
-                            df_perturbed[c] = (df_perturbed[c] + delta).clip(lower=0)
-                    else:
-                        multiplier = 1.0 - (u_pct/100.0) if scenario == "min" else 1.0 + (u_pct/100.0)
-                        df_perturbed[c] = df_perturbed[c] * multiplier
+                            multiplier = 1.0 - (u_pct/100.0) if scenario == "min" else 1.0 + (u_pct/100.0)
+                            df_perturbed[c] = df_perturbed[c] * multiplier
                     
                 df_perturbed = recalc_df(df_perturbed)
                 
-                res_pert = run_pvlib_simulation(df_perturbed, pvlib_node, usina, f"{var_key}_{scenario}", nodes)
+                res_pert = run_pvlib_simulation(df_perturbed, pvlib_node_perturbed, usina, f"{var_key}_{scenario}", nodes)
                 
                 if res_pert and "pvlib_E_Grid_válida" in res_pert:
                     results[f"{var_key}_{scenario}"]["valor"] += float(res_pert["pvlib_E_Grid_válida"].sum() / 60.0)

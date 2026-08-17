@@ -1,0 +1,178 @@
+{
+  "nodeConfigs": {
+    "gpoa": {
+      "inputs": [
+        {
+          "sensors": [],
+          "series": "CTG_CR1X_Pyr_1M_TR1_POAc_MS80_Avg",
+          "filter": "Irradiação_Qualidade_Travado"
+        }
+      ],
+      "outputFilter": "Irradiação_50_W",
+      "operation": "sum"
+    },
+    "grear": {
+      "inputs": [
+        {
+          "sensors": [],
+          "series": "CTG_CR1X_Pyr_1M_TR1_RPOAc_MS80_Avg",
+          "filter": "Irradiação_Qualidade_Travado"
+        }
+      ],
+      "outputFilter": "",
+      "operation": "sum"
+    },
+    "tracker": {
+      "inputs": [
+        {
+          "sensors": [
+            "CTG_CR1X_Pyr_1M_TR1_POAc_MS80_Avg",
+            "CTG_CR1X_Pyr_1M_TR1_RPOAc_MS80_Avg"
+          ],
+          "series": "CTG_CR1X_Pyr_1M_TR1_POAy_MS80",
+          "filter": ""
+        }
+      ],
+      "outputFilter": "",
+      "operation": "sum",
+      "trackerParams": {
+        "latitude": -27.4312,
+        "longitude": -48.4409,
+        "gcr": 0.325,
+        "max_angle": 55,
+        "tolerance": 10,
+        "angulo_defesa": -60,
+        "margem_perda_cc": 0,
+        "inverter_sinal": true
+      }
+    },
+    "tamb": {
+      "inputs": [
+        {
+          "sensors": [],
+          "series": "CTG_CR1X_Pyr_1M_TR4_RPOAInTe_MS80",
+          "filter": "Temperatura Ambiente_CTG"
+        }
+      ],
+      "outputFilter": "",
+      "operation": "sum"
+    },
+    "tmod": {
+      "inputs": [
+        {
+          "series": "CTG_CR1X_Tmod_1M_TR1_TmN_Avg",
+          "filter": "Temperatura Ambiente",
+          "sensors": []
+        },
+        {
+          "series": "CTG_CR1X_Tmod_1M_TR1_TmS_Avg",
+          "filter": "Temperatura Ambiente",
+          "sensors": []
+        }
+      ],
+      "outputFilter": "",
+      "operation": "mean"
+    },
+    "sujidade": {
+      "inputs": [],
+      "operation": "sum"
+    },
+    "potencia_ppc": {
+      "inputs": [],
+      "operation": "sum"
+    },
+    "referencia_ppc": {
+      "inputs": [],
+      "operation": "sum"
+    },
+    "energia_pmi": {
+      "inputs": [
+        {
+          "sensors": [],
+          "series": "CTG_TR1_INV_Pac",
+          "filter": "Energia_PMI_Zerada"
+        }
+      ],
+      "outputFilter": "",
+      "operation": "sum",
+      "energiaPmiParams": {
+        "multiplier": 1,
+        "inputType": "power_1min",
+        "outputUnit": "kW"
+      }
+    },
+    "geff": {
+      "beta": 0.8,
+      "SSF": 0.078,
+      "MLF": 0.024,
+      "type": "geff"
+    },
+    "tcel": {
+      "type": "tcel"
+    },
+    "curtailment": {
+      "curtailmentRefMin": 52.8,
+      "curtailmentRefMargin": 3,
+      "curtailmentDiffMargin": 5,
+      "type": "curtailment"
+    },
+    "simultaneidade": {
+      "simultParams": {
+        "geff": true,
+        "tamb": true,
+        "tcel": true,
+        "energia_pmi": true,
+        "curtailment": false,
+        "potencia_ppc": true,
+        "referencia_ppc": true,
+        "horario_valido_enabled": false,
+        "horario_start": "08:30",
+        "horario_end": "16:15"
+      }
+    },
+    "pvlib": {
+      "pvlibParams": {
+        "latitude": -23.55,
+        "longitude": -46.63,
+        "altitude": 0,
+        "gcr": 0.325,
+        "axis_tilt": 0,
+        "tz": "America/Sao_Paulo",
+        "selected_modulos": [
+          "1786043541448"
+        ],
+        "selected_inversores": [
+          "1786043548199"
+        ],
+        "loss_ohm_dc": 0.81,
+        "loss_bt_ca": 0,
+        "loss_aux_kw": 0,
+        "mismatch": 0.1,
+        "lid": 1,
+        "loss_ohm_ac": 0,
+        "trafo_pnom": 0,
+        "trafo_iron_loss": 0,
+        "trafo_copper_loss": 0,
+        "loss_ohm_ac_mt": 0,
+        "use_fixed_soiling": true,
+        "fixed_soiling_pct": 1
+      },
+      "type": "pvlib"
+    },
+    "pvsyst": {
+      "type": "pvsyst"
+    },
+    "epi": {
+      "inputs": [],
+      "operation": "sum",
+      "epiParams": {
+        "energiaVar": "E_Grid",
+        "irradianciaVar": "GlobInc",
+        "ohmVar": "OhmLoss",
+        "earrayVar": "EArray",
+        "fator_conversao": "0,005",
+        "toleranciaWcpr": "3"
+      }
+    }
+  }
+}

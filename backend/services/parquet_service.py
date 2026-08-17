@@ -26,7 +26,7 @@ def list_available_dates(usina: str) -> list[str]:
         return []
     dates = []
     for fname in os.listdir(usina_dir):
-        if fname.endswith(".parquet") and fname != "pvsyst_data.parquet":
+        if fname.endswith(".parquet") and fname not in ["pvsyst_data.parquet", "pvsyst_tmy.parquet"]:
             dates.append(fname.replace(".parquet", ""))
     return sorted(dates)
 

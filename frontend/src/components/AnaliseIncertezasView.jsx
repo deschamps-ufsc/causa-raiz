@@ -11,6 +11,7 @@ const AnaliseIncertezasView = ({ usinaAtual, selectedDates }) => {
           grear: 1.0,
           tmod: 2.0,
           sujidade: 2.0,
+          modeloSimulacao: 2.0,
           energiaMedida: 0.5,
           ...JSON.parse(saved)
         };
@@ -23,6 +24,7 @@ const AnaliseIncertezasView = ({ usinaAtual, selectedDates }) => {
       grear: 1.0,
       tmod: 2.0,
       sujidade: 2.0,
+      modeloSimulacao: 2.0,
       energiaMedida: 0.5
     };
   });
@@ -61,7 +63,7 @@ const AnaliseIncertezasView = ({ usinaAtual, selectedDates }) => {
       }
 
       // 2. Post to incertezas endpoint
-      const { energiaMedida, ...backendUncertainties } = uncertainties;
+      const { energiaMedida, modeloSimulacao, ...backendUncertainties } = uncertainties;
       const payload = {
         usina: usinaAtual,
         dates: selectedDates,
@@ -260,7 +262,7 @@ const AnaliseIncertezasView = ({ usinaAtual, selectedDates }) => {
         {Object.keys(uncertainties).map(key => (
           <div key={key} style={{ display: 'flex', flexDirection: 'column', width: '150px' }}>
             <label style={{ fontSize: '13px', fontWeight: 500, color: '#334155', marginBottom: '4px', textTransform: 'capitalize', whiteSpace: 'nowrap' }}>
-              {key === 'tmod' ? 'Tmod (°C)' : key === 'energiaMedida' ? 'Energia Medida (%)' : key === 'sujidade' ? 'Sujidade (%) - Abs.' : key + ' (%)'}
+              {key === 'tmod' ? 'Tmod (°C)' : key === 'energiaMedida' ? 'Energia Medida (%)' : key === 'sujidade' ? 'Sujidade (%) - Abs.' : key === 'modeloSimulacao' ? 'Modelo de Simulação (%)' : key + ' (%)'}
             </label>
             <input 
               type="number"
@@ -355,6 +357,12 @@ const AnaliseIncertezasView = ({ usinaAtual, selectedDates }) => {
                       <td style={{ padding: '10px', borderBottom: '1px solid #e2e8f0', fontWeight: 600, color: '#15803d' }}>+{rss_pos_pct.toFixed(2)}%</td>
                     </tr>
                     
+                    {/* Linha Modelo de Simulação */}
+                    <tr style={{ background: '#f1f5f9' }}>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #e2e8f0', fontWeight: 600 }} colSpan="3">Incerteza Modelo de Simulação</td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #e2e8f0', fontWeight: 600 }}>±{Number(uncertainties.modeloSimulacao).toFixed(2)}%</td>
+                    </tr>
+                    
                     {/* Linha Energia Medida */}
                     <tr style={{ background: '#f1f5f9' }}>
                       <td style={{ padding: '10px', borderBottom: '1px solid #e2e8f0', fontWeight: 600 }} colSpan="3">Incerteza Energia Medida</td>
@@ -365,13 +373,13 @@ const AnaliseIncertezasView = ({ usinaAtual, selectedDates }) => {
                     <tr style={{ background: '#e2e8f0' }}>
                       <td style={{ padding: '10px', borderBottom: '1px solid #cbd5e1', fontWeight: 700 }} colSpan="3">Incerteza EPI (Negativa)</td>
                       <td style={{ padding: '10px', borderBottom: '1px solid #cbd5e1', fontWeight: 700, color: '#b91c1c' }}>
-                        -{Math.sqrt(Math.pow(rss_neg_pct, 2) + Math.pow(Number(uncertainties.energiaMedida), 2)).toFixed(2)}%
+                        -{Math.sqrt(Math.pow(rss_neg_pct, 2) + Math.pow(Number(uncertainties.modeloSimulacao), 2) + Math.pow(Number(uncertainties.energiaMedida), 2)).toFixed(2)}%
                       </td>
                     </tr>
                     <tr style={{ background: '#e2e8f0' }}>
                       <td style={{ padding: '10px', borderBottom: '1px solid #cbd5e1', fontWeight: 700 }} colSpan="3">Incerteza EPI (Positiva)</td>
                       <td style={{ padding: '10px', borderBottom: '1px solid #cbd5e1', fontWeight: 700, color: '#15803d' }}>
-                        +{Math.sqrt(Math.pow(rss_pos_pct, 2) + Math.pow(Number(uncertainties.energiaMedida), 2)).toFixed(2)}%
+                        +{Math.sqrt(Math.pow(rss_pos_pct, 2) + Math.pow(Number(uncertainties.modeloSimulacao), 2) + Math.pow(Number(uncertainties.energiaMedida), 2)).toFixed(2)}%
                       </td>
                     </tr>
                   </React.Fragment>

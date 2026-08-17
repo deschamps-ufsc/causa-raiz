@@ -904,6 +904,284 @@
         },
         "End of List OperPoints": null
       }
+    },
+    {
+      "id": "1786043541448",
+      "nome": "JAM72D40-575/GB",
+      "potencia": 575,
+      "isc": 14.3,
+      "voc": 51.15,
+      "imp": 13.42,
+      "vmp": 42.85,
+      "alpha": 6.4,
+      "beta": -125,
+      "gamma": -0.304,
+      "celulas": 72,
+      "raw_data": {
+        "PVObject_": "pvModule",
+        "Version": 8.1,
+        "Flags": "$00900343",
+        "PVObject_Commercial": {
+          "PVObject_Commercial": "pvCommercial",
+          "Comment": 0,
+          "Flags": "$41",
+          "Manufacturer": "JA Solar",
+          "Model": "JAM72D40-575/GB",
+          "DataSource": "TUV SUD",
+          "Width": 1.134,
+          "Height": 2.278,
+          "Depth": 0.03,
+          "Weight": 31.2,
+          "NPieces": 100,
+          "PriceDate": "26/07/22 17:12",
+          "Remarks, Count": {
+            "Remarks, Count": 5,
+            "Str_1": "Frame: X",
+            "Str_2": "Structure: X",
+            "Str_3": "Connections: 0.050",
+            "Str_4": 1,
+            "Str_5": 30
+          },
+          "End of Remarks": 30
+        },
+        "End of PVObject pvCommercial": null,
+        "Technol": "mtSiMono",
+        "NCelS": 72,
+        "NCelP": 2,
+        "NDiode": 3,
+        "SubModuleLayout": "slTwinHalfCells",
+        "FrontSurface": "fsNormalGlass",
+        "GRef": 1000,
+        "TRef": 25,
+        "PNom": 575,
+        "PNomTolLow": 0,
+        "PNomTolUp": 3,
+        "BifacialityFactor": 0.8,
+        "Isc": 14.3,
+        "Voc": 51.15,
+        "Imp": 13.42,
+        "Vmp": 42.85,
+        "muISC": 6.4,
+        "muVocSpec": -125,
+        "muPmpReq": -0.304,
+        "RShunt": 350,
+        "Rp_0": 3500,
+        "Rp_Exp": 5.5,
+        "RSerie": 0.21,
+        "Gamma": 1.013,
+        "muGamma": -0.0002,
+        "VMaxIEC": 1500,
+        "VMaxUL": 1500,
+        "Absorb": 0.9,
+        "ARev": 3.2,
+        "BRev": -11998.8,
+        "RDiode": 0.01,
+        "VRevDiode": -0.7,
+        "IMaxDiode": 25,
+        "AirMassRef": 1.5,
+        "SandiaAMCorr": 50,
+        "RelEffic800": 0.5,
+        "RelEffic600": 0.44,
+        "RelEffic400": 0.36,
+        "RelEffic200": -1.94,
+        "PVObject_IAM": {
+          "PVObject_IAM": "pvIAM",
+          "Flags": "$00",
+          "IAMMode": "UserProfile",
+          "IAMProfile": {
+            "IAMProfile": "TCubicProfile",
+            "NPtsMax": 9,
+            "NPtsEff": 9,
+            "LastCompile": "$8D",
+            "Mode": 3,
+            "Point_1": [
+              0,
+              1
+            ],
+            "Point_2": [
+              30,
+              1
+            ],
+            "Point_3": [
+              60,
+              1
+            ],
+            "Point_4": [
+              65,
+              0.985
+            ],
+            "Point_5": [
+              70,
+              0.967
+            ],
+            "Point_6": [
+              75,
+              0.929
+            ],
+            "Point_7": [
+              80,
+              0.882
+            ],
+            "Point_8": [
+              85,
+              0.744
+            ],
+            "Point_9": [
+              90,
+              0
+            ]
+          },
+          "End of TCubicProfile": null
+        },
+        "End of PVObject pvIAM": null,
+        "OperPoints, list of": {
+          "OperPoints, list of": "13 tOperPoint",
+          "Point_1": [
+            "False",
+            100,
+            15,
+            -2.95,
+            0,
+            0,
+            0,
+            0,
+            57.5
+          ],
+          "Point_2": [
+            "False",
+            200,
+            15,
+            0.98,
+            0,
+            0,
+            0,
+            0,
+            119.65
+          ],
+          "Point_3": [
+            "False",
+            400,
+            15,
+            3.28,
+            0,
+            0,
+            0,
+            0,
+            244.76
+          ],
+          "Point_4": [
+            "False",
+            600,
+            15,
+            3.42,
+            0,
+            0,
+            0,
+            0,
+            367.63
+          ],
+          "Point_5": [
+            "False",
+            800,
+            15,
+            3.49,
+            0,
+            0,
+            0,
+            0,
+            490.51
+          ],
+          "Point_6": [
+            "False",
+            1000,
+            15,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "Point_7": [
+            "False",
+            100,
+            25,
+            -5.73,
+            0,
+            0,
+            0,
+            0,
+            54.23
+          ],
+          "Point_8": [
+            "False",
+            200,
+            25,
+            -1.94,
+            0,
+            0,
+            0,
+            0,
+            112.82
+          ],
+          "Point_9": [
+            "False",
+            400,
+            25,
+            0.36,
+            0,
+            0,
+            0,
+            0,
+            230.94
+          ],
+          "Point_10": [
+            "False",
+            600,
+            25,
+            0.44,
+            0,
+            0,
+            0,
+            0,
+            346.69
+          ],
+          "Point_11": [
+            "False",
+            800,
+            25,
+            0.5,
+            0,
+            0,
+            0,
+            0,
+            462.53
+          ],
+          "Point_12": [
+            "True",
+            1000,
+            25,
+            0,
+            51.15,
+            14.3,
+            13.42,
+            42.85,
+            575.05
+          ],
+          "Point_13": [
+            "False",
+            1100,
+            25,
+            -0.29,
+            0,
+            0,
+            0,
+            0,
+            630.98
+          ]
+        },
+        "End of List OperPoints": null
+      }
     }
   ],
   "inversores": [
@@ -1205,6 +1483,272 @@
         "DiscAdjust": "Yes",
         "MS_Thresh": 0.8,
         "Night_Loss": 30
+      }
+    },
+    {
+      "id": "1786043548199",
+      "nome": "SUN2000-20KTL-M2-400V",
+      "paco": 20000,
+      "pdco": 22000,
+      "vdco": 400,
+      "pso": 100,
+      "raw_data": {
+        "﻿PVObject_": "pvGInverter",
+        "Comment": "Huawei Technologies\tSUN2000-20KTL-M2-400V\tManufacturer 2022",
+        "Version": "7.4.0",
+        "ParObj1": 2022,
+        "Flags": "$803C1570",
+        "PVObject_Commercial": {
+          "PVObject_Commercial": "pvCommercial",
+          "Comment": "https://solar.huawei.com",
+          "Flags": "$0041",
+          "Manufacturer": "Huawei Technologies",
+          "Model": "SUN2000-20KTL-M2-400V",
+          "DataSource": "Manufacturer 2022",
+          "YearBeg": 2022,
+          "Width": 0.525,
+          "Height": 0.47,
+          "Depth": 0.262,
+          "Weight": 25,
+          "NPieces": 100,
+          "PriceDate": "12/07/23 15:20",
+          "Remarks, Count": {
+            "Remarks, Count": 3,
+            "Str_1": [
+              "Tecnologia: Dual stage",
+              " Transformerless"
+            ],
+            "Str_2": "Proteção: IP65",
+            "Str_3": [
+              "Controlo: LED indicator",
+              " Integrated WLAN + FusionSolar APP"
+            ]
+          },
+          "End of Remarks": [
+            "Controlo: LED indicator",
+            " Integrated WLAN + FusionSolar APP"
+          ]
+        },
+        "End of PVObject pvCommercial": null,
+        "Transfo": "Without",
+        "Converter": {
+          "Converter": "TConverter",
+          "PNomConv": 20,
+          "PMaxOUT": 22,
+          "VOutConv": 400,
+          "VMppMin": 160,
+          "VMPPMax": 950,
+          "VmppNom": 600,
+          "VAbsMax": 1080,
+          "PSeuil": 100,
+          "EfficMax": 0,
+          "EfficEuro": 0,
+          "FResNorm": 0,
+          "ModeOper": "MPPT",
+          "CompPMax": "Lim",
+          "CompVMax": "Lim",
+          "MonoTri": "Tri",
+          "ModeAffEnum": "Efficf_PIn",
+          "UnitAffEnum": "kW",
+          "IDCMax": 0,
+          "IMaxDC": 54,
+          "INomAC": 28.9,
+          "IMaxAC": 33.5,
+          "TPNom": 52,
+          "TPMax": 45,
+          "TPLim1": 55,
+          "TPLimAbs": 60,
+          "PLim1": 19,
+          "PLimAbs": 17,
+          "PInEffMax": 12000,
+          "PThreshEff": 79.08,
+          "HasdefaultPThresh": "True",
+          "VNomEff": [
+            450,
+            600,
+            850,
+            ""
+          ],
+          "EfficMaxV": [
+            98.65,
+            98.42,
+            97.8,
+            ""
+          ],
+          "EfficEuroV": [
+            98.3,
+            98.128,
+            97.149,
+            ""
+          ],
+          "ProfilPIOV1": {
+            "ProfilPIOV1": "TCubicProfile",
+            "NPtsMax": 11,
+            "NPtsEff": 8,
+            "LastCompile": "$008D",
+            "Mode": 1,
+            "Point_1": [
+              100,
+              0
+            ],
+            "Point_2": [
+              600,
+              553.5
+            ],
+            "Point_3": [
+              1000,
+              949.4
+            ],
+            "Point_4": [
+              2000,
+              1939.3
+            ],
+            "Point_5": [
+              4000,
+              3919
+            ],
+            "Point_6": [
+              6000,
+              5898.8
+            ],
+            "Point_7": [
+              12000,
+              11838
+            ],
+            "Point_8": [
+              20000,
+              19730
+            ],
+            "Point_9": [
+              0,
+              0
+            ],
+            "Point_10": [
+              0,
+              0
+            ],
+            "Point_11": [
+              0,
+              0
+            ]
+          },
+          "End of TCubicProfile": null,
+          "ProfilPIOV2": {
+            "ProfilPIOV2": "TCubicProfile",
+            "NPtsMax": 11,
+            "NPtsEff": 8,
+            "LastCompile": "$008D",
+            "Mode": 1,
+            "Point_1": [
+              100,
+              0
+            ],
+            "Point_2": [
+              600,
+              558.4
+            ],
+            "Point_3": [
+              1000,
+              953.2
+            ],
+            "Point_4": [
+              2000,
+              1940.2
+            ],
+            "Point_5": [
+              4000,
+              3914.3
+            ],
+            "Point_6": [
+              6000,
+              5888.3
+            ],
+            "Point_7": [
+              12000,
+              11810.4
+            ],
+            "Point_8": [
+              20000,
+              19684
+            ],
+            "Point_9": [
+              0,
+              0
+            ],
+            "Point_10": [
+              0,
+              0
+            ],
+            "Point_11": [
+              0,
+              0
+            ]
+          },
+          "ProfilPIOV3": {
+            "ProfilPIOV3": "TCubicProfile",
+            "NPtsMax": 11,
+            "NPtsEff": 1,
+            "Mode": 1,
+            "Point_1": [
+              80,
+              0
+            ],
+            "Point_2": [
+              0,
+              0
+            ],
+            "Point_3": [
+              0,
+              0
+            ],
+            "Point_4": [
+              0,
+              0
+            ],
+            "Point_5": [
+              0,
+              0
+            ],
+            "Point_6": [
+              0,
+              0
+            ],
+            "Point_7": [
+              0,
+              0
+            ],
+            "Point_8": [
+              0,
+              0
+            ],
+            "Point_9": [
+              0,
+              0
+            ],
+            "Point_10": [
+              0,
+              0
+            ],
+            "Point_11": [
+              0,
+              0
+            ]
+          }
+        },
+        "End of TConverter": null,
+        "NbInputs": 4,
+        "NbMPPT": 2,
+        "TanPhiMin": -0.75,
+        "TanPhiMax": 0.75,
+        "NbMSInterne": 2,
+        "MasterSlave": "No_M_S",
+        "IsolSurvey": "Yes",
+        "DC_Switch": "Yes",
+        "AC_Switch": "No",
+        "DiscAdjust": "Yes",
+        "ENS_Protec": "Yes",
+        "MS_Thresh": 0.8,
+        "Night_Loss": 5.5
       }
     }
   ]
