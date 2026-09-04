@@ -1,0 +1,398 @@
+{
+  "SKID1-INV01-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 1",
+    "inversor": "INV 1",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID1-INV02-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 1",
+    "inversor": "INV 2",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID1-INV03-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 1",
+    "inversor": "INV 3",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID1-INV04-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 1",
+    "inversor": "INV 4",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID1-INV05-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 1",
+    "inversor": "INV 5",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID1-INV06-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 1",
+    "inversor": "INV 6",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID1-INV07-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 1",
+    "inversor": "INV 7",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID1-INV08-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 1",
+    "inversor": "INV 8",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID1-INV09-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 1",
+    "inversor": "INV 9",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID1-INV10-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 1",
+    "inversor": "INV 10",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID1-INV11-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 1",
+    "inversor": "INV 11",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID1-INV12-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 1",
+    "inversor": "INV 12",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID1-INV13-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 1",
+    "inversor": "INV 13",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID1-INV14-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 1",
+    "inversor": "INV 14",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID1-INV15-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 1",
+    "inversor": "INV 15",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID1-INV16-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 1",
+    "inversor": "INV 16",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID1-INV17-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 1",
+    "inversor": "INV 17",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID1-INV18-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 1",
+    "inversor": "INV 18",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID1-INV19-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 1",
+    "inversor": "INV 19",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID1-INV20-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 1",
+    "inversor": "INV 20",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID2-INV21-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 2",
+    "inversor": "INV 21",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID2-INV22-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 2",
+    "inversor": "INV 22",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID2-INV23-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 2",
+    "inversor": "INV 23",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID2-INV24-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 2",
+    "inversor": "INV 24",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID2-INV25-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 2",
+    "inversor": "INV 25",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID2-INV26-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 2",
+    "inversor": "INV 26",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID2-INV27-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 2",
+    "inversor": "INV 27",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID2-INV28-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 2",
+    "inversor": "INV 28",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID2-INV29-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 2",
+    "inversor": "INV 29",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID2-INV30-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 2",
+    "inversor": "INV 30",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID2-INV31-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 2",
+    "inversor": "INV 31",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID2-INV32-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 2",
+    "inversor": "INV 32",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID2-INV33-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 2",
+    "inversor": "INV 33",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID2-INV34-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 2",
+    "inversor": "INV 34",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID2-INV35-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 2",
+    "inversor": "INV 35",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID2-INV36-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 2",
+    "inversor": "INV 36",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID2-INV37-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 2",
+    "inversor": "INV 37",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID2-INV38-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 2",
+    "inversor": "INV 38",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID2-INV39-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 2",
+    "inversor": "INV 39",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SKID2-INV40-P": {
+    "elemento": "Energia PMI",
+    "skid": "SKID 2",
+    "inversor": "INV 40",
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "TLA_T_Amb": {
+    "elemento": "Temperatura",
+    "skid": null,
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "TLA_T_Mod": {
+    "elemento": "Temperatura",
+    "skid": null,
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "TLA_ Irrad_POA": {
+    "elemento": "Irradiação",
+    "skid": null,
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "TLA_Irrad_GHI": {
+    "elemento": "Irradiação",
+    "skid": null,
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  }
+}

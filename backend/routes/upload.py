@@ -388,3 +388,121 @@ async def upload_pvsyst_tmy_file(background_tasks: BackgroundTasks, usina: str =
     background_tasks.add_task(run_upload_tmy_background, task_id, content, usina, file.filename)
     
     return {"task_id": task_id, "message": "Processamento iniciado em segundo plano"}
+
+def get_pvsyst_shading_path(usina: str) -> str:
+    return os.path.join(DATA_DIR, usina.strip(), "shading_table.json")
+
+def process_shading_table(content: bytes, usina: str) -> None:
+    import csv
+    import json
+    text = content.decode('utf-8', errors='replace')
+    lines = text.splitlines()
+    
+    # Detect delimiter
+    delimiter = ';' if len(lines) > 3 and ';' in lines[3] else ','
+    reader = csv.reader(lines, delimiter=delimiter)
+    
+    data_rows = []
+    for row in reader:
+        if not row or not any(row): continue
+        data_rows.append(row)
+        
+    az_row_idx = -1
+    for i, row in enumerate(data_rows):
+        if len(row) > 2:
+            if any('-180' in str(c) for c in row[:3]):
+                az_row_idx = i
+                break
+                
+    if az_row_idx == -1:
+        raise ValueError("Não foi possível encontrar a linha de Azimutes (com -180) no CSV.")
+        
+    az_row = data_rows[az_row_idx]
+    
+    def clean_num(x):
+        x = str(x).replace('°', '').replace(',', '.').strip()
+        try:
+            return float(x)
+        except:
+            return None
+            
+    azimuths_vals = []
+    col_indices = []
+    
+    for j, val in enumerate(az_row):
+        num = clean_num(val)
+        if num is not None:
+            azimuths_vals.append(num)
+            col_indices.append(j)
+            
+    heights = []
+    matrix = []
+    
+    for i in range(az_row_idx + 1, len(data_rows)):
+        row = data_rows[i]
+        if not row: continue
+        
+        h_val = clean_num(row[0])
+        if h_val is None and len(row) > 1:
+            h_val = clean_num(row[1])
+                
+        if h_val is not None:
+            heights.append(h_val)
+            row_vals = []
+            for j in col_indices:
+                if j < len(row):
+                    v = clean_num(row[j])
+                    row_vals.append(v if v is not None else 0.0)
+                else:
+                    row_vals.append(0.0)
+            matrix.append(row_vals)
+            
+    if not heights or not matrix:
+        raise ValueError("Não foi possível extrair a matriz de sombreamento.")
+        
+    if heights[0] > heights[-1]:
+        heights.reverse()
+        matrix.reverse()
+        
+    result = {
+        "azimuths": azimuths_vals,
+        "heights": heights,
+        "matrix": matrix
+    }
+    
+    path = get_pvsyst_shading_path(usina)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(result, f, indent=2)
+
+def run_upload_shading_table_background(task_id: str, content: bytes, usina: str, filename: str):
+    UPLOAD_TASKS[task_id] = {"status": "PROCESSING", "progress": 10, "message": "Iniciando processamento da Tabela de Sombreamento..."}
+    try:
+        process_shading_table(content, usina)
+        UPLOAD_TASKS[task_id] = {"status": "COMPLETED", "progress": 100, "message": "Upload da Tabela de Sombreamento concluído com sucesso!"}
+    except Exception as e:
+        logger.error(f"[UPLOAD_SHADING] Erro no task_id {task_id}: {e}")
+        UPLOAD_TASKS[task_id] = {"status": "FAILED", "progress": 0, "message": str(e)}
+
+@router.post("/pvsyst/shading_table")
+async def upload_pvsyst_shading_table(background_tasks: BackgroundTasks, usina: str = Form(...), file: UploadFile = File(...), _: dict = Depends(require_analyst_or_admin)):
+    """
+    Recebe um arquivo CSV do PVSyst com a Tabela de Sombreamento 3D.
+    """
+    if not file.filename.lower().endswith(".csv") and not file.filename.lower().endswith(".txt"):
+        raise HTTPException(
+            status_code=400,
+            detail="Apenas arquivos CSV ou TXT são aceitos para a Tabela de Sombreamento.",
+        )
+
+    if not usina or not usina.strip():
+        raise HTTPException(status_code=400, detail="Usina não informada.")
+
+    logger.info(f"[UPLOAD_SHADING] Recebendo: '{file.filename}' para usina '{usina}'")
+    content = await file.read()
+    
+    task_id = str(uuid.uuid4())
+    UPLOAD_TASKS[task_id] = {"status": "PENDING", "progress": 0, "message": "Aguardando fila..."}
+    background_tasks.add_task(run_upload_shading_table_background, task_id, content, usina, file.filename)
+    
+    return {"task_id": task_id, "message": "Processamento iniciado em segundo plano"}

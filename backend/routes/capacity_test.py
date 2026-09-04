@@ -92,6 +92,12 @@ def process_capacity_test(payload: CapacityTestPayload):
             df_numeric["timestamp"] = pd.to_datetime(df["timestamp"], errors='coerce')
         df = df_numeric.dropna(subset=series_list)
         
+        df_plot = df.copy()
+        if getattr(payload, "resolution", "1 min") == "15 min" and "timestamp" in df_plot.columns:
+            df_plot = df_plot.sort_values("timestamp").drop_duplicates(subset=["timestamp"]).set_index("timestamp").resample('15min').mean().reset_index()
+        if "timestamp" in df_plot.columns:
+            df_plot["date"] = df_plot["timestamp"].dt.strftime('%Y-%m-%d')
+            
         diagnostics_15min = None
         if getattr(payload, "resolution", "1 min") == "15 min" and "timestamp" in df.columns:
             df = df.sort_values("timestamp")
@@ -276,6 +282,15 @@ def process_capacity_test(payload: CapacityTestPayload):
                 g_p60_d = float(np.percentile(g_d, 60)) if len(g_d) > 0 else 0
                 t_mean_d = float(np.mean(t_d)) if len(t_d) > 0 else 0
 
+                group_plot = df_plot[df_plot["date"] == date].copy() if (df_plot is not None and "date" in df_plot.columns) else group.copy()
+                valid_timestamps = set(group["timestamp"].dt.strftime('%Y-%m-%d %H:%M:%S')) if "timestamp" in group.columns else set()
+                ts_plot = group_plot["timestamp"].dt.strftime('%Y-%m-%d %H:%M:%S').tolist() if "timestamp" in group_plot.columns else list(range(len(group_plot)))
+                is_valid = [(ts in valid_timestamps) for ts in ts_plot] if valid_timestamps else [True] * len(ts_plot)
+                
+                g_plot = group_plot[payload.g_series].values
+                t_plot = group_plot[payload.t_series].values
+                p_plot = group_plot[payload.p_series].values
+
                 daily_results[date] = {
                     "a1": float(a1_d),
                     "a2": float(a2_d),
@@ -297,7 +312,14 @@ def process_capacity_test(payload: CapacityTestPayload):
                     "t_min": t_min_d,
                     "t_max": t_max_d,
                     "g_p60": g_p60_d,
-                    "t_mean": t_mean_d
+                    "t_mean": t_mean_d,
+                    "plot_series": {
+                        "timestamps": ts_plot,
+                        "G": np.round(g_plot, 2).tolist(),
+                        "Tamb": np.round(t_plot, 2).tolist(),
+                        "P": np.round(p_plot, 2).tolist(),
+                        "is_valid": is_valid
+                    }
                 }
 
         astm_results = {}
@@ -363,6 +385,15 @@ def process_capacity_test(payload: CapacityTestPayload):
                             t_mean_w = float(np.mean(T_w)) if len(T_w) > 0 else 0
 
                             first_day = window_days[0]
+                            df_window_plot = df_plot[df_plot["date"].isin(window_days)].copy() if (df_plot is not None and "date" in df_plot.columns) else df_window.copy()
+                            valid_timestamps_w = set(df_window["timestamp"].dt.strftime('%Y-%m-%d %H:%M:%S')) if "timestamp" in df_window.columns else set()
+                            ts_plot_w = df_window_plot["timestamp"].dt.strftime('%Y-%m-%d %H:%M:%S').tolist() if "timestamp" in df_window_plot.columns else list(range(len(df_window_plot)))
+                            is_valid_w = [(ts in valid_timestamps_w) for ts in ts_plot_w] if valid_timestamps_w else [True] * len(ts_plot_w)
+                            
+                            g_plot_w = df_window_plot[payload.g_series].values
+                            t_plot_w = df_window_plot[payload.t_series].values
+                            p_plot_w = df_window_plot[payload.p_series].values
+
                             astm_results[first_day] = {
                                 "a1": float(coef_w[0]),
                                 "a2": float(coef_w[1]),
@@ -382,7 +413,14 @@ def process_capacity_test(payload: CapacityTestPayload):
                                 "t_min": t_min_w,
                                 "t_max": t_max_w,
                                 "g_p60": g_p60_w,
-                                "t_mean": t_mean_w
+                                "t_mean": t_mean_w,
+                                "plot_series": {
+                                    "timestamps": ts_plot_w,
+                                    "G": np.round(g_plot_w, 2).tolist(),
+                                    "Tamb": np.round(t_plot_w, 2).tolist(),
+                                    "P": np.round(p_plot_w, 2).tolist(),
+                                    "is_valid": is_valid_w
+                                }
                             }
         except Exception as e:
             logger.error(f"Erro calculando ASTM: {e}")
@@ -456,6 +494,12 @@ def process_capacity_test_stream(payload: CapacityTestPayload):
                 df_numeric["timestamp"] = pd.to_datetime(df["timestamp"], errors='coerce')
             df = df_numeric.dropna(subset=series_list)
             
+            df_plot = df.copy()
+            if getattr(payload, "resolution", "1 min") == "15 min" and "timestamp" in df_plot.columns:
+                df_plot = df_plot.sort_values("timestamp").drop_duplicates(subset=["timestamp"]).set_index("timestamp").resample('15min').mean().reset_index()
+            if "timestamp" in df_plot.columns:
+                df_plot["date"] = df_plot["timestamp"].dt.strftime('%Y-%m-%d')
+                
             diagnostics_15min = None
             if getattr(payload, "resolution", "1 min") == "15 min" and "timestamp" in df.columns:
                 df = df.sort_values("timestamp")
@@ -619,6 +663,15 @@ def process_capacity_test_stream(payload: CapacityTestPayload):
                     g_p60_d = float(np.percentile(g_d, 60)) if len(g_d) > 0 else 0
                     t_mean_d = float(np.mean(t_d)) if len(t_d) > 0 else 0
 
+                    group_plot = df_plot[df_plot["date"] == date_key].copy() if (df_plot is not None and "date" in df_plot.columns) else group.copy()
+                    valid_timestamps = set(group["timestamp"].dt.strftime('%Y-%m-%d %H:%M:%S')) if "timestamp" in group.columns else set()
+                    ts_plot = group_plot["timestamp"].dt.strftime('%Y-%m-%d %H:%M:%S').tolist() if "timestamp" in group_plot.columns else list(range(len(group_plot)))
+                    is_valid = [(ts in valid_timestamps) for ts in ts_plot] if valid_timestamps else [True] * len(ts_plot)
+                    
+                    g_plot = group_plot[payload.g_series].values
+                    t_plot = group_plot[payload.t_series].values
+                    p_plot = group_plot[payload.p_series].values
+
                     daily_results[date_key] = {
                         "a1": float(coef_d[0]),
                         "a2": float(coef_d[1]),
@@ -640,7 +693,14 @@ def process_capacity_test_stream(payload: CapacityTestPayload):
                         "t_min": t_min_d,
                         "t_max": t_max_d,
                         "g_p60": g_p60_d,
-                        "t_mean": t_mean_d
+                        "t_mean": t_mean_d,
+                        "plot_series": {
+                            "timestamps": ts_plot,
+                            "G": np.round(g_plot, 2).tolist(),
+                            "Tamb": np.round(t_plot, 2).tolist(),
+                            "P": np.round(p_plot, 2).tolist(),
+                            "is_valid": is_valid
+                        }
                     }
 
             astm_results = {}
@@ -706,6 +766,15 @@ def process_capacity_test_stream(payload: CapacityTestPayload):
                                 t_mean_w = float(np.mean(T_w)) if len(T_w) > 0 else 0
 
                                 first_day = window_days[0]
+                                df_window_plot = df_plot[df_plot["date"].isin(window_days)].copy() if (df_plot is not None and "date" in df_plot.columns) else df_window.copy()
+                                valid_timestamps_w = set(df_window["timestamp"].dt.strftime('%Y-%m-%d %H:%M:%S')) if "timestamp" in df_window.columns else set()
+                                ts_plot_w = df_window_plot["timestamp"].dt.strftime('%Y-%m-%d %H:%M:%S').tolist() if "timestamp" in df_window_plot.columns else list(range(len(df_window_plot)))
+                                is_valid_w = [(ts in valid_timestamps_w) for ts in ts_plot_w] if valid_timestamps_w else [True] * len(ts_plot_w)
+                                
+                                g_plot_w = df_window_plot[payload.g_series].values
+                                t_plot_w = df_window_plot[payload.t_series].values
+                                p_plot_w = df_window_plot[payload.p_series].values
+
                                 astm_results[first_day] = {
                                     "a1": float(coef_w[0]),
                                     "a2": float(coef_w[1]),
@@ -725,7 +794,14 @@ def process_capacity_test_stream(payload: CapacityTestPayload):
                                     "t_min": t_min_w,
                                     "t_max": t_max_w,
                                     "g_p60": g_p60_w,
-                                    "t_mean": t_mean_w
+                                    "t_mean": t_mean_w,
+                                    "plot_series": {
+                                        "timestamps": ts_plot_w,
+                                        "G": np.round(g_plot_w, 2).tolist(),
+                                        "Tamb": np.round(t_plot_w, 2).tolist(),
+                                        "P": np.round(p_plot_w, 2).tolist(),
+                                        "is_valid": is_valid_w
+                                    }
                                 }
             except Exception as e:
                 logger.error(f"Erro calculando ASTM em stream: {e}")

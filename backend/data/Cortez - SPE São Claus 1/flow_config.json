@@ -39,6 +39,7 @@
           "filter": "Irradiação_Qualidade"
         }
       ],
+      "outputFilter": "",
       "operation": "mean"
     },
     "tracker": {
@@ -96,6 +97,7 @@
           "filter": ""
         }
       ],
+      "outputFilter": "",
       "operation": "mean"
     },
     "tmod": {
@@ -169,9 +171,12 @@
           "filter": ""
         }
       ],
+      "outputFilter": "",
       "operation": "sum",
       "energiaPmiParams": {
-        "multiplier": 0.012
+        "multiplier": 0.012,
+        "inputType": "energy_5min",
+        "outputUnit": "MW"
       }
     },
     "geff": {
@@ -198,29 +203,37 @@
         "energia_pmi": true,
         "curtailment": true,
         "potencia_ppc": true,
-        "referencia_ppc": true
+        "referencia_ppc": true,
+        "horario_valido_enabled": false,
+        "horario_start": "06:00",
+        "horario_end": "19:00"
       }
     },
     "pvlib": {
       "pvlibParams": {
-        "latitude": 0,
-        "longitude": 0,
-        "altitude": 0,
+        "latitude": -11.1006,
+        "longitude": -41.2715,
+        "altitude": 1000,
         "tz": "America/Sao_Paulo",
-        "selected_modulos": [],
-        "selected_inversores": [],
-        "loss_ohm_dc": 0,
-        "loss_ohm_ac": 0,
-        "loss_ohm_ac_mt": 0,
-        "trafo_pnom": 0,
-        "trafo_iron_loss": 0,
-        "trafo_copper_loss": 0,
+        "selected_modulos": [
+          "1785624325717",
+          "1785624331896"
+        ],
+        "selected_inversores": [
+          "1785624391332"
+        ],
+        "loss_ohm_dc": 1.37,
+        "loss_ohm_ac": 0.02,
+        "loss_ohm_ac_mt": 1.57,
+        "trafo_pnom": 52800,
+        "trafo_iron_loss": 0.1,
+        "trafo_copper_loss": 0.9,
         "soiling": 2,
-        "gcr": 0,
-        "axis_tilt": 0,
-        "mismatch": 0,
-        "lid": 0,
-        "aux_loss": 0
+        "gcr": 0.34,
+        "axis_tilt": -1.4,
+        "mismatch": 1,
+        "lid": 1.2,
+        "aux_loss": 14
       },
       "type": "pvlib"
     },
@@ -232,7 +245,9 @@
       "operation": "sum",
       "epiParams": {
         "energiaVar": "E_Grid",
-        "irradianciaVar": "GlobInc"
+        "irradianciaVar": "GlobInc",
+        "ohmVar": "OhmLoss",
+        "earrayVar": "EArray"
       }
     }
   }

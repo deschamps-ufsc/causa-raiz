@@ -561,7 +561,10 @@ const calculateAggregation = (rowsToAggregate, columns, potenciaInstalada, gamma
       }
     });
 
-    if (['cap_ratio', 'cap_ratio_adaptive', 'astm_ratio', 'astm_ratio_adaptive'].includes(col.key)) {
+    if (['cap_ratio', 'cap_ratio_adaptive', 'astm_ratio', 'astm_ratio_adaptive', 'epi_pvlib_window'].includes(col.key)) {
+      if (col.key === 'epi_pvlib_window') {
+        return; // totals already handled below
+      }
       let sumMed = 0;
       let sumSim = 0;
       let hasNum = false;
@@ -618,6 +621,7 @@ const calculateAggregation = (rowsToAggregate, columns, potenciaInstalada, gamma
     const totPvlib = totals['pvlib_E_Grid_válida'];
     if (typeof totPmi === 'number' && typeof totPvlib === 'number' && totPvlib !== 0) {
       totals['epi_pvlib'] = totPmi / totPvlib;
+      totals['epi_pvlib_window'] = totPmi / totPvlib;
     }
   }
   
@@ -757,6 +761,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
   const [exportProgress, setExportProgress] = useState(0)
   const [pvsystUploadProgress, setPvsystUploadProgress] = useState(0)
   const [tmyUploadProgress, setTmyUploadProgress] = useState(0)
+  const [shadingTableUploadProgress, setShadingTableUploadProgress] = useState(0)
   const [geffParams, setGeffParams] = useState({ beta: 1, SSF: 0, MLF: 0 })
   const [pvlibParams, setPvlibParams] = useState({
     latitude: 0, longitude: 0, altitude: 0, tz: 'America/Sao_Paulo',
@@ -810,6 +815,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
   
   const pvsystFileInputRef = useRef(null)
   const tmyFileInputRef = useRef(null)
+  const shadingFileInputRef = useRef(null)
   const [pvsystColumns, setPvsystColumns] = useState([])
   const [isLoadingPvsystColumns, setIsLoadingPvsystColumns] = useState(false)
 
@@ -859,6 +865,14 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
       isCapacity: true 
     });
     
+    newColumns.push({ 
+      key: 'epi_pvlib_window', 
+      label: `EPI PVLib\nJanela ${currentAstmWindow} dias`, 
+      type: 'output', 
+      node_id: 'capacity_test', 
+      isCapacity: true 
+    });
+    
     let insertIdx = rawIntegralsData.columns.findIndex(c => c.type === 'validation');
     if (insertIdx === -1) {
       const tarrwtdIdx = rawIntegralsData.columns.findIndex(c => c.key === 'tarrwtd');
@@ -871,7 +885,52 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
       ...rawIntegralsData.columns.slice(insertIdx)
     ];
     
-    const newRows = rawIntegralsData.rows.map(row => {
+    const validationColKey = rawIntegralsData.columns.find(c => c.key === 'val_validacao')?.key || 'val_validacao';
+    
+    const newRows = rawIntegralsData.rows.map((row, i) => {
+      let isCurrentDayValid = true;
+      if (validationColKey && row[validationColKey]) {
+        const status = String(row[validationColKey]);
+        if (status === 'NÃO_OK' || status === 'Dia Inválido') {
+          isCurrentDayValid = false;
+        }
+      }
+
+      let epi_pvlib_window = null;
+
+      if (isCurrentDayValid) {
+        let validCount = 0;
+        let sumPmi = 0;
+        let sumPvlib = 0;
+        let j = i;
+        
+        while (validCount < currentAstmWindow && j < rawIntegralsData.rows.length) {
+          const rowJ = rawIntegralsData.rows[j];
+          
+          let isRowJValid = true;
+          if (validationColKey && rowJ[validationColKey]) {
+            const status = String(rowJ[validationColKey]);
+            if (status === 'NÃO_OK' || status === 'Dia Inválido') {
+              isRowJValid = false;
+            }
+          }
+          
+          const pmi = rowJ['Energia PMI_válida'];
+          const pvlib = rowJ['pvlib_E_Grid_válida'];
+          
+          if (isRowJValid && typeof pmi === 'number' && typeof pvlib === 'number') {
+            sumPmi += pmi;
+            sumPvlib += pvlib;
+            validCount++;
+          }
+          j++;
+        }
+        
+        if (validCount === currentAstmWindow && sumPvlib !== 0) {
+          epi_pvlib_window = sumPmi / sumPvlib;
+        }
+      }
+      
       const daily = capacityTestDailyResults[row.date];
       if (daily) {
         return {
@@ -887,10 +946,15 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
           astm_ratio: daily.astmRatio,
           astm_medido_adaptive: daily.astmPMedidoAdaptive,
           astm_simulado_adaptive: daily.astmPSimuladoAdaptive,
-          astm_ratio_adaptive: daily.astmRatioAdaptive
+          astm_ratio_adaptive: daily.astmRatioAdaptive,
+          epi_pvlib_window: epi_pvlib_window
         };
       }
-      return row;
+      
+      return {
+        ...row,
+        epi_pvlib_window: epi_pvlib_window
+      };
     });
     
     return { columns: mergedColumns, rows: newRows };
@@ -989,6 +1053,20 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
     const sum = mods.reduce((acc, curr) => acc + (typeof curr.gamma === 'number' ? curr.gamma : -0.35), 0);
     return sum / mods.length;
   }, [nodes, equipamentos]);
+
+  const [visibleFixedCharts, setVisibleFixedCharts] = useState({
+    epi_pvsyst: true,
+    epi_pvlib: true,
+    epi_pvlib_window: true,
+    cap_ratio: true,
+    cap_ratio_adaptive: true,
+    astm_ratio: true,
+    astm_ratio_adaptive: true,
+    wcpr: true,
+    wcpr_bifacial: true,
+    pr: true,
+    pr_bifacial: true
+  });
 
   const bifacialidade = useMemo(() => {
     const geffNode = nodes.find(n => n.id === 'geff');
@@ -1125,6 +1203,53 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
       }
     } catch (err) {
       setTmyUploadProgress(0);
+      setToast({ message: err.message, type: 'error' });
+    }
+    e.target.value = '';
+  }
+
+  const handleShadingTableUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (!usinaAtual) {
+      setToast({ message: 'Selecione uma usina primeiro', type: 'error' });
+      return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('usina', usinaAtual);
+    
+    setToast({ message: 'Iniciando envio da Tabela de Sombreamento...', type: 'info' });
+    setShadingTableUploadProgress(1);
+    try {
+      const res = await api.post(`/upload/pvsyst/shading_table`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      const taskId = res.data.task_id;
+      
+      let completed = false;
+      while (!completed) {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        const statusRes = await api.get(`/upload/status/${taskId}`);
+        const statusData = statusRes.data;
+        
+        if (statusData.status === 'COMPLETED') {
+          completed = true;
+          setShadingTableUploadProgress(100);
+          setToast({ message: 'Upload da Tabela de Sombreamento concluído!', type: 'success' });
+          setTimeout(() => setShadingTableUploadProgress(0), 2000);
+        } else if (statusData.status === 'FAILED') {
+          completed = true;
+          setShadingTableUploadProgress(0);
+          setToast({ message: `Erro no upload: ${statusData.message}`, type: 'error' });
+        } else {
+          setShadingTableUploadProgress(statusData.progress);
+        }
+      }
+    } catch (err) {
+      setShadingTableUploadProgress(0);
       setToast({ message: err.message, type: 'error' });
     }
     e.target.value = '';
@@ -1382,7 +1507,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
   }, [integralsData, selectedDates, showOnlyValidDays, aggregationMode, potenciaInstalada, gammaPmpp, bifacialidade]);
 
   const getConditionalColor = (colKey, val, tol, fallbackColor, prPrevistaVal) => {
-    if (['epi', 'epi_corrigido', 'epi_pvlib', 'cap_ratio', 'astm_ratio', 'cap_ratio_adaptive', 'astm_ratio_adaptive'].includes(colKey) && typeof val === 'number') {
+    if (['epi', 'epi_corrigido', 'epi_pvlib', 'epi_pvlib_window', 'cap_ratio', 'astm_ratio', 'cap_ratio_adaptive', 'astm_ratio_adaptive'].includes(colKey) && typeof val === 'number') {
        const rawVal = val / 100;
        return getEpiColor(rawVal, tol).bg;
     }
@@ -1405,7 +1530,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
       const yValues = displayRows.map(row => {
         const val = row[series.columnKey];
         if (typeof val === 'number') {
-          if (['epi', 'epi_corrigido', 'epi_pvlib', 'pr_medida', 'pr_medida_bifacial', 'pr_esperada', 'pr_esperada_bifacial', 'pr_prevista', 'pr_prevista_bifacial', 'wcpr', 'wcpr_bifacial', 'fator_ajuste'].includes(series.columnKey)) {
+          if (['epi', 'epi_corrigido', 'epi_pvlib', 'epi_pvlib_window', 'pr_medida', 'pr_medida_bifacial', 'pr_esperada', 'pr_esperada_bifacial', 'pr_prevista', 'pr_prevista_bifacial', 'wcpr', 'wcpr_bifacial', 'fator_ajuste'].includes(series.columnKey)) {
              return val * 100; // Transform to percentage for better dual-axis scaling
           }
         }
@@ -1477,7 +1602,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
       }
 
       // Shapes are used for static bounds (EPI)
-      if (series.showTolerance && ['epi', 'epi_corrigido', 'epi_pvlib', 'cap_ratio', 'astm_ratio', 'cap_ratio_adaptive', 'astm_ratio_adaptive'].includes(series.columnKey)) {
+      if (series.showTolerance && ['epi', 'epi_corrigido', 'epi_pvlib', 'epi_pvlib_window', 'cap_ratio', 'astm_ratio', 'cap_ratio_adaptive', 'astm_ratio_adaptive'].includes(series.columnKey)) {
         const yRef = series.axis === 'right' ? 'y2' : 'y1';
         const lowerLimit = 100 * (1 - epiTol);
         const upperLimit = 100 * (1 + epiTol);
@@ -1561,6 +1686,10 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
     return generateChartDataAndShapes([{ columnKey: 'epi_pvlib', type: 'bar', axis: 'left', color: '#3b82f6', inheritColor: true, showTolerance: true }]);
   }, [displayRows, integralsData, epiTol, prTol, wcprTol]);
 
+  const fixedEpiPvlibWindowChart = useMemo(() => {
+    return generateChartDataAndShapes([{ columnKey: 'epi_pvlib_window', type: 'bar', axis: 'left', color: '#3b82f6', inheritColor: true, showTolerance: true }]);
+  }, [displayRows, integralsData, epiTol, prTol, wcprTol]);
+
   const fixedEpiNormalChart = useMemo(() => {
     return generateChartDataAndShapes([{ columnKey: 'epi', type: 'bar', axis: 'left', color: '#3b82f6', inheritColor: true, showTolerance: true }]);
   }, [displayRows, integralsData, epiTol, prTol, wcprTol]);
@@ -1641,7 +1770,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
             }}
             useResizeHandler={true}
             style={{ width: '100%', height: '100%' }}
-            config={{ responsive: true, displayModeBar: true, displaylogo: false, modeBarButtonsToRemove: ['select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d'] }}
+            config={{ responsive: true, displayModeBar: 'hover', displaylogo: false, modeBarButtonsToRemove: ['select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d'] }}
           />
         </div>
       </div>
@@ -3904,6 +4033,28 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                     </div>
                   )}
                 </div>
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <input 
+                    type="file" 
+                    ref={shadingFileInputRef} 
+                    style={{ display: 'none' }} 
+                    accept=".csv,.txt" 
+                    onChange={handleShadingTableUpload} 
+                  />
+                  <button 
+                    onClick={() => shadingFileInputRef.current?.click()} 
+                    className="btn"
+                    style={{ width: '100%', background: '#6366f1', color: '#fff', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '16px', height: 'auto' }}
+                  >
+                    <span style={{ fontSize: '24px' }}>🕶️</span>
+                    <span>Upload Tabela<br/>Sombreamento 3D</span>
+                  </button>
+                  {shadingTableUploadProgress > 0 && (
+                    <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '6px', background: 'rgba(0,0,0,0.1)', borderRadius: '0 0 8px 8px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', background: '#4ade80', width: `${shadingTableUploadProgress}%`, transition: 'width 0.3s' }}></div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -4719,7 +4870,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                       if ((col.key === 'cap_ratio' || col.key === 'astm_ratio' || col.key === 'cap_ratio_adaptive' || col.key === 'astm_ratio_adaptive') && typeof val === 'number') {
                         formattedVal = val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
                       }
-                      if ((col.key === 'epi' || col.key === 'epi_corrigido' || col.key === 'epi_pvlib' || col.key === 'pr_medida' || col.key === 'pr_medida_bifacial' || col.key === 'pr_esperada' || col.key === 'pr_esperada_bifacial' || col.key === 'pr_prevista' || col.key === 'pr_prevista_bifacial' || col.key === 'wcpr' || col.key === 'wcpr_bifacial') && typeof val === 'number') {
+                      if ((col.key === 'epi' || col.key === 'epi_corrigido' || col.key === 'epi_pvlib' || col.key === 'epi_pvlib_window' || col.key === 'pr_medida' || col.key === 'pr_medida_bifacial' || col.key === 'pr_esperada' || col.key === 'pr_esperada_bifacial' || col.key === 'pr_prevista' || col.key === 'pr_prevista_bifacial' || col.key === 'wcpr' || col.key === 'wcpr_bifacial') && typeof val === 'number') {
                         formattedVal = (val * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
                       }
                       if (col.key === 'fator_ajuste' && typeof val === 'number') {
@@ -4750,7 +4901,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                         }
                       }
                       
-                      if ((col.key === 'epi' || col.key === 'epi_corrigido' || col.key === 'epi_pvlib') && typeof val === 'number') {
+                      if ((col.key === 'epi' || col.key === 'epi_corrigido' || col.key === 'epi_pvlib' || col.key === 'epi_pvlib_window') && typeof val === 'number') {
                         const epiColor = getEpiColor(val, epiTol);
                         cellBackground = epiColor.bg;
                         cellColor = epiColor.text;
@@ -4839,7 +4990,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                       if ((col.key === 'cap_ratio' || col.key === 'astm_ratio' || col.key === 'cap_ratio_adaptive' || col.key === 'astm_ratio_adaptive') && typeof val === 'number') {
                         formattedVal = val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
                       }
-                      if ((col.key === 'epi' || col.key === 'epi_corrigido' || col.key === 'epi_pvlib' || col.key === 'pr_medida' || col.key === 'pr_medida_bifacial' || col.key === 'pr_esperada' || col.key === 'pr_esperada_bifacial' || col.key === 'pr_prevista' || col.key === 'pr_prevista_bifacial' || col.key === 'wcpr' || col.key === 'wcpr_bifacial') && typeof val === 'number') {
+                      if ((col.key === 'epi' || col.key === 'epi_corrigido' || col.key === 'epi_pvlib' || col.key === 'epi_pvlib_window' || col.key === 'pr_medida' || col.key === 'pr_medida_bifacial' || col.key === 'pr_esperada' || col.key === 'pr_esperada_bifacial' || col.key === 'pr_prevista' || col.key === 'pr_prevista_bifacial' || col.key === 'wcpr' || col.key === 'wcpr_bifacial') && typeof val === 'number') {
                         formattedVal = (val * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
                       }
                       if (col.key === 'fator_ajuste' && typeof val === 'number') {
@@ -4848,7 +4999,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                       let cellBackground = isOutput ? theme.bgTotal : 'transparent';
                       let cellColor = isOutput ? theme.color : 'var(--text-primary)';
                       
-                      if ((col.key === 'epi' || col.key === 'epi_corrigido' || col.key === 'epi_pvlib') && typeof val === 'number') {
+                      if ((col.key === 'epi' || col.key === 'epi_corrigido' || col.key === 'epi_pvlib' || col.key === 'epi_pvlib_window') && typeof val === 'number') {
                         const epiColor = getEpiColor(val, epiTol);
                         cellBackground = epiColor.bg;
                         cellColor = epiColor.text;
@@ -4889,6 +5040,58 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '0 10px' }}>
               <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                 📈 Gráficos Principais
+                <details data-html2canvas-ignore="true" style={{ position: 'relative', cursor: 'pointer', marginLeft: '12px' }}>
+                  <summary style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '600', userSelect: 'none', listStyle: 'none', display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px', background: 'var(--bg-secondary)', borderRadius: '4px', border: '1px solid var(--border)' }}>
+                    <span>⚙️ Gráficos</span>
+                    <span style={{ fontSize: '10px' }}>▼</span>
+                  </summary>
+                  <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: '8px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '6px', padding: '10px 16px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 50, display: 'flex', flexDirection: 'column', gap: '10px', minWidth: '280px', whiteSpace: 'nowrap', fontWeight: 'normal' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                      <input type="checkbox" checked={visibleFixedCharts.pr} onChange={() => setVisibleFixedCharts(prev => ({ ...prev, pr: !prev.pr }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                      <span>PR Simples</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                      <input type="checkbox" checked={visibleFixedCharts.pr_bifacial} onChange={() => setVisibleFixedCharts(prev => ({ ...prev, pr_bifacial: !prev.pr_bifacial }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                      <span>PR Simples Bifacial</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                      <input type="checkbox" checked={visibleFixedCharts.wcpr} onChange={() => setVisibleFixedCharts(prev => ({ ...prev, wcpr: !prev.wcpr }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                      <span>WCPR</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                      <input type="checkbox" checked={visibleFixedCharts.wcpr_bifacial} onChange={() => setVisibleFixedCharts(prev => ({ ...prev, wcpr_bifacial: !prev.wcpr_bifacial }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                      <span>WCPR Bifacial</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                      <input type="checkbox" checked={visibleFixedCharts.cap_ratio} onChange={() => setVisibleFixedCharts(prev => ({ ...prev, cap_ratio: !prev.cap_ratio }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                      <span>Daily Capacity Ratio - Fixed RC</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                      <input type="checkbox" checked={visibleFixedCharts.cap_ratio_adaptive} onChange={() => setVisibleFixedCharts(prev => ({ ...prev, cap_ratio_adaptive: !prev.cap_ratio_adaptive }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                      <span>Daily Capacity Ratio - Adaptive RC</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                      <input type="checkbox" checked={visibleFixedCharts.astm_ratio} onChange={() => setVisibleFixedCharts(prev => ({ ...prev, astm_ratio: !prev.astm_ratio }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                      <span>ASTM Capacity Ratio - Fixed RC</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                      <input type="checkbox" checked={visibleFixedCharts.astm_ratio_adaptive} onChange={() => setVisibleFixedCharts(prev => ({ ...prev, astm_ratio_adaptive: !prev.astm_ratio_adaptive }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                      <span>ASTM Capacity Ratio - Adaptive RC</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                      <input type="checkbox" checked={visibleFixedCharts.epi_pvlib} onChange={() => setVisibleFixedCharts(prev => ({ ...prev, epi_pvlib: !prev.epi_pvlib }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                      <span>EPI PVLib</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                      <input type="checkbox" checked={visibleFixedCharts.epi_pvlib_window} onChange={() => setVisibleFixedCharts(prev => ({ ...prev, epi_pvlib_window: !prev.epi_pvlib_window }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                      <span>EPI PVLib - Janela {capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5} dias</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                      <input type="checkbox" checked={visibleFixedCharts.epi_pvsyst} onChange={() => setVisibleFixedCharts(prev => ({ ...prev, epi_pvsyst: !prev.epi_pvsyst }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                      <span>EPI PVSyst</span>
+                    </label>
+                  </div>
+                </details>
               </h3>
               
               <div style={{ display: 'flex', flexDirection: 'column', width: '280px', marginLeft: 'auto', marginRight: '24px' }}>
@@ -4934,16 +5137,17 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
             </div>
             
             <div>
-              {renderFixedChartUI("EPI - Energy Performance Index - PVSyst", fixedEpiNormalChart, "#3b82f6")}
-              {renderFixedChartUI("EPI - Energy Performance Index - PVLib", fixedEpiChart, "#3b82f6")}
-              {renderFixedChartUI("Daily Capacity Ratio (%) — Fixed RC", fixedCapRatioChart, "#3b82f6")}
-              {renderFixedChartUI("Daily Capacity Ratio (%) — Adaptive RC", adaptiveCapRatioChart, "#1d4ed8")}
-              {renderFixedChartUI(`ASTM Capacity Ratio (%) — Fixed RC - ${capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5} dias`, fixedAstmRatioChart, "#3b82f6")}
-              {renderFixedChartUI(`ASTM Capacity Ratio (%) — Adaptive RC - ${capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5} dias`, adaptiveAstmRatioChart, "#1d4ed8")}
-              {renderFixedChartUI("WCPR - Weather Corrected Performance Ratio - PR Corrigida por Temperatura", fixedWcprChart, "#3b82f6")}
-              {renderFixedChartUI("WCPR Bifacial - Weather Corrected Performance Ratio - PR Corrigida por Temperatura Bifacial", fixedWcprBifacialChart, "#0ea5e9")}
-              {renderFixedChartUI("Standard Performance Ratio - PR Simples", fixedPrChart, "#3b82f6")}
-              {renderFixedChartUI("Standard Performance Ratio Bifacial - PR Simples Bifacial", fixedPrBifacialChart, "#0ea5e9")}
+              {visibleFixedCharts.pr && renderFixedChartUI("Standard Performance Ratio - PR Simples", fixedPrChart, "#3b82f6")}
+              {visibleFixedCharts.pr_bifacial && renderFixedChartUI("Standard Performance Ratio Bifacial - PR Simples Bifacial", fixedPrBifacialChart, "#0ea5e9")}
+              {visibleFixedCharts.wcpr && renderFixedChartUI("WCPR - Weather Corrected Performance Ratio - PR Corrigida por Temperatura", fixedWcprChart, "#3b82f6")}
+              {visibleFixedCharts.wcpr_bifacial && renderFixedChartUI("WCPR Bifacial - Weather Corrected Performance Ratio Bifacial - PR Corrigida por Temperatura Bifacial", fixedWcprBifacialChart, "#0ea5e9")}
+              {visibleFixedCharts.cap_ratio && renderFixedChartUI("Daily Capacity Ratio (%) — Fixed RC", fixedCapRatioChart, "#3b82f6")}
+              {visibleFixedCharts.cap_ratio_adaptive && renderFixedChartUI("Daily Capacity Ratio (%) — Adaptive RC", adaptiveCapRatioChart, "#1d4ed8")}
+              {visibleFixedCharts.astm_ratio && renderFixedChartUI(`ASTM Capacity Ratio (%) — Fixed RC - ${capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5} dias`, fixedAstmRatioChart, "#3b82f6")}
+              {visibleFixedCharts.astm_ratio_adaptive && renderFixedChartUI(`ASTM Capacity Ratio (%) — Adaptive RC - ${capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5} dias`, adaptiveAstmRatioChart, "#1d4ed8")}
+              {visibleFixedCharts.epi_pvlib && renderFixedChartUI("EPI - Energy Performance Index - PVLib", fixedEpiChart, "#3b82f6")}
+              {visibleFixedCharts.epi_pvlib_window && renderFixedChartUI(`EPI PVLib - Janela ${capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5} dias`, fixedEpiPvlibWindowChart, "#3b82f6")}
+              {visibleFixedCharts.epi_pvsyst && renderFixedChartUI("EPI - Energy Performance Index - PVSyst", fixedEpiNormalChart, "#3b82f6")}
             </div>
           </div>
           </div>
@@ -5081,7 +5285,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                   }}
                   useResizeHandler={true}
                   style={{ width: '100%', height: '100%' }}
-                  config={{ responsive: true, displayModeBar: true, displaylogo: false, modeBarButtonsToRemove: ['select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d'] }}
+                  config={{ responsive: true, displayModeBar: 'hover', displaylogo: false, modeBarButtonsToRemove: ['select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d'] }}
                 />
               </div>
             ) : (
@@ -5450,8 +5654,8 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                     <div style={{ fontSize: '11px', fontWeight: 700, color: '#ea580c', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Temperatura</div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}><span>Tcel Válida</span> <span style={{ fontWeight: 600 }}>{rowData.tcel_válida != null ? rowData.tcel_válida.toFixed(2) + ' °C' : '-'}</span></div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}><span>TArrWtd</span> <span style={{ fontWeight: 600 }}>{rowData.tarrwtd != null ? rowData.tarrwtd.toFixed(2) + ' °C' : '-'}</span></div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}><span>Tcel Válida</span> <span style={{ fontWeight: 600 }}>{typeof rowData.tcel_válida === 'number' ? rowData.tcel_válida.toFixed(2) + ' °C' : '-'}</span></div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}><span>TArrWtd</span> <span style={{ fontWeight: 600 }}>{typeof rowData.tarrwtd === 'number' ? rowData.tarrwtd.toFixed(2) + ' °C' : '-'}</span></div>
                                 </div>
                             </div>
                         )}

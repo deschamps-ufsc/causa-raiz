@@ -73,5 +73,24 @@
     "min_time": 60,
     "median_window": 11,
     "adjustment_factor": 0.91448
+  },
+  {
+    "name": "Temperatura Módulo_Athon",
+    "element": "Temperatura",
+    "min_value": null,
+    "max_value": null,
+    "max_variation": 5,
+    "min_variation": 0.01,
+    "min_time": 60,
+    "median_window": 11,
+    "adjustment_factor": 0.5
+  },
+  {
+    "name": "Bifacialidade Athon",
+    "element": "Irradiação",
+    "min_value": null,
+    "max_value": null,
+    "max_variation": null,
+    "adjustment_factor": 0.05
   }
 ]

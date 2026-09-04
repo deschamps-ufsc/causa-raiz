@@ -1182,6 +1182,19 @@
         },
         "End of List OperPoints": null
       }
+    },
+    {
+      "id": "1788320871779",
+      "nome": "CS6W-535MB-AG",
+      "potencia": 535,
+      "isc": 13.85,
+      "voc": 49,
+      "imp": 13.02,
+      "vmp": 41.1,
+      "alpha": 0.05,
+      "beta": -0.26,
+      "gamma": -0.34,
+      "celulas": 144
     }
   ],
   "inversores": [
@@ -1750,6 +1763,14 @@
         "MS_Thresh": 0.8,
         "Night_Loss": 5.5
       }
+    },
+    {
+      "id": "1788321049077",
+      "nome": "CSI-125-T600GL02-E",
+      "paco": 125000,
+      "pdco": 130000,
+      "vdco": 950,
+      "pso": 500
     }
   ]
 }

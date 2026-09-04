@@ -183,8 +183,38 @@ def run_pvlib_simulation(processed_df: pd.DataFrame, pvlib_node: dict, usina: st
                 ghi_est = ghi_est * ratio
             
             poa_direct = poa_comp['poa_direct']
+            poa_direct_raw = poa_direct.copy()
             poa_sky_diffuse = poa_comp['poa_sky_diffuse']
             poa_ground_diffuse = poa_comp['poa_ground_diffuse']
+            
+            # =========================================================
+            # Near Shadings (3D Shading Table)
+            # =========================================================
+            shading_table_path = os.path.join(DATA_DIR, usina, "shading_table.json")
+            if os.path.exists(shading_table_path):
+                try:
+                    with open(shading_table_path, "r", encoding="utf-8") as f:
+                        shading_data = json.load(f)
+                    
+                    az_bins = np.array(shading_data["azimuths"])
+                    ht_bins = np.array(shading_data["heights"])
+                    matrix = np.array(shading_data["matrix"])
+                    
+                    from scipy.interpolate import RegularGridInterpolator
+                    interpolator = RegularGridInterpolator((ht_bins, az_bins), matrix, bounds_error=False, fill_value=0.0)
+                    
+                    pv_height = 90.0 - solpos['apparent_zenith'].values
+                    pv_azimuth = solpos['azimuth'].values - 180.0
+                    pv_azimuth = (pv_azimuth + 180) % 360 - 180
+                    
+                    pts = np.column_stack((pv_height, pv_azimuth))
+                    shading_loss = interpolator(pts)
+                    shading_factor = np.clip(1.0 - shading_loss, 0.0, 1.0)
+                    
+                    poa_direct = poa_direct * pd.Series(shading_factor, index=poa_direct.index)
+                except Exception as err:
+                    logger.warning(f"[PVLIB] Falha ao aplicar Tabela de Sombreamento 3D: {err}")
+            # =========================================================
             
             # Ajuste de Sombreamento Difuso (Row-to-Row)
             import pvlib.bifacial.utils as bifacial_utils
@@ -208,7 +238,7 @@ def run_pvlib_simulation(processed_df: pd.DataFrame, pvlib_node: dict, usina: st
             poa_ground_diffuse_shaded = poa_ground_diffuse * ground_shade_factor
             
             # poa_total_unshaded: energia real sem as obstruções de Near Shadings
-            poa_total_unshaded = poa_direct + poa_sky_diffuse + poa_ground_diffuse
+            poa_total_unshaded = poa_direct_raw + poa_sky_diffuse + poa_ground_diffuse
             
             # === PVSyst IAM Extraction ===
             mod_spec = list(modulos_specs.values())[0] if modulos_specs else {}
@@ -300,9 +330,14 @@ def run_pvlib_simulation(processed_df: pd.DataFrame, pvlib_node: dict, usina: st
             soiling_val = float(soiling_pct if soiling_pct is not None else 1.0) / 100.0
         else:
             suj_node = next((n for n in nodes if n.get("type") == "sujidade" or n.get("id") == "sujidade"), None)
-            if suj_node and "sujidade_válida" in processed_df.columns:
-                s_data = processed_df["sujidade_válida"].dropna()
-                if not s_data.empty:
+            soiling_val = 0.0
+            if suj_node:
+                # Find the unmasked sujidade column to calculate the daily mean without curtailment gaps
+                suj_col = "sujidade" if "sujidade" in processed_df.columns else "Sujidade" if "Sujidade" in processed_df.columns else None
+                if suj_col:
+                    s_data = processed_df[suj_col].dropna()
+                    if not s_data.empty:
+                        soiling_val = float(s_data.mean()) / 100.0
                     cfg = suj_node.get("data", {})
                 
                 # Aplica restrição de tempo

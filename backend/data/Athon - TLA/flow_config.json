@@ -1,0 +1,146 @@
+{
+  "nodeConfigs": {
+    "gpoa": {
+      "inputs": [
+        {
+          "series": "TLA_ Irrad_POA",
+          "filter": "Irradiação_Qualidade",
+          "sensors": []
+        }
+      ],
+      "outputFilter": "Irradiação_50_W",
+      "operation": "mean"
+    },
+    "grear": {
+      "inputs": [
+        {
+          "sensors": [],
+          "series": "TLA_ Irrad_POA",
+          "filter": "Irradiação_Qualidade"
+        }
+      ],
+      "outputFilter": "Bifacialidade Athon",
+      "operation": "mean"
+    },
+    "tracker": {
+      "inputs": [],
+      "operation": "sum"
+    },
+    "tamb": {
+      "inputs": [
+        {
+          "series": "TLA_T_Amb",
+          "filter": "Temperatura Módulo_Athon",
+          "sensors": []
+        }
+      ],
+      "outputFilter": "Temperatura Módulo_Athon",
+      "operation": "mean"
+    },
+    "tmod": {
+      "inputs": [
+        {
+          "sensors": [],
+          "series": "TLA_T_Amb",
+          "filter": "Temperatura Módulo_Athon"
+        }
+      ],
+      "outputFilter": "",
+      "operation": "sum"
+    },
+    "sujidade": {
+      "inputs": [],
+      "operation": "sum"
+    },
+    "potencia_ppc": {
+      "inputs": [],
+      "operation": "sum"
+    },
+    "referencia_ppc": {
+      "inputs": [],
+      "operation": "sum"
+    },
+    "energia_pmi": {
+      "inputs": [
+        {
+          "sensors": [],
+          "series": "SKID1-INV02-P",
+          "filter": "Energia_PMI_Zerada"
+        }
+      ],
+      "outputFilter": "",
+      "operation": "sum",
+      "energiaPmiParams": {
+        "multiplier": 1,
+        "inputType": "power_1min",
+        "outputUnit": "kW"
+      }
+    },
+    "geff": {
+      "beta": 0.7,
+      "SSF": 0.12300000000000001,
+      "MLF": 0.035,
+      "type": "geff"
+    },
+    "tcel": {
+      "type": "tcel"
+    },
+    "curtailment": {
+      "curtailmentRefMin": 52.8,
+      "curtailmentRefMargin": 3,
+      "curtailmentDiffMargin": 5,
+      "type": "curtailment"
+    },
+    "simultaneidade": {
+      "simultParams": {
+        "geff": true,
+        "tamb": false,
+        "tcel": true,
+        "energia_pmi": false,
+        "curtailment": false,
+        "potencia_ppc": true,
+        "referencia_ppc": true,
+        "horario_valido_enabled": false,
+        "horario_start": "06:00",
+        "horario_end": "19:00"
+      }
+    },
+    "pvlib": {
+      "pvlibParams": {
+        "latitude": -20.74130825,
+        "longitude": -51.8315207,
+        "altitude": 500,
+        "gcr": 0.34,
+        "axis_tilt": 0,
+        "tz": "America/Sao_Paulo",
+        "selected_modulos": [
+          "1788320871779"
+        ],
+        "selected_inversores": [
+          "1788321049077"
+        ],
+        "loss_ohm_dc": 2,
+        "loss_bt_ca": 0,
+        "loss_aux_kw": 0,
+        "mismatch": 1,
+        "lid": 2,
+        "aux_loss": 0,
+        "use_fixed_soiling": true,
+        "fixed_soiling_pct": 5,
+        "trafo_pnom": 0,
+        "loss_ohm_ac_mt": 0,
+        "loss_ohm_ac": 0,
+        "trafo_iron_loss": 0,
+        "trafo_copper_loss": 0
+      },
+      "type": "pvlib"
+    },
+    "pvsyst": {
+      "type": "pvsyst"
+    },
+    "epi": {
+      "inputs": [],
+      "operation": "sum"
+    }
+  }
+}

@@ -85,9 +85,9 @@
     "tamb": {
       "inputs": [
         {
+          "sensors": [],
           "series": "CLS02.4.MET-EPE.T_SSTRH",
-          "filter": "Temperatura Ambiente",
-          "sensors": []
+          "filter": "Temperatura Ambiente"
         }
       ],
       "outputFilter": "",
@@ -96,19 +96,19 @@
     "tmod": {
       "inputs": [
         {
+          "sensors": [],
           "series": "CLS02.2.MET-B.T_MOD",
-          "filter": "",
-          "sensors": []
+          "filter": ""
         },
         {
+          "sensors": [],
           "series": "CLS02.4.MET-A.T_MOD",
-          "filter": "",
-          "sensors": []
+          "filter": ""
         },
         {
+          "sensors": [],
           "series": "CLS02.6.MET-B.T_MOD",
-          "filter": "",
-          "sensors": []
+          "filter": ""
         }
       ],
       "outputFilter": "",
@@ -136,14 +136,14 @@
     "potencia_ppc": {
       "inputs": [
         {
+          "sensors": [],
           "series": "CLS02.PPC.1-2-3.PotAt",
-          "filter": "",
-          "sensors": []
+          "filter": ""
         },
         {
+          "sensors": [],
           "series": "CLS02.PPC.4-5-6.PotAt",
-          "filter": "",
-          "sensors": []
+          "filter": ""
         }
       ],
       "outputFilter": "",
@@ -181,7 +181,9 @@
       "outputFilter": "",
       "operation": "sum",
       "energiaPmiParams": {
-        "multiplier": 0.012
+        "multiplier": 0.012,
+        "inputType": "energy_5min",
+        "outputUnit": "MW"
       }
     },
     "geff": {
@@ -208,8 +210,40 @@
         "energia_pmi": true,
         "curtailment": true,
         "potencia_ppc": true,
-        "referencia_ppc": true
+        "referencia_ppc": true,
+        "horario_valido_enabled": false,
+        "horario_start": "06:00",
+        "horario_end": "19:00"
       }
+    },
+    "pvlib": {
+      "pvlibParams": {
+        "latitude": -11.1006,
+        "longitude": -41.2715,
+        "altitude": 1000,
+        "gcr": 0.34,
+        "axis_tilt": -1.4,
+        "tz": "America/Sao_Paulo",
+        "selected_modulos": [
+          "1785624325717",
+          "1785624331896"
+        ],
+        "selected_inversores": [
+          "1785624391332"
+        ],
+        "loss_ohm_dc": 1.37,
+        "loss_bt_ca": 0,
+        "loss_aux_kw": 0,
+        "mismatch": 1,
+        "lid": 1.13,
+        "aux_loss": 14,
+        "trafo_pnom": 52800,
+        "trafo_iron_loss": 0.1,
+        "trafo_copper_loss": 0.9,
+        "loss_ohm_ac_mt": 1.57,
+        "loss_ohm_ac": 0.02
+      },
+      "type": "pvlib"
     },
     "pvsyst": {
       "type": "pvsyst"
@@ -219,7 +253,9 @@
       "operation": "sum",
       "epiParams": {
         "energiaVar": "E_Grid",
-        "irradianciaVar": "GlobInc"
+        "irradianciaVar": "GlobInc",
+        "ohmVar": "OhmLoss",
+        "earrayVar": "EArray"
       }
     }
   }

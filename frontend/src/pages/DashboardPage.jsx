@@ -21,6 +21,7 @@ import { fetchVisualizations, createVisualization, updateVisualization, deleteVi
 import { SaveVisualizationModal, LoadVisualizationModal } from '../components/VisualizationModals'
 import FluxogramaView from '../components/FluxogramaView'
 import MapaView from '../components/MapaView'
+import EventosExtremosView from '../components/EventosExtremosView'
 import { exportTableToPdf, exportTableToPng } from '../utils/exportPdf'
 
 export function formatSeriesName(name) {
@@ -860,6 +861,7 @@ export default function DashboardPage() {
               { id: 'ranking', icon: '🏆', label: 'Ranking' },
               { id: 'trackers', icon: <TrackerSVGIcon />, label: 'Trackers' },
               { id: 'mapa', icon: '🗺️', label: 'Mapa' },
+              { id: 'eventos-extremos', icon: '⚡', label: 'Eventos Extremos' },
             ].map(tab => {
               const isActive = causaRaizTab === tab.id
               return (
@@ -890,6 +892,9 @@ export default function DashboardPage() {
             </div>
             <div style={{ display: causaRaizTab === 'mapa' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'auto' }}>
               <MapaView usina={usinaAtual} dates={selectedDates.join(',')} activeFilters={activeFilters} />
+            </div>
+            <div style={{ display: causaRaizTab === 'eventos-extremos' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'auto' }}>
+              <EventosExtremosView usina={usinaAtual} dates={selectedDates.join(',')} activeFilters={activeFilters} data={filteredData} selectedSeries={selectedSeries} loading={dataLoading} />
             </div>
           </div>
         </div>

@@ -112,6 +112,8 @@ const CapacityTestView = ({ usinaAtual, selectedDates, setCapacityTestDailyResul
   const toggleRow = (date) => {
     setExpandedRow(prev => prev === date ? null : date);
   };
+  
+  const [seriesModal, setSeriesModal] = useState({ open: false, title: '', data: null });
 
   const fetchSSE = async (url, payload, setProgress) => {
     const res = await fetch(url, {
@@ -964,7 +966,12 @@ const CapacityTestView = ({ usinaAtual, selectedDates, setCapacityTestDailyResul
                                       </div>
                                       <div style={{ display: 'flex', gap: '16px' }}>
                                         <div style={{ flex: 1, background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px' }}>
-                                          <div style={{ fontSize: '13px', fontWeight: 600, color: '#475569', borderBottom: '1px solid #f1f5f9', paddingBottom: '8px', marginBottom: '8px' }}>Fixed RC</div>
+                                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '8px', marginBottom: '8px' }}>
+                                            <div style={{ fontSize: '13px', fontWeight: 600, color: '#475569' }}>Fixed RC</div>
+                                            {d1?.plot_series && (
+                                              <button onClick={(e) => { e.stopPropagation(); setSeriesModal({ open: true, title: `Daily Fixed RC (${date})`, data: { ...d1.plot_series, P_sim: d2?.plot_series?.P } }); }} style={{ background: 'none', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '2px 6px', fontSize: '11px', cursor: 'pointer', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px' }}>📈 Ver Série</button>
+                                            )}
+                                          </div>
                                           <div style={{ fontSize: '13px', color: '#334155', marginBottom: '4px' }}><strong>G_RC:</strong> {rcG} W/m²</div>
                                           <div style={{ fontSize: '13px', color: '#334155', marginBottom: '4px' }}><strong>T_RC:</strong> {rcT} °C</div>
                                           <div style={{ fontSize: '13px', color: '#334155', marginBottom: '4px' }}><strong>RC Distance:</strong> {formatDist(dailyRcMetrics.distance)}</div>
@@ -972,7 +979,12 @@ const CapacityTestView = ({ usinaAtual, selectedDates, setCapacityTestDailyResul
                                           <div style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>{ratio ? ratio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%' : '—'}</div>
                                         </div>
                                         <div style={{ flex: 1, background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '16px' }}>
-                                          <div style={{ fontSize: '13px', fontWeight: 600, color: '#1d4ed8', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px', marginBottom: '8px' }}>Adaptive RC</div>
+                                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px', marginBottom: '8px' }}>
+                                            <div style={{ fontSize: '13px', fontWeight: 600, color: '#1d4ed8' }}>Adaptive RC</div>
+                                            {d1?.plot_series && (
+                                              <button onClick={(e) => { e.stopPropagation(); setSeriesModal({ open: true, title: `Daily Adaptive RC (${date})`, data: { ...d1.plot_series, P_sim: d2?.plot_series?.P } }); }} style={{ background: 'none', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '2px 6px', fontSize: '11px', cursor: 'pointer', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px' }}>📈 Ver Série</button>
+                                            )}
+                                          </div>
                                           <div style={{ fontSize: '13px', color: '#334155', marginBottom: '4px' }}><strong>G_RC (P60):</strong> {gP60Daily != null ? gP60Daily.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '—'} W/m²</div>
                                           <div style={{ fontSize: '13px', color: '#334155', marginBottom: '4px' }}><strong>T_RC (média):</strong> {tMeanDaily != null ? tMeanDaily.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '—'} °C</div>
                                           <div style={{ fontSize: '13px', color: '#334155', marginBottom: '4px' }}><strong>RC Distance:</strong> {formatDist(dailyAdaptiveRcMetrics.distance)}</div>
@@ -989,7 +1001,12 @@ const CapacityTestView = ({ usinaAtual, selectedDates, setCapacityTestDailyResul
                                         </div>
                                         <div style={{ display: 'flex', gap: '16px' }}>
                                           <div style={{ flex: 1, background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px' }}>
-                                            <div style={{ fontSize: '13px', fontWeight: 600, color: '#475569', borderBottom: '1px solid #f1f5f9', paddingBottom: '8px', marginBottom: '8px' }}>Fixed RC</div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '8px', marginBottom: '8px' }}>
+                                              <div style={{ fontSize: '13px', fontWeight: 600, color: '#475569' }}>Fixed RC</div>
+                                              {astmMed?.plot_series && (
+                                                <button onClick={(e) => { e.stopPropagation(); setSeriesModal({ open: true, title: `Janela Fixed RC (${date})`, data: { ...astmMed.plot_series, P_sim: astmSim?.plot_series?.P } }); }} style={{ background: 'none', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '2px 6px', fontSize: '11px', cursor: 'pointer', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px' }}>📈 Ver Série</button>
+                                              )}
+                                            </div>
                                             <div style={{ fontSize: '13px', color: '#334155', marginBottom: '4px' }}><strong>G_RC:</strong> {rcG} W/m²</div>
                                             <div style={{ fontSize: '13px', color: '#334155', marginBottom: '4px' }}><strong>T_RC:</strong> {rcT} °C</div>
                                             <div style={{ fontSize: '13px', color: '#334155', marginBottom: '4px' }}><strong>RC Distance:</strong> {formatDist(astmRcMetrics.distance)}</div>
@@ -997,7 +1014,12 @@ const CapacityTestView = ({ usinaAtual, selectedDates, setCapacityTestDailyResul
                                             <div style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>{astmRatio ? astmRatio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%' : '—'}</div>
                                           </div>
                                           <div style={{ flex: 1, background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '16px' }}>
-                                            <div style={{ fontSize: '13px', fontWeight: 600, color: '#1d4ed8', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px', marginBottom: '8px' }}>Adaptive RC</div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px', marginBottom: '8px' }}>
+                                              <div style={{ fontSize: '13px', fontWeight: 600, color: '#1d4ed8' }}>Adaptive RC</div>
+                                              {astmMed?.plot_series && (
+                                                <button onClick={(e) => { e.stopPropagation(); setSeriesModal({ open: true, title: `Janela Adaptive RC (${date})`, data: { ...astmMed.plot_series, P_sim: astmSim?.plot_series?.P } }); }} style={{ background: 'none', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '2px 6px', fontSize: '11px', cursor: 'pointer', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px' }}>📈 Ver Série</button>
+                                              )}
+                                            </div>
                                             <div style={{ fontSize: '13px', color: '#334155', marginBottom: '4px' }}><strong>G_RC (P60):</strong> {gP60Astm != null ? gP60Astm.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '—'} W/m²</div>
                                             <div style={{ fontSize: '13px', color: '#334155', marginBottom: '4px' }}><strong>T_RC (média):</strong> {tMeanAstm != null ? tMeanAstm.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '—'} °C</div>
                                             <div style={{ fontSize: '13px', color: '#334155', marginBottom: '4px' }}><strong>RC Distance:</strong> {formatDist(astmAdaptiveRcMetrics.distance)}</div>
@@ -1033,6 +1055,67 @@ const CapacityTestView = ({ usinaAtual, selectedDates, setCapacityTestDailyResul
           )}
         </div>
       )}
+
+      {seriesModal.open && seriesModal.data && (() => {
+        const d = seriesModal.data;
+        const is_valid = d.is_valid || d.timestamps.map(() => true);
+        const validG = d.G.map((v, i) => is_valid[i] ? v : null);
+        const validTamb = d.Tamb.map((v, i) => is_valid[i] ? v : null);
+        const validP = d.P.map((v, i) => is_valid[i] ? v : null);
+        const validPSim = d.P_sim ? d.P_sim.map((v, i) => is_valid[i] ? v : null) : null;
+        
+        return (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setSeriesModal({ open: false, title: '', data: null })}>
+            <div style={{ background: '#fff', borderRadius: '12px', padding: '24px', width: '90%', maxWidth: '1000px', maxHeight: '90vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }} onClick={e => e.stopPropagation()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#0f172a' }}>{seriesModal.title}</h3>
+                <button onClick={() => setSeriesModal({ open: false, title: '', data: null })} style={{ background: 'transparent', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#64748b' }}>✖</button>
+              </div>
+              
+              <div style={{ height: '500px', width: '100%' }}>
+                <Plot
+                  data={[
+                    { x: d.timestamps, y: d.G, type: 'scatter', mode: 'lines', name: 'G (Descartado)', line: { color: 'rgba(234, 179, 8, 0.3)' }, yaxis: 'y1', hoverinfo: 'skip', showlegend: false },
+                    { x: d.timestamps, y: d.Tamb, type: 'scatter', mode: 'lines', name: 'T (Descartado)', line: { color: 'rgba(239, 68, 68, 0.3)' }, yaxis: 'y2', hoverinfo: 'skip', showlegend: false },
+                    { x: d.timestamps, y: d.P, type: 'scatter', mode: 'lines', name: 'P Medido (Descartado)', line: { color: 'rgba(59, 130, 246, 0.3)' }, yaxis: 'y3', hoverinfo: 'skip', showlegend: false },
+                    ...(d.P_sim ? [{ x: d.timestamps, y: d.P_sim, type: 'scatter', mode: 'lines', name: 'P Simulado (Descartado)', line: { color: 'rgba(34, 197, 94, 0.3)' }, yaxis: 'y4', hoverinfo: 'skip', showlegend: false }] : []),
+                    
+                    { x: d.timestamps, y: validG, type: 'scatter', mode: 'lines', name: 'Irradiância (G) Válida', line: { color: '#eab308' }, yaxis: 'y1' },
+                    { x: d.timestamps, y: validTamb, type: 'scatter', mode: 'lines', name: 'Temperatura (T) Válida', line: { color: '#ef4444' }, yaxis: 'y2' },
+                    { x: d.timestamps, y: validP, type: 'scatter', mode: 'lines', name: 'Potência Medida (P) Válida', line: { color: '#3b82f6' }, yaxis: 'y3' },
+                    ...(d.P_sim ? [{ x: d.timestamps, y: validPSim, type: 'scatter', mode: 'lines', name: 'Potência Simulada (P) Válida', line: { color: '#22c55e' }, yaxis: 'y4' }] : [])
+                  ]}
+                  layout={{
+                    title: '',
+                    autosize: true,
+                    margin: { l: 60, r: 100, t: 20, b: 60 },
+                    xaxis: { 
+                      title: 'Tempo', 
+                      showgrid: false, 
+                      domain: [0, 0.85],
+                      type: 'date',
+                      tickformat: seriesModal.title.includes('Janela') ? '%d/%m %H:%M' : '%H:%M',
+                      dtick: 3600000
+                    },
+                    yaxis: { title: 'Irradiância (W/m²)', titlefont: { color: '#eab308' }, tickfont: { color: '#eab308' }, side: 'left', showgrid: false },
+                    yaxis2: { title: '', titlefont: { color: '#ef4444' }, tickfont: { color: '#ef4444' }, side: 'right', overlaying: 'y', position: 0.85, anchor: 'free', showgrid: false },
+                    yaxis3: { title: '', titlefont: { color: '#3b82f6' }, tickfont: { color: '#3b82f6' }, side: 'right', overlaying: 'y', position: 0.92, anchor: 'free', showgrid: false },
+                    yaxis4: { title: '', titlefont: { color: '#22c55e' }, tickfont: { color: '#22c55e' }, side: 'right', overlaying: 'y', position: 0.99, anchor: 'free', showgrid: false },
+                    legend: { orientation: 'h', y: -0.15 }
+                  }}
+                  style={{ width: '100%', height: '100%' }}
+                  config={{ 
+                    responsive: true, 
+                    displayModeBar: true,
+                    displaylogo: false,
+                    modeBarButtons: [['toImage', 'zoom2d', 'pan2d', 'resetScale2d']]
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };

@@ -77,6 +77,12 @@ def preview_file_date(content: bytes, filename: str) -> str | None:
                     raise ValueError("Possivelmente separador é ;")
             except Exception:
                 df = pd.read_csv(io.BytesIO(content), sep=';', nrows=5, on_bad_lines='skip')
+        elif filename.lower().endswith('.parquet'):
+            # parquet não suporta nrows nativamente pelo pandas de forma simples com BytesIO,
+            # mas podemos ler as primeiras N linhas usando PyArrow dataset
+            import pyarrow.parquet as pq
+            parquet_file = pq.ParquetFile(io.BytesIO(content))
+            df = next(parquet_file.iter_batches(batch_size=5)).to_pandas()
         else:
             df = pd.read_excel(io.BytesIO(content), engine="openpyxl", parse_dates=False, nrows=5)
 
@@ -100,6 +106,7 @@ def preview_file_date(content: bytes, filename: str) -> str | None:
 def process_excel(content: bytes, original_filename: str, usina: str, skip_unmapped: bool = False) -> dict:
     """
     Lê o Excel, converte para Parquet e retorna metadados.
+    Usa process_raw_file para suportar múltiplos dias no mesmo arquivo.
 
     Args:
         content: bytes do arquivo Excel
@@ -124,130 +131,29 @@ def process_excel(content: bytes, original_filename: str, usina: str, skip_unmap
         )
         return {**cached_info, "cached": True}
 
-    # ── Ler Excel ────────────────────────────────────────────────────────────
-    logger.info(f"[EXCEL] Lendo '{original_filename}' para usina '{usina}' ({len(content)/1024/1024:.2f} MB)...")
+    logger.info(f"[EXCEL] Processando '{original_filename}' para usina '{usina}' ({len(content)/1024/1024:.2f} MB)...")
 
-    import io
-    df = pd.read_excel(
-        io.BytesIO(content),
-        engine="openpyxl",
-        parse_dates=False,          # Vamos parsear manualmente
-    )
+    # Usa a função generalizada que lida com múltiplos dias, merge e limpeza
+    results = process_raw_file(content, original_filename, usina, skip_unmapped)
+    
+    if not results:
+        raise ValueError(f"Nenhum dado importado de {original_filename}")
 
-    logger.info(f"[EXCEL] Lido: {df.shape[0]} linhas × {df.shape[1]} colunas")
-
-    # ── Identificar formato longo / híbrido / largo ──
-    cols_lower = [str(c).lower().strip() for c in df.columns]
-    is_long_format = all(c in cols_lower for c in ['timestamp', 'tag', 'value'])
-    is_hybrid_pmi_format = all(c in cols_lower for c in ['time', 'meter_name', 'kwh_del_int', 'kwh_rec_int'])
-
-    if is_long_format:
-        logger.info(f"[EXCEL] Formato longo detectado no process_excel. Realizando pivot...")
-        ts_col = df.columns[cols_lower.index('timestamp')]
-        tag_col = df.columns[cols_lower.index('tag')]
-        val_col = df.columns[cols_lower.index('value')]
-        
-        df[ts_col] = pd.to_datetime(
-            df[ts_col].astype(str).str.strip(), 
-            dayfirst=TIMESTAMP_DAYFIRST,
-            errors='coerce'
-        )
-        df = df.drop_duplicates(subset=[ts_col, tag_col], keep='last')
-        df = df.pivot(index=ts_col, columns=tag_col, values=val_col).reset_index()
-        df = df.rename(columns={ts_col: "timestamp"})
-        df = df.dropna(subset=["timestamp"])
-        df = df.sort_values("timestamp").reset_index(drop=True)
-
-    elif is_hybrid_pmi_format:
-        logger.info(f"[EXCEL] Formato híbrido PMI detectado. Realizando melt e pivot...")
-        ts_col = df.columns[cols_lower.index('time')]
-        tag_col = df.columns[cols_lower.index('meter_name')]
-        
-        df[ts_col] = _parse_timestamp_col(df[ts_col])
-        
-        id_vars = [ts_col, tag_col]
-        value_vars = [c for c in df.columns if c not in id_vars]
-        
-        melted = pd.melt(df, id_vars=id_vars, value_vars=value_vars, var_name='var_type', value_name='value')
-        melted['tag'] = melted[tag_col].astype(str) + '_' + melted['var_type'].astype(str)
-        
-        melted = melted.drop_duplicates(subset=[ts_col, 'tag'], keep='last')
-        df = melted.pivot(index=ts_col, columns='tag', values='value').reset_index()
-        df = df.rename(columns={ts_col: "timestamp"})
-        df.columns.name = None
-        df = df.dropna(subset=["timestamp"])
-        df = df.sort_values("timestamp").reset_index(drop=True)
-
+    # Monta o resumo das datas processadas
+    dates = sorted([r["date"] for r in results])
+    if len(dates) > 1:
+        date_str = f"{dates[0]} até {dates[-1]} ({len(dates)} dias)"
     else:
-        # ── Parsear timestamp padrão (sempre primeira coluna) ─────────────────
-        ts_col = df.columns[TIMESTAMP_COL_INDEX]
-        logger.info(f"[EXCEL] Coluna de timestamp detectada: '{ts_col}'")
+        date_str = dates[0]
 
-        df[ts_col] = _parse_timestamp_col(df[ts_col])
-
-        # Renomear para nome padronizado
-        df = df.rename(columns={ts_col: "timestamp"})
-        df = df.dropna(subset=["timestamp"])
-        df = df.sort_values("timestamp").reset_index(drop=True)
-
-    # Converter colunas de métricas para tipo numérico usando regex robusto
-    for col in df.columns:
-        if col != "timestamp":
-            if not pd.api.types.is_numeric_dtype(df[col]):
-                s = df[col].astype(str)
-                # Se contém vírgula, tratamos como PT-BR (vírgula=decimal). Extraímos apenas dígitos, vírgula e sinal.
-                if s.str.contains(',').any():
-                    s = s.str.replace(r'[^\d\-,]', '', regex=True).str.replace(',', '.', regex=False)
-                else:
-                    s = s.str.replace(r'[^\d\-.]', '', regex=True)
-                
-                s = s.replace('', np.nan)
-                df[col] = pd.to_numeric(s, errors='coerce')
-            else:
-                df[col] = pd.to_numeric(df[col], errors='coerce')
-
-    # ── Detectar data do arquivo ──────────────────────────────────────────────
-    detected_date = df["timestamp"].dt.date.iloc[0].isoformat()  # "2025-12-04"
-    parquet_path = os.path.join(usina_dir, f"{detected_date}.parquet")
-    
-    # ── Garantir grade de 24 horas por dia (1 minuto) ──
-    df.set_index("timestamp", inplace=True)
-    df = df.resample('1min').mean()
-    
-    full_idx = pd.date_range(f"{detected_date} 00:00:00", f"{detected_date} 23:59:00", freq='1min')
-    df = df.reindex(full_idx)
-    df.index.name = "timestamp"
-    
-    df = df.ffill().where(df.bfill().notna())
-    df.reset_index(inplace=True)
-
-    if skip_unmapped:
-        from services.mapping_service import load_mapping
-        mapping = load_mapping(usina)
-        cols_to_keep = [c for c in df.columns if c in mapping or c == "timestamp"]
-        df = df[cols_to_keep]
-        logger.info(f"[PROCESS] Séries após filtro de mapeamento: {len(df.columns) - 1}")
-
-    # ── Salvar como Parquet ───────────────────────────────────────────────────
-    logger.info(f"[PARQUET] Salvando em '{parquet_path}'...")
-    table = pa.Table.from_pandas(df, preserve_index=False)
-    pq.write_table(
-        table,
-        parquet_path,
-        compression="snappy",       # Compressão rápida, boa para leitura
-    )
-
-    series_count = len(df.columns) - 1  # Exclui timestamp
-    logger.info(f"[PARQUET] Salvo! {series_count} séries, data={detected_date}")
-
-    # ── Salvar no cache ───────────────────────────────────────────────────────
     result = {
-        "date": detected_date,
-        "series_count": series_count,
-        "parquet_path": parquet_path,
+        "date": date_str,
+        "series_count": results[0]["series_count"],
+        "parquet_path": results[0]["parquet_path"],
         "cached": False,
     }
     
+    # ── Salvar no cache por MD5 ───────────────────────────────────────────────
     cache = _load_cache()
     cache[cache_key] = {k: v for k, v in result.items() if k != "cached"}
     _save_cache(cache)
@@ -274,7 +180,7 @@ def process_raw_file(content, filename: str, usina: str, skip_unmapped: bool = F
         df = content.copy()
         logger.info(f"[PROCESS] DataFrame recebido diretamente: {df.shape[0]} linhas × {df.shape[1]} colunas")
     else:
-        # Detecção de CSV vs Excel
+        # Detecção de CSV vs Excel vs Parquet
         if filename.lower().endswith('.csv'):
             # Tenta ler com separador vírgula
             try:
@@ -284,6 +190,9 @@ def process_raw_file(content, filename: str, usina: str, skip_unmapped: bool = F
             except Exception:
                 # Fallback para ponto-e-vírgula se der erro
                 df = pd.read_csv(io.BytesIO(content), sep=';', on_bad_lines='skip')
+        elif filename.lower().endswith('.parquet'):
+            # Se vier Parquet bruto do Google Drive/Cliente
+            df = pd.read_parquet(io.BytesIO(content))
         else:
             df = pd.read_excel(io.BytesIO(content), engine="openpyxl", parse_dates=False)
             

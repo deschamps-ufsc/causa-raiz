@@ -15,6 +15,8 @@ def extract_series_names(content: bytes, filename: str) -> list[str]:
                 raise ValueError("Possivelmente separador é ;")
         except Exception:
             df = pd.read_csv(io.BytesIO(content), sep=';', on_bad_lines='skip')
+    elif filename.lower().endswith('.parquet'):
+        df = pd.read_parquet(io.BytesIO(content))
     else:
         df = pd.read_excel(io.BytesIO(content), engine="openpyxl", parse_dates=False)
         

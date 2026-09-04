@@ -1,0 +1,163 @@
+[
+  {
+    "id": "b85a5c44-8a8a-4a78-adb1-3e34db1c9475",
+    "created_at": "2026-09-01T23:58:27.912889",
+    "name": "Inv30 x Inv21",
+    "user": "deschamps.ufsc@gmail.com",
+    "selectedDates": [
+      "2023-09-23"
+    ],
+    "selectedSeries": [
+      "SKID2-INV21-P",
+      "SKID2-INV30-P",
+      "TLA_ Irrad_POA",
+      "TLA_T_Amb",
+      "TLA_T_Mod"
+    ],
+    "activeFilters": [],
+    "visibleFilters": [],
+    "filterColors": {},
+    "chartConfig": {
+      "gridX": true,
+      "gridY1": true,
+      "gridY2": false,
+      "gridY3": false,
+      "gridY4": false,
+      "xGridSpacing": "",
+      "xLimits": {
+        "min": "",
+        "max": "23:59"
+      },
+      "y1Limits": {
+        "min": -2,
+        "max": 1058
+      },
+      "y2Limits": {
+        "min": 0,
+        "max": 133
+      },
+      "y3Limits": {
+        "min": -4,
+        "max": 178
+      },
+      "y4Limits": {
+        "min": "",
+        "max": ""
+      },
+      "appliedRanges": {},
+      "seriesAxisMap": {
+        "SKID1-INV01-P": "y2",
+        "SKID1-INV02-P": "y2",
+        "SKID1-INV03-P": "y2",
+        "SKID1-INV04-P": "y2",
+        "SKID1-INV05-P": "y2",
+        "SKID1-INV06-P": "y2",
+        "SKID1-INV07-P": "y2",
+        "SKID1-INV08-P": "y2",
+        "SKID1-INV09-P": "y2",
+        "SKID1-INV10-P": "y2",
+        "SKID1-INV11-P": "y2",
+        "SKID1-INV12-P": "y2",
+        "SKID1-INV13-P": "y2",
+        "SKID1-INV14-P": "y2",
+        "SKID1-INV15-P": "y2",
+        "SKID1-INV16-P": "y2",
+        "SKID1-INV17-P": "y2",
+        "SKID1-INV18-P": "y2",
+        "SKID1-INV19-P": "y2",
+        "SKID1-INV20-P": "y2",
+        "SKID2-INV21-P": "y2",
+        "SKID2-INV30-P": "y2",
+        "TLA_ Irrad_POA": "y1",
+        "TLA_T_Amb": "y3",
+        "TLA_T_Mod": "y3"
+      },
+      "seriesColors": {
+        "SKID1-INV01-P": "#2E7D32",
+        "SKID1-INV02-P": "#7CB342",
+        "SKID1-INV03-P": "#B1D18D",
+        "SKID1-INV04-P": "#2E7D32",
+        "SKID1-INV05-P": "#2E7D32",
+        "SKID1-INV06-P": "#7CB342",
+        "SKID1-INV07-P": "#B1D18D",
+        "SKID1-INV08-P": "#2E7D32",
+        "SKID1-INV09-P": "#7CB342",
+        "SKID1-INV10-P": "#B1D18D",
+        "SKID1-INV11-P": "#2E7D32",
+        "SKID1-INV12-P": "#7CB342",
+        "SKID1-INV13-P": "#B1D18D",
+        "SKID1-INV14-P": "#2E7D32",
+        "SKID1-INV15-P": "#7CB342",
+        "SKID1-INV16-P": "#B1D18D",
+        "SKID1-INV17-P": "#2E7D32",
+        "SKID1-INV18-P": "#7CB342",
+        "SKID1-INV19-P": "#B1D18D",
+        "SKID1-INV20-P": "#2E7D32",
+        "SKID2-INV21-P": "#E53935",
+        "SKID2-INV30-P": "#1565C0",
+        "TLA_ Irrad_POA": "#F9CC00",
+        "TLA_T_Amb": "#96C267",
+        "TLA_T_Mod": "#2E7D32"
+      },
+      "seriesWidths": {
+        "SKID1-INV01-P": 1,
+        "SKID1-INV02-P": 1,
+        "SKID1-INV03-P": 1,
+        "SKID1-INV04-P": 1,
+        "SKID1-INV05-P": 1,
+        "SKID1-INV06-P": 1,
+        "SKID1-INV07-P": 1,
+        "SKID1-INV08-P": 1,
+        "SKID1-INV09-P": 1,
+        "SKID1-INV10-P": 1,
+        "SKID1-INV11-P": 1,
+        "SKID1-INV12-P": 1,
+        "SKID1-INV13-P": 1,
+        "SKID1-INV14-P": 1,
+        "SKID1-INV15-P": 1,
+        "SKID1-INV16-P": 1,
+        "SKID1-INV17-P": 1,
+        "SKID1-INV18-P": 1,
+        "SKID1-INV19-P": 1,
+        "SKID1-INV20-P": 1,
+        "SKID2-INV21-P": 1,
+        "SKID2-INV30-P": 1,
+        "TLA_ Irrad_POA": 1,
+        "TLA_T_Amb": 1,
+        "TLA_T_Mod": 1
+      },
+      "seriesDashes": {
+        "SKID1-INV01-P": "solid",
+        "SKID1-INV02-P": "solid",
+        "SKID1-INV03-P": "solid",
+        "SKID1-INV04-P": "solid",
+        "SKID1-INV05-P": "solid",
+        "SKID1-INV06-P": "solid",
+        "SKID1-INV07-P": "solid",
+        "SKID1-INV08-P": "solid",
+        "SKID1-INV09-P": "solid",
+        "SKID1-INV10-P": "solid",
+        "SKID1-INV11-P": "solid",
+        "SKID1-INV12-P": "solid",
+        "SKID1-INV13-P": "solid",
+        "SKID1-INV14-P": "solid",
+        "SKID1-INV15-P": "solid",
+        "SKID1-INV16-P": "solid",
+        "SKID1-INV17-P": "solid",
+        "SKID1-INV18-P": "solid",
+        "SKID1-INV19-P": "solid",
+        "SKID1-INV20-P": "solid",
+        "SKID2-INV21-P": "solid",
+        "SKID2-INV30-P": "solid",
+        "TLA_ Irrad_POA": "solid",
+        "TLA_T_Amb": "solid",
+        "TLA_T_Mod": "solid"
+      },
+      "seriesFills": {
+        "TLA_ Irrad_POA": 9
+      },
+      "legendPosition": "right"
+    },
+    "shared": false
+  }
+]

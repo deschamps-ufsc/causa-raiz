@@ -792,11 +792,11 @@ def run_flow_processing(usina: str, dates_str: str = None, progress_callback=Non
                 processed_df["E_Grid_Ajustada_Corr_Unidade_válida"] = processed_df["E_Grid_Ajustada_válida"] / fator_unidade
 
             # --- Cria série Ajuste Potência CC String -> E_Grid ---
-            if "E_Grid" in processed_df.columns and "EArray" in processed_df.columns and "OhmLoss" in processed_df.columns:
-                processed_df["Ajuste Potência CC String -> E_Grid"] = processed_df["E_Grid"] / (processed_df["EArray"] + processed_df["OhmLoss"]).replace(0, np.nan)
+            if energia_var in processed_df.columns and "EArray" in processed_df.columns and "OhmLoss" in processed_df.columns:
+                processed_df["Ajuste Potência CC String -> E_Grid"] = processed_df[energia_var] / (processed_df["EArray"] + processed_df["OhmLoss"]).replace(0, np.nan)
             
-            if "E_Grid_válida" in processed_df.columns and "EArray_válida" in processed_df.columns and "OhmLoss_válida" in processed_df.columns:
-                processed_df["Ajuste Potência CC String -> E_Grid_válida"] = processed_df["E_Grid_válida"] / (processed_df["EArray_válida"] + processed_df["OhmLoss_válida"]).replace(0, np.nan)
+            if f"{energia_var}_válida" in processed_df.columns and "EArray_válida" in processed_df.columns and "OhmLoss_válida" in processed_df.columns:
+                processed_df["Ajuste Potência CC String -> E_Grid_válida"] = processed_df[f"{energia_var}_válida"] / (processed_df["EArray_válida"] + processed_df["OhmLoss_válida"]).replace(0, np.nan)
 
             # --- Cria série Potência CC Strings Perdida Não OK Corrigida ---
             if "Ajuste Potência CC String -> E_Grid" in processed_df.columns and "Potência CC Strings Perdida Não OK" in processed_df.columns:
