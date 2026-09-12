@@ -5487,7 +5487,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
             {summaryTableData && summaryTableData.length > 0 && (
               <div style={{ marginTop: '24px', background: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border)', overflow: 'hidden' }}>
                 <div style={{ background: 'var(--bg-secondary)', padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>Resumo de Tolerância</span>
+                  <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{UI_TRANSLATIONS["Resumo de Tolerância"] ? UI_TRANSLATIONS["Resumo de Tolerância"][language] : "Resumo de Tolerância"}</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
 
                     <div data-html2canvas-ignore="true" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '500', marginRight: '16px' }}>
@@ -5505,7 +5505,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                     <div style={{ width: '1px', height: '16px', background: 'var(--border)' }}></div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '500' }}>
-                      <span style={{ color: summaryViewMode === 'count' ? 'var(--blue)' : 'var(--text-secondary)' }}>Quantidade</span>
+                      <span style={{ color: summaryViewMode === 'count' ? 'var(--blue)' : 'var(--text-secondary)' }}>{UI_TRANSLATIONS['Quantidade'] ? UI_TRANSLATIONS['Quantidade'][language] : 'Quantidade'}</span>
                       <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', margin: 0 }}>
                         <div style={{ position: 'relative', width: '36px', height: '20px' }}>
                           <input type="checkbox" checked={summaryViewMode === 'percent'} onChange={() => setSummaryViewMode(prev => prev === 'count' ? 'percent' : 'count')} style={{ opacity: 0, width: '100%', height: '100%', position: 'absolute', zIndex: 2, cursor: 'pointer', margin: 0 }} />
@@ -5513,32 +5513,33 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                           <div style={{ position: 'absolute', left: summaryViewMode === 'percent' ? '18px' : '2px', top: '2px', background: 'white', width: '16px', height: '16px', borderRadius: '8px', transition: 'left 0.2s', zIndex: 1 }}></div>
                         </div>
                       </label>
-                      <span style={{ color: summaryViewMode === 'percent' ? 'var(--blue)' : 'var(--text-secondary)' }}>Percentual</span>
+                      <span style={{ color: summaryViewMode === 'percent' ? 'var(--blue)' : 'var(--text-secondary)' }}>{UI_TRANSLATIONS['Percentual'] ? UI_TRANSLATIONS['Percentual'][language] : 'Percentual'}</span>
                     </div>
                   </div>
                 </div>
                 <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                     <thead>
                       <tr style={{ background: 'var(--bg-card)' }}>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontWeight: '600' }}>Métrica</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'center', borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontWeight: '600' }}>Abaixo da Tolerância</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'center', borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontWeight: '600' }}>Abaixo da Meta</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'center', borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontWeight: '600' }}>Acima da Meta</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'center', borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontWeight: '600' }}>Acima da Tolerância</th>
+                        <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontWeight: '600' }}>{UI_TRANSLATIONS["Métrica"] ? UI_TRANSLATIONS["Métrica"][language] : "Métrica"}</th>
+                        <th style={{ padding: '12px 16px', textAlign: 'center', borderBottom: '1px solid var(--border)', color: '#ef4444', fontWeight: '600' }}>{UI_TRANSLATIONS["Abaixo da Tolerância"] ? UI_TRANSLATIONS["Abaixo da Tolerância"][language] : "Abaixo da Tolerância"}</th>
+                        <th style={{ padding: '12px 16px', textAlign: 'center', borderBottom: '1px solid var(--border)', color: '#f59e0b', fontWeight: '600' }}>{UI_TRANSLATIONS["Abaixo da Meta"] ? UI_TRANSLATIONS["Abaixo da Meta"][language] : "Abaixo da Meta"}</th>
+                        <th style={{ padding: '12px 16px', textAlign: 'center', borderBottom: '1px solid var(--border)', color: '#10b981', fontWeight: '600' }}>{UI_TRANSLATIONS["Acima da Meta"] ? UI_TRANSLATIONS["Acima da Meta"][language] : "Acima da Meta"}</th>
+                        <th style={{ padding: '12px 16px', textAlign: 'center', borderBottom: '1px solid var(--border)', color: '#3b82f6', fontWeight: '600' }}>{UI_TRANSLATIONS["Acima da Tolerância"] ? UI_TRANSLATIONS["Acima da Tolerância"][language] : "Acima da Tolerância"}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {summaryTableData.map((row, i) => {
                         const total = row.stats.reduce((a, b) => a + b, 0);
                         const formatValue = (val) => summaryViewMode === 'percent' && total > 0 ? ((val / total) * 100).toFixed(1) + '%' : val;
+                        const windowSize = capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5;
                         return (
                           <tr key={i} style={{ borderBottom: i === summaryTableData.length - 1 ? 'none' : '1px solid var(--border)' }}>
-                            <td style={{ padding: '12px 16px', color: 'var(--text-primary)', fontWeight: '500' }}>{row.name}</td>
-                            <td style={{ padding: '12px 16px', textAlign: 'center', color: '#991b1b', fontWeight: row.stats[0] > 0 ? '700' : '400' }}>{formatValue(row.stats[0])}</td>
-                            <td style={{ padding: '12px 16px', textAlign: 'center', color: '#854d0e', fontWeight: row.stats[1] > 0 ? '700' : '400' }}>{formatValue(row.stats[1])}</td>
-                            <td style={{ padding: '12px 16px', textAlign: 'center', color: '#166534', fontWeight: row.stats[2] > 0 ? '700' : '400' }}>{formatValue(row.stats[2])}</td>
-                            <td style={{ padding: '12px 16px', textAlign: 'center', color: '#1e3a8a', fontWeight: row.stats[3] > 0 ? '700' : '400' }}>{formatValue(row.stats[3])}</td>
+                            <td style={{ padding: '12px 16px', color: 'var(--text-primary)', fontWeight: '500' }}>{getMetricName(row.name, windowSize, language)}</td>
+                            <td style={{ padding: '12px 16px', textAlign: 'center', color: row.stats[0] > 0 ? '#ef4444' : 'var(--text-muted)', fontWeight: row.stats[0] > 0 ? '700' : '400' }}>{formatValue(row.stats[0])}</td>
+                            <td style={{ padding: '12px 16px', textAlign: 'center', color: row.stats[1] > 0 ? '#f59e0b' : 'var(--text-muted)', fontWeight: row.stats[1] > 0 ? '700' : '400' }}>{formatValue(row.stats[1])}</td>
+                            <td style={{ padding: '12px 16px', textAlign: 'center', color: row.stats[2] > 0 ? '#10b981' : 'var(--text-muted)', fontWeight: row.stats[2] > 0 ? '700' : '400' }}>{formatValue(row.stats[2])}</td>
+                            <td style={{ padding: '12px 16px', textAlign: 'center', color: row.stats[3] > 0 ? '#3b82f6' : 'var(--text-muted)', fontWeight: row.stats[3] > 0 ? '700' : '400' }}>{formatValue(row.stats[3])}</td>
                           </tr>
                         );
                       })}

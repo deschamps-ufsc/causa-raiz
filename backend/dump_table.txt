@@ -1,0 +1,955 @@
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11.5px', tableLayout: 'fixed' }}>
+                      <colgroup>
+                        <col style={{ width: '22%' }} />
+                        <col style={{ width: '28%' }} />
+                        <col style={{ width: '50%' }} />
+                      </colgroup>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                          <th style={{ textAlign: 'left', padding: '5px 10px', color: 'var(--text-secondary)', fontWeight: '600' }}>Coluna</th>
+                          <th style={{ textAlign: 'left', padding: '5px 10px', color: 'var(--text-secondary)', fontWeight: '600' }}>Série base</th>
+                          <th style={{ textAlign: 'left', padding: '5px 10px', color: 'var(--text-secondary)', fontWeight: '600' }}>Critério de aprovação</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                          <td style={{ padding: '6px 10px', color: 'var(--text-primary)' }}>Irradiância &gt; 600 W/m²<br/><span style={{ color: 'var(--text-secondary)' }}>Dados Medidos</span></td>
+                          <td style={{ padding: '6px 10px', fontFamily: 'monospace', color: 'var(--amber)', fontSize: '11px' }}>gpoa_15min<br/><span style={{ color: 'var(--text-secondary)', fontFamily: 'sans-serif', fontSize: '10px' }}>média 15 min da gpoa (1-min)</span></td>
+                          <td style={{ padding: '6px 10px' }}>Bloco consecutivo ≥ 3h com média 15 min &gt; 600 W/m²</td>
+                        </tr>
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)' }}>
+                          <td style={{ padding: '6px 10px', color: 'var(--text-primary)' }}>Irradiância &gt; 600 W/m²<br/><span style={{ color: 'var(--text-secondary)' }}>Dados Válidos</span></td>
+                          <td style={{ padding: '6px 10px', fontFamily: 'monospace', color: 'var(--amber)', fontSize: '11px' }}>gpoa_válida_15min<br/><span style={{ color: 'var(--text-secondary)', fontFamily: 'sans-serif', fontSize: '10px' }}>média 15 min da gpoa_válida (1-min)</span></td>
+                          <td style={{ padding: '6px 10px' }}>Bloco consecutivo ≥ 3h com média 15 min &gt; 600 W/m² <span style={{ color: 'var(--amber)', fontWeight: 600 }}>← usada na decisão final</span></td>
+                        </tr>
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                          <td style={{ padding: '6px 10px', color: 'var(--text-primary)' }}>Irradiação &gt; 3 kWh/m²<br/><span style={{ color: 'var(--text-secondary)' }}>Dados Medidos</span></td>
+                          <td style={{ padding: '6px 10px', fontFamily: 'monospace', color: 'var(--amber)', fontSize: '11px' }}>gpoa (1-min)<br/><span style={{ color: 'var(--text-secondary)', fontFamily: 'sans-serif', fontSize: '10px' }}>soma integral do dia ÷ 60.000</span></td>
+                          <td style={{ padding: '6px 10px' }}>Σ gpoa [W/m²·min] ÷ 60.000 ≥ 3 kWh/m²</td>
+                        </tr>
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)' }}>
+                          <td style={{ padding: '6px 10px', color: 'var(--text-primary)' }}>Irradiação &gt; 3 kWh/m²<br/><span style={{ color: 'var(--text-secondary)' }}>Dados Válidos</span></td>
+                          <td style={{ padding: '6px 10px', fontFamily: 'monospace', color: 'var(--amber)', fontSize: '11px' }}>gpoa_válida (1-min)<br/><span style={{ color: 'var(--text-secondary)', fontFamily: 'sans-serif', fontSize: '10px' }}>soma integral do dia ÷ 60.000</span></td>
+                          <td style={{ padding: '6px 10px' }}>Σ gpoa_válida ÷ 60.000 ≥ 3 kWh/m² <span style={{ color: 'var(--amber)', fontWeight: 600 }}>← usada na decisão final</span></td>
+                        </tr>
+                        <tr>
+                          <td style={{ padding: '6px 10px', color: 'var(--text-primary)', fontWeight: 600 }}>Validação (Dia Válido)</td>
+                          <td style={{ padding: '6px 10px', color: 'var(--text-secondary)' }} colSpan={2}>Ambas as colunas de <strong>Dados Válidos</strong> aprovadas simultaneamente</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <div style={{ marginTop: '12px', padding: '8px 10px', background: 'rgba(251,191,36,0.08)', borderRadius: '8px', borderLeft: '3px solid var(--amber)', fontSize: '11px', color: 'var(--text-secondary)' }}>
+                      <strong style={{ color: 'var(--amber)' }}>Contagem de pontos:</strong> cada ponto = 1 minuto. Ex: 540 pts = 9 h. A coluna "consecutivos" mostra o maior bloco ininterrupto acima do limiar.
+                    </div>
+                  </div>
+                )}
+              </div>
+            </h3>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <label style={{ 
+              display: 'flex', alignItems: 'center', gap: '8px', 
+              fontSize: '13px', cursor: 'pointer', userSelect: 'none', 
+              color: 'var(--text-primary)', fontWeight: '600'
+            }}>
+              <input 
+                type="checkbox" 
+                checked={showInputs} 
+                onChange={(e) => setShowInputs(e.target.checked)} 
+                style={{ 
+                  width: '16px', height: '16px', 
+                  accentColor: 'var(--amber)', cursor: 'pointer'
+                }} 
+              />
+              Entradas
+            </label>
+
+            <label style={{ 
+              display: 'flex', alignItems: 'center', gap: '8px', 
+              fontSize: '13px', cursor: 'pointer', userSelect: 'none', 
+              color: 'var(--text-primary)', fontWeight: '600'
+            }}>
+              <input 
+                type="checkbox" 
+                checked={showMeasured} 
+                onChange={(e) => setShowMeasured(e.target.checked)} 
+                style={{ 
+                  width: '16px', height: '16px', 
+                  accentColor: 'var(--amber)', cursor: 'pointer'
+                }} 
+              />
+              Dados Medidos
+            </label>
+
+            <label style={{ 
+              display: 'flex', alignItems: 'center', gap: '8px', 
+              fontSize: '13px', cursor: 'pointer', userSelect: 'none', 
+              color: 'var(--text-primary)', fontWeight: '600'
+            }}>
+              <input 
+                type="checkbox" 
+                checked={showValid} 
+                onChange={(e) => setShowValid(e.target.checked)} 
+                style={{ 
+                  width: '16px', height: '16px', 
+                  accentColor: 'var(--amber)', cursor: 'pointer'
+                }} 
+              />
+              Dados Válidos
+            </label>
+
+            <label style={{ 
+              display: 'flex', alignItems: 'center', gap: '8px', 
+              fontSize: '13px', cursor: 'pointer', userSelect: 'none', 
+              color: 'var(--text-primary)', fontWeight: '600'
+            }}>
+              <input 
+                type="checkbox" 
+                checked={showResults} 
+                onChange={(e) => setShowResults(e.target.checked)} 
+                style={{ 
+                  width: '16px', height: '16px', 
+                  accentColor: 'var(--amber)', cursor: 'pointer'
+                }} 
+              />
+              Resultados
+            </label>
+
+            <label style={{ 
+              display: 'flex', alignItems: 'center', gap: '8px', 
+              fontSize: '13px', cursor: 'pointer', userSelect: 'none', 
+              color: 'var(--text-primary)', fontWeight: '600'
+            }}>
+              <input 
+                type="checkbox" 
+                checked={showPR} 
+                onChange={(e) => setShowPR(e.target.checked)} 
+                style={{ 
+                  width: '16px', height: '16px', 
+                  accentColor: 'var(--amber)', cursor: 'pointer'
+                }} 
+              />
+              PR
+            </label>
+
+            <label style={{ 
+              display: 'flex', alignItems: 'center', gap: '8px', 
+              fontSize: '13px', cursor: 'pointer', userSelect: 'none', 
+              color: 'var(--text-primary)', fontWeight: '600'
+            }}>
+              <input 
+                type="checkbox" 
+                checked={showValidation} 
+                onChange={(e) => setShowValidation(e.target.checked)} 
+                style={{ 
+                  width: '16px', height: '16px', 
+                  accentColor: 'var(--amber)', cursor: 'pointer'
+                }} 
+              />
+              Validação
+            </label>
+
+            <div style={{ width: '1px', height: '16px', backgroundColor: 'var(--border)' }} />
+
+            {/* Toggle para Dias Válidos */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '12px', fontWeight: '600', color: showOnlyValidDays ? 'var(--text-secondary)' : 'var(--text-primary)' }}>Todos os Dias</span>
+              <div 
+                onClick={() => setShowOnlyValidDays(!showOnlyValidDays)}
+                style={{ 
+                  width: '36px', height: '20px', 
+                  background: showOnlyValidDays ? 'var(--amber)' : 'rgba(255,255,255,0.1)', 
+                  borderRadius: '10px', 
+                  position: 'relative', 
+                  cursor: 'pointer',
+                  transition: 'background 0.2s'
+                }}
+              >
+                <div style={{
+                  width: '16px', height: '16px',
+                  background: 'white', borderRadius: '50%',
+                  position: 'absolute', top: '2px',
+                  left: showOnlyValidDays ? '18px' : '2px',
+                  transition: 'left 0.2s cubic-bezier(0.4, 0.0, 0.2, 1)',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+                }} />
+              </div>
+              <span style={{ fontSize: '12px', fontWeight: '600', color: showOnlyValidDays ? 'var(--amber)' : 'var(--text-secondary)' }}>Dias Válidos</span>
+            </div>
+
+            <div style={{ width: '1px', height: '16px', backgroundColor: 'var(--border)' }} />
+
+            {/* Toggle para Agrupamento (Diário / Mensal) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '12px', fontWeight: '600', color: aggregationMode === 'monthly' ? 'var(--text-secondary)' : 'var(--text-primary)' }}>Diário</span>
+              <div 
+                onClick={() => setAggregationMode(aggregationMode === 'daily' ? 'monthly' : 'daily')}
+                style={{ 
+                  width: '36px', height: '20px', 
+                  background: aggregationMode === 'monthly' ? 'var(--blue)' : 'rgba(255,255,255,0.1)', 
+                  borderRadius: '10px', 
+                  position: 'relative', 
+                  cursor: 'pointer',
+                  transition: 'background 0.2s'
+                }}
+              >
+                <div style={{
+                  width: '16px', height: '16px',
+                  background: 'white', borderRadius: '50%',
+                  position: 'absolute', top: '2px',
+                  left: aggregationMode === 'monthly' ? '18px' : '2px',
+                  transition: 'left 0.2s cubic-bezier(0.4, 0.0, 0.2, 1)',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+                }} />
+              </div>
+              <span style={{ fontSize: '12px', fontWeight: '600', color: aggregationMode === 'monthly' ? 'var(--blue)' : 'var(--text-secondary)' }}>Mensal</span>
+            </div>
+
+            <div style={{ width: '1px', height: '16px', backgroundColor: 'var(--border)' }} />
+
+            <details style={{ position: 'relative', cursor: 'pointer' }}>
+              <summary style={{ 
+                fontSize: '13px', color: 'var(--text-primary)', fontWeight: '600', 
+                userSelect: 'none', listStyle: 'none', display: 'flex', alignItems: 'center', gap: 4 
+              }}>
+                <span>⚙️ Variáveis</span>
+                <span style={{ fontSize: '10px' }}>▼</span>
+              </summary>
+              <div style={{ 
+                position: 'absolute', top: '100%', right: 0, marginTop: '8px', 
+                background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '6px', 
+                padding: '10px 16px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 50, 
+                display: 'flex', flexDirection: 'column', gap: '10px', minWidth: '220px', whiteSpace: 'nowrap' 
+              }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.gpoa} onChange={() => setVisibleVars(prev => ({ ...prev, gpoa: !prev.gpoa }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>G<sub>poa</sub></span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.grear} onChange={() => setVisibleVars(prev => ({ ...prev, grear: !prev.grear }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>G<sub>rear</sub></span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.geff} onChange={() => setVisibleVars(prev => ({ ...prev, geff: !prev.geff }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>G<sub>eff</sub></span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.tamb} onChange={() => setVisibleVars(prev => ({ ...prev, tamb: !prev.tamb }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>T<sub>amb</sub></span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.tmod} onChange={() => setVisibleVars(prev => ({ ...prev, tmod: !prev.tmod }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>T<sub>mod</sub></span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.tcel} onChange={() => setVisibleVars(prev => ({ ...prev, tcel: !prev.tcel }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>T<sub>cel</sub></span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.sujidade_dia} onChange={() => setVisibleVars(prev => ({ ...prev, sujidade_dia: !prev.sujidade_dia }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>Sujidade (Dia Completo)</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.sujidade_hora} onChange={() => setVisibleVars(prev => ({ ...prev, sujidade_hora: !prev.sujidade_hora }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>Sujidade (Hora Restrita)</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.sujidade_media} onChange={() => setVisibleVars(prev => ({ ...prev, sujidade_media: !prev.sujidade_media }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>Sujidade (Média Interna)</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.tracker} onChange={() => setVisibleVars(prev => ({ ...prev, tracker: !prev.tracker }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>Tracker Piranômetro</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--text-primary)', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={visibleVars.wcpr} onChange={() => setVisibleVars(prev => ({ ...prev, wcpr: !prev.wcpr }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  WCPR
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--text-primary)', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={visibleVars.wcpr_bifacial} onChange={() => setVisibleVars(prev => ({ ...prev, wcpr_bifacial: !prev.wcpr_bifacial }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  WCPR Bifacial
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.potencia_ppc} onChange={() => setVisibleVars(prev => ({ ...prev, potencia_ppc: !prev.potencia_ppc }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>Potência PPC</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.energia_pmi} onChange={() => setVisibleVars(prev => ({ ...prev, energia_pmi: !prev.energia_pmi }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>Energia PMI</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.pvsyst} onChange={() => setVisibleVars(prev => ({ ...prev, pvsyst: !prev.pvsyst }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>Energia Esperada</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.referencia_ppc} onChange={() => setVisibleVars(prev => ({ ...prev, referencia_ppc: !prev.referencia_ppc }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>Referência PPC</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.pr_medida} onChange={() => setVisibleVars(prev => ({ ...prev, pr_medida: !prev.pr_medida }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#334155' }}>PR Medida</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={visibleVars.pr_medida_bifacial} onChange={() => setVisibleVars(prev => ({ ...prev, pr_medida_bifacial: !prev.pr_medida_bifacial }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#334155' }}>PR Medida (Bifacial)</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.pr_prevista} onChange={() => setVisibleVars(prev => ({ ...prev, pr_prevista: !prev.pr_prevista }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#334155' }}>PR Prevista</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={visibleVars.pr_prevista_bifacial} onChange={() => setVisibleVars(prev => ({ ...prev, pr_prevista_bifacial: !prev.pr_prevista_bifacial }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#334155' }}>PR Prevista (Bifacial)</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.curtailment} onChange={() => setVisibleVars(prev => ({ ...prev, curtailment: !prev.curtailment }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>Curtailment</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.epi} onChange={() => setVisibleVars(prev => ({ ...prev, epi: !prev.epi }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>EPI</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.pr_medida} onChange={() => setVisibleVars(prev => ({ ...prev, pr_medida: !prev.pr_medida }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>PR Medida</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.pr_esperada} onChange={() => setVisibleVars(prev => ({ ...prev, pr_esperada: !prev.pr_esperada }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>PR Esperada</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.pr_esperada_bifacial} onChange={() => setVisibleVars(prev => ({ ...prev, pr_esperada_bifacial: !prev.pr_esperada_bifacial }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>PR Esperada (Bifacial)</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.pr_prevista} onChange={() => setVisibleVars(prev => ({ ...prev, pr_prevista: !prev.pr_prevista }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>PR Prevista</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.tarrwtd} onChange={() => setVisibleVars(prev => ({ ...prev, tarrwtd: !prev.tarrwtd }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>TArrWtd</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.perdida_tracker} onChange={() => setVisibleVars(prev => ({ ...prev, perdida_tracker: !prev.perdida_tracker }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>Energia Perdida Tracker</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={visibleVars.recuperavel} onChange={() => setVisibleVars(prev => ({ ...prev, recuperavel: !prev.recuperavel }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                  <span>Energia CA Recuperável</span>
+                </label>
+              </div>
+            </details>
+
+            <div style={{ width: '1px', height: '16px', backgroundColor: 'var(--border)' }} />
+
+            <button
+              onClick={() => loadIntegrals(usinaAtual)}
+              disabled={isLoadingIntegrals || !usinaAtual}
+              className="btn btn-ghost btn-sm"
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              {isLoadingIntegrals ? '🔄 Carregando...' : '🔁 Atualizar'}
+            </button>
+
+            <div style={{ width: '1px', height: '16px', backgroundColor: 'var(--border)', margin: '0 8px' }} />
+            
+            <div style={{ position: 'relative', display: 'flex', gap: '8px' }}>
+              <button
+                  className="btn btn-secondary"
+                  style={{ padding: '4px 12px', fontSize: '13px', flexShrink: 0, fontWeight: 600, background: '#e2e8f0', color: '#1e293b', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '6px' }}
+                  onClick={() => exportTableToPng(tableRef.current, 'Resultados.png')}
+                  title="Exportar tabela atual como Imagem PNG"
+              >
+                🖼️ PNG
+              </button>
+              <button 
+                  className="btn btn-secondary" 
+                  style={{ padding: '4px 12px', fontSize: '13px', flexShrink: 0, fontWeight: 600, background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '6px' }}
+                  onClick={() => setShowPdfMenu(!showPdfMenu)}
+                  title="Exportar tabela atual para PDF"
+              >
+                📄 PDF
+              </button>
+              
+              {showPdfMenu && (
+                <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, padding: 8, zIndex: 50, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', display: 'flex', flexDirection: 'column', gap: 4, minWidth: 160 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', marginBottom: 4, textTransform: 'uppercase' }}>Orientação</div>
+                  <button 
+                    onClick={() => { setShowPdfMenu(false); exportTableToPdf(tableRef.current, 'Resultados.pdf', { usinaName: usinaAtual || 'N/D', forceOrientation: 'p' }) }} 
+                    style={{ padding: '6px 12px', fontSize: 13, cursor: 'pointer', border: '1px solid var(--border)', background: '#f8fafc', borderRadius: 4, textAlign: 'left', color: '#334155', fontWeight: 500 }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
+                    onMouseLeave={e => e.currentTarget.style.background = '#f8fafc'}
+                  >
+                    📄 Retrato (Vertical)
+                  </button>
+                  <button 
+                    onClick={() => { setShowPdfMenu(false); exportTableToPdf(tableRef.current, 'Resultados.pdf', { usinaName: usinaAtual || 'N/D', forceOrientation: 'l' }) }} 
+                    style={{ padding: '6px 12px', fontSize: 13, cursor: 'pointer', border: '1px solid var(--border)', background: '#f8fafc', borderRadius: 4, textAlign: 'left', color: '#334155', fontWeight: 500 }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
+                    onMouseLeave={e => e.currentTarget.style.background = '#f8fafc'}
+                  >
+                    📄 Paisagem (Horizontal)
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {isLoadingIntegrals ? (
+          <div style={{ padding: '60px 40px', textAlign: 'center', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+            <div style={{ marginBottom: '16px', color: 'var(--text-primary)', fontSize: '15px', fontWeight: 600 }}>
+              Calculando integrais das séries... {integralsProgress}%
+            </div>
+            <div style={{ width: '100%', maxWidth: '400px', margin: '0 auto', background: 'var(--border)', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
+              <div style={{ 
+                width: `${integralsProgress}%`, 
+                background: 'var(--primary)', 
+                height: '100%', 
+                transition: 'width 0.3s ease' 
+              }} />
+            </div>
+            <div style={{ marginTop: '12px', color: 'var(--text-muted)', fontSize: '12px' }}>
+              Processando arquivos diários, por favor aguarde.
+            </div>
+          </div>
+        ) : integralsError ? (
+          <div style={{ padding: '24px', background: 'rgba(239, 68, 68, 0.1)', borderLeft: '4px solid var(--red)', borderRadius: '6px', color: 'var(--red)', fontSize: '13px' }}>
+            ⚠️ {integralsError}
+          </div>
+        ) : !integralsData.rows || integralsData.rows.length === 0 ? (
+          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px dashed var(--border)' }}>
+            📭 Nenhuma integral calculada. Por favor, certifique-se de processar o fluxograma primeiro para gerar os dados consolidados.
+          </div>
+        ) : (
+          <div ref={tableRef} style={{ width: '100%', maxHeight: '70vh', overflow: 'auto', borderRadius: '8px', border: '1px solid var(--border)' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+              <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--bg-secondary)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                {/* LINHA 1 (Nível Superior) */}
+                <tr>
+                  <th 
+                    rowSpan={2} 
+                    style={{ 
+                      padding: '8px 10px', 
+                      fontWeight: '700', 
+                      fontSize: '13px', 
+                      color: 'var(--text-primary)', 
+                      borderBottom: '2px solid var(--border)', 
+                      textAlign: 'left',
+                      position: 'sticky',
+                      left: 0,
+                      background: 'var(--bg-secondary)',
+                      zIndex: 3,
+                      boxShadow: '2px 0 5px rgba(0,0,0,0.05)',
+                      verticalAlign: 'middle',
+                      whiteSpace: 'nowrap',
+                      minWidth: '95px'
+                    }}
+                  >
+                    Data
+                  </th>
+                  {headerGroups.map((group, gIdx) => {
+                    const firstCol = group.columns[0];
+                    const theme = getColumnTheme(firstCol);
+                    
+                    if (group.type === 'input') {
+                      return (
+                        <th 
+                          key={`group-${group.type}-${group.node_id}-${gIdx}`}
+                          colSpan={group.columns.length}
+                          style={{
+                            padding: '6px 8px',
+                            fontWeight: '700',
+                            fontSize: '12px',
+                            color: 'var(--text-primary)',
+                            borderBottom: '1px solid var(--border)',
+                            textAlign: 'center',
+                            whiteSpace: 'nowrap',
+                            background: 'var(--bg-secondary)'
+                          }}
+                        >
+                          {formatGroupHeaderLabel(group.node_id)}
+                        </th>
+                      );
+                    } else if (group.type === 'validation') {
+                      // Render each validation column directly with rowSpan=2 (no group header cell)
+                      return group.columns.map((col) => {
+                        const colTheme = getColumnTheme(col);
+                        return (
+                          <th
+                            key={`val-direct-${col.key}`}
+                            rowSpan={2}
+                            style={{
+                              padding: '8px 8px',
+                              fontWeight: '700',
+                              fontSize: '11px',
+                              color: colTheme.color,
+                              borderBottom: '2px solid var(--border)',
+                              textAlign: 'center',
+                              whiteSpace: 'normal',
+                              minWidth: col.key === 'dia_valido' ? '80px' : '160px',
+                              background: 'var(--bg-secondary)',
+                              verticalAlign: 'middle',
+                            }}
+                          >
+                            {col.label}
+                          </th>
+                        );
+                      });
+
+                    } else {
+                      // Output ou Special (spans across both rows)
+                      const isStyled = group.type === 'output' || group.type === 'special';
+                      return (
+                        <th 
+                          key={`group-single-${firstCol.key}`}
+                          rowSpan={2}
+                          style={{ 
+                            padding: '8px 8px', 
+                            fontWeight: '700', 
+                            fontSize: '12px', 
+                            color: firstCol.label.includes('Bifacial') ? '#8B4513' : (isStyled ? theme.color : 'var(--text-primary)'), 
+                            borderBottom: '2px solid var(--border)', 
+                            textAlign: 'center',
+                            whiteSpace: (firstCol.label.startsWith('Sujidade (') || firstCol.label.includes('PVSyst') || firstCol.label.includes('Tracker Piranômetro') || firstCol.isCapacity || firstCol.label.includes('Bifacial')) ? 'pre-wrap' : 'nowrap',
+                            minWidth: (firstCol.label.startsWith('Sujidade (') || firstCol.label.includes('PVSyst') || firstCol.label.includes('Tracker Piranômetro') || firstCol.isCapacity || firstCol.label.includes('Bifacial')) ? '60px' : 'auto',
+                            background: isStyled ? theme.bgHeader : 'var(--bg-secondary)',
+                            verticalAlign: 'middle'
+                          }}
+                        >
+                          {formatColumnLabel(firstCol.label)}
+                        </th>
+                      );
+                    }
+                  })}
+                </tr>
+
+                {/* LINHA 2 (Nível Inferior - apenas se houver inputs) */}
+                {headerGroups.some(g => g.type === 'input') && (
+                  <tr style={{ background: 'var(--bg-secondary)' }}>
+                    {headerGroups.filter(g => g.type === 'input').map(group => {
+                      return group.columns.map((col, idx) => {
+                        const theme = getColumnTheme(col);
+                        // Extrair apenas o número da entrada (ex: "Gpoa - Entrada 2" -> "2")
+                        const match = col.label.match(/Entrada\s+(\d+)/i);
+                        const subLabel = col.type === 'validation' ? col.label : (match ? match[1] : (idx + 1).toString());
+                        
+                        return (
+                          <th 
+                            key={`sub-${col.type}-${col.key}`}
+                            style={{ 
+                              padding: '4px 6px', 
+                              fontWeight: '700', 
+                              fontSize: col.type === 'validation' ? '10px' : '11px', 
+                              color: 'var(--text-secondary)', 
+                              borderBottom: '2px solid var(--border)', 
+                              textAlign: 'center',
+                              whiteSpace: col.type === 'validation' ? 'normal' : 'nowrap',
+                              minWidth: col.type === 'validation' ? '150px' : 'auto',
+                              background: 'var(--bg-secondary)'
+                            }}
+                          >
+                            {subLabel}
+                          </th>
+                        );
+                      });
+                    })}
+                  </tr>
+                )}
+              </thead>
+              <tbody>
+                {displayRows.map((row, idx) => (
+                  <tr 
+                    key={row.date} 
+                    style={{ 
+                      background: idx % 2 === 0 ? 'var(--bg-card)' : 'rgba(0,0,0,0.01)',
+                      transition: 'background 0.15s',
+                      cursor: 'pointer'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(245, 158, 11, 0.04)'}
+                    onMouseLeave={e => e.currentTarget.style.background = idx % 2 === 0 ? 'var(--bg-card)' : 'rgba(0,0,0,0.01)'}
+                    onClick={() => openChartPopup(row.date)}
+                  >
+                    <td style={{ 
+                      padding: '6px 10px', 
+                      fontWeight: '600', 
+                      color: 'var(--text-primary)', 
+                      borderBottom: '1px solid var(--border)', 
+                      textAlign: 'left',
+                      position: 'sticky',
+                      left: 0,
+                      background: 'var(--bg-card)',
+                      zIndex: 1,
+                      boxShadow: '2px 0 5px rgba(0,0,0,0.05)',
+                      whiteSpace: 'nowrap',
+                      minWidth: '95px'
+                    }}>
+                      {row.date}
+                    </td>
+                    {visibleColumns.map(col => {
+                      const theme = getColumnTheme(col);
+                      const isOutput = !col.label.includes('Entrada');
+                      let val = row[col.key];
+                      let formattedVal = typeof val === 'number' 
+                        ? val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
+                        : val;
+                      if (col.key.toLowerCase().includes('sujidade') && typeof val === 'number') {
+                        formattedVal += '%';
+                      }
+                      if ((col.key === 'cap_ratio' || col.key === 'astm_ratio' || col.key === 'cap_ratio_adaptive' || col.key === 'astm_ratio_adaptive') && typeof val === 'number') {
+                        formattedVal = val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+                      }
+                      if ((col.key === 'epi' || col.key === 'epi_corrigido' || col.key === 'epi_pvlib' || col.key === 'epi_pvlib_window' || col.key === 'pr_medida' || col.key === 'pr_medida_bifacial' || col.key === 'pr_esperada' || col.key === 'pr_esperada_bifacial' || col.key === 'pr_prevista' || col.key === 'pr_prevista_bifacial' || col.key === 'wcpr' || col.key === 'wcpr_bifacial') && typeof val === 'number') {
+                        formattedVal = (val * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+                      }
+                      if (col.key === 'fator_ajuste' && typeof val === 'number') {
+                        formattedVal = val.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+                      }
+                      let cellBackground = isOutput ? theme.bgCell : 'transparent';
+                      let cellColor = isOutput ? 'var(--text-primary)' : 'var(--text-secondary)';
+                      
+                      if (col.type === 'validation') {
+                        let status = val;
+                        if (typeof val === 'string' && val.includes('|')) {
+                          const firstPipe = val.indexOf('|');
+                          status = val.substring(0, firstPipe);
+                          formattedVal = val.substring(firstPipe + 1);
+                        }
+                        
+                        if (status === 'OK' || status === 'Dia Válido') {
+                          cellBackground = '#84cc16'; // darker green
+                          cellColor = '#ffffff';
+                        } else if (status === 'OK_RESSALVA') {
+                          cellBackground = '#bbf7d0'; // light green
+                          cellColor = '#166534';
+                        } else if (status === 'NÃO_OK' || status === 'Dia Inválido') {
+                          cellBackground = '#ef4444'; // red
+                          cellColor = '#ffffff';
+                        } else {
+                          cellBackground = 'var(--bg-secondary)';
+                        }
+                      }
+                      
+                      if ((col.key === 'epi' || col.key === 'epi_corrigido' || col.key === 'epi_pvlib' || col.key === 'epi_pvlib_window') && typeof val === 'number') {
+                        const epiColor = getEpiColor(val, epiTol);
+                        cellBackground = epiColor.bg;
+                        cellColor = epiColor.text;
+                      } else if ((col.key === 'cap_ratio' || col.key === 'astm_ratio' || col.key === 'cap_ratio_adaptive' || col.key === 'astm_ratio_adaptive') && typeof val === 'number') {
+                        const epiColor = getEpiColor(val / 100, epiTol);
+                        cellBackground = epiColor.bg;
+                        cellColor = epiColor.text;
+                      }
+
+                      const targetPrevista = (col.key === 'pr_medida_bifacial' || col.key === 'wcpr_bifacial') ? row.pr_prevista_bifacial : row.pr_prevista;
+                      if ((col.key === 'pr_medida' || col.key === 'pr_medida_bifacial' || col.key === 'wcpr' || col.key === 'wcpr_bifacial') && typeof val === 'number' && typeof targetPrevista === 'number') {
+                        const tol = (col.key === 'pr_medida' || col.key === 'pr_medida_bifacial') ? prTol : wcprTol;
+                        const colors = getPrWcprColor(val, targetPrevista, tol);
+                        cellBackground = colors.bg;
+                        cellColor = colors.text;
+                      }
+                      
+                      let displayContent = formattedVal;
+                      if (col.type === 'validation') {
+                        if (typeof formattedVal === 'string' && formattedVal.includes('|')) {
+                          const subParts = formattedVal.split('|');
+                          if (subParts.length === 2) {
+                            const totais = subParts[0].trim();
+                            const consec = subParts[1].trim();
+                            displayContent = (
+                              <div style={{ display: 'flex', flexDirection: 'column', fontSize: '11px', lineHeight: '1.4' }}>
+                                <span>{consec}</span>
+                                <span>{totais}</span>
+                              </div>
+                            );
+                          } else {
+                            displayContent = <span style={{ fontSize: '11px' }}>{formattedVal}</span>;
+                          }
+                        } else {
+                          displayContent = <span style={{ fontSize: '11px' }}>{formattedVal}</span>;
+                        }
+                      }
+
+                      return (
+                        <td 
+                          key={col.key} 
+                          style={{ 
+                            padding: '6px 8px', 
+                            borderBottom: '1px solid var(--border)', 
+                            textAlign: 'center',
+                            whiteSpace: 'nowrap',
+                            color: cellColor,
+                            fontWeight: isOutput || col.type === 'validation' ? '600' : 'normal',
+                            background: cellBackground
+                          }}
+                        >
+                          {displayContent}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+              {totalsRow && (
+                <tfoot style={{ position: 'sticky', bottom: 0, zIndex: 10, boxShadow: '0 -2px 4px rgba(0,0,0,0.05)' }}>
+                  <tr style={{ background: 'var(--bg-secondary)', fontWeight: 'bold', borderTop: '2px double var(--border)' }}>
+                    <td style={{ 
+                      padding: '8px 10px', 
+                      fontWeight: '700', 
+                      color: 'var(--text-primary)', 
+                      textAlign: 'left',
+                      position: 'sticky',
+                      left: 0,
+                      background: 'var(--bg-secondary)',
+                      zIndex: 1,
+                      boxShadow: '2px 0 5px rgba(0,0,0,0.05)',
+                      borderTop: '2px double var(--border)'
+                    }}>
+                      {totalsRow.date}
+                    </td>
+                    {visibleColumns.map(col => {
+                      const theme = getColumnTheme(col);
+                      const isOutput = !col.label.includes('Entrada');
+                      const val = totalsRow[col.key];
+                      let formattedVal = typeof val === 'number' 
+                        ? val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
+                        : val;
+                      if (col.key.toLowerCase().includes('sujidade') && typeof val === 'number') {
+                        formattedVal += '%';
+                      }
+                      if ((col.key === 'cap_ratio' || col.key === 'astm_ratio' || col.key === 'cap_ratio_adaptive' || col.key === 'astm_ratio_adaptive') && typeof val === 'number') {
+                        formattedVal = val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+                      }
+                      if ((col.key === 'epi' || col.key === 'epi_corrigido' || col.key === 'epi_pvlib' || col.key === 'epi_pvlib_window' || col.key === 'pr_medida' || col.key === 'pr_medida_bifacial' || col.key === 'pr_esperada' || col.key === 'pr_esperada_bifacial' || col.key === 'pr_prevista' || col.key === 'pr_prevista_bifacial' || col.key === 'wcpr' || col.key === 'wcpr_bifacial') && typeof val === 'number') {
+                        formattedVal = (val * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+                      }
+                      if (col.key === 'fator_ajuste' && typeof val === 'number') {
+                        formattedVal = val.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+                      }
+                      let cellBackground = isOutput ? theme.bgTotal : 'transparent';
+                      let cellColor = isOutput ? theme.color : 'var(--text-primary)';
+                      
+                      if ((col.key === 'epi' || col.key === 'epi_corrigido' || col.key === 'epi_pvlib' || col.key === 'epi_pvlib_window') && typeof val === 'number') {
+                        const epiColor = getEpiColor(val, epiTol);
+                        cellBackground = epiColor.bg;
+                        cellColor = epiColor.text;
+                      } else if ((col.key === 'cap_ratio' || col.key === 'astm_ratio' || col.key === 'cap_ratio_adaptive' || col.key === 'astm_ratio_adaptive') && typeof val === 'number') {
+                        const epiColor = getEpiColor(val / 100, epiTol);
+                        cellBackground = epiColor.bg;
+                        cellColor = epiColor.text;
+                      }
+                      
+                      return (
+                        <td 
+                          key={col.key} 
+                          style={{ 
+                            padding: '8px 8px', 
+                            textAlign: 'center',
+                            whiteSpace: 'nowrap',
+                            color: cellColor,
+                            fontWeight: '700',
+                            background: cellBackground,
+                            borderTop: '2px double var(--border)'
+                          }}
+                        >
+                          {formattedVal}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                </tfoot>
+                )}
+            </table>
+          </div>
+        )}
+        
+        {/* GRÁFICOS PRINCIPAIS FIXOS */}
+        {integralsData?.rows?.length > 0 && (
+          <div style={{ marginTop: '8px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
+            <div ref={graficosPrincipaisRef} style={{ background: 'var(--bg-primary)', padding: '10px 0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '0 10px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                📈 {UI_TRANSLATIONS["Gráficos Principais"][language]}
+                <details data-html2canvas-ignore="true" style={{ position: 'relative', cursor: 'pointer', marginLeft: '12px' }}>
+                  <summary style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '600', userSelect: 'none', listStyle: 'none', display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px', background: 'var(--bg-secondary)', borderRadius: '4px', border: '1px solid var(--border)' }}>
+                    <span>⚙️ Gráficos</span>
+                    <span style={{ fontSize: '10px' }}>▼</span>
+                  </summary>
+                  <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: '8px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '6px', padding: '10px 16px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 50, display: 'flex', flexDirection: 'column', gap: '10px', minWidth: '280px', whiteSpace: 'nowrap', fontWeight: 'normal' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                      <input type="checkbox" checked={visibleFixedCharts.pr} onChange={() => setVisibleFixedCharts(prev => ({ ...prev, pr: !prev.pr }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                      <span>PR Simples</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                      <input type="checkbox" checked={visibleFixedCharts.pr_bifacial} onChange={() => setVisibleFixedCharts(prev => ({ ...prev, pr_bifacial: !prev.pr_bifacial }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                      <span>PR Simples Bifacial</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                      <input type="checkbox" checked={visibleFixedCharts.wcpr} onChange={() => setVisibleFixedCharts(prev => ({ ...prev, wcpr: !prev.wcpr }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                      <span>WCPR</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                      <input type="checkbox" checked={visibleFixedCharts.wcpr_bifacial} onChange={() => setVisibleFixedCharts(prev => ({ ...prev, wcpr_bifacial: !prev.wcpr_bifacial }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                      <span>WCPR Bifacial</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                      <input type="checkbox" checked={visibleFixedCharts.cap_ratio} onChange={() => setVisibleFixedCharts(prev => ({ ...prev, cap_ratio: !prev.cap_ratio }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                      <span>Daily Capacity Ratio - Fixed RC</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                      <input type="checkbox" checked={visibleFixedCharts.cap_ratio_adaptive} onChange={() => setVisibleFixedCharts(prev => ({ ...prev, cap_ratio_adaptive: !prev.cap_ratio_adaptive }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                      <span>Daily Capacity Ratio - Adaptive RC</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                      <input type="checkbox" checked={visibleFixedCharts.astm_ratio} onChange={() => setVisibleFixedCharts(prev => ({ ...prev, astm_ratio: !prev.astm_ratio }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                      <span>ASTM Capacity Ratio - Fixed RC</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                      <input type="checkbox" checked={visibleFixedCharts.astm_ratio_adaptive} onChange={() => setVisibleFixedCharts(prev => ({ ...prev, astm_ratio_adaptive: !prev.astm_ratio_adaptive }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                      <span>ASTM Capacity Ratio - Adaptive RC</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                      <input type="checkbox" checked={visibleFixedCharts.epi_pvlib} onChange={() => setVisibleFixedCharts(prev => ({ ...prev, epi_pvlib: !prev.epi_pvlib }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                      <span>EPI PVLib</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                      <input type="checkbox" checked={visibleFixedCharts.epi_pvlib_window} onChange={() => setVisibleFixedCharts(prev => ({ ...prev, epi_pvlib_window: !prev.epi_pvlib_window }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                      <span>EPI PVLib - Janela {capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5} dias</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                      <input type="checkbox" checked={visibleFixedCharts.epi_pvsyst} onChange={() => setVisibleFixedCharts(prev => ({ ...prev, epi_pvsyst: !prev.epi_pvsyst }))} style={{ accentColor: 'var(--amber)', width: '14px', height: '14px' }} />
+                      <span>EPI PVSyst</span>
+                    </label>
+                  </div>
+                </details>
+              </h3>
+
+              <div data-html2canvas-ignore="true" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '500' }}>
+                <span style={{ color: language === 'pt' ? 'var(--blue)' : 'var(--text-secondary)' }}>PT</span>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', margin: 0 }}>
+                  <div style={{ position: 'relative', width: '36px', height: '20px' }}>
+                    <input type="checkbox" checked={language === 'en'} onChange={() => setLanguage(prev => prev === 'pt' ? 'en' : 'pt')} style={{ opacity: 0, width: '100%', height: '100%', position: 'absolute', zIndex: 2, cursor: 'pointer', margin: 0 }} />
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: language === 'en' ? 'var(--blue)' : 'var(--border)', borderRadius: '10px', transition: 'background 0.2s' }}></div>
+                    <div style={{ position: 'absolute', left: language === 'en' ? '18px' : '2px', top: '2px', background: 'white', width: '16px', height: '16px', borderRadius: '8px', transition: 'left 0.2s', zIndex: 1 }}></div>
+                  </div>
+                </label>
+                <span style={{ color: language === 'en' ? 'var(--blue)' : 'var(--text-secondary)' }}>EN</span>
+              </div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', width: '280px', marginLeft: 'auto', marginRight: '24px' }}>
+                <div style={{ display: 'flex', height: '10px', width: '100%', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                  <div style={{ flex: '1', background: '#fee2e2', borderRight: '1px solid rgba(0,0,0,0.1)' }}></div>
+                  <div style={{ flex: '2', background: 'linear-gradient(to right, #fef9c3, #bbf7d0)', borderRight: '1px solid rgba(0,0,0,0.1)' }}></div>
+                  <div style={{ flex: '2', background: 'linear-gradient(to right, #bbf7d0, #fef9c3)', borderRight: '1px solid rgba(0,0,0,0.1)' }}></div>
+                  <div style={{ flex: '1', background: '#dbeafe' }}></div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginTop: '4px', fontSize: '10px', color: 'var(--text-secondary)', position: 'relative', height: '12px' }}>
+                  <span style={{ position: 'absolute', left: '16.66%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' }}>Tol. Mín</span>
+                  <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', fontWeight: 'bold' }}>Meta</span>
+                  <span style={{ position: 'absolute', left: '83.33%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' }}>Tol. Máx</span>
+                </div>
+              </div>
+
+              <div data-html2canvas-ignore="true" style={{ display: 'flex', gap: '8px' }}>
+                <button 
+                  onClick={() => exportTableToPng(graficosPrincipaisRef.current, 'graficos_principais.png', { skipAncestorExpansion: true })}
+                  style={{ 
+                    background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border)', 
+                    borderRadius: '6px', padding: '6px 12px', fontSize: '12px', fontWeight: '600',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                  }}
+                  title="Exportar os 3 gráficos principais para Imagem (PNG)"
+                >
+                  🖼️ PNG
+                </button>
+                <button 
+                  onClick={() => exportTableToPdf(graficosPrincipaisRef.current, 'graficos_principais.pdf', { usinaName: usinaAtual || 'N/D', forceOrientation: 'p', skipAncestorExpansion: true })}
+                  style={{ 
+                    background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border)', 
+                    borderRadius: '6px', padding: '6px 12px', fontSize: '12px', fontWeight: '600',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                  }}
+                  title="Exportar os 3 gráficos principais para PDF"
+                >
+                  📄 PDF
+                </button>
+              </div>
+            </div>
+            
+            <div>
+              {visibleFixedCharts.pr && renderFixedChartUI(getMetricName("Standard Performance Ratio - PR Simples", capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5, language), fixedPrChart, "#3b82f6")}
+              {visibleFixedCharts.pr_bifacial && renderFixedChartUI(getMetricName("Standard Performance Ratio Bifacial - PR Simples Bifacial", capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5, language), fixedPrBifacialChart, "#0ea5e9")}
+              {visibleFixedCharts.wcpr && renderFixedChartUI(getMetricName("WCPR - Weather Corrected Performance Ratio - PR Corrigida por Temperatura", capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5, language), fixedWcprChart, "#3b82f6")}
+              {visibleFixedCharts.wcpr_bifacial && renderFixedChartUI(getMetricName("WCPR Bifacial - Weather Corrected Performance Ratio Bifacial - PR Corrigida por Temperatura Bifacial", capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5, language), fixedWcprBifacialChart, "#0ea5e9")}
+              {visibleFixedCharts.cap_ratio && renderFixedChartUI("Daily Capacity Ratio (%) — Fixed RC", fixedCapRatioChart, "#3b82f6")}
+              {visibleFixedCharts.cap_ratio_adaptive && renderFixedChartUI("Daily Capacity Ratio (%) — Adaptive RC", adaptiveCapRatioChart, "#1d4ed8")}
+              {visibleFixedCharts.astm_ratio && renderFixedChartUI(`ASTM Capacity Ratio (%) — Fixed RC - ${capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5} dias`, fixedAstmRatioChart, "#3b82f6")}
+              {visibleFixedCharts.astm_ratio_adaptive && renderFixedChartUI(`ASTM Capacity Ratio (%) — Adaptive RC - ${capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5} dias`, adaptiveAstmRatioChart, "#1d4ed8")}
+              {visibleFixedCharts.epi_pvlib && renderFixedChartUI(getMetricName("EPI - Energy Performance Index - PVLib", capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5, language), fixedEpiChart, "#3b82f6")}
+              {visibleFixedCharts.epi_pvlib_window && renderFixedChartUI(getMetricName(`EPI PVLib - Janela ${capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5} dias`, capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5, language), fixedEpiPvlibWindowChart, "#3b82f6")}
+              {visibleFixedCharts.epi_pvsyst && renderFixedChartUI(getMetricName("EPI - Energy Performance Index - PVSyst", capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5, language), fixedEpiNormalChart, "#3b82f6")}
+            </div>
+
+
+            {/* Tabela Resumo de Tolerância */}
+            {summaryTableData && summaryTableData.length > 0 && (
+              <div style={{ marginTop: '24px', background: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                <div style={{ background: 'var(--bg-secondary)', padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>Resumo de Tolerância</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+
+                    <div data-html2canvas-ignore="true" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '500', marginRight: '16px' }}>
+                      <span style={{ color: language === 'pt' ? 'var(--blue)' : 'var(--text-secondary)' }}>PT</span>
+                      <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', margin: 0 }}>
+                        <div style={{ position: 'relative', width: '36px', height: '20px' }}>
+                          <input type="checkbox" checked={language === 'en'} onChange={() => setLanguage(prev => prev === 'pt' ? 'en' : 'pt')} style={{ opacity: 0, width: '100%', height: '100%', position: 'absolute', zIndex: 2, cursor: 'pointer', margin: 0 }} />
+                          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: language === 'en' ? 'var(--blue)' : 'var(--border)', borderRadius: '10px', transition: 'background 0.2s' }}></div>
+                          <div style={{ position: 'absolute', left: language === 'en' ? '18px' : '2px', top: '2px', background: 'white', width: '16px', height: '16px', borderRadius: '8px', transition: 'left 0.2s', zIndex: 1 }}></div>
+                        </div>
+                      </label>
+                      <span style={{ color: language === 'en' ? 'var(--blue)' : 'var(--text-secondary)' }}>EN</span>
+                    </div>
+
+                    <div style={{ width: '1px', height: '16px', background: 'var(--border)' }}></div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '500' }}>
+                      <span style={{ color: summaryViewMode === 'count' ? 'var(--blue)' : 'var(--text-secondary)' }}>Quantidade</span>
+                      <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', margin: 0 }}>
+                        <div style={{ position: 'relative', width: '36px', height: '20px' }}>
+                          <input type="checkbox" checked={summaryViewMode === 'percent'} onChange={() => setSummaryViewMode(prev => prev === 'count' ? 'percent' : 'count')} style={{ opacity: 0, width: '100%', height: '100%', position: 'absolute', zIndex: 2, cursor: 'pointer', margin: 0 }} />
+                          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: summaryViewMode === 'percent' ? 'var(--blue)' : 'var(--border)', borderRadius: '10px', transition: 'background 0.2s' }}></div>
+                          <div style={{ position: 'absolute', left: summaryViewMode === 'percent' ? '18px' : '2px', top: '2px', background: 'white', width: '16px', height: '16px', borderRadius: '8px', transition: 'left 0.2s', zIndex: 1 }}></div>
+                        </div>
+                      </label>
+                      <span style={{ color: summaryViewMode === 'percent' ? 'var(--blue)' : 'var(--text-secondary)' }}>Percentual</span>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                    <thead>
+                      <tr style={{ background: 'var(--bg-card)' }}>
+                        <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontWeight: '600' }}>Métrica</th>
+                        <th style={{ padding: '12px 16px', textAlign: 'center', borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontWeight: '600' }}>Abaixo da Tolerância</th>
+                        <th style={{ padding: '12px 16px', textAlign: 'center', borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontWeight: '600' }}>Abaixo da Meta</th>
+                        <th style={{ padding: '12px 16px', textAlign: 'center', borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontWeight: '600' }}>Acima da Meta</th>
+                        <th style={{ padding: '12px 16px', textAlign: 'center', borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontWeight: '600' }}>Acima da Tolerância</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {summaryTableData.map((row, i) => {
+                        const total = row.stats.reduce((a, b) => a + b, 0);
+                        const formatValue = (val) => summaryViewMode === 'percent' && total > 0 ? ((val / total) * 100).toFixed(1) + '%' : val;
+                        return (
+                          <tr key={i} style={{ borderBottom: i === summaryTableData.length - 1 ? 'none' : '1px solid var(--border)' }}>
+                            <td style={{ padding: '12px 16px', color: 'var(--text-primary)', fontWeight: '500' }}>{row.name}</td>
+                            <td style={{ padding: '12px 16px', textAlign: 'center', color: '#991b1b', fontWeight: row.stats[0] > 0 ? '700' : '400' }}>{formatValue(row.stats[0])}</td>
+                            <td style={{ padding: '12px 16px', textAlign: 'center', color: '#854d0e', fontWeight: row.stats[1] > 0 ? '700' : '400' }}>{formatValue(row.stats[1])}</td>
+                            <td style={{ padding: '12px 16px', textAlign: 'center', color: '#166534', fontWeight: row.stats[2] > 0 ? '700' : '400' }}>{formatValue(row.stats[2])}</td>
+                            <td style={{ padding: '12px 16px', textAlign: 'center', color: '#1e3a8a', fontWeight: row.stats[3] > 0 ? '700' : '400' }}>{formatValue(row.stats[3])}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
