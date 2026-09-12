@@ -2503,13 +2503,13 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
     
     const rows = [];
     
-    const calculateStats = (key, targetKey, tol, isTargetFixed = false) => {
+    const calculateStats = (key, targetKey, tol, fixedTargetValue = null) => {
       const stats = [0, 0, 0, 0];
       displayRows.forEach(row => {
         let val = row[key];
         if (typeof val !== 'number') return;
         
-        let target = isTargetFixed ? 1.0 : row[targetKey];
+        let target = fixedTargetValue !== null ? fixedTargetValue : row[targetKey];
         if (typeof target !== 'number') return;
         
         if (val < target - tol) stats[0]++;
@@ -2534,23 +2534,23 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
     }
     
     if (visibleFixedCharts.cap_ratio) {
-      rows.push({ name: "Daily Capacity Ratio (%) - Fixed RC", stats: calculateStats('cap_ratio', null, epiTol, true) });
+      rows.push({ name: "Daily Capacity Ratio (%) - Fixed RC", stats: calculateStats('cap_ratio', null, epiTol * 100, 100.0) });
     }
     if (visibleFixedCharts.cap_ratio_adaptive) {
-      rows.push({ name: "Daily Capacity Ratio (%) - Adaptive RC", stats: calculateStats('cap_ratio_adaptive', null, epiTol, true) });
+      rows.push({ name: "Daily Capacity Ratio (%) - Adaptive RC", stats: calculateStats('cap_ratio_adaptive', null, epiTol * 100, 100.0) });
     }
     const astmWindow = capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5;
     if (visibleFixedCharts.astm_ratio) {
-      rows.push({ name: `ASTM Capacity Ratio (%) - Fixed RC - ${astmWindow} dias`, stats: calculateStats('astm_ratio', null, epiTol, true) });
+      rows.push({ name: `ASTM Capacity Ratio (%) - Fixed RC - ${astmWindow} dias`, stats: calculateStats('astm_ratio', null, epiTol * 100, 100.0) });
     }
     if (visibleFixedCharts.astm_ratio_adaptive) {
-      rows.push({ name: `ASTM Capacity Ratio (%) - Adaptive RC - ${astmWindow} dias`, stats: calculateStats('astm_ratio_adaptive', null, epiTol, true) });
+      rows.push({ name: `ASTM Capacity Ratio (%) - Adaptive RC - ${astmWindow} dias`, stats: calculateStats('astm_ratio_adaptive', null, epiTol * 100, 100.0) });
     }
     if (visibleFixedCharts.epi_pvlib) {
-      rows.push({ name: "EPI - Energy Performance Index - PVLib", stats: calculateStats('epi_pvlib', null, epiTol, true) });
+      rows.push({ name: "EPI - Energy Performance Index - PVLib", stats: calculateStats('epi_pvlib', null, epiTol, 1.0) });
     }
     if (visibleFixedCharts.epi_pvlib_window) {
-      rows.push({ name: `EPI PVLib - Janela ${astmWindow} dias`, stats: calculateStats('epi_pvlib_window', null, epiTol, true) });
+      rows.push({ name: `EPI PVLib - Janela ${astmWindow} dias`, stats: calculateStats('epi_pvlib_window', null, epiTol, 1.0) });
     }
     if (visibleFixedCharts.epi_pvsyst) {
       rows.push({ name: "EPI - Energy Performance Index - PVSyst", stats: calculateStats('epi', null, epiTol, true) });
