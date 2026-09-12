@@ -448,3 +448,59 @@ export async function exportTableToPng(elementRef, filename = 'export.png', opti
     }
   }
 }
+
+/**
+ * Exporta um elemento HTML (tabela) para um arquivo Excel (XLSX).
+ */
+export async function exportTableToExcel(elementRef, filename = 'export.xlsx') {
+  if (!elementRef) return;
+  
+  try {
+    const XLSX = await import('xlsx');
+    // raw: true evita que o xlsx tente parsear os números no formato inglês (onde vírgula é separador de milhar)
+    const wb = XLSX.utils.table_to_book(elementRef, { sheet: "Planilha1", raw: true });
+    
+    // Pós-processamento para converter strings de números no formato pt-BR (ex: "53,82") em números reais do Excel
+    const ws = wb.Sheets["Planilha1"];
+    
+    for (let cellAddress in ws) {
+      if (cellAddress[0] === '!') continue; // Pula propriedades especiais
+      
+      let cell = ws[cellAddress];
+      if (cell && cell.t === 's') { // se for texto
+        let val = cell.v.trim();
+        if (!val) continue;
+
+        let isPercent = val.endsWith('%');
+        let numStr = isPercent ? val.slice(0, -1).trim() : val;
+        
+        // Expressão regular para identificar um número no formato pt-BR
+        // Aceita: opcional '-', seguido de dígitos (com ou sem pontos de milhar), seguido opcionalmente de vírgula e dígitos
+        // Ex: "53,82", "-1.234,56", "100"
+        if (/^-?(?:\d{1,3}(?:\.\d{3})*|\d+)(?:,\d+)?$/.test(numStr)) {
+           // Converte para formato numérico do JavaScript (inglês)
+           let enNumStr = numStr.replace(/\./g, '').replace(',', '.');
+           let floatVal = parseFloat(enNumStr);
+           
+           if (!isNaN(floatVal)) {
+              if (isPercent) floatVal = floatVal / 100;
+              cell.t = 'n'; // altera tipo para number
+              cell.v = floatVal;
+              if (isPercent) {
+                cell.z = '0.00%'; // formato de porcentagem no Excel
+              } else if (numStr.includes(',')) {
+                // Descobre a quantidade de casas decimais originais
+                const decimals = numStr.split(',')[1].length;
+                cell.z = '0.' + '0'.repeat(decimals); // formata com a mesma precisão
+              }
+           }
+        }
+      }
+    }
+    
+    XLSX.writeFile(wb, filename);
+  } catch (error) {
+    console.error('Erro ao exportar Excel:', error);
+  }
+}
+

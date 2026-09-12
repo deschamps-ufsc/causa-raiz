@@ -37,6 +37,12 @@ export default function DriveImportModal({ usina, usinaObj, onClose, onSuccess }
   const [fileSearch, setFileSearch] = useState('')
 
   // 1. Check link and get root folder metadata
+  const [replicateStep, setReplicateStep] = useState(false)
+  const [siblingFolders, setSiblingFolders] = useState([])
+  const [selectedSiblings, setSelectedSiblings] = useState({})
+  const [replicating, setReplicating] = useState(false)
+
+  // 1. Check link and get root folder metadata
   const handleCheckLink = async () => {
     if (!driveLink) return;
     setLoading(true)
@@ -147,6 +153,83 @@ export default function DriveImportModal({ usina, usinaObj, onClose, onSuccess }
     }
   }
 
+  const handleOpenReplicate = async () => {
+    if (breadcrumbs.length < 2) return
+    setReplicating(true)
+    setError(null)
+    try {
+      const parentFolderId = breadcrumbs[breadcrumbs.length - 2].id
+      const currentFolderId = breadcrumbs[breadcrumbs.length - 1].id
+      
+      const res = await fetch(`http://localhost:8000/api/drive/folder/${parentFolderId}/files`)
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.detail || 'Erro ao carregar pastas')
+      
+      const siblingDirs = (data.files || [])
+        .filter(f => f.mimeType === 'application/vnd.google-apps.folder' && f.id !== currentFolderId)
+        
+      setSiblingFolders(siblingDirs)
+      setSelectedSiblings({})
+      setReplicateStep(true)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setReplicating(false)
+    }
+  }
+
+  const handleApplyReplication = async () => {
+    const selectedFolderIds = Object.keys(selectedSiblings).filter(id => selectedSiblings[id])
+    if (selectedFolderIds.length === 0) {
+      setReplicateStep(false)
+      return
+    }
+    
+    setReplicating(true)
+    setError(null)
+    
+    const currentFolderName = breadcrumbs[breadcrumbs.length - 1].name
+    // Get the currently selected file objects
+    const baseFiles = currentItems.filter(f => selectedFiles[f.id])
+    
+    let newlySelectedCount = 0
+    const newSelections = { ...selectedFiles }
+    
+    try {
+      for (const folderId of selectedFolderIds) {
+        const targetFolder = siblingFolders.find(f => f.id === folderId)
+        if (!targetFolder) continue
+        
+        const res = await fetch(`http://localhost:8000/api/drive/folder/${folderId}/files`)
+        const data = await res.json()
+        if (!res.ok) continue
+        
+        const targetContents = data.files || []
+        
+        for (const baseFile of baseFiles) {
+           let expectedName = baseFile.name
+           if (expectedName.includes(currentFolderName)) {
+              expectedName = expectedName.replace(currentFolderName, targetFolder.name)
+           }
+           
+           const match = targetContents.find(f => f.name === expectedName)
+           if (match && !newSelections[match.id]) {
+             newSelections[match.id] = true
+             newlySelectedCount++
+           }
+        }
+      }
+      
+      setSelectedFiles(newSelections)
+      setReplicateStep(false)
+      alert(`${newlySelectedCount} arquivos correspondentes foram selecionados nas pastas escolhidas!`)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setReplicating(false)
+    }
+  }
+
   // ── Passo 1: Preview (detectar datas antes de importar) ──────────
   const handlePreview = async () => {
     const fileIds = Object.keys(selectedFiles).filter(id => selectedFiles[id])
@@ -185,64 +268,78 @@ export default function DriveImportModal({ usina, usinaObj, onClose, onSuccess }
     setImportProgress({ status: 'starting', message: 'Iniciando...', progress: 0, total: 0, file_idx: 1, total_files: detectedFiles.length })
     
     let total_series = 0
+    const failedFiles = []
+    
     try {
       let idx = 1
       for (const f of detectedFiles) {
-        const override_date = f.confirmed_iso_date
-        if (!override_date) {
-          throw new Error(`Data inválida para "${f.filename}". Selecione uma data válida.`)
-        }
-        
-        const res = await fetch('http://localhost:8000/api/drive/import-stream', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            usina: usina.id || usina.nome || usina,
-            file_ids: [f.file_id],
-            skip_unmapped: skipUnmapped,
-            override_date: override_date,
+        try {
+          const override_date = f.confirmed_iso_date
+          if (!override_date) {
+            throw new Error(`Data inválida. Selecione uma data válida.`)
+          }
+          
+          const res = await fetch('http://localhost:8000/api/drive/import-stream', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              usina: usina.id || usina.nome || usina,
+              file_ids: [f.file_id],
+              skip_unmapped: skipUnmapped,
+              override_date: override_date,
+            })
           })
-        })
-        
-        if (!res.ok) {
-           const errData = await res.json().catch(() => ({}))
-           throw new Error(errData.detail || `Erro ao importar "${f.filename}"`)
-        }
+          
+          if (!res.ok) {
+             const errData = await res.json().catch(() => ({}))
+             throw new Error(errData.detail || `Erro do servidor`)
+          }
 
-        const reader = res.body.getReader()
-        const decoder = new TextDecoder()
-        let buffer = ''
-        
-        while(true) {
-          const { done, value } = await reader.read()
-          if (done) break
+          const reader = res.body.getReader()
+          const decoder = new TextDecoder()
+          let buffer = ''
           
-          buffer += decoder.decode(value, { stream: true })
-          const lines = buffer.split('\n')
-          buffer = lines.pop() || ''
-          
-          for (const line of lines) {
-            if (!line.trim()) continue
-            try {
-              const msg = JSON.parse(line)
-              if (msg.status === 'error') throw new Error(msg.message)
-              if (msg.status === 'success') {
-                total_series += msg.total_series || 0
-              } else {
-                setImportProgress({ ...msg, file_idx: idx, total_files: detectedFiles.length })
+          while(true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            
+            buffer += decoder.decode(value, { stream: true })
+            const lines = buffer.split('\n')
+            buffer = lines.pop() || ''
+            
+            for (const line of lines) {
+              if (!line.trim()) continue
+              try {
+                const msg = JSON.parse(line)
+                if (msg.status === 'error') throw new Error(msg.message)
+                if (msg.status === 'success') {
+                  total_series += msg.total_series || 0
+                } else {
+                  setImportProgress({ ...msg, file_idx: idx, total_files: detectedFiles.length })
+                }
+              } catch (e) {
+                if (e.message && !e.message.includes('JSON')) throw e
               }
-            } catch (e) {
-              if (e.message && !e.message.includes('JSON')) throw e
             }
           }
+        } catch (fileErr) {
+          failedFiles.push({ filename: f.filename, date: f.confirmed_iso_date || 'Desconhecida', error: fileErr.message })
         }
         idx++
       }
       
+      let summaryMsg = `Foram importadas ${total_series} séries do Google Drive.`
+      if (failedFiles.length > 0) {
+        summaryMsg += `\n\nAtenção! ${failedFiles.length} arquivo(s) apresentaram falha:\n`
+        failedFiles.forEach(ff => {
+          summaryMsg += `- [${toDisplay(ff.date)}] ${ff.filename}: ${ff.error}\n`
+        })
+      }
+
       if (onSuccess) {
-        onSuccess(`Foram importadas ${total_series} séries do Google Drive.`)
+        onSuccess(summaryMsg)
       } else {
-        alert(`Importação concluída! ${total_series} séries importadas.`)
+        alert(summaryMsg)
         onClose()
       }
     } catch (err) {
@@ -273,8 +370,68 @@ export default function DriveImportModal({ usina, usinaObj, onClose, onSuccess }
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 24, lineHeight: 1 }}>&times;</button>
         </div>
 
-        {/* ── PAINEL DE CONFIRMAÇÃO DE DATA ── */}
-        {confirmStep ? (
+        {/* ── PAINEL DE REPLICAÇÃO ── */}
+        {replicateStep ? (
+          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>
+              Selecione as pastas para onde deseja estender a seleção atual. O sistema procurará automaticamente os mesmos arquivos (substituindo a data no nome, se houver) nas pastas selecionadas.
+            </p>
+            <div style={{ padding: '8px 14px', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+               <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>PASTAS IRMÃS DISPONÍVEIS</span>
+               <button 
+                  onClick={() => {
+                     const allSelected = siblingFolders.length > 0 && siblingFolders.every(f => selectedSiblings[f.id])
+                     const newSelection = { ...selectedSiblings }
+                     siblingFolders.forEach(f => { newSelection[f.id] = !allSelected })
+                     setSelectedSiblings(newSelection)
+                  }} 
+                  style={{ background: 'none', border: 'none', color: 'var(--amber)', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
+               >
+                  {siblingFolders.length > 0 && siblingFolders.every(f => selectedSiblings[f.id]) ? 'Desmarcar Todos' : 'Selecionar Todos'}
+               </button>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-input)', borderRadius: '0 0 8px 8px', border: '1px solid var(--border)', borderTop: 'none', minHeight: 200 }}>
+               {siblingFolders.map(folder => (
+                 <label 
+                   key={folder.id} 
+                   style={{ 
+                     display: 'flex', padding: '10px 14px', borderBottom: '1px solid var(--border)33', 
+                     cursor: 'pointer', alignItems: 'center', background: selectedSiblings[folder.id] ? 'rgba(245, 158, 11, 0.1)' : 'transparent',
+                     transition: 'background 0.2s'
+                   }}
+                 >
+                   <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, fontSize: 14 }}>
+                     <input 
+                       type="checkbox" 
+                       checked={selectedSiblings[folder.id] || false} 
+                       onChange={() => setSelectedSiblings(prev => ({ ...prev, [folder.id]: !prev[folder.id] }))} 
+                       style={{ accentColor: 'var(--amber)', width: 16, height: 16 }}
+                     />
+                     <span style={{ fontSize: 18 }}>📁</span>
+                     <span style={{ color: selectedSiblings[folder.id] ? 'var(--amber)' : 'var(--text-primary)' }}>{folder.name}</span>
+                   </div>
+                 </label>
+               ))}
+               {siblingFolders.length === 0 && (
+                 <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)', fontSize: 14 }}>
+                    Nenhuma outra pasta encontrada no mesmo nível.
+                 </div>
+               )}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16 }}>
+              <button className="btn btn-ghost" onClick={() => setReplicateStep(false)} disabled={replicating}>
+                ← Voltar
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={handleApplyReplication}
+                disabled={replicating || !Object.values(selectedSiblings).some(v => v)}
+              >
+                {replicating ? '⏳ Buscando...' : '🔄 Buscar Arquivos Correspondentes'}
+              </button>
+            </div>
+          </div>
+        ) : confirmStep ? (
           <div style={{ flex: 1, overflowY: 'auto' }}>
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>
               Verifique as datas detectadas nos arquivos. <strong>Corrija se necessário</strong> antes de confirmar a importação.
@@ -428,6 +585,16 @@ export default function DriveImportModal({ usina, usinaObj, onClose, onSuccess }
               </div>
             )}
 
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, marginTop: 8 }}>
+               <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                 {selectedCount > 0 ? <span><strong>{selectedCount}</strong> arquivo(s) selecionado(s)</span> : <span>Nenhum arquivo selecionado</span>}
+               </div>
+               <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
+                  <input type="checkbox" checked={skipUnmapped} onChange={(e) => setSkipUnmapped(e.target.checked)} style={{ accentColor: 'var(--amber)' }} />
+                  <span style={{ color: 'var(--text-primary)' }}>Pular séries não mapeadas</span>
+               </label>
+            </div>
+
             {/* FILE BROWSER */}
             {breadcrumbs.length > 0 && (
               <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-input)', borderRadius: 8, border: '1px solid var(--border)', minHeight: 200, display: 'flex', flexDirection: 'column' }}>
@@ -521,14 +688,7 @@ export default function DriveImportModal({ usina, usinaObj, onClose, onSuccess }
               </div>
             )}
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 24, flexShrink: 0 }}>
-              <div style={{ fontSize: 13, color: 'var(--text-muted)', display: 'flex', gap: 16, alignItems: 'center' }}>
-                {selectedCount > 0 ? <span><strong>{selectedCount}</strong> arquivo(s) selecionado(s)</span> : <span>Nenhum arquivo selecionado</span>}
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', paddingLeft: 16, borderLeft: '1px solid var(--border)' }}>
-                  <input type="checkbox" checked={skipUnmapped} onChange={(e) => setSkipUnmapped(e.target.checked)} style={{ accentColor: 'var(--amber)' }} />
-                  <span style={{ color: 'var(--text-primary)' }}>Pular séries não mapeadas</span>
-                </label>
-              </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginTop: 24, flexShrink: 0 }}>
               <div style={{ display: 'flex', gap: 12 }}>
                 <button className="btn btn-ghost" onClick={onClose} disabled={loading}>Cancelar</button>
                 <button 
@@ -539,6 +699,16 @@ export default function DriveImportModal({ usina, usinaObj, onClose, onSuccess }
                 >
                   {loading ? '⏳' : '📥'} Extrair Nomes de Séries
                 </button>
+                {breadcrumbs.length >= 2 && (
+                  <button 
+                    className="btn btn-ghost" 
+                    onClick={handleOpenReplicate} 
+                    disabled={selectedCount === 0 || loading}
+                    style={{ border: '1px solid var(--amber)', color: 'var(--amber)', background: 'rgba(245, 158, 11, 0.1)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}
+                  >
+                    🔄 Replicar Seleção
+                  </button>
+                )}
                 <button className="btn btn-primary" onClick={handlePreview} disabled={selectedCount === 0 || loading}>
                   {loading ? '⏳ Analisando...' : 'Próximo →'}
                 </button>

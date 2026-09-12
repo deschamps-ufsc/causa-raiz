@@ -1,7 +1,7 @@
 """
 Rota POST /upload — Recebe Excel, converte para Parquet.
 """
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends, BackgroundTasks
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends, BackgroundTasks, Query
 from models.schemas import UploadResponse
 from services.excel_service import process_excel
 from utils.logger import logger
@@ -15,6 +15,68 @@ import uuid
 router = APIRouter(prefix="/upload", tags=["Upload"])
 
 UPLOAD_TASKS = {}
+
+
+def get_pvsyst_uploads_meta_path(usina: str) -> str:
+    return os.path.join(DATA_DIR, usina.strip(), "pvsyst_uploads_meta.json")
+
+def save_upload_meta(usina: str, key: str, filename: str):
+    from datetime import datetime
+    meta_path = get_pvsyst_uploads_meta_path(usina)
+    meta = {}
+    if os.path.exists(meta_path):
+        with open(meta_path, "r", encoding="utf-8") as f:
+            try:
+                meta = json.load(f)
+            except:
+                pass
+    meta[key] = {
+        "filename": filename,
+        "upload_date": datetime.now().isoformat()
+    }
+    os.makedirs(os.path.dirname(meta_path), exist_ok=True)
+    with open(meta_path, "w", encoding="utf-8") as f:
+        json.dump(meta, f, indent=2, ensure_ascii=False)
+
+@router.get("/pvsyst/metadata")
+async def get_pvsyst_upload_metadata(usina: str = Query(...)):
+    meta_path = get_pvsyst_uploads_meta_path(usina)
+    if os.path.exists(meta_path):
+        with open(meta_path, "r", encoding="utf-8") as f:
+            try:
+                return json.load(f)
+            except:
+                return {}
+    return {}
+
+from fastapi.responses import FileResponse
+
+@router.get("/pvsyst/download/{file_type}")
+async def download_pvsyst_file(file_type: str, usina: str = Query(...)):
+    if file_type == "results":
+        path = get_pvsyst_path(usina)
+    elif file_type == "tmy":
+        path = os.path.join(DATA_DIR, usina.strip(), "pvsyst_tmy_raw.csv")
+    elif file_type == "shading":
+        path = os.path.join(DATA_DIR, usina.strip(), "shading_raw.csv")
+    else:
+        raise HTTPException(status_code=400, detail="Invalid file type")
+        
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="Arquivo original não encontrado")
+        
+    meta = {}
+    meta_path = get_pvsyst_uploads_meta_path(usina)
+    if os.path.exists(meta_path):
+        with open(meta_path, "r", encoding="utf-8") as f:
+            try:
+                meta = json.load(f)
+            except:
+                pass
+                
+    original_name = meta.get(file_type, {}).get("filename", os.path.basename(path))
+    return FileResponse(path, filename=original_name)
+
 
 def run_upload_pvsyst_background(task_id: str, content: bytes, usina: str, filename: str):
     UPLOAD_TASKS[task_id] = {"status": "PROCESSING", "progress": 10, "message": "Iniciando processamento do arquivo..."}
@@ -35,6 +97,8 @@ def run_upload_pvsyst_background(task_id: str, content: bytes, usina: str, filen
         with open(meta_path, "w", encoding="utf-8") as f:
             json.dump(columns, f, indent=2, ensure_ascii=False)
             
+        save_upload_meta(usina, "results", filename)
+            
         UPLOAD_TASKS[task_id] = {"status": "COMPLETED", "progress": 100, "message": "Upload concluído com sucesso!", "columns": columns}
     except Exception as e:
         logger.error(f"[UPLOAD_PVSYST] Erro no task_id {task_id}: {e}")
@@ -43,6 +107,12 @@ def run_upload_pvsyst_background(task_id: str, content: bytes, usina: str, filen
 def run_upload_tmy_background(task_id: str, content: bytes, usina: str, filename: str):
     UPLOAD_TASKS[task_id] = {"status": "PROCESSING", "progress": 10, "message": "Iniciando processamento do TMY..."}
     try:
+        raw_path = os.path.join(DATA_DIR, usina.strip(), "pvsyst_tmy_raw.csv")
+        os.makedirs(os.path.dirname(raw_path), exist_ok=True)
+        with open(raw_path, "wb") as f:
+            f.write(content)
+        save_upload_meta(usina, "tmy", filename)
+        
         process_pvsyst_tmy(content, usina)
         UPLOAD_TASKS[task_id] = {"status": "COMPLETED", "progress": 100, "message": "Upload concluído com sucesso!"}
     except Exception as e:
@@ -478,6 +548,12 @@ def process_shading_table(content: bytes, usina: str) -> None:
 def run_upload_shading_table_background(task_id: str, content: bytes, usina: str, filename: str):
     UPLOAD_TASKS[task_id] = {"status": "PROCESSING", "progress": 10, "message": "Iniciando processamento da Tabela de Sombreamento..."}
     try:
+        raw_path = os.path.join(DATA_DIR, usina.strip(), "shading_raw.csv")
+        os.makedirs(os.path.dirname(raw_path), exist_ok=True)
+        with open(raw_path, "wb") as f:
+            f.write(content)
+        save_upload_meta(usina, "shading", filename)
+        
         process_shading_table(content, usina)
         UPLOAD_TASKS[task_id] = {"status": "COMPLETED", "progress": 100, "message": "Upload da Tabela de Sombreamento concluído com sucesso!"}
     except Exception as e:

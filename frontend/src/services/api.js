@@ -89,11 +89,11 @@ export const fetchUsinas = () =>
 export const fetchDetailedUsinas = () =>
   api.get('/usinas/detailed').then((r) => r.data)
 
-export const createUsina = (nome) =>
-  api.post('/usinas', { nome }).then((r) => r.data)
+export const createUsina = (data) =>
+  api.post('/usinas', data).then((r) => r.data)
 
-export const renameUsina = (nome, novoNome) =>
-  api.patch(`/usinas/${encodeURIComponent(nome)}`, { novo_nome: novoNome }).then(r => r.data)
+export const renameUsina = (nome, payload) =>
+  api.patch(`/usinas/${encodeURIComponent(nome)}`, payload).then(r => r.data)
 
 export const updateUsinaDriveLink = (nome, driveLink) =>
   api.patch(`/usinas/${encodeURIComponent(nome)}/drive-link`, { drive_link: driveLink }).then(r => r.data)
@@ -311,7 +311,7 @@ export const getFlowIntegralsStatus = (usina, taskId) =>
 // ── CAMPANHAS (PERFORMANCE CAMPAIGNS)
 // ============================================================================
 export const fetchCampanhas = (usina) =>
-  api.get('/campanhas', { params: { usina } }).then((r) => r.data)
+  api.get('/campanhas', usina ? { params: { usina } } : {}).then((r) => r.data)
 
 export const saveCampanha = (usina, payload) =>
   api.post('/campanhas', payload, { params: { usina } }).then((r) => r.data)

@@ -165,17 +165,25 @@ def run_pvlib_simulation(processed_df: pd.DataFrame, pvlib_node: dict, usina: st
                 dni_est = erbs_res['dni'].fillna(0)
                 dhi_est = erbs_res['dhi'].fillna(0)
                 
-                poa_comp = pvlib.irradiance.get_total_irradiance(
-                    surface_tilt=surface_tilt,
-                    surface_azimuth=surface_azimuth,
-                    solar_zenith=solpos['apparent_zenith'],
-                    solar_azimuth=solpos['azimuth'],
-                    dni=dni_est,
-                    ghi=ghi_est,
-                    dhi=dhi_est,
-                    dni_extra=dni_extra,
-                    model='haydavies'
+                aoi_ = pvlib.irradiance.aoi(surface_tilt, surface_azimuth, solpos['apparent_zenith'], solpos['azimuth'])
+                poa_direct = np.maximum(dni_est * np.cos(np.radians(aoi_)), 0)
+                poa_ground_diffuse = pvlib.irradiance.get_ground_diffuse(surface_tilt, ghi_est, albedo=0.25)
+                
+                diffuse_components = pvlib.irradiance.haydavies(
+                    surface_tilt=surface_tilt, surface_azimuth=surface_azimuth,
+                    dhi=dhi_est, dni=dni_est, dni_extra=dni_extra,
+                    solar_zenith=solpos['apparent_zenith'], solar_azimuth=solpos['azimuth'],
+                    return_components=True
                 )
+                
+                poa_comp = {
+                    'poa_global': poa_direct + diffuse_components['poa_sky_diffuse'] + poa_ground_diffuse,
+                    'poa_direct': poa_direct,
+                    'poa_sky_diffuse': diffuse_components['poa_sky_diffuse'],
+                    'poa_ground_diffuse': poa_ground_diffuse,
+                    'poa_isotropic': diffuse_components['poa_isotropic'],
+                    'poa_circumsolar': diffuse_components['poa_circumsolar']
+                }
                 
                 poa_calc = poa_comp['poa_global']
                 ratio = gpoa_eff_tz / poa_calc.replace(0, np.nan)
@@ -185,12 +193,15 @@ def run_pvlib_simulation(processed_df: pd.DataFrame, pvlib_node: dict, usina: st
             poa_direct = poa_comp['poa_direct']
             poa_direct_raw = poa_direct.copy()
             poa_sky_diffuse = poa_comp['poa_sky_diffuse']
+            poa_isotropic = poa_comp['poa_isotropic']
+            poa_circumsolar = poa_comp['poa_circumsolar']
             poa_ground_diffuse = poa_comp['poa_ground_diffuse']
             
             # =========================================================
             # Near Shadings (3D Shading Table)
             # =========================================================
             shading_table_path = os.path.join(DATA_DIR, usina, "shading_table.json")
+            shading_factor = pd.Series(1.0, index=poa_direct.index)
             if os.path.exists(shading_table_path):
                 try:
                     with open(shading_table_path, "r", encoding="utf-8") as f:
@@ -204,14 +215,19 @@ def run_pvlib_simulation(processed_df: pd.DataFrame, pvlib_node: dict, usina: st
                     interpolator = RegularGridInterpolator((ht_bins, az_bins), matrix, bounds_error=False, fill_value=0.0)
                     
                     pv_height = 90.0 - solpos['apparent_zenith'].values
-                    pv_azimuth = solpos['azimuth'].values - 180.0
+                    
+                    if lat < 0:
+                        pv_azimuth = 360.0 - solpos['azimuth'].values
+                    else:
+                        pv_azimuth = solpos['azimuth'].values - 180.0
+                        
                     pv_azimuth = (pv_azimuth + 180) % 360 - 180
                     
                     pts = np.column_stack((pv_height, pv_azimuth))
                     shading_loss = interpolator(pts)
-                    shading_factor = np.clip(1.0 - shading_loss, 0.0, 1.0)
+                    shading_factor = pd.Series(np.clip(1.0 - shading_loss, 0.0, 1.0), index=poa_direct.index)
                     
-                    poa_direct = poa_direct * pd.Series(shading_factor, index=poa_direct.index)
+                    poa_direct = poa_direct * shading_factor
                 except Exception as err:
                     logger.warning(f"[PVLIB] Falha ao aplicar Tabela de Sombreamento 3D: {err}")
             # =========================================================
@@ -234,7 +250,10 @@ def run_pvlib_simulation(processed_df: pd.DataFrame, pvlib_node: dict, usina: st
                 gf = np.where(vf_ground_unshaded.values > 1e-5, vf_ground_shaded / vf_ground_unshaded.values, 1.0)
             ground_shade_factor = pd.Series(gf, index=surface_tilt.index).fillna(1.0).clip(lower=0)
             
-            poa_sky_diffuse_shaded = poa_sky_diffuse * sky_shade_factor
+            poa_isotropic_shaded = poa_isotropic * sky_shade_factor
+            poa_circumsolar_shaded = poa_circumsolar * shading_factor
+            poa_sky_diffuse_shaded = poa_isotropic_shaded + poa_circumsolar_shaded
+            
             poa_ground_diffuse_shaded = poa_ground_diffuse * ground_shade_factor
             
             # poa_total_unshaded: energia real sem as obstruções de Near Shadings
@@ -322,6 +341,9 @@ def run_pvlib_simulation(processed_df: pd.DataFrame, pvlib_node: dict, usina: st
         module_quality_loss = float(params.get("module_quality_loss", 0.0)) / 100.0
         aux_loss = float(params.get("aux_loss", 0.0)) # kW
         
+        limit_must_enable = params.get("limit_must_enable", False)
+        limit_must_kw = float(params.get("limit_must_kw", 0.0))
+        
         # Puxa sujidade do node config ou usa valor fixo
         soiling_val = 0.0
         
@@ -336,34 +358,26 @@ def run_pvlib_simulation(processed_df: pd.DataFrame, pvlib_node: dict, usina: st
                 suj_col = "sujidade" if "sujidade" in processed_df.columns else "Sujidade" if "Sujidade" in processed_df.columns else None
                 if suj_col:
                     s_data = processed_df[suj_col].dropna()
-                    if not s_data.empty:
-                        soiling_val = float(s_data.mean()) / 100.0
                     cfg = suj_node.get("data", {})
-                
-                # Aplica restrição de tempo
-                start_str = cfg.get("startTime")
-                end_str = cfg.get("endTime")
-                if start_str and end_str:
-                    try:
-                        start_t = pd.to_datetime(start_str).time()
-                        end_t = pd.to_datetime(end_str).time()
-                        s_data = s_data.between_time(start_t, end_t)
-                    except Exception:
-                        pass
-                
-                # Aplica trim
-                try:
-                    trim_val = float(cfg.get("trimPercent", 0))
-                    if trim_val > 0 and not s_data.empty:
-                        lower = s_data.quantile(trim_val / 100.0)
-                        upper = s_data.quantile(1 - (trim_val / 100.0))
-                        s_data = s_data[(s_data >= lower) & (s_data <= upper)]
-                except Exception:
-                    pass
-                        
-                if not s_data.empty:
-                    soiling_val = float(s_data.mean()) / 100.0
                     
+                    if not s_data.empty:
+                        # Se existe trimPercent, aplicamos o trim percentual sobre o DIA COMPLETO
+                        # (igual ao comportamento da coluna "Média Interna" no flow_service)
+                        try:
+                            trim_val = float(cfg.get("trimPercent", 0)) / 100.0
+                            if trim_val > 0:
+                                s_data_clean = s_data.sort_values()
+                                n = len(s_data_clean)
+                                if n > 0:
+                                    trim_k = int(n * trim_val / 2.0)
+                                    if trim_k > 0:
+                                        s_data = s_data_clean.iloc[trim_k : n - trim_k]
+                        except Exception:
+                            pass
+                            
+                        if not s_data.empty:
+                            soiling_val = float(s_data.mean()) / 100.0
+                            
         # Aplica soiling no Geff (Geff real suja) usando o valor único diário
         # Se o valor for muito alto (ex: 99%), significa eficiência (ratio), então multiplica direto
         # Se for baixo (ex: 2%), significa perda, então multiplica por (1 - soiling_val)
@@ -415,6 +429,7 @@ def run_pvlib_simulation(processed_df: pd.DataFrame, pvlib_node: dict, usina: st
                     
                     Vth = k * (273.15 + 25) / e
                     nNsVth = Ns * Gamma * Vth
+                    
                     
                     try:
                         Io_ref = (Isc - Voc/Rsh) / (math.exp(Voc / nNsVth) - 1)
@@ -591,6 +606,21 @@ def run_pvlib_simulation(processed_df: pd.DataFrame, pvlib_node: dict, usina: st
         else:
             # Caso total_p_dc não seja serie ainda
             pass
+            
+        # Aplicação da Limitação MUST (Curtailment / Clipping pós-Trafo)
+        if limit_must_enable and limit_must_kw > 0:
+            must_limit_w = limit_must_kw * 1000.0
+            if isinstance(total_p_ac, pd.Series):
+                # Cria fator de corte onde excede o MUST
+                curtailment_factor = np.where(total_p_ac > must_limit_w, must_limit_w / total_p_ac, 1.0)
+                curtailment_factor = pd.Series(curtailment_factor, index=total_p_ac.index)
+                total_p_ac = total_p_ac.clip(upper=must_limit_w)
+            else:
+                curtailment_factor = must_limit_w / total_p_ac if total_p_ac > must_limit_w else 1.0
+                total_p_ac = min(total_p_ac, must_limit_w)
+            
+            # Ajusta proporcionalmente a potência CC para refletir o corte no gráfico e cálculos de PR
+            total_p_dc = total_p_dc * curtailment_factor
             
         # Approximation for the UI column using global totals
         if total_nominal_p_dc > 0:

@@ -850,7 +850,7 @@ export default function SettingsPage() {
   return (
     <div style={{ flex: 1, background: '#f1f5f9', minHeight: '100%', padding: '32px 20px', boxSizing: 'border-box' }}>
       {/* Centered container */}
-      <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+      <div style={{ maxWidth: 1600, margin: '0 auto' }}>
 
         {/* Tabs */}
         <div style={{ display: 'flex', gap: 2, marginBottom: 20, borderBottom: '2px solid #e2e8f0' }}>

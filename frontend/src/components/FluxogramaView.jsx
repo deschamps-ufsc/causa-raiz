@@ -747,12 +747,47 @@ const calculateAggregation = (rowsToAggregate, columns, potenciaInstalada, gamma
   return totals;
 };
 
+
+const UI_TRANSLATIONS = {
+  "Quantidade": { pt: "Quantidade", en: "Count" },
+  "Percentual": { pt: "Percentual", en: "Percentage" },
+  "Métrica": { pt: "Métrica", en: "Metric" },
+  "Abaixo da Tolerância": { pt: "Abaixo da Tolerância", en: "Below Tolerance" },
+  "Abaixo da Meta": { pt: "Abaixo da Meta", en: "Below Target" },
+  "Acima da Meta": { pt: "Acima da Meta", en: "Above Target" },
+  "Acima da Tolerância": { pt: "Acima da Tolerância", en: "Above Tolerance" },
+  "Resumo de Tolerância": { pt: "Resumo de Tolerância", en: "Tolerance Summary" },
+  "Gráficos Principais": { pt: "Gráficos Principais", en: "Main Charts" },
+};
+
+const METRICS_TRANSLATIONS = {
+  "Standard Performance Ratio - PR Simples": { pt: "Standard Performance Ratio - PR Simples", en: "Standard Performance Ratio (PR)" },
+  "Standard Performance Ratio Bifacial - PR Simples Bifacial": { pt: "Standard Performance Ratio Bifacial - PR Simples Bifacial", en: "Bifacial Standard Performance Ratio (Bifacial PR)" },
+  "WCPR - Weather Corrected Performance Ratio - PR Corrigida por Temperatura": { pt: "PR Corrigida por Temperatura (WCPR)", en: "Weather Corrected Performance Ratio (WCPR)" },
+  "WCPR Bifacial - Weather Corrected Performance Ratio Bifacial - PR Corrigida por Temperatura Bifacial": { pt: "PR Corrigida por Temperatura Bifacial (WCPR Bifacial)", en: "Bifacial Weather Corrected Performance Ratio (Bifacial WCPR)" },
+  "Daily Capacity Ratio (%) - Fixed RC": { pt: "Daily Capacity Ratio (%) - Fixed RC", en: "Daily Capacity Ratio (%) - Fixed RC" },
+  "Daily Capacity Ratio (%) - Adaptive RC": { pt: "Daily Capacity Ratio (%) - Adaptive RC", en: "Daily Capacity Ratio (%) - Adaptive RC" },
+  "EPI - Energy Performance Index - PVLib": { pt: "EPI - Energy Performance Index - PVLib", en: "Energy Performance Index (EPI) - PVLib" },
+  "EPI - Energy Performance Index - PVSyst": { pt: "EPI - Energy Performance Index - PVSyst", en: "Energy Performance Index (EPI) - PVSyst" },
+};
+
+const getMetricName = (name, windowSize, lang) => {
+  if (name.startsWith('ASTM Capacity Ratio (%) - Fixed RC')) return lang === 'pt' ? `ASTM Capacity Ratio (%) - Fixed RC - ${windowSize} dias` : `ASTM Capacity Ratio (%) - Fixed RC - ${windowSize} days`;
+  if (name.startsWith('ASTM Capacity Ratio (%) - Adaptive RC')) return lang === 'pt' ? `ASTM Capacity Ratio (%) - Adaptive RC - ${windowSize} dias` : `ASTM Capacity Ratio (%) - Adaptive RC - ${windowSize} days`;
+  if (name.startsWith('EPI PVLib - Janela')) return lang === 'pt' ? `EPI PVLib - Janela ${windowSize} dias` : `EPI PVLib - ${windowSize} days Window`;
+  
+  return METRICS_TRANSLATIONS[name]?.[lang] || name;
+};
 export default function FluxogramaView({ elementos = [], selectedDates = [], showTitle = true, mode = 'all', capacityTestDailyResults = null }) {
   const { usinaAtual } = useUsina()
   const { filterSettings } = useChartSettings()
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
   const [selectedNodeId, setSelectedNodeId] = useState(null)
+
+  const [summaryViewMode, setSummaryViewMode] = useState('count');
+  const [language, setLanguage] = useState('pt');
+
   const selectedBlock = useMemo(() => nodes.find(n => n.id === selectedNodeId)?.data, [nodes, selectedNodeId])
   const [inputsList, setInputsList] = useState([{ series: '', filter: '', sensors: [] }])
   const [operation, setOperation] = useState('sum')
@@ -818,6 +853,25 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
   const shadingFileInputRef = useRef(null)
   const [pvsystColumns, setPvsystColumns] = useState([])
   const [isLoadingPvsystColumns, setIsLoadingPvsystColumns] = useState(false)
+  const [activePvsystTab, setActivePvsystTab] = useState(null)
+  const [pvsystMetadata, setPvsystMetadata] = useState({})
+  
+  useEffect(() => {
+    if (selectedNodeId === 'pvsyst' && usinaAtual) {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+      fetch(`${baseUrl}/upload/pvsyst/metadata?usina=${encodeURIComponent(usinaAtual)}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      })
+      .then(res => res.ok ? res.json() : {})
+      .then(data => {
+        setPvsystMetadata(data || {});
+      })
+      .catch(err => {
+        console.error("Erro ao buscar metadados do pvsyst:", err);
+      });
+      setActivePvsystTab(null);
+    }
+  }, [selectedNodeId, usinaAtual]);
 
   // Estados para Tabela de Integrais Diárias
   const [rawIntegralsData, setRawIntegralsData] = useState({ columns: [], rows: [] })
@@ -1145,6 +1199,14 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
           setToast({ message: 'Upload do PVSyst concluído!', type: 'success' });
           setPvsystColumns(statusData.columns || []);
           setTimeout(() => setPvsystUploadProgress(0), 2000);
+          const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+          fetch(`${baseUrl}/upload/pvsyst/metadata?usina=${encodeURIComponent(usinaAtual)}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+          })
+          .then(res => res.ok ? res.json() : {})
+          .then(data => setPvsystMetadata(data || {}))
+          .catch(err => console.error(err));
+
         } else if (statusData.status === 'FAILED') {
           completed = true;
           setPvsystUploadProgress(0);
@@ -1192,6 +1254,14 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
           setTmyUploadProgress(100);
           setToast({ message: 'Upload do TMY concluído!', type: 'success' });
           setTimeout(() => setTmyUploadProgress(0), 2000);
+          const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+          fetch(`${baseUrl}/upload/pvsyst/metadata?usina=${encodeURIComponent(usinaAtual)}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+          })
+          .then(res => res.ok ? res.json() : {})
+          .then(data => setPvsystMetadata(data || {}))
+          .catch(err => console.error(err));
+
           loadIntegrals(usinaAtual);
         } else if (statusData.status === 'FAILED') {
           completed = true;
@@ -1240,6 +1310,14 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
           setShadingTableUploadProgress(100);
           setToast({ message: 'Upload da Tabela de Sombreamento concluído!', type: 'success' });
           setTimeout(() => setShadingTableUploadProgress(0), 2000);
+          const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+          fetch(`${baseUrl}/upload/pvsyst/metadata?usina=${encodeURIComponent(usinaAtual)}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+          })
+          .then(res => res.ok ? res.json() : {})
+          .then(data => setPvsystMetadata(data || {}))
+          .catch(err => console.error(err));
+
         } else if (statusData.status === 'FAILED') {
           completed = true;
           setShadingTableUploadProgress(0);
@@ -2420,6 +2498,66 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
     }
   }
 
+  const summaryTableData = useMemo(() => {
+    if (!displayRows || displayRows.length === 0) return [];
+    
+    const rows = [];
+    
+    const calculateStats = (key, targetKey, tol, isTargetFixed = false) => {
+      const stats = [0, 0, 0, 0];
+      displayRows.forEach(row => {
+        let val = row[key];
+        if (typeof val !== 'number') return;
+        
+        let target = isTargetFixed ? 1.0 : row[targetKey];
+        if (typeof target !== 'number') return;
+        
+        if (val < target - tol) stats[0]++;
+        else if (val >= target - tol && val < target) stats[1]++;
+        else if (val >= target && val <= target + tol) stats[2]++;
+        else if (val > target + tol) stats[3]++;
+      });
+      return stats;
+    };
+
+    if (visibleFixedCharts.pr) {
+      rows.push({ name: "Standard Performance Ratio - PR Simples", stats: calculateStats('pr_medida', 'pr_prevista', prTol) });
+    }
+    if (visibleFixedCharts.pr_bifacial) {
+      rows.push({ name: "Standard Performance Ratio Bifacial - PR Simples Bifacial", stats: calculateStats('pr_medida_bifacial', 'pr_prevista_bifacial', prTol) });
+    }
+    if (visibleFixedCharts.wcpr) {
+      rows.push({ name: "WCPR - Weather Corrected Performance Ratio - PR Corrigida por Temperatura", stats: calculateStats('wcpr', 'pr_prevista', wcprTol) });
+    }
+    if (visibleFixedCharts.wcpr_bifacial) {
+      rows.push({ name: "WCPR Bifacial - Weather Corrected Performance Ratio Bifacial - PR Corrigida por Temperatura Bifacial", stats: calculateStats('wcpr_bifacial', 'pr_prevista_bifacial', wcprTol) });
+    }
+    
+    if (visibleFixedCharts.cap_ratio) {
+      rows.push({ name: "Daily Capacity Ratio (%) - Fixed RC", stats: calculateStats('cap_ratio', null, epiTol, true) });
+    }
+    if (visibleFixedCharts.cap_ratio_adaptive) {
+      rows.push({ name: "Daily Capacity Ratio (%) - Adaptive RC", stats: calculateStats('cap_ratio_adaptive', null, epiTol, true) });
+    }
+    const astmWindow = capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5;
+    if (visibleFixedCharts.astm_ratio) {
+      rows.push({ name: `ASTM Capacity Ratio (%) - Fixed RC - ${astmWindow} dias`, stats: calculateStats('astm_ratio', null, epiTol, true) });
+    }
+    if (visibleFixedCharts.astm_ratio_adaptive) {
+      rows.push({ name: `ASTM Capacity Ratio (%) - Adaptive RC - ${astmWindow} dias`, stats: calculateStats('astm_ratio_adaptive', null, epiTol, true) });
+    }
+    if (visibleFixedCharts.epi_pvlib) {
+      rows.push({ name: "EPI - Energy Performance Index - PVLib", stats: calculateStats('epi_pvlib', null, epiTol, true) });
+    }
+    if (visibleFixedCharts.epi_pvlib_window) {
+      rows.push({ name: `EPI PVLib - Janela ${astmWindow} dias`, stats: calculateStats('epi_pvlib_window', null, epiTol, true) });
+    }
+    if (visibleFixedCharts.epi_pvsyst) {
+      rows.push({ name: "EPI - Energy Performance Index - PVSyst", stats: calculateStats('epi', null, epiTol, true) });
+    }
+
+    return rows;
+  }, [displayRows, visibleFixedCharts, prTol, wcprTol, epiTol, capacityTestDailyResults]);
   return (
     <div style={{ 
       display: 'flex', 
@@ -3821,6 +3959,34 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                     </div>
                   </div>
                 </div>
+                {/* Limitação MUST */}
+                <div style={{ background: 'rgba(16, 185, 129, 0.05)', padding: '16px', borderRadius: '8px', borderLeft: '4px solid #10b981', marginTop: '16px' }}>
+                  <h4 style={{ margin: '0 0 12px 0', color: '#10b981', fontSize: '14px' }}>Limitação MUST (Exportação CA)</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center' }}>
+                      <label style={{ fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={pvlibParams.limit_must_enable || false}
+                          onChange={e => setPvlibParams({ ...pvlibParams, limit_must_enable: e.target.checked })}
+                        />
+                        Ativar Limitação MUST
+                      </label>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600, color: pvlibParams.limit_must_enable ? 'inherit' : '#9ca3af' }}>Valor do MUST (kW):</label>
+                      <input 
+                        type="number" 
+                        step="1" 
+                        className="input" 
+                        value={pvlibParams.limit_must_kw || 0} 
+                        onChange={e => setPvlibParams({...pvlibParams, limit_must_kw: parseFloat(e.target.value)||0})} 
+                        disabled={!pvlibParams.limit_must_enable}
+                        style={{ opacity: pvlibParams.limit_must_enable ? 1 : 0.6 }}
+                      />
+                    </div>
+                  </div>
+                </div>
 
               </div>
 
@@ -3897,169 +4063,323 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
 
       {/* Modal Bloco PVSyst */}
       {selectedNodeId === 'pvsyst' && (
-        <>
-          <div 
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000 }} 
-            onClick={() => setSelectedNodeId(null)} 
-          />
-          <div style={{
-            position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-            background: 'var(--bg-card)', padding: '24px', borderRadius: '8px', zIndex: 1001,
-            width: '500px', maxWidth: '90vw', boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-            display: 'flex', flexDirection: 'column'
-          }}>
-            <h3 style={{ marginTop: 0, color: '#233772', borderBottom: '1px solid var(--border)', paddingBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15,23,42,0.8)', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div style={{ background: 'var(--bg-card)', padding: '24px', borderRadius: '16px', maxWidth: activePvsystTab ? '800px' : '400px', width: '90%', border: '1px solid var(--border)', transition: 'max-width 0.3s ease-in-out' }}>
+            <h3 style={{ marginTop: 0, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', paddingBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <img src="/pvsyst.png" alt="PVSyst Logo" style={{ height: '24px', objectFit: 'contain' }} />
-                <span>Simulação PVSyst</span>
+                <span>Integração PVSyst</span>
               </div>
               <button onClick={() => setSelectedNodeId(null)} style={{ background: 'none', border: 'none', fontSize: '16px', cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
             </h3>
             
-            <div style={{ margin: '20px 0', display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <p style={{ fontSize: '14px', color: 'var(--text-primary)' }}>
-                Nesta etapa, você pode exportar as séries filtradas para uso no software PVSYST, ou carregar os resultados de uma simulação já realizada.
-              </p>
+            <div style={{ margin: '20px 0', display: 'flex', gap: '24px' }}>
               
-              <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginTop: '10px' }}>
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <button 
-                    disabled={isExporting}
-                    onClick={async () => {
-                      if (isExporting) return;
-                      try {
-                        setIsExporting(true);
-                        setExportProgress(0);
-                        const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-                        
-                        // Inicia a exportação
-                        const startRes = await fetch(`${baseUrl}/flow/${encodeURIComponent(usinaAtual)}/export-pvsyst/start`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ dates: selectedDates })
-                        });
-                        
-                        if (!startRes.ok) throw new Error("Erro ao iniciar exportação");
-                        const startData = await startRes.json();
-                        const taskId = startData.task_id;
-                        
-                        // Polling para checar status
-                        const interval = setInterval(async () => {
-                          try {
-                            const statusRes = await fetch(`${baseUrl}/flow/${encodeURIComponent(usinaAtual)}/export-pvsyst/status/${taskId}`);
-                            if (!statusRes.ok) return;
-                            const statusData = await statusRes.json();
-                            
-                            setExportProgress(statusData.progress);
-                            
-                            if (statusData.status === 'done') {
-                              clearInterval(interval);
-                              // Faz o download
-                              window.location.href = `${baseUrl}/flow/${encodeURIComponent(usinaAtual)}/export-pvsyst/download/${taskId}`;
-                              setIsExporting(false);
-                            } else if (statusData.status === 'error') {
-                              clearInterval(interval);
-                              setToast({ type: 'error', message: statusData.error || 'Erro na exportação.' });
-                              setIsExporting(false);
-                            }
-                          } catch (e) {
-                            console.error("Polling error:", e);
-                          }
-                        }, 1000);
-                        
-                      } catch (e) {
-                          setIsExporting(false);
-                          setToast({ type: 'error', message: 'Falha ao iniciar exportação.' });
-                      }
-                    }} 
-                    className="btn"
-                    style={{ background: isExporting ? 'var(--bg-secondary)' : '#233772', color: isExporting ? 'var(--text-muted)' : '#fff', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '16px', height: '100%', cursor: isExporting ? 'wait' : 'pointer' }}
-                  >
-                    <span style={{ fontSize: '24px' }}>⬇️</span>
-                    <span>{isExporting ? 'Gerando...' : 'Baixar Arquivo de\nImportação'}</span>
-                  </button>
+              {/* Menu Column */}
+              <div style={{ flex: '0 0 300px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '8px' }}>Selecione o arquivo que deseja importar ou exportar:</p>
+                
+                <button 
+                  onClick={() => setActivePvsystTab('export')}
+                  className="btn"
+                  style={{ 
+                    width: '100%', 
+                    background: '#1e3a8a',
+                    color: '#fff',
+                    border: activePvsystTab === 'export' ? '2px solid #000' : 'none',
+                    display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
+                    justifyContent: 'flex-start',
+                    boxShadow: activePvsystTab === 'export' ? '0 0 0 2px rgba(35,55,114,0.1)' : 'none'
+                  }}
+                >
+                  <span style={{ fontSize: '20px' }}>⬇️</span>
+                  <span style={{ fontWeight: activePvsystTab === 'export' ? 600 : 400 }}>Arquivo de Importação</span>
+                </button>
+
+                <button 
+                  onClick={() => setActivePvsystTab('resultado')}
+                  className="btn"
+                  style={{ 
+                    width: '100%', 
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    border: activePvsystTab === 'resultado' ? '2px solid #1e40af' : '1px solid var(--border)',
+                    display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
+                    justifyContent: 'flex-start'
+                  }}
+                >
+                  <span style={{ fontSize: '20px' }}>⬆️</span>
+                  <span style={{ fontWeight: activePvsystTab === 'resultado' ? 600 : 400 }}>Resultado PVSyst</span>
+                </button>
+
+                <button 
+                  onClick={() => setActivePvsystTab('tmy')}
+                  className="btn"
+                  style={{ 
+                    width: '100%', 
+                    background: '#f59e0b',
+                    color: '#fff',
+                    border: activePvsystTab === 'tmy' ? '2px solid #000' : 'none',
+                    display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
+                    justifyContent: 'flex-start'
+                  }}
+                >
+                  <span style={{ fontSize: '20px' }}>☀️</span>
+                  <span style={{ fontWeight: activePvsystTab === 'tmy' ? 600 : 400 }}>Simulação TMY</span>
+                </button>
+
+                <button 
+                  onClick={() => setActivePvsystTab('shading')}
+                  className="btn"
+                  style={{ 
+                    width: '100%', 
+                    background: '#6366f1',
+                    color: '#fff',
+                    border: activePvsystTab === 'shading' ? '2px solid #000' : 'none',
+                    display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
+                    justifyContent: 'flex-start'
+                  }}
+                >
+                  <span style={{ fontSize: '20px' }}>🕶️</span>
+                  <span style={{ fontWeight: activePvsystTab === 'shading' ? 600 : 400 }}>Tabela Sombreamento 3D</span>
+                </button>
+              </div>
+
+              {/* Details Pane */}
+              {activePvsystTab && (
+                <div style={{ flex: 1, borderLeft: '1px solid var(--border)', paddingLeft: '24px', display: 'flex', flexDirection: 'column' }}>
                   
-                  {isExporting && (
-                    <div style={{ width: '100%', height: '6px', background: 'var(--border)', borderRadius: '3px', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', background: '#4ade80', width: `${exportProgress}%`, transition: 'width 0.3s' }}></div>
-                    </div>
+                  {activePvsystTab === 'export' && (
+                    <>
+                      <h4 style={{ margin: '0 0 12px 0', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        ⬇️ Gerar Arquivo de Importação
+                      </h4>
+                      <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '20px' }}>
+                        Gera um arquivo de texto com as séries meteorológicas filtradas e sincronizadas (Irradiâncias e Temperaturas), formatado no padrão exigido pelo PVSyst para importação de dados customizados.
+                      </p>
+                      
+                      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <button 
+                          disabled={isExporting}
+                          onClick={async () => {
+                            if (isExporting) return;
+                            try {
+                              setIsExporting(true);
+                              setExportProgress(0);
+                              const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+                              
+                              const startRes = await fetch(`${baseUrl}/flow/${encodeURIComponent(usinaAtual)}/export-pvsyst/start`, {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ dates: selectedDates })
+                              });
+                              
+                              if (!startRes.ok) throw new Error("Erro ao iniciar exportação");
+                              const startData = await startRes.json();
+                              const taskId = startData.task_id;
+                              
+                              const interval = setInterval(async () => {
+                                try {
+                                  const statusRes = await fetch(`${baseUrl}/flow/${encodeURIComponent(usinaAtual)}/export-pvsyst/status/${taskId}`);
+                                  if (!statusRes.ok) return;
+                                  const statusData = await statusRes.json();
+                                  
+                                  setExportProgress(statusData.progress);
+                                  
+                                  if (statusData.status === 'done') {
+                                    clearInterval(interval);
+                                    window.location.href = `${baseUrl}/flow/${encodeURIComponent(usinaAtual)}/export-pvsyst/download/${taskId}`;
+                                    setIsExporting(false);
+                                  } else if (statusData.status === 'error') {
+                                    clearInterval(interval);
+                                    setToast({ type: 'error', message: statusData.error || 'Erro na exportação.' });
+                                    setIsExporting(false);
+                                  }
+                                } catch (e) {
+                                  console.error("Polling error:", e);
+                                }
+                              }, 1000);
+                              
+                            } catch (e) {
+                                setIsExporting(false);
+                                setToast({ type: 'error', message: 'Falha ao iniciar exportação.' });
+                            }
+                          }} 
+                          className="btn"
+                          style={{ background: '#233772', color: '#fff', border: 'none', padding: '12px', cursor: isExporting ? 'wait' : 'pointer', fontWeight: 600, display: 'flex', justifyContent: 'center' }}
+                        >
+                          {isExporting ? `Gerando... ${exportProgress}%` : 'Iniciar Geração e Baixar'}
+                        </button>
+                        {isExporting && (
+                          <div style={{ width: '100%', height: '4px', background: 'var(--border)', borderRadius: '2px', overflow: 'hidden' }}>
+                            <div style={{ height: '100%', background: '#4ade80', width: `${exportProgress}%`, transition: 'width 0.3s' }}></div>
+                          </div>
+                        )}
+                      </div>
+                    </>
                   )}
-                </div>
 
-                <div style={{ position: 'relative', flex: 1 }}>
-                  <input 
-                    type="file" 
-                    ref={pvsystFileInputRef} 
-                    style={{ display: 'none' }} 
-                    accept=".csv" 
-                    onChange={handlePvsystUpload} 
-                  />
-                  <button 
-                    onClick={() => pvsystFileInputRef.current?.click()} 
-                    className="btn"
-                    style={{ width: '100%', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '16px', height: '100%' }}
-                  >
-                    <span style={{ fontSize: '24px' }}>⬆️</span>
-                    <span>Fazer Upload<br/>do Resultado</span>
-                  </button>
-                  {pvsystUploadProgress > 0 && (
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '6px', background: 'var(--border)', borderRadius: '0 0 8px 8px', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', background: '#4ade80', width: `${pvsystUploadProgress}%`, transition: 'width 0.3s' }}></div>
-                    </div>
-                  )}
-                </div>
-              </div>
+                  {activePvsystTab === 'resultado' && (
+                    <>
+                      <h4 style={{ margin: '0 0 12px 0', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        ⬆️ Resultado PVSyst (CSV)
+                      </h4>
+                      <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '20px' }}>
+                        Faça o upload do CSV exportado pelo PVSyst contendo os resultados da simulação baseada nos dados medidos. Este arquivo fornecerá séries como E_Grid, PR, GlobInc para as comparações.
+                      </p>
+                      
+                      <div style={{ padding: '16px', background: 'var(--bg-secondary)', borderRadius: '8px', marginBottom: '20px', border: '1px dashed var(--border)' }}>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Arquivo Vigente:</div>
+                        {pvsystMetadata?.results ? (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                              <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '13px' }}>{pvsystMetadata.results.filename}</div>
+                              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Enviado em: {new Date(pvsystMetadata.results.upload_date).toLocaleString()}</div>
+                            </div>
+                            <a 
+                              href={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/upload/pvsyst/download/results?usina=${encodeURIComponent(usinaAtual)}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ padding: '6px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '4px', color: '#1e40af', fontSize: '12px', textDecoration: 'none', cursor: 'pointer' }}
+                            >
+                              Baixar
+                            </a>
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Nenhum arquivo enviado.</div>
+                        )}
+                      </div>
 
-              <div style={{ display: 'flex', gap: '16px', marginTop: '16px' }}>
-                <div style={{ position: 'relative', flex: 1 }}>
-                  <input 
-                    type="file" 
-                    ref={tmyFileInputRef} 
-                    style={{ display: 'none' }} 
-                    accept=".csv" 
-                    onChange={handleTmyUpload} 
-                  />
-                  <button 
-                    onClick={() => tmyFileInputRef.current?.click()} 
-                    className="btn"
-                    style={{ width: '100%', background: '#f59e0b', color: '#fff', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '16px', height: 'auto' }}
-                  >
-                    <span style={{ fontSize: '24px' }}>☀️</span>
-                    <span>Fazer Upload da<br/>Simulação TMY</span>
-                  </button>
-                  {tmyUploadProgress > 0 && (
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '6px', background: 'rgba(0,0,0,0.1)', borderRadius: '0 0 8px 8px', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', background: '#4ade80', width: `${tmyUploadProgress}%`, transition: 'width 0.3s' }}></div>
-                    </div>
+                      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <input 
+                          type="file" ref={pvsystFileInputRef} style={{ display: 'none' }} accept=".csv" 
+                          onChange={handlePvsystUpload} 
+                        />
+                        <button 
+                          onClick={() => pvsystFileInputRef.current?.click()} 
+                          className="btn"
+                          style={{ background: '#1e40af', color: '#fff', border: 'none', padding: '12px', fontWeight: 600 }}
+                        >
+                          Selecionar Novo Arquivo
+                        </button>
+                        {pvsystUploadProgress > 0 && (
+                          <div style={{ width: '100%', height: '4px', background: 'var(--border)', borderRadius: '2px', overflow: 'hidden' }}>
+                            <div style={{ height: '100%', background: '#4ade80', width: `${pvsystUploadProgress}%`, transition: 'width 0.3s' }}></div>
+                          </div>
+                        )}
+                      </div>
+                    </>
                   )}
-                </div>
-                <div style={{ position: 'relative', flex: 1 }}>
-                  <input 
-                    type="file" 
-                    ref={shadingFileInputRef} 
-                    style={{ display: 'none' }} 
-                    accept=".csv,.txt" 
-                    onChange={handleShadingTableUpload} 
-                  />
-                  <button 
-                    onClick={() => shadingFileInputRef.current?.click()} 
-                    className="btn"
-                    style={{ width: '100%', background: '#6366f1', color: '#fff', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '16px', height: 'auto' }}
-                  >
-                    <span style={{ fontSize: '24px' }}>🕶️</span>
-                    <span>Upload Tabela<br/>Sombreamento 3D</span>
-                  </button>
-                  {shadingTableUploadProgress > 0 && (
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '6px', background: 'rgba(0,0,0,0.1)', borderRadius: '0 0 8px 8px', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', background: '#4ade80', width: `${shadingTableUploadProgress}%`, transition: 'width 0.3s' }}></div>
-                    </div>
+
+                  {activePvsystTab === 'tmy' && (
+                    <>
+                      <h4 style={{ margin: '0 0 12px 0', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        ☀️ Simulação TMY (CSV)
+                      </h4>
+                      <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '20px' }}>
+                        Faça o upload do resultado diário/mensal da simulação TMY de projeto. Esses dados serão usados para extrair valores esperados de projeto como a PR Esperada/Prevista e TArrWtd para os Capacity Tests.
+                      </p>
+                      
+                      <div style={{ padding: '16px', background: 'var(--bg-secondary)', borderRadius: '8px', marginBottom: '20px', border: '1px dashed var(--border)' }}>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Arquivo Vigente:</div>
+                        {pvsystMetadata?.tmy ? (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                              <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '13px' }}>{pvsystMetadata.tmy.filename}</div>
+                              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Enviado em: {new Date(pvsystMetadata.tmy.upload_date).toLocaleString()}</div>
+                            </div>
+                            <a 
+                              href={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/upload/pvsyst/download/tmy?usina=${encodeURIComponent(usinaAtual)}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ padding: '6px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '4px', color: '#1e40af', fontSize: '12px', textDecoration: 'none', cursor: 'pointer' }}
+                            >
+                              Baixar
+                            </a>
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Nenhum arquivo enviado.</div>
+                        )}
+                      </div>
+
+                      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <input 
+                          type="file" ref={tmyFileInputRef} style={{ display: 'none' }} accept=".csv" 
+                          onChange={handleTmyUpload} 
+                        />
+                        <button 
+                          onClick={() => tmyFileInputRef.current?.click()} 
+                          className="btn"
+                          style={{ background: '#f59e0b', color: '#fff', border: 'none', padding: '12px', fontWeight: 600 }}
+                        >
+                          Selecionar Novo Arquivo
+                        </button>
+                        {tmyUploadProgress > 0 && (
+                          <div style={{ width: '100%', height: '4px', background: 'var(--border)', borderRadius: '2px', overflow: 'hidden' }}>
+                            <div style={{ height: '100%', background: '#4ade80', width: `${tmyUploadProgress}%`, transition: 'width 0.3s' }}></div>
+                          </div>
+                        )}
+                      </div>
+                    </>
                   )}
+
+                  {activePvsystTab === 'shading' && (
+                    <>
+                      <h4 style={{ margin: '0 0 12px 0', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        🕶️ Tabela Sombreamento 3D (CSV)
+                      </h4>
+                      <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '20px' }}>
+                        Carregue a tabela "Shading Factor Table according to strings" exportada da cena 3D do PVSyst. Ela será usada pelo motor do PVLib para aplicar as mesmas perdas não-lineares calculadas no PVSyst.
+                      </p>
+                      
+                      <div style={{ padding: '16px', background: 'var(--bg-secondary)', borderRadius: '8px', marginBottom: '20px', border: '1px dashed var(--border)' }}>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Arquivo Vigente:</div>
+                        {pvsystMetadata?.shading ? (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                              <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '13px' }}>{pvsystMetadata.shading.filename}</div>
+                              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Enviado em: {new Date(pvsystMetadata.shading.upload_date).toLocaleString()}</div>
+                            </div>
+                            <a 
+                              href={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/upload/pvsyst/download/shading?usina=${encodeURIComponent(usinaAtual)}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ padding: '6px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '4px', color: '#1e40af', fontSize: '12px', textDecoration: 'none', cursor: 'pointer' }}
+                            >
+                              Baixar
+                            </a>
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Nenhum arquivo enviado.</div>
+                        )}
+                      </div>
+
+                      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <input 
+                          type="file" ref={shadingFileInputRef} style={{ display: 'none' }} accept=".csv,.txt" 
+                          onChange={handleShadingTableUpload} 
+                        />
+                        <button 
+                          onClick={() => shadingFileInputRef.current?.click()} 
+                          className="btn"
+                          style={{ background: '#6366f1', color: '#fff', border: 'none', padding: '12px', fontWeight: 600 }}
+                        >
+                          Selecionar Novo Arquivo
+                        </button>
+                        {shadingTableUploadProgress > 0 && (
+                          <div style={{ width: '100%', height: '4px', background: 'var(--border)', borderRadius: '2px', overflow: 'hidden' }}>
+                            <div style={{ height: '100%', background: '#4ade80', width: `${shadingTableUploadProgress}%`, transition: 'width 0.3s' }}></div>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                  
                 </div>
-              </div>
+              )}
             </div>
-
           </div>
-        </>
+        </div>
       )}
 
       {/* ── MODAL EPI ── */}
@@ -5039,7 +5359,7 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
             <div ref={graficosPrincipaisRef} style={{ background: 'var(--bg-primary)', padding: '10px 0' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '0 10px' }}>
               <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                📈 Gráficos Principais
+                📈 {UI_TRANSLATIONS["Gráficos Principais"][language]}
                 <details data-html2canvas-ignore="true" style={{ position: 'relative', cursor: 'pointer', marginLeft: '12px' }}>
                   <summary style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '600', userSelect: 'none', listStyle: 'none', display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px', background: 'var(--bg-secondary)', borderRadius: '4px', border: '1px solid var(--border)' }}>
                     <span>⚙️ Gráficos</span>
@@ -5093,6 +5413,18 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
                   </div>
                 </details>
               </h3>
+
+              <div data-html2canvas-ignore="true" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '500' }}>
+                <span style={{ color: language === 'pt' ? 'var(--blue)' : 'var(--text-secondary)' }}>PT</span>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', margin: 0 }}>
+                  <div style={{ position: 'relative', width: '36px', height: '20px' }}>
+                    <input type="checkbox" checked={language === 'en'} onChange={() => setLanguage(prev => prev === 'pt' ? 'en' : 'pt')} style={{ opacity: 0, width: '100%', height: '100%', position: 'absolute', zIndex: 2, cursor: 'pointer', margin: 0 }} />
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: language === 'en' ? 'var(--blue)' : 'var(--border)', borderRadius: '10px', transition: 'background 0.2s' }}></div>
+                    <div style={{ position: 'absolute', left: language === 'en' ? '18px' : '2px', top: '2px', background: 'white', width: '16px', height: '16px', borderRadius: '8px', transition: 'left 0.2s', zIndex: 1 }}></div>
+                  </div>
+                </label>
+                <span style={{ color: language === 'en' ? 'var(--blue)' : 'var(--text-secondary)' }}>EN</span>
+              </div>
               
               <div style={{ display: 'flex', flexDirection: 'column', width: '280px', marginLeft: 'auto', marginRight: '24px' }}>
                 <div style={{ display: 'flex', height: '10px', width: '100%', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border)' }}>
@@ -5137,18 +5469,85 @@ export default function FluxogramaView({ elementos = [], selectedDates = [], sho
             </div>
             
             <div>
-              {visibleFixedCharts.pr && renderFixedChartUI("Standard Performance Ratio - PR Simples", fixedPrChart, "#3b82f6")}
-              {visibleFixedCharts.pr_bifacial && renderFixedChartUI("Standard Performance Ratio Bifacial - PR Simples Bifacial", fixedPrBifacialChart, "#0ea5e9")}
-              {visibleFixedCharts.wcpr && renderFixedChartUI("WCPR - Weather Corrected Performance Ratio - PR Corrigida por Temperatura", fixedWcprChart, "#3b82f6")}
-              {visibleFixedCharts.wcpr_bifacial && renderFixedChartUI("WCPR Bifacial - Weather Corrected Performance Ratio Bifacial - PR Corrigida por Temperatura Bifacial", fixedWcprBifacialChart, "#0ea5e9")}
+              {visibleFixedCharts.pr && renderFixedChartUI(getMetricName("Standard Performance Ratio - PR Simples", capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5, language), fixedPrChart, "#3b82f6")}
+              {visibleFixedCharts.pr_bifacial && renderFixedChartUI(getMetricName("Standard Performance Ratio Bifacial - PR Simples Bifacial", capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5, language), fixedPrBifacialChart, "#0ea5e9")}
+              {visibleFixedCharts.wcpr && renderFixedChartUI(getMetricName("WCPR - Weather Corrected Performance Ratio - PR Corrigida por Temperatura", capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5, language), fixedWcprChart, "#3b82f6")}
+              {visibleFixedCharts.wcpr_bifacial && renderFixedChartUI(getMetricName("WCPR Bifacial - Weather Corrected Performance Ratio Bifacial - PR Corrigida por Temperatura Bifacial", capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5, language), fixedWcprBifacialChart, "#0ea5e9")}
               {visibleFixedCharts.cap_ratio && renderFixedChartUI("Daily Capacity Ratio (%) — Fixed RC", fixedCapRatioChart, "#3b82f6")}
               {visibleFixedCharts.cap_ratio_adaptive && renderFixedChartUI("Daily Capacity Ratio (%) — Adaptive RC", adaptiveCapRatioChart, "#1d4ed8")}
               {visibleFixedCharts.astm_ratio && renderFixedChartUI(`ASTM Capacity Ratio (%) — Fixed RC - ${capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5} dias`, fixedAstmRatioChart, "#3b82f6")}
               {visibleFixedCharts.astm_ratio_adaptive && renderFixedChartUI(`ASTM Capacity Ratio (%) — Adaptive RC - ${capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5} dias`, adaptiveAstmRatioChart, "#1d4ed8")}
-              {visibleFixedCharts.epi_pvlib && renderFixedChartUI("EPI - Energy Performance Index - PVLib", fixedEpiChart, "#3b82f6")}
-              {visibleFixedCharts.epi_pvlib_window && renderFixedChartUI(`EPI PVLib - Janela ${capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5} dias`, fixedEpiPvlibWindowChart, "#3b82f6")}
-              {visibleFixedCharts.epi_pvsyst && renderFixedChartUI("EPI - Energy Performance Index - PVSyst", fixedEpiNormalChart, "#3b82f6")}
+              {visibleFixedCharts.epi_pvlib && renderFixedChartUI(getMetricName("EPI - Energy Performance Index - PVLib", capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5, language), fixedEpiChart, "#3b82f6")}
+              {visibleFixedCharts.epi_pvlib_window && renderFixedChartUI(getMetricName(`EPI PVLib - Janela ${capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5} dias`, capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5, language), fixedEpiPvlibWindowChart, "#3b82f6")}
+              {visibleFixedCharts.epi_pvsyst && renderFixedChartUI(getMetricName("EPI - Energy Performance Index - PVSyst", capacityTestDailyResults && Object.keys(capacityTestDailyResults).length > 0 && capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]]?.astmWindow ? capacityTestDailyResults[Object.keys(capacityTestDailyResults)[0]].astmWindow : 5, language), fixedEpiNormalChart, "#3b82f6")}
             </div>
+
+
+            {/* Tabela Resumo de Tolerância */}
+            {summaryTableData && summaryTableData.length > 0 && (
+              <div style={{ marginTop: '24px', background: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                <div style={{ background: 'var(--bg-secondary)', padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>Resumo de Tolerância</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+
+                    <div data-html2canvas-ignore="true" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '500', marginRight: '16px' }}>
+                      <span style={{ color: language === 'pt' ? 'var(--blue)' : 'var(--text-secondary)' }}>PT</span>
+                      <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', margin: 0 }}>
+                        <div style={{ position: 'relative', width: '36px', height: '20px' }}>
+                          <input type="checkbox" checked={language === 'en'} onChange={() => setLanguage(prev => prev === 'pt' ? 'en' : 'pt')} style={{ opacity: 0, width: '100%', height: '100%', position: 'absolute', zIndex: 2, cursor: 'pointer', margin: 0 }} />
+                          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: language === 'en' ? 'var(--blue)' : 'var(--border)', borderRadius: '10px', transition: 'background 0.2s' }}></div>
+                          <div style={{ position: 'absolute', left: language === 'en' ? '18px' : '2px', top: '2px', background: 'white', width: '16px', height: '16px', borderRadius: '8px', transition: 'left 0.2s', zIndex: 1 }}></div>
+                        </div>
+                      </label>
+                      <span style={{ color: language === 'en' ? 'var(--blue)' : 'var(--text-secondary)' }}>EN</span>
+                    </div>
+
+                    <div style={{ width: '1px', height: '16px', background: 'var(--border)' }}></div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '500' }}>
+                      <span style={{ color: summaryViewMode === 'count' ? 'var(--blue)' : 'var(--text-secondary)' }}>Quantidade</span>
+                      <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', margin: 0 }}>
+                        <div style={{ position: 'relative', width: '36px', height: '20px' }}>
+                          <input type="checkbox" checked={summaryViewMode === 'percent'} onChange={() => setSummaryViewMode(prev => prev === 'count' ? 'percent' : 'count')} style={{ opacity: 0, width: '100%', height: '100%', position: 'absolute', zIndex: 2, cursor: 'pointer', margin: 0 }} />
+                          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: summaryViewMode === 'percent' ? 'var(--blue)' : 'var(--border)', borderRadius: '10px', transition: 'background 0.2s' }}></div>
+                          <div style={{ position: 'absolute', left: summaryViewMode === 'percent' ? '18px' : '2px', top: '2px', background: 'white', width: '16px', height: '16px', borderRadius: '8px', transition: 'left 0.2s', zIndex: 1 }}></div>
+                        </div>
+                      </label>
+                      <span style={{ color: summaryViewMode === 'percent' ? 'var(--blue)' : 'var(--text-secondary)' }}>Percentual</span>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                    <thead>
+                      <tr style={{ background: 'var(--bg-card)' }}>
+                        <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontWeight: '600' }}>Métrica</th>
+                        <th style={{ padding: '12px 16px', textAlign: 'center', borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontWeight: '600' }}>Abaixo da Tolerância</th>
+                        <th style={{ padding: '12px 16px', textAlign: 'center', borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontWeight: '600' }}>Abaixo da Meta</th>
+                        <th style={{ padding: '12px 16px', textAlign: 'center', borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontWeight: '600' }}>Acima da Meta</th>
+                        <th style={{ padding: '12px 16px', textAlign: 'center', borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontWeight: '600' }}>Acima da Tolerância</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {summaryTableData.map((row, i) => {
+                        const total = row.stats.reduce((a, b) => a + b, 0);
+                        const formatValue = (val) => summaryViewMode === 'percent' && total > 0 ? ((val / total) * 100).toFixed(1) + '%' : val;
+                        return (
+                          <tr key={i} style={{ borderBottom: i === summaryTableData.length - 1 ? 'none' : '1px solid var(--border)' }}>
+                            <td style={{ padding: '12px 16px', color: 'var(--text-primary)', fontWeight: '500' }}>{row.name}</td>
+                            <td style={{ padding: '12px 16px', textAlign: 'center', color: '#991b1b', fontWeight: row.stats[0] > 0 ? '700' : '400' }}>{formatValue(row.stats[0])}</td>
+                            <td style={{ padding: '12px 16px', textAlign: 'center', color: '#854d0e', fontWeight: row.stats[1] > 0 ? '700' : '400' }}>{formatValue(row.stats[1])}</td>
+                            <td style={{ padding: '12px 16px', textAlign: 'center', color: '#166534', fontWeight: row.stats[2] > 0 ? '700' : '400' }}>{formatValue(row.stats[2])}</td>
+                            <td style={{ padding: '12px 16px', textAlign: 'center', color: '#1e3a8a', fontWeight: row.stats[3] > 0 ? '700' : '400' }}>{formatValue(row.stats[3])}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
           </div>
           </div>
         )}

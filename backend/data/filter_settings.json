@@ -92,5 +92,13 @@
     "max_value": null,
     "max_variation": null,
     "adjustment_factor": 0.05
+  },
+  {
+    "name": "Bifacialidade Janaúba",
+    "element": "Irradiação",
+    "min_value": null,
+    "max_value": null,
+    "max_variation": null,
+    "adjustment_factor": 0.05
   }
 ]

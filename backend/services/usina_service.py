@@ -182,7 +182,7 @@ def delete_usina_dir(usina: str):
         logger.info(f"[USINA_SERVICE] Usina deletada: {usina}")
 
 def rename_usina_dir(old_name: str, new_name: str):
-    """Renomeia a pasta da usina."""
+    """Renomeia a pasta da usina e atualiza a ordem."""
     old_path = os.path.join(DATA_DIR, old_name)
     new_path = os.path.join(DATA_DIR, new_name)
     if not os.path.exists(old_path):
@@ -190,4 +190,12 @@ def rename_usina_dir(old_name: str, new_name: str):
     if os.path.exists(new_path):
         raise ValueError(f"Já existe uma usina com o nome '{new_name}'.")
     os.rename(old_path, new_path)
+    
+    # Atualiza a ordem
+    order = get_usina_order()
+    if old_name in order:
+        idx = order.index(old_name)
+        order[idx] = new_name
+        save_usina_order(order)
+        
     logger.info(f"[USINA_SERVICE] Usina renomeada: {old_name} -> {new_name}")

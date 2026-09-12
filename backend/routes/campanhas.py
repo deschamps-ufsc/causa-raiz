@@ -29,11 +29,13 @@ def save_campanhas(data: Dict[str, Dict[str, List[str]]]):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 @router.get("")
-def get_campanhas(usina: str = Query(...)):
-    """Retorna a lista de campanhas para uma usina, no formato [{nome, dias}]"""
+def get_campanhas(usina: Optional[str] = Query(None)):
+    """Retorna a lista de campanhas para uma usina ou todas se omitido"""
     data = load_campanhas()
-    usina_campanhas = data.get(usina, {})
-    return [{"nome": nome, "dias": dias} for nome, dias in usina_campanhas.items()]
+    if usina:
+        usina_campanhas = data.get(usina, {})
+        return [{"nome": nome, "dias": dias} for nome, dias in usina_campanhas.items()]
+    return data
 
 @router.post("")
 def create_or_update_campanha(usina: str = Query(...), payload: CampanhaPayload = Body(...)):

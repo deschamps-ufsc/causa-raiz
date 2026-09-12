@@ -1,0 +1,15 @@
+{
+  "batch_2e75b851": {
+    "nome": "Albedo",
+    "formula": "S2/S1",
+    "criado_em": "2026-09-04T10:17:57.376444",
+    "series": [
+      {
+        "nome_sintetico": "Albedo",
+        "serie_1": "IrraAlbSup",
+        "serie_2": "IrraAlbInf",
+        "serie_3": null
+      }
+    ]
+  }
+}

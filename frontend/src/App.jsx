@@ -3,12 +3,13 @@ import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from './hooks/AuthContext'
 import { useUsina } from './hooks/UsinaContext'
 import { fetchUsinas } from './services/api'
+import UsinaSelector from './components/UsinaSelector'
 
 export default function App() {
   const { user, isAdmin, isAnalystOrAdmin, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const { usinaAtual, setUsinaAtual } = useUsina()
+  const { usinaAtual, setUsinaAtual, campanhaAtual, setCampanhaAtual } = useUsina()
   const [usinas, setUsinas] = useState([])
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const userMenuRef = useRef(null)
@@ -100,21 +101,13 @@ export default function App() {
           <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.15)' }} />
 
           {/* Seletor de usina no canto superior direito */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,0.15)', padding: '4px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)' }}>
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', whiteSpace: 'nowrap' }}>🏭 Usina:</span>
-            <select
-              value={usinaAtual || ''}
-              onChange={e => setUsinaAtual(e.target.value)}
-              style={{
-                background: 'transparent', border: 'none', color: '#fff',
-                fontSize: 13, fontWeight: 600, outline: 'none', cursor: 'pointer',
-                fontFamily: 'inherit', maxWidth: 180,
-              }}
-            >
-              <option value="" style={{ color: '#000' }}>-- Selecionar --</option>
-              {usinas.map(u => <option key={u} value={u} style={{ color: '#000' }}>{u}</option>)}
-            </select>
-          </div>
+          <UsinaSelector 
+            usinas={usinas} 
+            usinaAtual={usinaAtual} 
+            setUsinaAtual={setUsinaAtual}
+            campanhaAtual={campanhaAtual}
+            setCampanhaAtual={setCampanhaAtual}
+          />
 
           {/* Divider */}
           <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.15)' }} />

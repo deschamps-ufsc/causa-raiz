@@ -4,12 +4,14 @@ const UsinaContext = createContext();
 
 export function UsinaProvider({ children }) {
   const [usinaAtual, setUsinaAtual] = useState(() => {
-    // Tenta recuperar do localStorage ao carregar a página
     return localStorage.getItem('@UsinaSolar:usinaAtual') || '';
   });
 
+  const [campanhaAtual, setCampanhaAtual] = useState(() => {
+    return localStorage.getItem('@UsinaSolar:campanhaAtual') || null;
+  });
+
   useEffect(() => {
-    // Sempre que usinaAtual mudar, salva no localStorage
     if (usinaAtual) {
       localStorage.setItem('@UsinaSolar:usinaAtual', usinaAtual);
     } else {
@@ -17,8 +19,16 @@ export function UsinaProvider({ children }) {
     }
   }, [usinaAtual]);
 
+  useEffect(() => {
+    if (campanhaAtual) {
+      localStorage.setItem('@UsinaSolar:campanhaAtual', campanhaAtual);
+    } else {
+      localStorage.removeItem('@UsinaSolar:campanhaAtual');
+    }
+  }, [campanhaAtual]);
+
   return (
-    <UsinaContext.Provider value={{ usinaAtual, setUsinaAtual }}>
+    <UsinaContext.Provider value={{ usinaAtual, setUsinaAtual, campanhaAtual, setCampanhaAtual }}>
       {children}
     </UsinaContext.Provider>
   );

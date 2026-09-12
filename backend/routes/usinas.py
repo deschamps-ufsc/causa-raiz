@@ -14,12 +14,24 @@ router = APIRouter(prefix="/usinas", tags=["Usinas"])
 
 class UsinaCreate(BaseModel):
     nome: str
+    cliente: str | None = None
+    complexo: str | None = None
+    duplicar_de: str | None = None
+    duplicar_mapeamento: bool = False
+    duplicar_infos_usina: bool = False
+    duplicar_sinteticas: bool = False
+    duplicar_dados_diarios: bool = False
+    duplicar_fluxograma: bool = False
 
 class UsinaRename(BaseModel):
     novo_nome: str
+    cliente: str | None = None
+    complexo: str | None = None
 
 class UsinaDetailed(BaseModel):
     nome: str
+    cliente: str | None = None
+    complexo: str | None = None
     criado_em: str
     criado_por: str
     count_elementos: int
@@ -37,26 +49,37 @@ class UsinaDetailed(BaseModel):
     dias_presentes: int
     drive_link: str | None = None
 
-@router.get("", response_model=List[str])
+class UsinaBasic(BaseModel):
+    nome: str
+    cliente: str | None = None
+    complexo: str | None = None
+
+@router.get("", response_model=List[UsinaBasic])
 def list_usinas():
-    """Lista as usinas disponíveis lendo subpastas válidas em DATA_DIR."""
+    """Lista as usinas disponíveis lendo subpastas válidas em DATA_DIR e retorna informações básicas."""
     if not os.path.exists(DATA_DIR):
         return []
     
-    usinas = []
+    usinas_basicas = []
     for item in os.listdir(DATA_DIR):
         if os.path.isdir(os.path.join(DATA_DIR, item)):
-            usinas.append(item)
+            meta = usina_service.get_usina_metadata(item)
+            usinas_basicas.append(UsinaBasic(
+                nome=item,
+                cliente=meta.get("cliente"),
+                complexo=meta.get("complexo")
+            ))
+            
     order = usina_service.get_usina_order()
     
-    def sort_key(name):
+    def sort_key(usina):
         try:
-            return (0, order.index(name))
+            return (0, order.index(usina.nome))
         except ValueError:
-            return (1, name)
+            return (1, usina.nome)
             
-    logger.info(f"[USINAS] Listando {len(usinas)} usinas.")
-    return sorted(usinas, key=sort_key)
+    logger.info(f"[USINAS] Listando {len(usinas_basicas)} usinas.")
+    return sorted(usinas_basicas, key=sort_key)
 
 @router.get("/detailed", response_model=List[UsinaDetailed])
 def list_usinas_detailed(_: dict = Depends(require_analyst_or_admin)):
@@ -71,6 +94,8 @@ def list_usinas_detailed(_: dict = Depends(require_analyst_or_admin)):
             stats = usina_service.get_usina_stats(item)
             result.append(UsinaDetailed(
                 nome=item,
+                cliente=meta.get("cliente"),
+                complexo=meta.get("complexo"),
                 criado_em=meta.get("criado_em", ""),
                 criado_por=meta.get("criado_por", ""),
                 drive_link=meta.get("drive_link"),
@@ -112,24 +137,76 @@ def create_usina(usina: UsinaCreate = Body(...), current_user: dict = Depends(re
         os.makedirs(path, exist_ok=True)
         # Salva metadados
         meta = {
+            "cliente": usina.cliente,
+            "complexo": usina.complexo,
             "criado_em": datetime.now().isoformat(),
             "criado_por": current_user.get("name") or current_user.get("email", "Desconhecido")
         }
         usina_service.save_usina_metadata(nome_limpo, meta)
         
+        # Lógica de Duplicação
+        if usina.duplicar_de:
+            source_path = os.path.join(DATA_DIR, usina.duplicar_de)
+            if os.path.exists(source_path):
+                import shutil
+                if usina.duplicar_mapeamento:
+                    src_map = os.path.join(source_path, "mapping.json")
+                    if os.path.exists(src_map):
+                        shutil.copy2(src_map, os.path.join(path, "mapping.json"))
+                
+                if usina.duplicar_infos_usina:
+                    src_info = os.path.join(source_path, "usina_info.json")
+                    if os.path.exists(src_info):
+                        shutil.copy2(src_info, os.path.join(path, "usina_info.json"))
+                        
+                if usina.duplicar_sinteticas:
+                    src_synth = os.path.join(source_path, "synthetics.json")
+                    if os.path.exists(src_synth):
+                        shutil.copy2(src_synth, os.path.join(path, "synthetics.json"))
+                        
+                if usina.duplicar_fluxograma:
+                    src_flow = os.path.join(source_path, "flow_config.json")
+                    if os.path.exists(src_flow):
+                        shutil.copy2(src_flow, os.path.join(path, "flow_config.json"))
+                        
+                if usina.duplicar_dados_diarios:
+                    for folder in ["raw", "processed"]:
+                        src_folder = os.path.join(source_path, folder)
+                        dst_folder = os.path.join(path, folder)
+                        if os.path.exists(src_folder):
+                            shutil.copytree(src_folder, dst_folder, dirs_exist_ok=True)
+                            
         logger.info(f"[USINAS] Nova usina criada: {nome_limpo} por {meta['criado_por']}")
     except Exception as e:
         logger.error(f"[USINAS] Erro ao criar usina {nome_limpo}: {e}")
+        # Em caso de erro, tenta remover a pasta criada parcialmente
+        if os.path.exists(path):
+            import shutil
+            shutil.rmtree(path, ignore_errors=True)
         raise HTTPException(status_code=500, detail=str(e))
         
     return {"status": "ok", "usina": nome_limpo}
 
 @router.patch("/{nome}", response_model=dict)
 def rename_usina(nome: str, body: UsinaRename = Body(...), _: dict = Depends(require_analyst_or_admin)):
-    """Renomeia uma usina."""
+    """Edita os metadados e opcionalmente renomeia uma usina."""
     try:
-        usina_service.rename_usina_dir(nome, body.novo_nome.strip())
-        return {"status": "ok", "mensagem": "Usina renomeada com sucesso."}
+        novo_nome = body.novo_nome.strip() if body.novo_nome else nome
+        
+        target_name = nome
+        if novo_nome and novo_nome != nome:
+            usina_service.rename_usina_dir(nome, novo_nome)
+            target_name = novo_nome
+            
+        meta = usina_service.get_usina_metadata(target_name)
+        if body.cliente is not None:
+            meta["cliente"] = body.cliente
+        if body.complexo is not None:
+            meta["complexo"] = body.complexo
+            
+        usina_service.save_usina_metadata(target_name, meta)
+        
+        return {"status": "ok", "mensagem": "Usina atualizada com sucesso."}
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except ValueError as e:

@@ -1,0 +1,137 @@
+{
+  "SM01RadGlobInclinado": {
+    "elemento": "Irradiação",
+    "skid": "JANA",
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SM02RadGlobInclinado": {
+    "elemento": "Irradiação",
+    "skid": "JANA",
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "IrraGlobal": {
+    "elemento": "Irradiação",
+    "skid": "JANA",
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "IrraAlbSup": {
+    "elemento": "Irradiação",
+    "skid": "JANA",
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "IrraAlbInf": {
+    "elemento": "Irradiação",
+    "skid": "JANA",
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "Albedo": {
+    "elemento": "Irradiação",
+    "skid": "JANA",
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "TAR": {
+    "elemento": "Temperatura",
+    "skid": "JANA",
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SM01TempContato": {
+    "elemento": "Temperatura",
+    "skid": "JANA",
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "SM02TempContato": {
+    "elemento": "Temperatura",
+    "skid": "JANA",
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "CELSUJ1": {
+    "elemento": "Sujidade",
+    "skid": "JANA",
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "CELSUJ2": {
+    "elemento": "Sujidade",
+    "skid": "JANA",
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "PotAt": {
+    "elemento": "Energia PMI",
+    "skid": "JANA",
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "PotRea": {
+    "elemento": "Energia PMI",
+    "skid": "JANA",
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "EnAtEnt": {
+    "elemento": "Energia PMI",
+    "skid": "JANA",
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  },
+  "EnAtRec": {
+    "elemento": "Energia PMI",
+    "skid": "JANA",
+    "inversor": null,
+    "stringbox": null,
+    "tracker": null,
+    "estacao": null,
+    "string": null
+  }
+}

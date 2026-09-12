@@ -84,8 +84,7 @@ const RootCauseSVGIcon = () => (
 export default function DashboardPage() {
   const location = useLocation()
   const initialDate = location.state?.date || ''
-  const { usinaAtual, setUsinaAtual } = useUsina()
-  // const [usinas, setUsinas] = useState([]) // Usinas state is now managed in App.jsx
+  const { usinaAtual, setUsinaAtual, campanhaAtual, setCampanhaAtual } = useUsina()
 
   const view = new URLSearchParams(location.search).get('view') || 'dashboard'
 
@@ -96,7 +95,6 @@ export default function DashboardPage() {
   
   // Campanhas state
   const [campanhas, setCampanhas] = useState([])
-  const [campanhaAtual, setCampanhaAtual] = useState(null)
   const [isCampanhaModalOpen, setIsCampanhaModalOpen] = useState(false)
   const [newCampanhaName, setNewCampanhaName] = useState('')
   const [addCampanhaModalOpen, setAddCampanhaModalOpen] = useState(false)
@@ -540,35 +538,7 @@ export default function DashboardPage() {
               </div>
               {isDataOpen && (
                 <>
-                  {/* Seletor de Campanha */}
-                  {usinaAtual && (
-                    <div style={{ marginBottom: 12, padding: '0 4px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-primary)', padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)' }}>
-                        <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>🎯</span>
-                        <select
-                          value={campanhaAtual || ''}
-                          onChange={e => setCampanhaAtual(e.target.value || null)}
-                          style={{
-                            background: 'transparent', border: 'none', color: 'var(--text-primary)',
-                            fontSize: 13, fontWeight: 600, outline: 'none', cursor: 'pointer',
-                            fontFamily: 'inherit', flex: 1,
-                          }}
-                        >
-                          <option value="">Todos os dias</option>
-                          {campanhas.map(c => <option key={c.nome} value={c.nome}>{c.nome} ({c.dias.length} d)</option>)}
-                        </select>
-                        {campanhaAtual && (
-                          <button 
-                            onClick={() => handleDeleteCampanha(campanhaAtual)}
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: '#ef4444' }}
-                            title="Excluir campanha"
-                          >
-                            🗑️
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                  {/* O seletor de campanha agora fica no UsinaSelector da barra superior */}
                   {filteredDates.length > 0 && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12, padding: '0 4px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

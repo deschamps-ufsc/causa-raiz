@@ -499,13 +499,19 @@ def run_flow_processing(usina: str, dates_str: str = None, progress_callback=Non
                     cond_1 = eval_referencia < threshold_min
 
                     # Gatilho 2: potência real está dentro da banda de tolerância da referência
-                    # |real - ref| <= ref * (diff_margin / 100)
-                    tolerance_band = (eval_referencia * (float(diff_margin) / 100.0)).abs()
+                    # A tolerância é calculada com base na Ref. Mínima (Potência Nominal)
+                    # |real - ref| <= ref_min * (diff_margin / 100)
+                    tolerance_band = abs(float(ref_min) * (float(diff_margin) / 100.0))
                     cond_2 = (eval_potencia - eval_referencia).abs() <= tolerance_band
 
                     # Curtailment efetivo (0) se cond_1 e cond_2 forem verdadeiras. Caso contrário, válido (1)
                     curtailment_flag = ~(cond_1 & cond_2)
-                    processed_df[curtailment_id] = curtailment_flag.astype(int)
+                    
+                    # Define como NaN onde os inputs são nulos, evitando flag 1 na madrugada
+                    curtailment_flag = curtailment_flag.astype(float)
+                    curtailment_flag.loc[eval_referencia.isna() | eval_potencia.isna()] = np.nan
+                    
+                    processed_df[curtailment_id] = curtailment_flag
                 except Exception as e:
                     logger.error(f"[FLOW] Erro ao calcular curtailment: {e}")
                     processed_df[curtailment_id] = 1

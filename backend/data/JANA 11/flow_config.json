@@ -1,0 +1,134 @@
+{
+  "nodeConfigs": {
+    "gpoa": {
+      "inputs": [
+        {
+          "sensors": [],
+          "series": "SM02RadGlobInclinado",
+          "filter": "Irradiação_Qualidade"
+        }
+      ],
+      "outputFilter": "Irradiação_50_W",
+      "operation": "mean"
+    },
+    "grear": {
+      "inputs": [
+        {
+          "sensors": [],
+          "series": "SM02RadGlobInclinado",
+          "filter": "Irradiação_Qualidade"
+        }
+      ],
+      "outputFilter": "Bifacialidade Janaúba",
+      "operation": "mean"
+    },
+    "tracker": {
+      "inputs": [],
+      "operation": "sum"
+    },
+    "tamb": {
+      "inputs": [
+        {
+          "series": "TAR",
+          "filter": "Temperatura Ambiente",
+          "sensors": []
+        }
+      ],
+      "outputFilter": "",
+      "operation": "mean"
+    },
+    "tmod": {
+      "inputs": [
+        {
+          "sensors": [],
+          "series": "SM02TempContato",
+          "filter": ""
+        }
+      ],
+      "outputFilter": "",
+      "operation": "mean"
+    },
+    "sujidade": {
+      "inputs": [
+        {
+          "series": "CELSUJ1",
+          "filter": "Sujidade",
+          "sensors": []
+        },
+        {
+          "series": "CELSUJ2",
+          "filter": "Sujidade",
+          "sensors": []
+        }
+      ],
+      "outputFilter": "Sujidade",
+      "operation": "mean",
+      "startTime": "11:00",
+      "endTime": "13:00",
+      "trimPercent": "25"
+    },
+    "potencia_ppc": {
+      "inputs": [],
+      "operation": "sum"
+    },
+    "referencia_ppc": {
+      "inputs": [],
+      "operation": "sum"
+    },
+    "energia_pmi": {
+      "inputs": [
+        {
+          "sensors": [],
+          "series": "PotAt",
+          "filter": "Energia_PMI_Zerada"
+        }
+      ],
+      "outputFilter": "",
+      "operation": "sum",
+      "energiaPmiParams": {
+        "multiplier": 1,
+        "inputType": "power_1min",
+        "outputUnit": "MW"
+      }
+    },
+    "geff": {
+      "beta": 0.7,
+      "SSF": 0.12300000000000001,
+      "MLF": 0.035,
+      "type": "geff"
+    },
+    "tcel": {
+      "type": "tcel"
+    },
+    "curtailment": {
+      "curtailmentRefMin": 52.8,
+      "curtailmentRefMargin": 3,
+      "curtailmentDiffMargin": 5,
+      "type": "curtailment"
+    },
+    "simultaneidade": {
+      "simultParams": {
+        "geff": true,
+        "tamb": true,
+        "tcel": true,
+        "energia_pmi": true,
+        "curtailment": false,
+        "potencia_ppc": true,
+        "referencia_ppc": true,
+        "horario_valido_enabled": false,
+        "horario_start": "06:00",
+        "horario_end": "19:00"
+      }
+    },
+    "pvlib": {
+      "type": "pvlib"
+    },
+    "pvsyst": {
+      "type": "pvsyst"
+    },
+    "epi": {
+      "inputs": [],
+      "operation": "sum"
+    }
+  }
+}

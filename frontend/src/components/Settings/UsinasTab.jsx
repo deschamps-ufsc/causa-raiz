@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { fetchDetailedUsinas, createUsina, renameUsina, deleteUsina, saveUsinasOrder } from '../../services/api'
 import { useAuth } from '../../hooks/AuthContext'
 import UsinaDetail from './UsinaDetail'
 
-function UsinaRow({ u, index, readOnly, setSelectedUsina, setEditingUsina, setNewName, setShowModal, setDeleteConfirm, reorderUsinas, draggedIndex, setDraggedIndex, draggedOverIndex, setDraggedOverIndex }) {
+function UsinaRow({ u, index, readOnly, setSelectedUsina, onEdit, setDeleteConfirm, reorderUsinas, draggedIndex, setDraggedIndex, draggedOverIndex, setDraggedOverIndex }) {
   const [isHovered, setIsHovered] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
 
@@ -56,49 +56,15 @@ function UsinaRow({ u, index, readOnly, setSelectedUsina, setEditingUsina, setNe
   return (
     <tr
       style={{ 
-        borderTop: dragBorderTop,
-        borderBottom: dragBorderBottom,
-        background: isDragging ? '#f8fafc' : 'transparent',
-        opacity: isDragging ? 0.4 : 1,
-        transition: 'background 0.12s, opacity 0.15s',
-        cursor: 'pointer' 
+        background: 'transparent', transition: 'background 0.15s', cursor: 'pointer',
+        borderBottom: '1px solid #f1f5f9'
       }}
-      draggable={!readOnly}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
       onClick={() => setSelectedUsina(u)}
-      onMouseEnter={e => { if (!isDragging) e.currentTarget.style.background = '#fef9ec'; setIsHovered(true) }}
-      onMouseLeave={e => { if (!isDragging) e.currentTarget.style.background = 'transparent'; setIsHovered(false) }}
+      onMouseEnter={e => { e.currentTarget.style.background = '#fef9ec'; setIsHovered(true) }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; setIsHovered(false) }}
     >
-      <td style={{ padding: '12px', fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap' }}>
+      <td style={{ padding: '12px 12px 12px 56px', fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {!readOnly && (
-            <div
-              title="Arraste para reordenar"
-              style={{
-                cursor: 'grab',
-                color: isHovered ? '#94a3b8' : 'transparent',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginLeft: -8,
-                marginRight: -4,
-                padding: '0 4px',
-                transition: 'color 0.15s'
-              }}
-            >
-              <svg width="10" height="14" viewBox="0 0 12 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="4" cy="4" r="1.5" />
-                <circle cx="8" cy="4" r="1.5" />
-                <circle cx="4" cy="8" r="1.5" />
-                <circle cx="8" cy="8" r="1.5" />
-                <circle cx="4" cy="12" r="1.5" />
-                <circle cx="8" cy="12" r="1.5" />
-              </svg>
-            </div>
-          )}
           {u.nome}
         </div>
       </td>
@@ -123,11 +89,14 @@ function UsinaRow({ u, index, readOnly, setSelectedUsina, setEditingUsina, setNe
           {!readOnly && (
             <>
               <button
-                onClick={e => { e.stopPropagation(); setEditingUsina(u); setNewName(u.nome); setShowModal(true) }}
+                onClick={e => { 
+                  e.stopPropagation(); 
+                  onEdit(u);
+                }}
                 style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', transition: 'all 0.15s' }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = '#94a3b8'; e.currentTarget.style.background = '#f8fafc' }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#fff' }}
-                title="Editar nome"
+                title="Editar usina"
               >✏️</button>
               <button
                 onClick={e => { e.stopPropagation(); setDeleteConfirm(u.nome) }}
@@ -156,10 +125,24 @@ export default function UsinasTab({ readOnly = false }) {
   const [showModal, setShowModal] = useState(false)
   const [editingUsina, setEditingUsina] = useState(null)
   const [newName, setNewName] = useState('')
+  const [newCliente, setNewCliente] = useState('')
+  const [newComplexo, setNewComplexo] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [selectedUsina, setSelectedUsina] = useState(null) // usina object being viewed
   const [draggedIndex, setDraggedIndex] = useState(null)
   const [draggedOverIndex, setDraggedOverIndex] = useState(null)
+  const [expandedClientes, setExpandedClientes] = useState({})
+  const [expandedComplexos, setExpandedComplexos] = useState({})
+
+  const [isDuplicating, setIsDuplicating] = useState(false)
+  const [duplicarDe, setDuplicarDe] = useState('')
+  const [duplicarOptions, setDuplicarOptions] = useState({
+    mapeamento: false,
+    infos_usina: false,
+    sinteticas: false,
+    fluxograma: false,
+    dados_diarios: false
+  })
 
   const reorderUsinas = async (dragIndex, dropIndex) => {
     try {
@@ -202,14 +185,32 @@ export default function UsinasTab({ readOnly = false }) {
     if (!newName.trim()) return
     try {
       if (editingUsina) {
-        await renameUsina(editingUsina.nome, newName.trim())
-        showFeedback('success', 'Usina renomeada com sucesso.')
+        const payload = {
+          novo_nome: newName.trim(),
+          cliente: newCliente.trim() || null,
+          complexo: newComplexo.trim() || null
+        }
+        await renameUsina(editingUsina.nome, payload)
+        showFeedback('success', 'Usina atualizada com sucesso.')
       } else {
-        await createUsina(newName.trim())
+        const payload = {
+          nome: newName.trim(),
+          cliente: newCliente.trim() || null,
+          complexo: newComplexo.trim() || null,
+          duplicar_de: isDuplicating && duplicarDe ? duplicarDe : null,
+          duplicar_mapeamento: isDuplicating ? duplicarOptions.mapeamento : false,
+          duplicar_infos_usina: isDuplicating ? duplicarOptions.infos_usina : false,
+          duplicar_sinteticas: isDuplicating ? duplicarOptions.sinteticas : false,
+          duplicar_fluxograma: isDuplicating ? duplicarOptions.fluxograma : false,
+          duplicar_dados_diarios: isDuplicating ? duplicarOptions.dados_diarios : false
+        }
+        await createUsina(payload)
         showFeedback('success', 'Nova usina criada com sucesso.')
       }
       setShowModal(false)
       setNewName('')
+      setNewCliente('')
+      setNewComplexo('')
       setEditingUsina(null)
       loadUsinas()
     } catch (err) {
@@ -304,6 +305,15 @@ export default function UsinasTab({ readOnly = false }) {
     )
   }
 
+  const tree = {};
+  usinas.forEach(u => {
+    const c = u.cliente || 'Sem Cliente';
+    const comp = u.complexo || 'Sem Complexo';
+    if (!tree[c]) tree[c] = {};
+    if (!tree[c][comp]) tree[c][comp] = [];
+    tree[c][comp].push(u);
+  });
+
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
@@ -312,7 +322,14 @@ export default function UsinasTab({ readOnly = false }) {
         </div>
         {!readOnly && (
           <button 
-            onClick={() => { setEditingUsina(null); setNewName(''); setShowModal(true) }}
+            onClick={() => { 
+              setEditingUsina(null); 
+              setNewName(''); 
+              setIsDuplicating(false);
+              setDuplicarDe('');
+              setDuplicarOptions({ mapeamento: false, infos_usina: false, sinteticas: false, fluxograma: false, dados_diarios: false });
+              setShowModal(true); 
+            }}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '8px 16px', borderRadius: 8, border: 'none',
@@ -353,14 +370,16 @@ export default function UsinasTab({ readOnly = false }) {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
                 <tr style={{ background: '#f8fafc' }}>
-                  <th rowSpan={2} style={{ 
-                    padding: '10px 12px', textAlign: 'left', 
-                    fontWeight: 700, color: '#94a3b8', fontSize: 10, 
-                    letterSpacing: 0.5, textTransform: 'uppercase', 
-                    borderBottom: '1px solid #f1f5f9', whiteSpace: 'nowrap',
-                    verticalAlign: 'middle',
-                    borderRight: '1px solid #e2e8f0'
-                  }}>Usina</th>
+                  {['Usina'].map(l => (
+                    <th key={l} rowSpan={2} style={{ 
+                      padding: '10px 12px', textAlign: 'left', 
+                      fontWeight: 700, color: '#94a3b8', fontSize: 10, 
+                      letterSpacing: 0.5, textTransform: 'uppercase', 
+                      borderBottom: '1px solid #f1f5f9', whiteSpace: 'nowrap',
+                      verticalAlign: 'middle',
+                      borderRight: '1px solid #e2e8f0'
+                    }}>{l}</th>
+                  ))}
 
                   <th colSpan={7} style={{ 
                     padding: '6px 12px', textAlign: 'center', 
@@ -412,24 +431,55 @@ export default function UsinasTab({ readOnly = false }) {
                 </tr>
               </thead>
               <tbody>
-                {usinas.map((u, idx) => (
-                  <UsinaRow
-                    key={u.nome}
-                    u={u}
-                    index={idx}
-                    readOnly={readOnly}
-                    setSelectedUsina={setSelectedUsina}
-                    setEditingUsina={setEditingUsina}
-                    setNewName={setNewName}
-                    setShowModal={setShowModal}
-                    setDeleteConfirm={setDeleteConfirm}
-                    reorderUsinas={reorderUsinas}
-                    draggedIndex={draggedIndex}
-                    setDraggedIndex={setDraggedIndex}
-                    draggedOverIndex={draggedOverIndex}
-                    setDraggedOverIndex={setDraggedOverIndex}
-                  />
-                ))}
+                {Object.keys(tree).sort().map(cliente => {
+                  const isCliOpen = expandedClientes[cliente] !== false; // Default to true
+                  return (
+                    <React.Fragment key={`cli-${cliente}`}>
+                      <tr onClick={() => setExpandedClientes(p => ({...p, [cliente]: !isCliOpen}))} style={{ background: '#f8fafc', cursor: 'pointer', borderBottom: '1px solid #e2e8f0', borderTop: '1px solid #e2e8f0' }}>
+                        <td colSpan={15} style={{ padding: '8px 12px', fontWeight: 700, color: '#0f172a' }}>
+                          <span style={{ display: 'inline-block', width: 20, color: '#64748b', fontSize: 10 }}>{isCliOpen ? '▼' : '▶'}</span>
+                          🏢 {cliente}
+                        </td>
+                      </tr>
+                      {isCliOpen && Object.keys(tree[cliente]).sort().map(complexo => {
+                        const compKey = `${cliente}-${complexo}`;
+                        const isCompOpen = expandedComplexos[compKey] !== false;
+                        return (
+                          <React.Fragment key={`comp-${compKey}`}>
+                            <tr onClick={() => setExpandedComplexos(p => ({...p, [compKey]: !isCompOpen}))} style={{ background: '#fcfcfc', cursor: 'pointer', borderBottom: '1px solid #f1f5f9' }}>
+                              <td colSpan={15} style={{ padding: '6px 12px 6px 32px', fontWeight: 600, color: '#334155' }}>
+                                <span style={{ display: 'inline-block', width: 20, color: '#94a3b8', fontSize: 10 }}>{isCompOpen ? '▼' : '▶'}</span>
+                                🏭 {complexo}
+                              </td>
+                            </tr>
+                            {isCompOpen && tree[cliente][complexo].sort((a,b) => a.nome.localeCompare(b.nome)).map((u, idx) => (
+                              <UsinaRow
+                                key={u.nome}
+                                u={u}
+                                index={idx}
+                                readOnly={readOnly}
+                                setSelectedUsina={setSelectedUsina}
+                                onEdit={(u) => {
+                                  setEditingUsina(u);
+                                  setNewName(u.nome);
+                                  setNewCliente(u.cliente || '');
+                                  setNewComplexo(u.complexo || '');
+                                  setShowModal(true);
+                                }}
+                                setDeleteConfirm={setDeleteConfirm}
+                                reorderUsinas={reorderUsinas}
+                                draggedIndex={draggedIndex}
+                                setDraggedIndex={setDraggedIndex}
+                                draggedOverIndex={draggedOverIndex}
+                                setDraggedOverIndex={setDraggedOverIndex}
+                              />
+                            ))}
+                          </React.Fragment>
+                        )
+                      })}
+                    </React.Fragment>
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -464,7 +514,7 @@ export default function UsinasTab({ readOnly = false }) {
                     width: '100%', boxSizing: 'border-box', background: '#f8fafc', 
                     border: '1.5px solid #e2e8f0', borderRadius: 8, color: '#0f172a', 
                     padding: '10px 12px', fontSize: 13, fontFamily: 'inherit', 
-                    outline: 'none', transition: 'border-color 0.2s' 
+                    outline: 'none', transition: 'border-color 0.2s', marginBottom: 16
                   }}
                   placeholder="Ex: Usina Solar Central"
                   value={newName}
@@ -472,15 +522,110 @@ export default function UsinasTab({ readOnly = false }) {
                   onFocus={e => e.target.style.borderColor = '#f59e0b'}
                   onBlur={e => e.target.style.borderColor = '#e2e8f0'}
                 />
+
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', marginBottom: 5, textTransform: 'uppercase', letterSpacing: 0.5 }}>Cliente</label>
+                <input 
+                  list="clientes-list"
+                  style={{ 
+                    width: '100%', boxSizing: 'border-box', background: '#f8fafc', 
+                    border: '1.5px solid #e2e8f0', borderRadius: 8, color: '#0f172a', 
+                    padding: '10px 12px', fontSize: 13, fontFamily: 'inherit', 
+                    outline: 'none', transition: 'border-color 0.2s', marginBottom: 16
+                  }}
+                  placeholder="Ex: Athon"
+                  value={newCliente}
+                  onChange={e => setNewCliente(e.target.value)}
+                  onFocus={e => e.target.style.borderColor = '#f59e0b'}
+                  onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                />
+                <datalist id="clientes-list">
+                  {Array.from(new Set(usinas.map(u => u.cliente).filter(Boolean))).map(c => <option key={c} value={c} />)}
+                </datalist>
+
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', marginBottom: 5, textTransform: 'uppercase', letterSpacing: 0.5 }}>Complexo</label>
+                <input 
+                  list="complexos-list"
+                  style={{ 
+                    width: '100%', boxSizing: 'border-box', background: '#f8fafc', 
+                    border: '1.5px solid #e2e8f0', borderRadius: 8, color: '#0f172a', 
+                    padding: '10px 12px', fontSize: 13, fontFamily: 'inherit', 
+                    outline: 'none', transition: 'border-color 0.2s'
+                  }}
+                  placeholder="Ex: Larissa"
+                  value={newComplexo}
+                  onChange={e => setNewComplexo(e.target.value)}
+                  onFocus={e => e.target.style.borderColor = '#f59e0b'}
+                  onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                />
+                <datalist id="complexos-list">
+                  {Array.from(new Set(usinas.map(u => u.complexo).filter(Boolean))).map(c => <option key={c} value={c} />)}
+                </datalist>
               </div>
+
+              {!editingUsina && usinas.length > 0 && (
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#0f172a', fontWeight: 600, cursor: 'pointer', marginBottom: 12 }}>
+                    <input 
+                      type="checkbox" 
+                      checked={isDuplicating} 
+                      onChange={e => setIsDuplicating(e.target.checked)} 
+                      style={{ width: 16, height: 16, accentColor: '#f59e0b' }}
+                    />
+                    Duplicar de uma usina existente
+                  </label>
+
+                  {isDuplicating && (
+                    <div style={{ padding: '12px 14px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8 }}>
+                      <select
+                        value={duplicarDe}
+                        onChange={e => setDuplicarDe(e.target.value)}
+                        style={{ 
+                          width: '100%', boxSizing: 'border-box', background: '#fff', 
+                          border: '1px solid #cbd5e1', borderRadius: 6, color: '#0f172a', 
+                          padding: '8px 10px', fontSize: 13, marginBottom: 12, outline: 'none' 
+                        }}
+                      >
+                        <option value="">Selecione a usina de origem...</option>
+                        {usinas.map(u => (
+                          <option key={u.nome} value={u.nome}>{u.nome}</option>
+                        ))}
+                      </select>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <label style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.5 }}>O que trazer?</label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#334155', cursor: 'pointer' }}>
+                          <input type="checkbox" checked={duplicarOptions.mapeamento} onChange={e => setDuplicarOptions(p => ({ ...p, mapeamento: e.target.checked }))} style={{ accentColor: '#f59e0b' }} />
+                          Arquivos de mapeamento das séries (Mapeamento)
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#334155', cursor: 'pointer' }}>
+                          <input type="checkbox" checked={duplicarOptions.infos_usina} onChange={e => setDuplicarOptions(p => ({ ...p, infos_usina: e.target.checked }))} style={{ accentColor: '#f59e0b' }} />
+                          Infos Usina
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#334155', cursor: 'pointer' }}>
+                          <input type="checkbox" checked={duplicarOptions.sinteticas} onChange={e => setDuplicarOptions(p => ({ ...p, sinteticas: e.target.checked }))} style={{ accentColor: '#f59e0b' }} />
+                          Séries sintéticas
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#334155', cursor: 'pointer' }}>
+                          <input type="checkbox" checked={duplicarOptions.dados_diarios} onChange={e => setDuplicarOptions(p => ({ ...p, dados_diarios: e.target.checked }))} style={{ accentColor: '#f59e0b' }} />
+                          Arquivos de dados diários (Dados e Campanhas)
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#334155', cursor: 'pointer' }}>
+                          <input type="checkbox" checked={duplicarOptions.fluxograma} onChange={e => setDuplicarOptions(p => ({ ...p, fluxograma: e.target.checked }))} style={{ accentColor: '#f59e0b' }} />
+                          Configurações da aba fluxograma (Bloquinhos)
+                        </label>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
               
               <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
                 <button type="button" onClick={() => setShowModal(false)} style={{ padding: '9px 18px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>Cancelar</button>
-                <button type="submit" disabled={!newName.trim()} style={{ 
+                <button type="submit" disabled={!newName.trim() || (isDuplicating && !duplicarDe)} style={{ 
                   padding: '9px 18px', borderRadius: 8, border: 'none', 
                   background: 'linear-gradient(135deg,#f59e0b,#f97316)', color: '#fff', 
-                  cursor: !newName.trim() ? 'not-allowed' : 'pointer', fontSize: 13, 
-                  fontWeight: 700, opacity: !newName.trim() ? 0.7 : 1 
+                  cursor: (!newName.trim() || (isDuplicating && !duplicarDe)) ? 'not-allowed' : 'pointer', fontSize: 13, 
+                  fontWeight: 700, opacity: (!newName.trim() || (isDuplicating && !duplicarDe)) ? 0.7 : 1 
                 }}>
                   {editingUsina ? 'Renomear' : 'Criar Usina'}
                 </button>
